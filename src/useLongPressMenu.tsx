@@ -37,12 +37,12 @@ function animateRing(ringEl: SVGElement, ms: number) {
   requestAnimationFrame(tick);
 }
 
-function LongPressIndicator({ x, y }: { x: number; y: number }) {
+function LongPressIndicator({ x, y, ms }: { x: number; y: number; ms: number }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const portalTarget = usePortalTarget();
   useEffect(() => {
-    if (svgRef.current) animateRing(svgRef.current, LONG_PRESS_MS);
-  }, []);
+    if (svgRef.current) animateRing(svgRef.current, ms);
+  }, [ms]);
   return createPortal(
     <div
       style={{
@@ -94,13 +94,24 @@ function isInteractiveElement(el: HTMLElement): boolean {
   return false;
 }
 
-export function LongPressMenuProvider({ children }: { children: React.ReactNode }) {
+export function LongPressMenuProvider({
+  children,
+  showRing = true,
+  longPressMs = LONG_PRESS_MS,
+}: {
+  children: React.ReactNode;
+  /** Hide the iOS-style progress ring (reactions open on long-press). */
+  showRing?: boolean;
+  /** How long the press must be held before the action fires (ms). */
+  longPressMs?: number;
+}) {
   const [indicator, setIndicator] = useState<{ x: number; y: number } | null>(null);
   const currentDocument = useCurrentDocument();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ringTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startRef = useRef<{ x: number; y: number; target: EventTarget | null }>({ x: 0, y: 0, target: null });
   const activeRef = useRef(false);
+  const ringDelay = Math.min(RING_DELAY_MS, longPressMs * 0.5);
 
   useEffect(() => {
     if (!IS_COARSE || !currentDocument) return;
@@ -120,7 +131,9 @@ export function LongPressMenuProvider({ children }: { children: React.ReactNode 
 
       // Ring appears after a tiny delay, then runs its full countdown so it
       // completes exactly when the long-press action fires.
-      ringTimerRef.current = setTimeout(() => setIndicator({ x, y }), RING_DELAY_MS);
+      if (showRing) {
+        ringTimerRef.current = setTimeout(() => setIndicator({ x, y }), ringDelay);
+      }
 
       timerRef.current = setTimeout(() => {
         if (!activeRef.current) return;
@@ -139,7 +152,7 @@ export function LongPressMenuProvider({ children }: { children: React.ReactNode 
           view: window,
         });
         heldTarget.dispatchEvent(ctxEvent);
-      }, RING_DELAY_MS + LONG_PRESS_MS);
+      }, longPressMs);
     };
 
     const onPointerMove = (e: PointerEvent) => {
@@ -197,12 +210,14 @@ export function LongPressMenuProvider({ children }: { children: React.ReactNode 
       if (timerRef.current !== null) clearTimeout(timerRef.current);
       if (ringTimerRef.current !== null) clearTimeout(ringTimerRef.current);
     };
-  }, []);
+  }, [showRing, longPressMs, ringDelay]);
 
   return (
     <>
       {children}
-      {indicator && <LongPressIndicator x={indicator.x} y={indicator.y} />}
+      {showRing && indicator && (
+        <LongPressIndicator x={indicator.x} y={indicator.y} ms={longPressMs - ringDelay} />
+      )}
     </>
   );
 }
