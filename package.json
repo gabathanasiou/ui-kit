@@ -1,6 +1,6 @@
 {
   "name": "@gabriel/ui-kit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shared interaction primitives: device/touch detection, menus, dialogs, long-press. Extracted from the lemon_schedule app.",
   "type": "module",
   "license": "UNLICENSED",
@@ -23,6 +23,7 @@
     "**/*.css"
   ],
   "scripts": {
+    "prepare": "npm run build",
     "build": "npm run build:js && npm run build:types && npm run build:css",
     "build:js": "vite build",
     "build:types": "tsc -p tsconfig.build.json",
