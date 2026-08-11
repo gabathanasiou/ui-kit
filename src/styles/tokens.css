@@ -1,0 +1,522 @@
+/*
+ * @gabriel/ui-kit — design tokens + semantic component classes.
+ *
+ * THEMING: override any --ui-* variable at :root (or on any scope) to
+ * re-skin the kit. `[data-theme]` scoping provides the three built-in looks
+ * (dark / light / blue) — the DropdownMenu & Dialog components set it for you.
+ *
+ * The defaults reproduce the lemon_schedule visuals pixel-for-pixel.
+ *
+ * HOVER GATING: all hover styles live behind @media (any-hover: hover) so
+ * iPadOS (primary pointer stays coarse even with a trackpad/pencil) keeps
+ * working — this is the core iOS interaction rule. :active feedback is
+ * outside the gate: instant on touch.
+ */
+
+:root {
+  /* dark (default) — zinc equivalents */
+  --ui-menu-bg: rgba(9, 9, 11, 0.95);
+  --ui-menu-border: #27272a;
+  --ui-panel-bg: #18181b;
+  --ui-panel-border: #27272a;
+  --ui-input-bg: #27272a;
+  --ui-input-border: #3f3f46;
+  --ui-input-text: #e4e4e7;
+  --ui-overlay-bg: rgba(0, 0, 0, 0.2);
+
+  --ui-text: #d4d4d8;
+  --ui-text-strong: #ffffff;
+  --ui-text-muted: #a1a1aa;
+  --ui-text-faint: #71717a;
+  --ui-text-disabled: #3f3f46;
+
+  --ui-item-hover-bg: #27272a;
+  --ui-item-hover-text: #ffffff;
+  --ui-item-active-bg: #3f3f46;
+  --ui-sep: #27272a;
+
+  --ui-row-hover-bg: #27272a;
+  --ui-row-active-bg: rgba(37, 99, 235, 0.2);
+  --ui-row-active-text: #bfdbfe;
+
+  --ui-danger-text: #f87171;
+  --ui-danger-hover-bg: rgba(127, 29, 29, 0.3);
+  --ui-danger-hover-text: #fca5a5;
+  --ui-danger-active-bg: rgba(127, 29, 29, 0.5);
+  --ui-danger-active-text: #fecaca;
+  --ui-danger-solid: #dc2626;
+  --ui-danger-solid-hover: #ef4444;
+
+  --ui-accent-soft-text: #93c5fd;
+  --ui-accent-soft-bg: rgba(147, 197, 253, 0.12);
+  --ui-confirm-hover: #4ade80;
+  --ui-cancel-hover: #f87171;
+
+  --ui-btn-bg: #27272a;
+  --ui-btn-hover-bg: #3f3f46;
+
+  --ui-label: #a1a1aa;
+
+  --ui-blur: 12px;
+  --ui-radius-menu: 8px;
+  --ui-radius-input: 6px;
+  --ui-radius-btn: 6px;
+  --ui-shadow-menu: 0 10px 40px -10px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] {
+  --ui-menu-bg: #ffffff;
+  --ui-menu-border: #e4e4e7;
+  --ui-panel-bg: #ffffff;
+  --ui-panel-border: #e4e4e7;
+  --ui-input-bg: #27272a;
+  --ui-input-border: #3f3f46;
+  --ui-input-text: #e4e4e7;
+  --ui-overlay-bg: rgba(0, 0, 0, 0.2);
+
+  --ui-text: #3f3f46;
+  --ui-text-strong: #18181b;
+  --ui-text-muted: #71717a;
+  --ui-text-faint: #a1a1aa;
+  --ui-text-disabled: #d4d4d8;
+
+  --ui-item-hover-bg: #f4f4f5;
+  --ui-item-hover-text: #18181b;
+  --ui-item-active-bg: #e4e4e7;
+  --ui-sep: #e4e4e7;
+
+  --ui-row-hover-bg: #f4f4f5;
+  --ui-row-active-bg: rgba(37, 99, 235, 0.1);
+  --ui-row-active-text: #1d4ed8;
+
+  --ui-danger-text: #dc2626;
+  --ui-danger-hover-bg: #fee2e2;
+  --ui-danger-hover-text: #dc2626;
+  --ui-danger-active-bg: #fecaca;
+  --ui-danger-active-text: #b91c1c;
+  --ui-danger-solid: #dc2626;
+  --ui-danger-solid-hover: #ef4444;
+
+  --ui-accent-soft-text: #1d4ed8;
+  --ui-accent-soft-bg: rgba(29, 78, 216, 0.08);
+  --ui-confirm-hover: #16a34a;
+  --ui-cancel-hover: #dc2626;
+
+  --ui-btn-bg: #27272a;
+  --ui-btn-hover-bg: #3f3f46;
+
+  --ui-label: #71717a;
+
+  --ui-shadow-menu: 0 10px 40px -10px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="blue"] {
+  --ui-menu-bg: rgba(23, 37, 84, 0.95);
+  --ui-menu-border: rgba(255, 255, 255, 0.1);
+  --ui-panel-bg: #1e293b;
+  --ui-panel-border: rgba(255, 255, 255, 0.1);
+  --ui-input-bg: rgba(255, 255, 255, 0.1);
+  --ui-input-border: rgba(255, 255, 255, 0.1);
+  --ui-input-text: #ffffff;
+  --ui-overlay-bg: rgba(0, 0, 0, 0.3);
+
+  --ui-text: #ffffff;
+  --ui-text-strong: #ffffff;
+  --ui-text-muted: rgba(255, 255, 255, 0.6);
+  --ui-text-faint: rgba(255, 255, 255, 0.45);
+  --ui-text-disabled: rgba(255, 255, 255, 0.2);
+
+  --ui-item-hover-bg: rgba(255, 255, 255, 0.1);
+  --ui-item-hover-text: #ffffff;
+  --ui-item-active-bg: rgba(255, 255, 255, 0.15);
+  --ui-sep: rgba(255, 255, 255, 0.1);
+
+  --ui-row-hover-bg: rgba(255, 255, 255, 0.1);
+  --ui-row-active-bg: rgba(255, 255, 255, 0.15);
+  --ui-row-active-text: #ffffff;
+
+  --ui-danger-text: #fca5a5;
+  --ui-danger-hover-bg: rgba(248, 113, 113, 0.15);
+  --ui-danger-hover-text: #fecaca;
+  --ui-danger-active-bg: rgba(248, 113, 113, 0.25);
+  --ui-danger-active-text: #fecaca;
+  --ui-danger-solid: #dc2626;
+  --ui-danger-solid-hover: #ef4444;
+
+  --ui-accent-soft-text: #ffffff;
+  --ui-accent-soft-bg: rgba(255, 255, 255, 0.1);
+  --ui-confirm-hover: #4ade80;
+  --ui-cancel-hover: #fca5a5;
+
+  --ui-btn-bg: rgba(255, 255, 255, 0.12);
+  --ui-btn-hover-bg: rgba(255, 255, 255, 0.2);
+
+  --ui-label: rgba(255, 255, 255, 0.6);
+
+  --ui-shadow-menu: 0 10px 48px -8px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Shared interaction rules ─────────────────────────────────────────── */
+
+.ui-interactive {
+  touch-action: manipulation;
+}
+
+.ui-interactive:focus-visible {
+  outline: 2px solid var(--ui-accent-soft-text);
+  outline-offset: 1px;
+}
+
+/* ── Menu (dropdown, context menu, submenu content) ───────────────────── */
+
+.ui-menu {
+  touch-action: manipulation;
+  background: var(--ui-menu-bg);
+  backdrop-filter: blur(var(--ui-blur));
+  -webkit-backdrop-filter: blur(var(--ui-blur));
+  border: 1px solid var(--ui-menu-border);
+  border-radius: var(--ui-radius-menu);
+  box-shadow: var(--ui-shadow-menu);
+  color: var(--ui-text);
+  font-family: Helvetica Neue, Helvetica, system-ui, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── Menu items ────────────────────────────────────────────────────────── */
+
+.ui-item {
+  touch-action: manipulation;
+  color: var(--ui-text);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ui-item:active {
+  background: var(--ui-item-active-bg);
+  transition: none;
+}
+
+@media (any-hover: hover) {
+  .ui-item:hover,
+  .ui-item:focus-visible {
+    background: var(--ui-item-hover-bg);
+    color: var(--ui-item-hover-text);
+  }
+}
+
+.ui-item-danger {
+  color: var(--ui-danger-text);
+}
+
+.ui-item-danger:active {
+  background: var(--ui-danger-active-bg);
+  color: var(--ui-danger-active-text);
+}
+
+@media (any-hover: hover) {
+  .ui-item-danger:hover,
+  .ui-item-danger:focus-visible {
+    background: var(--ui-danger-hover-bg);
+    color: var(--ui-danger-hover-text);
+  }
+}
+
+.ui-item[data-highlighted] {
+  background: var(--ui-item-hover-bg);
+  color: var(--ui-item-hover-text);
+}
+
+/* Submenu trigger open state (set by Radix) */
+.ui-item[data-state="open"] {
+  background: var(--ui-item-hover-bg);
+  color: var(--ui-item-hover-text);
+}
+
+/* ── Icons & icon buttons ──────────────────────────────────────────────── */
+
+.ui-icon {
+  color: var(--ui-text-muted);
+}
+
+.ui-icon-btn {
+  touch-action: manipulation;
+  color: var(--ui-text-faint);
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.ui-icon-btn:active {
+  color: var(--ui-text-muted);
+  transition: none;
+}
+
+@media (any-hover: hover) {
+  .ui-icon-btn:hover,
+  .ui-icon-btn:focus-visible {
+    color: var(--ui-text);
+  }
+}
+
+.ui-icon-btn-active {
+  color: var(--ui-accent-soft-text);
+}
+
+@media (any-hover: hover) {
+  .ui-icon-btn-active:hover,
+  .ui-icon-btn-active:focus-visible {
+    color: var(--ui-accent-soft-text);
+  }
+}
+
+.ui-icon-btn-danger {
+  color: var(--ui-text-faint);
+}
+
+.ui-icon-btn-danger:active {
+  color: var(--ui-danger-active-text);
+}
+
+@media (any-hover: hover) {
+  .ui-icon-btn-danger:hover,
+  .ui-icon-btn-danger:focus-visible {
+    color: var(--ui-danger-text);
+  }
+}
+
+.ui-icon-btn-confirm:active {
+  color: var(--ui-confirm-hover);
+}
+
+@media (any-hover: hover) {
+  .ui-icon-btn-confirm:hover,
+  .ui-icon-btn-confirm:focus-visible {
+    color: var(--ui-confirm-hover);
+  }
+}
+
+.ui-icon-btn-cancel:active {
+  color: var(--ui-cancel-hover);
+}
+
+@media (any-hover: hover) {
+  .ui-icon-btn-cancel:hover,
+  .ui-icon-btn-cancel:focus-visible {
+    color: var(--ui-cancel-hover);
+  }
+}
+
+/* ── Separators & labels ──────────────────────────────────────────────── */
+
+.ui-sep {
+  border-top: 1px solid var(--ui-sep);
+}
+
+.ui-label {
+  color: var(--ui-label);
+}
+
+/* ── Inputs ───────────────────────────────────────────────────────────── */
+
+.ui-input {
+  touch-action: manipulation;
+  background: var(--ui-input-bg);
+  border: 1px solid var(--ui-input-border);
+  color: var(--ui-input-text);
+  border-radius: var(--ui-radius-input);
+  outline: none;
+}
+
+.ui-input::placeholder {
+  color: var(--ui-text-faint);
+}
+
+.ui-input:focus {
+  border-color: var(--ui-text-muted);
+}
+
+/* ── Item-manager rows ────────────────────────────────────────────────── */
+
+.ui-row {
+  touch-action: manipulation;
+}
+
+@media (any-hover: hover) {
+  .ui-row:hover {
+    background: var(--ui-row-hover-bg);
+  }
+}
+
+.ui-row-active {
+  background: var(--ui-row-active-bg);
+}
+
+.ui-row-active-text {
+  color: var(--ui-row-active-text);
+}
+
+.ui-row-hover-text {
+  color: var(--ui-text);
+}
+
+@media (any-hover: hover) {
+  .ui-row:hover .ui-row-hover-text {
+    color: var(--ui-item-hover-text);
+  }
+}
+
+.ui-disabled {
+  color: var(--ui-text-disabled);
+  pointer-events: none;
+}
+
+/* ── Dialog ───────────────────────────────────────────────────────────── */
+
+.ui-overlay {
+  background: var(--ui-overlay-bg);
+}
+
+.ui-dialog {
+  touch-action: manipulation;
+  background: var(--ui-panel-bg);
+  border: 1px solid var(--ui-panel-border);
+  border-radius: var(--ui-radius-menu);
+  box-shadow: var(--ui-shadow-menu);
+  color: var(--ui-text);
+}
+
+.ui-dialog-title {
+  color: var(--ui-text-strong);
+  font-weight: 700;
+}
+
+.ui-dialog-text {
+  color: var(--ui-text-muted);
+  line-height: 1.5;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
+
+.ui-btn {
+  touch-action: manipulation;
+  border-radius: var(--ui-radius-btn);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.ui-btn:active {
+  transition: none;
+}
+
+.ui-btn-primary {
+  background: var(--ui-btn-bg);
+  color: var(--ui-text-strong);
+}
+
+.ui-btn-primary:active {
+  background: var(--ui-btn-hover-bg);
+}
+
+@media (any-hover: hover) {
+  .ui-btn-primary:hover,
+  .ui-btn-primary:focus-visible {
+    background: var(--ui-btn-hover-bg);
+  }
+}
+
+.ui-btn-danger {
+  background: var(--ui-danger-solid);
+  color: #ffffff;
+}
+
+.ui-btn-danger:active {
+  background: var(--ui-danger-solid-hover);
+}
+
+@media (any-hover: hover) {
+  .ui-btn-danger:hover,
+  .ui-btn-danger:focus-visible {
+    background: var(--ui-danger-solid-hover);
+  }
+}
+
+.ui-btn-ghost {
+  color: var(--ui-text-muted);
+}
+
+.ui-btn-ghost:active {
+  background: var(--ui-item-hover-bg);
+  color: var(--ui-text-strong);
+}
+
+@media (any-hover: hover) {
+  .ui-btn-ghost:hover,
+  .ui-btn-ghost:focus-visible {
+    background: var(--ui-item-hover-bg);
+    color: var(--ui-text-strong);
+  }
+}
+
+/* ── Muted text that brightens on hover (gated) ───────────────────────── */
+
+.ui-text {
+  color: var(--ui-text);
+}
+
+.ui-text-muted {
+  color: var(--ui-text-muted);
+}
+
+.ui-text-muted-interactive {
+  color: var(--ui-text-muted);
+  transition: color 150ms ease;
+}
+
+@media (any-hover: hover) {
+  .ui-text-muted-interactive:hover,
+  .ui-text-muted-interactive:focus-visible {
+    color: var(--ui-text-strong);
+  }
+}
+
+/* ── Reveal-on-hover (touch sees it always) ───────────────────────────── */
+
+.hover-reveal {
+  opacity: 1;
+}
+
+@media (any-hover: hover) and (any-pointer: fine) {
+  .hover-reveal {
+    opacity: 0;
+  }
+  .group:hover .hover-reveal,
+  :hover > .hover-reveal {
+    opacity: 1;
+  }
+}
+
+/* ── Scrollbars ───────────────────────────────────────────────────────── */
+
+.scrollbar-custom::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  background: var(--ui-text-disabled);
+  border-radius: 3px;
+}
+
+/* ── Long-press ring (used by LongPressMenuProvider) ──────────────────── */
+
+.ui-longpress-ring {
+  pointer-events: none;
+}
