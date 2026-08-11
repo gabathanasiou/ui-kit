@@ -122,7 +122,9 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
     if (rs.dir.includes('s')) newH = rs.startH + dy;
     if (rs.dir.includes('n')) { newH = rs.startH - dy; newT = rs.startT + dy; }
 
-    const vw = currentWindowRef.current.innerWidth, vh = currentWindowRef.current.innerHeight;
+    const win = currentWindowRef.current;
+    if (!win) return;
+    const vw = win.innerWidth, vh = win.innerHeight;
     newW = Math.max(MIN_W, Math.min(newW, vw - MAX_EDGE * 2));
     newH = Math.max(MIN_H, Math.min(newH, vh - MAX_EDGE * 2));
     if (rs.dir.includes('w')) newL = Math.max(MAX_EDGE, Math.min(newL, vw - newW - MAX_EDGE));
