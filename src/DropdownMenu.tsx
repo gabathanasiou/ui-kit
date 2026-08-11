@@ -1,3 +1,4 @@
+"use client";
 import React, { createContext, useContext, useCallback, useState, useRef, useEffect } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Pencil, Copy, Trash2, Plus, Check, X, RotateCcw } from 'lucide-react';

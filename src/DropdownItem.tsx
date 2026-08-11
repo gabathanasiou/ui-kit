@@ -1,3 +1,4 @@
+"use client";
 import React, { useRef } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useDropdownTheme, getDropdownClasses } from './DropdownMenu';

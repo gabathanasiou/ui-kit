@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useLayoutEffect } from 'react';
 import { IS_COARSE } from './device';
 import { useCurrentWindow } from './popout';

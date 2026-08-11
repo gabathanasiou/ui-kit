@@ -1,3 +1,4 @@
+"use client";
 import { IS_TOUCH_CAPABLE, isTouchLike, useLastPointerType } from './device';
 
 /**

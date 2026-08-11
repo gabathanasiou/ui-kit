@@ -1,3 +1,4 @@
+"use client";
 export { default as DropdownMenu, ItemManagerDropdown, DropdownThemeContext, useDropdownTheme, getDropdownClasses, SubmenuContext } from './DropdownMenu';
 export type { DropdownTheme } from './DropdownMenu';
 export { default as DropdownItem } from './DropdownItem';

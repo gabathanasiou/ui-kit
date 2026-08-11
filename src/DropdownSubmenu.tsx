@@ -1,3 +1,4 @@
+"use client";
 import React, { useContext } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronRight } from 'lucide-react';
