@@ -10,6 +10,9 @@ export default defineConfig({
       fileName: (format) => (format === 'es' ? 'index.js' : 'index.cjs'),
     },
     rollupOptions: {
+      output: {
+        banner: '"use client";',
+      },
       external: [
         'react',
         'react-dom',
