@@ -103,7 +103,7 @@ export function LongPressMenuProvider({ children }: { children: React.ReactNode 
   const activeRef = useRef(false);
 
   useEffect(() => {
-    if (!IS_COARSE) return;
+    if (!IS_COARSE || !currentDocument) return;
 
     const onPointerDown = (e: PointerEvent) => {
       if (!isTouchLike(e.pointerType) || e.button !== 0) return;
@@ -182,7 +182,7 @@ export function LongPressMenuProvider({ children }: { children: React.ReactNode 
       setIndicator(null);
     };
 
-    currentDocument.addEventListener('pointerdown', onPointerDown);
+    currentDocument?.addEventListener('pointerdown', onPointerDown);
     currentDocument.addEventListener('pointermove', onPointerMove);
     currentDocument.addEventListener('pointerup', onPointerUp);
     currentDocument.addEventListener('pointercancel', onPointerUp);
@@ -192,8 +192,8 @@ export function LongPressMenuProvider({ children }: { children: React.ReactNode 
       currentDocument.removeEventListener('pointerdown', onPointerDown);
       currentDocument.removeEventListener('pointermove', onPointerMove);
       currentDocument.removeEventListener('pointerup', onPointerUp);
-      currentDocument.removeEventListener('pointercancel', onPointerUp);
-      currentDocument.removeEventListener('pointerleave', onPointerLeave);
+      currentDocument?.removeEventListener('pointercancel', onPointerUp);
+      currentDocument?.removeEventListener('pointerleave', onPointerLeave);
       if (timerRef.current !== null) clearTimeout(timerRef.current);
       if (ringTimerRef.current !== null) clearTimeout(ringTimerRef.current);
     };

@@ -13,12 +13,13 @@ export function usePortalTarget(): HTMLElement | null {
   return null;
 }
 
-export function useCurrentDocument(): Document {
+export function useCurrentDocument(): Document | null {
   const popout = usePopoutWindow();
-  return popout?.document ?? document;
+  if (popout) return popout.document;
+  return typeof document !== 'undefined' ? document : null;
 }
 
-export function useCurrentWindow(): Window {
+export function useCurrentWindow(): Window | null {
   const popout = usePopoutWindow();
-  return popout ?? window;
+  return popout ?? (typeof window !== 'undefined' ? window : null);
 }

@@ -20,10 +20,12 @@ export function useSmartPosition(
     dropdown.style.bottom = '';
     dropdown.style.maxHeight = '';
 
+    const win = currentWindowRef.current;
+    if (!win) return;
     const wrapperRect = wrapperRef.current.getBoundingClientRect();
     const ddRect = dropdown.getBoundingClientRect();
-    const vw = currentWindowRef.current.innerWidth;
-    const vh = currentWindowRef.current.innerHeight;
+    const vw = win.innerWidth;
+    const vh = win.innerHeight;
 
     const overflowRight = ddRect.right - vw;
     if (overflowRight > 0) {
@@ -61,9 +63,11 @@ export function useFixedPosition(
     const el = wrapperRef.current;
     requestAnimationFrame(() => {
       const rect = el.getBoundingClientRect();
-      const vw = currentWindowRef.current.innerWidth;
-      const vh = currentWindowRef.current.visualViewport?.height ?? currentWindowRef.current.innerHeight;
-      const voff = currentWindowRef.current.visualViewport?.offsetTop ?? 0;
+      const win = currentWindowRef.current;
+      if (!win) return;
+      const vw = win.innerWidth;
+      const vh = win.visualViewport?.height ?? win.innerHeight;
+      const voff = win.visualViewport?.offsetTop ?? 0;
       const panelWidth = 200;
       const gap = 4;
       const minH = 120;

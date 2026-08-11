@@ -24,7 +24,7 @@ export const ContextMenu: React.FC<{
   const currentWindow = useCurrentWindow();
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !currentWindow) return;
     const handler = (e: PointerEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         onClose();
@@ -38,8 +38,8 @@ export const ContextMenu: React.FC<{
     if (!open || !menuRef.current) return;
     const rect = menuRef.current.getBoundingClientRect();
     const containerRect = containerRef?.current?.getBoundingClientRect();
-    const vw = containerRect ? containerRect.right : currentWindow.innerWidth;
-    const vh = containerRect ? containerRect.bottom : currentWindow.innerHeight;
+    const vw = containerRect ? containerRect.right : currentWindow?.innerWidth ?? 0;
+    const vh = containerRect ? containerRect.bottom : currentWindow?.innerHeight ?? 0;
     const minLeft = containerRect ? containerRect.left : 0;
     const minTop = containerRect ? containerRect.top : 0;
     let top = Math.max(minTop + MARGIN, y);
