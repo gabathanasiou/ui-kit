@@ -85,7 +85,7 @@ export function useLongPressOptOut() {
   return { 'data-no-longpress': 'true' as const };
 }
 
-function isInteractiveElement(el: HTMLElement): boolean {
+export function isInteractiveElement(el: HTMLElement): boolean {
   const tag = el.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON') return true;
   if (el.isContentEditable) return true;

@@ -5,7 +5,7 @@ export { default as DropdownItem } from './DropdownItem';
 export { default as DropdownSubmenu } from './DropdownSubmenu';
 export { default as ContextMenu, ContextMenuItem, ContextMenuDivider } from './ContextMenu';
 export { DialogProvider, useDialog } from './Dialog';
-export { LongPressMenuProvider, useLongPressOptOut } from './useLongPressMenu';
+export { LongPressMenuProvider, useLongPressOptOut, isInteractiveElement } from './useLongPressMenu';
 export { useSmartPosition, useFixedPosition } from './useSmartPosition';
 export { useTouchMode } from './useTouchMode';
 export {
