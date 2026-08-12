@@ -98,12 +98,21 @@ export function LongPressMenuProvider({
   children,
   showRing = true,
   longPressMs = LONG_PRESS_MS,
+  targetSelector = '[data-context-menu]',
+  shouldStartLongPress,
+  onLongPress,
 }: {
   children: React.ReactNode;
   /** Hide the iOS-style progress ring (reactions open on long-press). */
   showRing?: boolean;
   /** How long the press must be held before the action fires (ms). */
   longPressMs?: number;
+  /** Selector matched via `closest()` to decide long-press targets. */
+  targetSelector?: string;
+  /** Extra pointer-down gate; default excludes interactive elements. */
+  shouldStartLongPress?: (target: HTMLElement) => boolean;
+  /** Custom action on completion; default dispatches a synthetic `contextmenu`. */
+  onLongPress?: (target: HTMLElement, x: number, y: number) => void;
 }) {
   const [indicator, setIndicator] = useState<{ x: number; y: number } | null>(null);
   const currentDocument = useCurrentDocument();
@@ -112,6 +121,10 @@ export function LongPressMenuProvider({
   const startRef = useRef<{ x: number; y: number; target: EventTarget | null }>({ x: 0, y: 0, target: null });
   const activeRef = useRef(false);
   const ringDelay = Math.min(RING_DELAY_MS, longPressMs * 0.5);
+  const shouldStartRef = useRef(shouldStartLongPress);
+  shouldStartRef.current = shouldStartLongPress;
+  const onLongPressRef = useRef(onLongPress);
+  onLongPressRef.current = onLongPress;
 
   useEffect(() => {
     if (!IS_COARSE || !currentDocument) return;
@@ -119,10 +132,8 @@ export function LongPressMenuProvider({
     const onPointerDown = (e: PointerEvent) => {
       if (!isTouchLike(e.pointerType) || e.button !== 0) return;
       const target = e.target as HTMLElement;
-      // Only start long-presses on [data-context-menu] targets; everything
-      // else (inputs, menus, modals, plain text) gets no ring.
-      if (!target.closest('[data-context-menu]')) return;
-      if (isInteractiveElement(target)) return;
+      if (!target.closest(targetSelector)) return;
+      if (shouldStartRef.current ? !shouldStartRef.current(target) : isInteractiveElement(target)) return;
 
       const x = e.clientX;
       const y = e.clientY;
@@ -143,6 +154,11 @@ export function LongPressMenuProvider({
         const heldTarget = startRef.current.target as HTMLElement | null;
         if (!heldTarget) return;
 
+        const custom = onLongPressRef.current;
+        if (custom) {
+          custom(heldTarget, x, y);
+          return;
+        }
         const ctxEvent = new MouseEvent('contextmenu', {
           bubbles: true,
           cancelable: true,
@@ -210,7 +226,7 @@ export function LongPressMenuProvider({
       if (timerRef.current !== null) clearTimeout(timerRef.current);
       if (ringTimerRef.current !== null) clearTimeout(ringTimerRef.current);
     };
-  }, [showRing, longPressMs, ringDelay]);
+  }, [showRing, longPressMs, ringDelay, targetSelector]);
 
   return (
     <>
