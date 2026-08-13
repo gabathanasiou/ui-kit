@@ -221,9 +221,10 @@ export function ItemManagerDropdown({
 
   return (
     <DropdownMenu open={open} onOpenChange={(o) => { if (o) { setEditingId(null); setEditValue(''); } else { if (editingId && editValue.trim()) { onRename(editingId, editValue.trim()); } setEditingId(null); setEditValue(''); } if (!o || !readOnly) onClose(o); }} width="w-80" theme={theme} trigger={trigger}>
-      <div className={d.headerText}>
+      <div className={`shrink-0 ${d.headerText}`}>
         {header}
       </div>
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-custom flex flex-col">
       {items.map(item => {
         const isActive = item.id === activeId;
         const isEditing = editingId === item.id;
@@ -293,7 +294,8 @@ export function ItemManagerDropdown({
           </div>
         );
       })}
-      <div className={editingId ? 'opacity-40 pointer-events-none' : ''}>
+      </div>
+      <div className={`shrink-0 ${editingId ? 'opacity-40 pointer-events-none' : ''}`}>
         {onReset && (
           <>
             <RadixDropdownMenu.Separator className={d.separator} />
