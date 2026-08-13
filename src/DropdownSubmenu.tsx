@@ -25,7 +25,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
 
   const triggerClasses = `w-full text-left ${SUB_ITEM} rounded flex items-center gap-2 outline-none cursor-pointer select-none justify-between ui-item`;
 
-  const contentClasses = `ui-menu rounded-lg shadow-xl z-[210] p-1 flex flex-col select-none max-h-[min(75vh,30rem)] overflow-y-auto min-w-0 ${width || 'w-48'}`;
+  const contentClasses = `ui-menu rounded-lg shadow-xl z-[210] p-1 flex flex-col select-none max-h-[min(75vh,30rem)] overflow-y-auto min-w-0 scrollbar-custom ${width || 'w-48'}`;
 
   return (
       <RadixDropdownMenu.Sub open={subOpen} onOpenChange={(o) => setActiveSub(o ? id : null)}>

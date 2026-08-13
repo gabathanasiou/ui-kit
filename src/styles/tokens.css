@@ -34,6 +34,7 @@
   --ui-item-hover-text: #ffffff;
   --ui-item-active-bg: #3f3f46;
   --ui-sep: #27272a;
+  --ui-scroll-thumb: #52525b;
 
   --ui-row-hover-bg: #27272a;
   --ui-row-active-bg: rgba(37, 99, 235, 0.2);
@@ -84,6 +85,7 @@
   --ui-item-hover-text: #18181b;
   --ui-item-active-bg: #e4e4e7;
   --ui-sep: #e4e4e7;
+  --ui-scroll-thumb: #d4d4d8;
 
   --ui-row-hover-bg: #f4f4f5;
   --ui-row-active-bg: rgba(37, 99, 235, 0.1);
@@ -125,6 +127,7 @@
   --ui-text-muted: rgba(255, 255, 255, 0.6);
   --ui-text-faint: rgba(255, 255, 255, 0.45);
   --ui-text-disabled: rgba(255, 255, 255, 0.2);
+  --ui-scroll-thumb: rgba(255, 255, 255, 0.3);
 
   --ui-item-hover-bg: rgba(255, 255, 255, 0.1);
   --ui-item-hover-text: #ffffff;
@@ -511,7 +514,7 @@
 }
 
 .scrollbar-custom::-webkit-scrollbar-thumb {
-  background: var(--ui-text-disabled);
+  background: var(--ui-scroll-thumb, var(--ui-text-disabled));
   border-radius: 3px;
 }
 

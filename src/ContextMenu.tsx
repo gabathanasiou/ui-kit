@@ -56,7 +56,7 @@ export const ContextMenu: React.FC<{
     <div
       ref={menuRef}
       data-theme="light"
-      className={`fixed ui-menu rounded-lg shadow-xl p-1 z-[9999] ${CTX_TEXT} min-w-[180px] max-h-[85vh] overflow-y-auto`}
+      className={`fixed ui-menu rounded-lg shadow-xl p-1 z-[9999] ${CTX_TEXT} min-w-[180px] max-h-[85vh] overflow-y-auto scrollbar-custom`}
       style={{ top: y, left: x, touchAction: 'manipulation' }}
     >
       {children}
