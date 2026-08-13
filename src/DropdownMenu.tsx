@@ -178,6 +178,16 @@ export function ItemManagerDropdown({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Open scrolled to the active item so the selection is always visible.
+  useEffect(() => {
+    if (open) {
+      requestAnimationFrame(() => {
+        listRef.current?.querySelector<HTMLElement>('[data-active="1"]')?.scrollIntoView({ block: 'nearest' });
+      });
+    }
+  }, [open]);
 
   useEffect(() => {
     if (editingId) {
@@ -224,12 +234,12 @@ export function ItemManagerDropdown({
       <div className={`shrink-0 ${d.headerText}`}>
         {header}
       </div>
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-custom flex flex-col">
+      <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-custom flex flex-col">
       {items.map(item => {
         const isActive = item.id === activeId;
         const isEditing = editingId === item.id;
         return (
-          <div key={item.id} className={`flex items-center gap-1 rounded my-0.5 ${isActive ? d.rowActiveBg : d.rowHoverBg} ${editingId && !isEditing ? 'opacity-40 pointer-events-none' : ''}`}>
+          <div key={item.id} data-active={isActive ? '1' : undefined} className={`flex items-center gap-1 rounded my-0.5 ${isActive ? d.rowActiveBg : d.rowHoverBg} ${editingId && !isEditing ? 'opacity-40 pointer-events-none' : ''}`}>
             {isEditing ? (
               <>
                 <div className={`flex-1 min-w-0 ${d.itemPad} rounded outline-none flex items-center gap-2`}>
