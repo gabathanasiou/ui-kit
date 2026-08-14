@@ -22,6 +22,7 @@ export interface CheckboxProps {
 export default function Checkbox({ checked, onChange, disabled = false, label, id, className = '', labelClassName = '', theme }: CheckboxProps) {
   const boxCls = IS_COARSE ? 'w-5 h-5 rounded-md' : 'w-4 h-4 rounded';
   const markCls = IS_COARSE ? 'w-3.5 h-3.5' : 'w-3 h-3';
+  const labelCls = IS_COARSE ? 'text-sm' : 'text-xs';
   return (
     <label
       className={`ui-checkbox ${disabled ? 'ui-disabled' : ''} ${className}`}
@@ -44,7 +45,7 @@ export default function Checkbox({ checked, onChange, disabled = false, label, i
           </svg>
         )}
       </span>
-      {label != null && <span className={`ui-checkbox-label ${labelClassName}`}>{label}</span>}
+      {label != null && <span className={`ui-checkbox-label ${labelCls} ${labelClassName}`}>{label}</span>}
     </label>
   );
 }
