@@ -239,6 +239,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
 
             {dialog?.kind === 'confirm' && (dialog.options as ConfirmOptions).suppressKey && (
               <Checkbox
+                block
                 checked={suppressCheck}
                 onChange={setSuppressCheck}
                 tone="danger"

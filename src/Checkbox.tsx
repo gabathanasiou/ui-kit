@@ -28,9 +28,11 @@ export interface CheckboxProps {
   theme?: 'dark' | 'light' | 'blue'; // explicit color scope; unset = inherit ambient
   variant?: 'pill' | 'plain';
   tone?: 'accent' | 'danger';
+  /** Block-level: spans the full width of its container (button-row look in modals). */
+  block?: boolean;
 }
 
-export default function Checkbox({ checked, onChange, disabled = false, label, id, className = '', labelClassName = '', theme, variant = 'pill', tone = 'accent' }: CheckboxProps) {
+export default function Checkbox({ checked, onChange, disabled = false, label, id, className = '', labelClassName = '', theme, variant = 'pill', tone = 'accent', block = false }: CheckboxProps) {
   const pill = variant !== 'plain';
   const indicatorCls = IS_COARSE ? 'w-5 h-5' : 'w-4 h-4';
   const boxCls = IS_COARSE ? 'w-5 h-5 rounded-md' : 'w-4 h-4 rounded';
@@ -40,7 +42,7 @@ export default function Checkbox({ checked, onChange, disabled = false, label, i
   return (
     <label
       className={`ui-checkbox ${pill ? `ui-checkbox-pill ${pillPad} rounded-lg` : ''} ${tone === 'danger' ? 'ui-checkbox-tone-danger' : ''} ${disabled ? 'ui-disabled' : ''} ${className}`}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: IS_COARSE ? 10 : 8 }}
+      style={{ display: block ? 'flex' : 'inline-flex', alignItems: 'center', gap: IS_COARSE ? 10 : 8 }}
       onClick={(e) => e.stopPropagation()}
       {...(theme ? { 'data-theme': theme } : {})}
     >
