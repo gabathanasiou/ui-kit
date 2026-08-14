@@ -24,6 +24,7 @@ export default function Checkbox({ checked, onChange, disabled = false, label, i
     <label
       className={`ui-checkbox ${disabled ? 'ui-disabled' : ''} ${className}`}
       style={{ display: 'inline-flex', alignItems: 'center', gap: IS_COARSE ? 10 : 8 }}
+      onClick={(e) => e.stopPropagation()}
     >
       <input
         type="checkbox"
