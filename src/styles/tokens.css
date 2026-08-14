@@ -413,7 +413,7 @@
 }
 
 .ui-checkbox-label {
-  color: var(--ui-text);
+  color: var(--ui-text-muted);
 }
 
 .ui-checkbox.ui-disabled {

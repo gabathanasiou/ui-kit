@@ -14,10 +14,12 @@ export interface CheckboxProps {
   disabled?: boolean;
   label?: React.ReactNode;
   id?: string;
-  className?: string; // extra classes on the label row
+  className?: string;      // extra classes on the label row
+  labelClassName?: string; // extra classes on the label text (match surrounding text)
+  theme?: 'dark' | 'light' | 'blue'; // explicit color scope; unset = inherit ambient
 }
 
-export default function Checkbox({ checked, onChange, disabled = false, label, id, className = '' }: CheckboxProps) {
+export default function Checkbox({ checked, onChange, disabled = false, label, id, className = '', labelClassName = '', theme }: CheckboxProps) {
   const boxCls = IS_COARSE ? 'w-5 h-5 rounded-md' : 'w-4 h-4 rounded';
   const markCls = IS_COARSE ? 'w-3.5 h-3.5' : 'w-3 h-3';
   return (
@@ -25,6 +27,7 @@ export default function Checkbox({ checked, onChange, disabled = false, label, i
       className={`ui-checkbox ${disabled ? 'ui-disabled' : ''} ${className}`}
       style={{ display: 'inline-flex', alignItems: 'center', gap: IS_COARSE ? 10 : 8 }}
       onClick={(e) => e.stopPropagation()}
+      {...(theme ? { 'data-theme': theme } : {})}
     >
       <input
         type="checkbox"
@@ -41,7 +44,7 @@ export default function Checkbox({ checked, onChange, disabled = false, label, i
           </svg>
         )}
       </span>
-      {label != null && <span className="ui-checkbox-label">{label}</span>}
+      {label != null && <span className={`ui-checkbox-label ${labelClassName}`}>{label}</span>}
     </label>
   );
 }
