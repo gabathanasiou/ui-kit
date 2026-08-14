@@ -51,8 +51,10 @@ export default function Checklist({
   theme,
   className = '',
 }: ChecklistProps) {
-  const has = (id: string | number) =>
-    selected instanceof Set ? selected.has(id) : selected.includes(id as never);
+  const has = (id: string | number) => {
+    if (selected instanceof Set) return selected.has(id);
+    return (selected as readonly (string | number)[]).includes(id);
+  };
   const itemPad = IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
   const checkCls = IS_COARSE ? 'w-5 h-5 rounded-md' : 'w-4 h-4 rounded';
   const showHeader = title != null || onToggleAll != null;
