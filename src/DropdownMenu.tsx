@@ -149,6 +149,9 @@ interface ItemManagerDropdownProps {
   itemLabel?: string;
   trigger: React.ReactNode;
   minItems?: number;
+  /** Renders each item's label (e.g. styled previews) — falls back to the
+   *  plain name when omitted. */
+  itemRender?: (item: { id: string; name: string }) => React.ReactNode;
 }
 
 export function ItemManagerDropdown({
@@ -173,6 +176,7 @@ export function ItemManagerDropdown({
   itemLabel,
   trigger,
   minItems = 1,
+  itemRender,
 }: ItemManagerDropdownProps) {
   const d = getDropdownClasses(theme);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -273,7 +277,7 @@ export function ItemManagerDropdown({
                   onSelect={closeOnSelect ? () => { onSelect(item.id); } : e => { e.preventDefault(); onSelect(item.id); }}
                   onTouchStart={() => {}}
                 >
-                  <span className={`truncate ${isActive ? d.rowActiveText : ''}`}>{item.name}</span>
+                  <span className={`truncate ${isActive ? d.rowActiveText : ''}`}>{itemRender ? itemRender(item) : item.name}</span>
                 </RadixDropdownMenu.Item>
                 <RadixDropdownMenu.Item
                   className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer ${isActive ? d.btnActive : d.btnBase}`}
