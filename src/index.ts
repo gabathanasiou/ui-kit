@@ -10,6 +10,8 @@ export { useSmartPosition, useFixedPosition } from './useSmartPosition';
 export { useTouchMode } from './useTouchMode';
 export { default as Checkbox } from './Checkbox';
 export type { CheckboxProps } from './Checkbox';
+export { default as Checklist } from './Checklist';
+export type { ChecklistProps, ChecklistItem } from './Checklist';
 export {
   IS_COARSE,
   IS_TOUCH_CAPABLE,
