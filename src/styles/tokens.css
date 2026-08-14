@@ -781,6 +781,32 @@
   opacity: 0.45;
 }
 
+
+/* ── RadioList (single-select word list) ─────────────────────────────── */
+
+.ui-radio-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1.5px solid var(--ui-check-border);
+  border-radius: 9999px;
+  color: var(--ui-check-check);
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.ui-checklist-item-checked .ui-radio-circle {
+  border-color: var(--ui-check-accent);
+  background: var(--ui-check-accent);
+}
+
+.ui-radio-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--ui-check-check);
+}
+
 /* ── Scrollbars ───────────────────────────────────────────────────────── */
 
 .scrollbar-custom::-webkit-scrollbar {

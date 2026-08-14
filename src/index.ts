@@ -12,6 +12,8 @@ export { default as Checkbox } from './Checkbox';
 export type { CheckboxProps } from './Checkbox';
 export { default as Checklist } from './Checklist';
 export type { ChecklistProps, ChecklistItem } from './Checklist';
+export { default as RadioList } from './RadioList';
+export type { RadioListProps, RadioListItem } from './RadioList';
 export {
   IS_COARSE,
   IS_TOUCH_CAPABLE,
