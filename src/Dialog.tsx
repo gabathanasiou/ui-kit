@@ -4,6 +4,7 @@ import * as RadixDialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { IS_COARSE } from './device';
 import { usePortalTarget, useCurrentWindow } from './popout';
+import Checkbox from './Checkbox';
 
 const DIALOG_PAD = IS_COARSE ? 'p-6' : 'p-5';
 const DIALOG_TITLE = IS_COARSE ? 'text-base' : 'text-sm';
@@ -237,15 +238,12 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
             )}
 
             {dialog?.kind === 'confirm' && (dialog.options as ConfirmOptions).suppressKey && (
-              <label className="flex items-center gap-2 cursor-pointer ui-text-muted-interactive text-xs">
-                <input
-                  type="checkbox"
-                  checked={suppressCheck}
-                  onChange={e => setSuppressCheck(e.target.checked)}
-                  className="ui-input"
-                />
-                Don't ask again (24 hours)
-              </label>
+              <Checkbox
+                checked={suppressCheck}
+                onChange={setSuppressCheck}
+                tone="danger"
+                label="Don't ask again (24 hours)"
+              />
             )}
 
             {dialog?.kind === 'prompt' && (

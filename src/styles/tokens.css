@@ -59,10 +59,14 @@
   --ui-label: #71717a;
 
   --ui-check-bg: transparent;
-  --ui-check-border: #3f3f46;
+  --ui-check-border: #52525b;
   --ui-check-hover-border: #71717a;
   --ui-check-accent: #3b82f6;
   --ui-check-check: #ffffff;
+  --ui-check-pill-bg: rgba(39, 39, 42, 0.5);
+  --ui-check-pill-hover-bg: rgba(39, 39, 42, 0.75);
+  --ui-check-pill-border: rgba(39, 39, 42, 0.6);
+  --ui-check-pill-hover-border: #3f3f46;
 
   --ui-blur: 12px;
   --ui-radius-menu: 8px;
@@ -116,10 +120,14 @@
   --ui-label: #71717a;
 
   --ui-check-bg: transparent;
-  --ui-check-border: #d4d4d8;
-  --ui-check-hover-border: #a1a1aa;
+  --ui-check-border: #a1a1aa;
+  --ui-check-hover-border: #71717a;
   --ui-check-accent: #2563eb;
   --ui-check-check: #ffffff;
+  --ui-check-pill-bg: rgba(0, 0, 0, 0.04);
+  --ui-check-pill-hover-bg: rgba(0, 0, 0, 0.08);
+  --ui-check-pill-border: rgba(0, 0, 0, 0.12);
+  --ui-check-pill-hover-border: rgba(0, 0, 0, 0.25);
 
   --ui-shadow-menu: 0 10px 40px -10px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -169,10 +177,14 @@
   --ui-label: rgba(255, 255, 255, 0.6);
 
   --ui-check-bg: transparent;
-  --ui-check-border: rgba(255, 255, 255, 0.25);
+  --ui-check-border: rgba(255, 255, 255, 0.35);
   --ui-check-hover-border: rgba(255, 255, 255, 0.5);
   --ui-check-accent: #3b82f6;
   --ui-check-check: #ffffff;
+  --ui-check-pill-bg: rgba(255, 255, 255, 0.08);
+  --ui-check-pill-hover-bg: rgba(255, 255, 255, 0.14);
+  --ui-check-pill-border: rgba(255, 255, 255, 0.15);
+  --ui-check-pill-hover-border: rgba(255, 255, 255, 0.3);
 
   --ui-shadow-menu: 0 10px 48px -8px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.25);
 }
@@ -433,6 +445,45 @@
   background: var(--ui-input-bg);
   border-color: var(--ui-text-disabled);
 }
+
+/* ── Checkbox pill variant (button-like row) ─────────────────────────── */
+
+.ui-checkbox-pill {
+  background: var(--ui-check-pill-bg);
+  border: 1px solid var(--ui-check-pill-border);
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.ui-checkbox-pill:active {
+  background: var(--ui-check-pill-hover-bg);
+  transition: none;
+}
+
+@media (any-hover: hover) {
+  .ui-checkbox-pill:hover {
+    background: var(--ui-check-pill-hover-bg);
+    border-color: var(--ui-check-pill-hover-border);
+  }
+}
+
+.ui-checkbox-pill .ui-check-indicator {
+  color: var(--ui-text-faint);
+  transition: color 120ms ease;
+}
+
+.ui-checkbox-pill input:checked + .ui-check-indicator {
+  color: var(--ui-check-accent);
+}
+
+.ui-checkbox-pill.ui-checkbox-tone-danger input:checked + .ui-check-indicator {
+  color: var(--ui-danger-solid);
+}
+
+.ui-checkbox-pill.ui-disabled {
+  opacity: 0.45;
+  background: transparent;
+}
+
 
 /* ── Item-manager rows ────────────────────────────────────────────────── */
 
