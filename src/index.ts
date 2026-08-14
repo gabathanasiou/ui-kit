@@ -8,6 +8,8 @@ export { DialogProvider, useDialog } from './Dialog';
 export { LongPressMenuProvider, useLongPressOptOut, isInteractiveElement } from './useLongPressMenu';
 export { useSmartPosition, useFixedPosition } from './useSmartPosition';
 export { useTouchMode } from './useTouchMode';
+export { default as Checkbox } from './Checkbox';
+export type { CheckboxProps } from './Checkbox';
 export {
   IS_COARSE,
   IS_TOUCH_CAPABLE,
