@@ -70,8 +70,8 @@ export const ContentRow: React.FC<{ label?: string; children: React.ReactNode; t
 
 /** Editor panel header bar: leading slot (icon + label) + right-aligned
  *  trailing actions. */
-export const ChromeHeader: React.FC<{ leading?: React.ReactNode; trailing?: React.ReactNode }> = ({ leading, trailing }) => (
-  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-zinc-700/40 border border-zinc-700/60 min-w-max">
+export const ChromeHeader: React.FC<{ leading?: React.ReactNode; trailing?: React.ReactNode; className?: string }> = ({ leading, trailing, className = '' }) => (
+  <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-zinc-700/40 border border-zinc-700/60 min-w-max ${className}`}>
     {leading}
     {trailing && <div className="ml-auto flex items-center gap-1">{trailing}</div>}
   </div>
