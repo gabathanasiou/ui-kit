@@ -31,6 +31,10 @@ export interface RichTextEditorHandle {
   focus: () => void;
   /** Inserts a `{{key}}` token node at the caret. */
   insertToken: (key: string) => void;
+  /** Rewrites the LAST-CLICKED token chip's key (e.g. adding `|`-item
+   *  options) — targets exactly the chip the consumer was handed via
+   *  `onTokenClick`, never a sibling with the same key. */
+  replaceToken: (newKey: string) => void;
 }
 
 /** Formatting state at the caret/selection — drives the toolbar's toggle lighting. */
@@ -57,15 +61,21 @@ export interface RichTextEditorProps {
   resolveToken?: (key: string) => TokenMeta | null;
   /** Items for the `@` token autocomplete, filtered by the current query. */
   suggestionItems?: (query: string) => TokenItem[];
+  /** Fired when a token chip is clicked: its key, viewport rect and document
+   *  position. Pair with the handle's `replaceToken` for targeted edits. */
+  onTokenClick?: (key: string, rect: DOMRect, pos: number) => void;
 }
 
 const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProps>(({
-  value, onChange, placeholder, disabled, className, onStateChange, resolveToken, suggestionItems,
+  value, onChange, placeholder, disabled, className, onStateChange, resolveToken, suggestionItems, onTokenClick,
 }, ref) => {
   const resolveRef = useRef(resolveToken);
   resolveRef.current = resolveToken;
   const itemsRef = useRef(suggestionItems);
   itemsRef.current = suggestionItems;
+  const onTokenClickRef = useRef(onTokenClick);
+  onTokenClickRef.current = onTokenClick;
+  const lastTokenPosRef = useRef<number | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const disabledRef = useRef(disabled);
@@ -111,7 +121,14 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
       },
       render: TokenSuggestion,
     };
-    return Token.configure({ resolve: resolveRef.current ?? null, suggestion } as unknown as Parameters<typeof Token.configure>[0]);
+    return Token.configure({
+      resolve: resolveRef.current ?? null,
+      suggestion,
+      onTokenClick: (key: string, rect: DOMRect, pos: number) => {
+        lastTokenPosRef.current = pos;
+        onTokenClickRef.current?.(key, rect, pos);
+      },
+    } as unknown as Parameters<typeof Token.configure>[0]);
   }, []);
 
   const editor = useEditor({
@@ -188,6 +205,18 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
     insertToken: (key: string) => {
       if (!editor || disabledRef.current) return;
       editor.chain().focus().insertContent({ type: 'token', attrs: { field: key } }).run();
+    },
+    replaceToken: (newKey: string) => {
+      if (!editor || disabledRef.current) return;
+      const pos = lastTokenPosRef.current;
+      if (pos == null) return;
+      lastTokenPosRef.current = null;
+      editor.chain().focus().command(({ tr }) => {
+        const node = tr.doc.nodeAt(pos);
+        if (!node || node.type.name !== 'token') return false;
+        tr.setNodeMarkup(pos, undefined, { field: newKey });
+        return true;
+      }).run();
     },
   }), [editor]);
 

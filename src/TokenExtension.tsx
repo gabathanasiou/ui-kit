@@ -37,8 +37,8 @@ interface TokenAttrs {
 /** Chip renderer for a token atom — label on the resolved color. */
 export const TokenChipView: React.FC<NodeViewProps> = ({ node, selected, extension, editor, view, getPos }) => {
   const field = (node.attrs as TokenAttrs).field ?? '';
-  const resolve = (extension.options as { resolve?: (key: string) => TokenMeta | null }).resolve;
-  const meta = resolve?.(field) ?? null;
+  const options = extension.options as { resolve?: (key: string) => TokenMeta | null; onTokenClick?: (key: string, rect: DOMRect, pos: number) => void };
+  const meta = options.resolve?.(field) ?? null;
   const color = meta?.color ?? FALLBACK_COLOR;
   const label = meta?.label ?? `{{${field}}}`;
   return (
@@ -70,6 +70,9 @@ export const TokenChipView: React.FC<NodeViewProps> = ({ node, selected, extensi
         if (target && NodeSelection.isSelectable(target)) {
           view.dispatch(view.state.tr.setSelection(new NodeSelection($pos)));
         }
+        // Chip-level click callback (consumer UX: token properties popover).
+        // Fires after selection so the editor is in a stable state.
+        options.onTokenClick?.(field, (e.currentTarget as HTMLElement).getBoundingClientRect(), pos);
       }}
     >
       {label}
@@ -97,6 +100,10 @@ export function preprocessTokenHtml(html: string): string {
 export interface TokenExtensionOptions {
   /** Resolves a token key to its display meta (label + color). */
   resolve?: ((key: string) => TokenMeta | null) | null;
+  /** Fired when a chip is clicked: full key (may carry `|`-options), the
+   *  chip's viewport rect, and the atom's document position (for targeted
+   *  replacement). */
+  onTokenClick?: ((key: string, rect: DOMRect, pos: number) => void) | null;
 }
 
 /** The Token extension — an atom with a native React chip view. */
@@ -107,6 +114,7 @@ export const Token = Mention.extend<TokenExtensionOptions>({
     return {
       ...this.parent?.(),
       resolve: null as ((key: string) => TokenMeta | null) | null,
+      onTokenClick: null as ((key: string, rect: DOMRect, pos: number) => void) | null,
     };
   },
   addNodeView() {
