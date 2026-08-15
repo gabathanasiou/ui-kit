@@ -1,14 +1,19 @@
 "use client";
 import React, { useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useFloating, autoUpdate, offset, flip, shift, size, type Placement } from '@floating-ui/react-dom';
+import { useFloating, autoUpdate, offset, flip, shift, type Placement } from '@floating-ui/react-dom';
 import { useCurrentWindow } from './popout';
 
 // ---- floating editor chrome (block/table-column/column editors) ----------------
 // Portals the panel to the current window's body and positions it with Floating
-// UI (strategy fixed) against an anchor inside the block card. `flip`/`shift`/
-// `size` keep it fully inside the viewport (like the context menus); autoUpdate
+// UI (strategy fixed) against an anchor inside the block card. `flip`/`shift`
+// keep it fully inside the viewport (like the context menus); autoUpdate
 // repositions it on scroll/resize and as the panel grows (typing, dropdowns).
+// The panel's max size is a CONSTANT window fraction (.ui-chrome CSS) — the
+// anchor-relative size middleware was removed because it clamped the panel to
+// the space on its own side of the anchor (tiny for a panel above a tall card
+// scrolled near the viewport top), which made the panel visibly shrink and
+// jump on scroll. The panel keeps a stable size and scrolls internally.
 // The inline anchor div (`.ui-chrome-anchor`) must sit inside a `position:
 // relative` parent — the parent's rect is the anchor.
 
@@ -73,14 +78,6 @@ export const FloatingChrome: React.FC<FloatingChromeProps> = ({
       offset(offsetVal),
       flip({ padding: 8 }),
       shift({ padding: 8 }),
-      size({
-        padding: 8,
-        apply({ availableWidth, availableHeight, elements }) {
-          const el = elements.floating as HTMLElement;
-          el.style.maxWidth = `${availableWidth}px`;
-          el.style.maxHeight = `${availableHeight}px`;
-        },
-      }),
       // Final hard clamp into the viewport. Floating UI's shift measures the
       // panel's *current* DOM rect (one update behind), so a large scroll jump
       // can leave it off-screen next to a scrolled-out reference — this clamp
