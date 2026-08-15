@@ -1,6 +1,6 @@
 {
   "name": "@gabriel/ui-kit",
-  "version": "0.1.24",
+  "version": "0.1.25",
   "description": "Shared interaction primitives: device/touch detection, menus, dialogs, long-press, floating editor chrome, rich-text editor. Extracted from the lemon_schedule app.",
   "type": "module",
   "license": "UNLICENSED",
