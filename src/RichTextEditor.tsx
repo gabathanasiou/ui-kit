@@ -251,6 +251,13 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
         const node = tr.doc.nodeAt(pos);
         if (!node || node.type.name !== 'token') return false;
         tr.setNodeMarkup(pos, undefined, { field: newKey });
+        // setNodeMarkup collapses a NodeSelection on the chip — restore it so
+        // selection-driven consumers (chip property panels) stay targeted
+        // while the chip is rewritten.
+        const $pos = tr.doc.resolve(pos);
+        if ($pos.nodeAfter && $pos.nodeAfter.type.name === 'token') {
+          tr.setSelection(new NodeSelection($pos));
+        }
         return true;
       });
     },
