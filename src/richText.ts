@@ -75,7 +75,12 @@ export function sanitizeRichText(html: string): string {
   template.innerHTML = clean;
   const frag = document.createDocumentFragment();
   for (const child of Array.from(template.content.childNodes)) frag.appendChild(sanitizeNode(child));
-  const serialized = new XMLSerializer().serializeToString(frag);
+  // Serialize via innerHTML (NOT XMLSerializer — that emits
+  // `xmlns="http://www.w3.org/1999/xhtml"` on every element, polluting stored
+  // text that later surfaces as literal markup in key views and consumers).
+  const container = document.createElement('div');
+  container.appendChild(frag);
+  const serialized = container.innerHTML;
   return serialized
     .replace(/<strong(\s|>)/gi, '<b$1').replace(/<\/strong>/gi, '</b>')
     .replace(/<em(\s|>)/gi, '<i$1').replace(/<\/em>/gi, '</i>')
