@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
+import { NodeSelection } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { TextStyle } from '@tiptap/extension-text-style';
@@ -31,9 +32,11 @@ export interface RichTextEditorHandle {
   focus: () => void;
   /** Inserts a `{{key}}` token node at the caret. */
   insertToken: (key: string) => void;
-  /** Rewrites the LAST-CLICKED token chip's key (e.g. adding `|`-item
-   *  options) — targets exactly the chip the consumer was handed via
-   *  `onTokenClick`, never a sibling with the same key. */
+  /** Rewrites the LAST-SELECTED token chip's key (e.g. adding `|`-item
+   *  options) — targets exactly the chip reported via `onSelectionChange`,
+   *  never a sibling with the same key. Repeatable: the target position is
+   *  remapped through transactions, and no focus steal (panel inputs keep
+   *  their focus while the chip updates live). */
   replaceToken: (newKey: string) => void;
 }
 
@@ -64,10 +67,15 @@ export interface RichTextEditorProps {
   /** Fired when a token chip is clicked: its key, viewport rect and document
    *  position. Pair with the handle's `replaceToken` for targeted edits. */
   onTokenClick?: (key: string, rect: DOMRect, pos: number) => void;
+  /** Fired whenever the selected-chip state CHANGES: the chip's key + doc
+   *  position when a token chip is selected, or `null` when the selection
+   *  leaves the chip. Drives target-aware chip property editors — the panel
+   *  shows while a chip is selected and hides on deselect. */
+  onSelectionChange?: (sel: { key: string; pos: number } | null) => void;
 }
 
 const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProps>(({
-  value, onChange, placeholder, disabled, className, onStateChange, resolveToken, suggestionItems, onTokenClick,
+  value, onChange, placeholder, disabled, className, onStateChange, resolveToken, suggestionItems, onTokenClick, onSelectionChange,
 }, ref) => {
   const resolveRef = useRef(resolveToken);
   resolveRef.current = resolveToken;
@@ -75,7 +83,10 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
   itemsRef.current = suggestionItems;
   const onTokenClickRef = useRef(onTokenClick);
   onTokenClickRef.current = onTokenClick;
+  const onSelectionChangeRef = useRef(onSelectionChange);
+  onSelectionChangeRef.current = onSelectionChange;
   const lastTokenPosRef = useRef<number | null>(null);
+  const lastSelChipRef = useRef<{ key: string; pos: number } | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const disabledRef = useRef(disabled);
@@ -99,6 +110,25 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
     if (prev && prev.bold === next.bold && prev.italic === next.italic && prev.underline === next.underline && prev.strike === next.strike && prev.link === next.link && prev.color === next.color) return;
     lastStateRef.current = next;
     onStateChangeRef.current?.(next);
+  };
+
+  /** Reports the token-chip selection state, remapping the replaceToken
+   *  target through every transaction so repeated patches stay on the chip
+   *  even as its key length changes. */
+  const reportSelection = (ed: NonNullable<ReturnType<typeof useEditor>>) => {
+    const sel = ed.state.selection;
+    let next: { key: string; pos: number } | null = null;
+    if (sel instanceof NodeSelection && sel.node.type.name === 'token') {
+      next = { key: (sel.node.attrs.field as string) ?? '', pos: sel.from };
+      lastTokenPosRef.current = sel.from;
+    } else if (lastTokenPosRef.current != null) {
+      lastTokenPosRef.current = ed.state.tr.mapping.map(lastTokenPosRef.current);
+    }
+    const prev = lastSelChipRef.current;
+    const same = prev && next && prev.key === next.key && prev.pos === next.pos;
+    if ((!prev && !next) || same) return;
+    lastSelChipRef.current = next;
+    onSelectionChangeRef.current?.(next);
   };
 
   // Storage form of the editor state: stripped tokens → sanitized; an
@@ -158,7 +188,10 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
     // Every transaction — including storedMarks-only toggles with a collapsed
     // caret, which never reach `update` (doc unchanged) yet DO change what
     // the next keystroke applies. reportState skips unchanged values.
-    onTransaction: ({ editor: ed }) => reportState(ed),
+    onTransaction: ({ editor: ed }) => {
+      reportState(ed);
+      reportSelection(ed);
+    },
   });
 
   // External value sync — only while the editor isn't focused (typing never
@@ -184,6 +217,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
     if (!editor) return;
     lastStateRef.current = null;
     reportState(editor);
+    reportSelection(editor);
   }, [editor]);
 
   useImperativeHandle(ref, () => ({
@@ -210,13 +244,15 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
       if (!editor || disabledRef.current) return;
       const pos = lastTokenPosRef.current;
       if (pos == null) return;
-      lastTokenPosRef.current = null;
-      editor.chain().focus().command(({ tr }) => {
+      // No focus() — panel-driven edits must keep the consumer's input
+      // focused. The target position stays valid across calls (reportSelection
+      // remaps it through every transaction).
+      editor.commands.command(({ tr }) => {
         const node = tr.doc.nodeAt(pos);
         if (!node || node.type.name !== 'token') return false;
         tr.setNodeMarkup(pos, undefined, { field: newKey });
         return true;
-      }).run();
+      });
     },
   }), [editor]);
 
