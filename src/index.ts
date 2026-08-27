@@ -10,6 +10,8 @@ export { useSmartPosition, useFixedPosition } from './useSmartPosition';
 export { useTouchMode } from './useTouchMode';
 export { default as Button } from './Button';
 export type { ButtonProps } from './Button';
+export { default as DatePicker } from './DatePicker';
+export type { DatePickerProps } from './DatePicker';
 export { default as Checkbox } from './Checkbox';
 export type { CheckboxProps } from './Checkbox';
 export { default as Checklist } from './Checklist';
