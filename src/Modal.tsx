@@ -169,6 +169,7 @@ export default function Modal({
   morph = true,
 }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const [contentReady, setContentReady] = useState(false);
   /* Radix mounts the Portal content in a LATER commit than the Modal's own
      layout effects (ref is null + content absent when [open] effects run, and
@@ -315,6 +316,10 @@ export default function Modal({
       el.style.transition = 'none';
       el.style.height = `${from}px`;
       if (centerLock) el.style.top = `${topPin}px`;
+      /* The body is overflow-y-auto — while the box is pinned smaller than
+         the content, a scrollbar would appear and take layout width (shift).
+         Hide it for the duration of the animation. */
+      if (bodyRef.current) bodyRef.current.style.overflow = 'hidden';
       void el.getBoundingClientRect(); // commit the pin before paint
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -326,6 +331,7 @@ export default function Modal({
             if (el.style.height !== `${h}px`) return;
             el.style.transition = '';
             el.style.height = '';
+            if (bodyRef.current) bodyRef.current.style.overflow = '';
             /* Commit the new centered top through React (dragPos owns left/top
                in the style prop) — clearing the inline top would leave the
                stale pre-growth top, and React only rewrites on prop change. */
@@ -435,7 +441,7 @@ export default function Modal({
             </div>
           </div>
 
-          <div className="overflow-y-auto flex-1 bg-zinc-900 text-zinc-100">
+          <div ref={bodyRef} className="overflow-y-auto flex-1 bg-zinc-900 text-zinc-100">
             {children}
           </div>
 
