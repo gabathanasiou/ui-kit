@@ -194,6 +194,7 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
     if (!ready || !visibleRef.current || !overlayMorphEnabled(morphRef.current)) return;
     const el = elRef.current;
     if (!el) return;
+    if (typeof console !== 'undefined' && (window as any).__MORPH_DBG) console.log('[morph] open effect fire', { ready, visible: opts.visible, token: token.current });
     playOverlayOpen(token, el, anchorRef.current);
   }, [ready, opts.visible]);
 
@@ -212,6 +213,7 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
     if (!opts.cloneOnUnmount) return;
     return () => {
       const el = elRef.current;
+      if (typeof console !== 'undefined' && (window as any).__MORPH_DBG) console.log('[morph] unmount cleanup', { el: !!el, visible: visibleRef.current, vis: el?.style.visibility, enabled: overlayMorphEnabled(morphRef.current) });
       if (!el || !visibleRef.current) return;
       if (el.style.visibility === 'hidden') return; // never painted visible
       if (!overlayMorphEnabled(morphRef.current)) return;
