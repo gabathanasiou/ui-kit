@@ -538,6 +538,22 @@
   background: var(--ui-overlay-bg);
 }
 
+/* Modal (Modal.tsx) stacking fade: dialogs portal as siblings into the
+   window body, so DOM order = stack order. Any open modal with an open modal
+   AFTER it fades to invisible — only the top modal stays visible.
+   pointer-events: none is required: the faded parent still outranks the
+   child's overlay and would swallow clicks meant for it (they now hit the
+   overlay, closing the child). 180ms lands the fade with the 220ms morph.
+   The ui-kit confirm/alert (.ui-dialog) intentionally does NOT dim the modal
+   beneath it (no data-modal-stack). */
+[data-modal-stack] {
+  transition: opacity 180ms ease;
+}
+[data-modal-stack][data-state="open"]:has(~ [data-modal-stack][data-state="open"]) {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .ui-dialog {
   touch-action: manipulation;
   background: var(--ui-panel-bg);
