@@ -94,7 +94,11 @@ function zoomIn(token: { current: number }, el: HTMLElement, onDone: () => void)
 }
 
 /** Standalone-close zoom: shrink the content box to ZOOM_FROM (center-anchored,
- *  so the offset target keeps the center fixed) while fading out. */
+ *  so the offset target keeps the center fixed) while fading out. The closing
+ *  styles are NEVER cleared while the content is still mounted: clearing
+ *  `opacity` there paints one last full-opacity frame if the caller's unmount
+ *  render is deferred (the classic close-flash). The box is pinned invisible,
+ *  onClose unmounts it, and the styles are only restored once it is detached. */
 function zoomOut(token: { current: number }, el: HTMLElement, onDone: () => void) {
   const my = ++token.current;
   const r = el.getBoundingClientRect();
@@ -106,11 +110,16 @@ function zoomOut(token: { current: number }, el: HTMLElement, onDone: () => void
   el.style.opacity = '0';
   window.setTimeout(() => {
     if (token.current !== my) return;
-    el.style.transition = '';
-    el.style.transform = '';
-    el.style.transformOrigin = '';
-    el.style.opacity = '';
+    el.style.visibility = 'hidden';
     onDone();
+    requestAnimationFrame(() => {
+      if (token.current !== my || el.isConnected) return;
+      el.style.transition = '';
+      el.style.transform = '';
+      el.style.transformOrigin = '';
+      el.style.opacity = '';
+      el.style.visibility = '';
+    });
   }, MORPH_MS + 60);
 }
 

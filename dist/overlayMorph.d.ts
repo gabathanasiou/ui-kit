@@ -29,13 +29,20 @@ type Token = {
 export declare function playOverlayOpen(token: Token, el: HTMLElement, getAnchor: (() => OverlayRect | null) | null, onDone?: () => void): void;
 /** Close morph on the live node: shrink back to the anchor + fade (the
  *  modal's zoom-out). The panel goes pointer-transparent for the duration so
- *  the still-mounted content can't intercept clicks. */
+ *  the still-mounted content can't intercept clicks. The closing styles are
+ *  NEVER cleared while the node is still mounted: clearing `opacity` there
+ *  paints one last full-opacity frame if the consumer's unmount render is
+ *  deferred (the classic close-flash). Instead the box is pinned invisible
+ *  (`visibility: hidden`), the consumer unmounts it, and the styles are only
+ *  restored once the node is actually detached. */
 export declare function playOverlayClose(token: Token, el: HTMLElement, getAnchor: (() => OverlayRect | null) | null, onDone?: () => void): void;
 /** Unmount-driven close (the modal's clone pattern): the parent removes the
  *  panel to close it, so pin a clone exactly where the panel was (panels may
  *  be position:absolute in a cell — the clone is hard-pinned fixed at the
- *  live rect, body-level) and zoom the clone out. */
-export declare function cloneOverlayClose(el: HTMLElement, getAnchor: (() => OverlayRect | null) | null): void;
+ *  live rect, body-level) and zoom the clone out. `fallbackRect` covers the
+ *  case where the live node is already detached when the ref fires (its own
+ *  rect reads all zeros) — the hook caches the last known rect. */
+export declare function cloneOverlayClose(el: HTMLElement, getAnchor: (() => OverlayRect | null) | null, fallbackRect?: OverlayRect | null): void;
 /** The overlay-morph controller. Returns a callback ref for the panel/content
  *  element (compose it with your own ref — e.g. Radix content refs, the app
  *  panel's positioning ref). The OPEN morph fires when the element mounts

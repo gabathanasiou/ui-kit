@@ -96,10 +96,15 @@ export function playOverlayOpen(token: Token, el: HTMLElement, getAnchor: (() =>
 
 /** Close morph on the live node: shrink back to the anchor + fade (the
  *  modal's zoom-out). The panel goes pointer-transparent for the duration so
- *  the still-mounted content can't intercept clicks. */
+ *  the still-mounted content can't intercept clicks. The closing styles are
+ *  NEVER cleared while the node is still mounted: clearing `opacity` there
+ *  paints one last full-opacity frame if the consumer's unmount render is
+ *  deferred (the classic close-flash). Instead the box is pinned invisible
+ *  (`visibility: hidden`), the consumer unmounts it, and the styles are only
+ *  restored once the node is actually detached. */
 export function playOverlayClose(token: Token, el: HTMLElement, getAnchor: (() => OverlayRect | null) | null, onDone?: () => void) {
   const my = ++token.current;
-  const prev = { transition: el.style.transition, transform: el.style.transform, transformOrigin: el.style.transformOrigin, opacity: el.style.opacity, pointerEvents: el.style.pointerEvents };
+  const prev = { transition: el.style.transition, transform: el.style.transform, transformOrigin: el.style.transformOrigin, opacity: el.style.opacity, pointerEvents: el.style.pointerEvents, visibility: el.style.visibility };
   const o = anchorOf(el, getAnchor);
   el.style.transition = `transform ${MORPH_MS}ms ${MORPH_EASE}, opacity ${MORPH_OPACITY_MS}ms ease`;
   el.style.transformOrigin = `${o.x * 100}% ${o.y * 100}%`;
@@ -108,22 +113,30 @@ export function playOverlayClose(token: Token, el: HTMLElement, getAnchor: (() =
   el.style.pointerEvents = 'none';
   window.setTimeout(() => {
     if (token.current !== my) return;
-    el.style.transition = prev.transition;
-    el.style.transform = prev.transform;
-    el.style.transformOrigin = prev.transformOrigin;
-    el.style.opacity = prev.opacity;
-    el.style.pointerEvents = prev.pointerEvents;
+    el.style.visibility = 'hidden';
     onDone?.();
+    requestAnimationFrame(() => {
+      if (token.current !== my || el.isConnected) return;
+      el.style.transition = prev.transition;
+      el.style.transform = prev.transform;
+      el.style.transformOrigin = prev.transformOrigin;
+      el.style.opacity = prev.opacity;
+      el.style.pointerEvents = prev.pointerEvents;
+      el.style.visibility = prev.visibility;
+    });
   }, MORPH_MS + 60);
 }
 
 /** Unmount-driven close (the modal's clone pattern): the parent removes the
  *  panel to close it, so pin a clone exactly where the panel was (panels may
  *  be position:absolute in a cell — the clone is hard-pinned fixed at the
- *  live rect, body-level) and zoom the clone out. */
-export function cloneOverlayClose(el: HTMLElement, getAnchor: (() => OverlayRect | null) | null) {
+ *  live rect, body-level) and zoom the clone out. `fallbackRect` covers the
+ *  case where the live node is already detached when the ref fires (its own
+ *  rect reads all zeros) — the hook caches the last known rect. */
+export function cloneOverlayClose(el: HTMLElement, getAnchor: (() => OverlayRect | null) | null, fallbackRect?: OverlayRect | null) {
   const clone = el.cloneNode(true) as HTMLElement;
-  const r = el.getBoundingClientRect();
+  const live = el.getBoundingClientRect();
+  const r = (live.width > 0 || live.height > 0) ? live : (fallbackRect ?? live);
   clone.setAttribute('data-morph-clone', '');
   clone.setAttribute('aria-hidden', 'true');
   clone.style.pointerEvents = 'none';
@@ -172,6 +185,11 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
 }): (node: T | null) => void {
   const elRef = useRef<T | null>(null);
   const [ready, setReady] = useState(false);
+  /* Last known rect of the element (cached while attached). The ref callback
+     fires with null when the panel leaves the DOM; if it is already detached
+     by then its own rect reads all zeros — the clone pins this cached rect
+     instead. */
+  const lastRectRef = useRef<OverlayRect | null>(null);
   /* The ref callback fires with null whenever the panel element leaves the
      DOM — both when the whole component unmounts AND when a conditional
      panel is removed while its host stays mounted (SelectDropdown closes by
@@ -182,6 +200,10 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
     if (opts.ref) opts.ref.current = node;
     if (node) {
       elRef.current = node;
+      const r = node.getBoundingClientRect();
+      if (r.width > 0 || r.height > 0) {
+        lastRectRef.current = { left: r.left, top: r.top, width: r.width, height: r.height };
+      }
       setReady(true);
       return;
     }
@@ -191,7 +213,7 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
     if (!el || !opts.cloneOnUnmount || !visibleRef.current) return;
     if (el.style.visibility === 'hidden') return; // never painted visible
     if (!overlayMorphEnabled(morphRef.current)) return;
-    cloneOverlayClose(el, anchorRef.current);
+    cloneOverlayClose(el, anchorRef.current, lastRectRef.current);
   }, []);
   const visibleRef = useRef(opts.visible);
   visibleRef.current = opts.visible;
