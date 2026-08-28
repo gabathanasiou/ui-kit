@@ -53,13 +53,20 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
 
   useEffect(() => {
     if (!open || !currentWindow) return;
-    const handler = (e: PointerEvent) => {
+    const onPointer = (e: PointerEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         onClose();
       }
     };
-    currentWindow.addEventListener('pointerdown', handler, true);
-    return () => currentWindow.removeEventListener('pointerdown', handler, true);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    currentWindow.addEventListener('pointerdown', onPointer, true);
+    currentWindow.addEventListener('keydown', onKey, true);
+    return () => {
+      currentWindow.removeEventListener('pointerdown', onPointer, true);
+      currentWindow.removeEventListener('keydown', onKey, true);
+    };
   }, [open, onClose, currentWindow]);
 
   useLayoutEffect(() => {
