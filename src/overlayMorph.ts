@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 /* Overlay morph — the motion language shared by every floating surface
    (menus, submenus, context menus, entity-dropdown panels). This is the

@@ -197,7 +197,7 @@ function Ve(t) {
       var k;
       return (k = l.current) == null ? void 0 : k.call(l);
     });
-  }, [t.visible]), useEffect(() => {
+  }, [t.visible]), X(() => {
     if (!n || !c.current) return;
     const p = (x) => {
       const m = e.current;
