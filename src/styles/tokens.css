@@ -281,6 +281,15 @@
   color: var(--ui-item-hover-text);
 }
 
+/* Submenu trigger mid close-morph: Radix keeps the trigger's data-state
+   "open" while the sub content is persisted for the reverse morph — unlight
+   it so the trigger doesn't read as "selected" alongside the item being
+   clicked while both fade out. */
+.ui-item[data-state="open"].ui-sub-closing {
+  background: transparent;
+  color: var(--ui-text);
+}
+
 /* ── Icons & icon buttons ──────────────────────────────────────────────── */
 
 .ui-icon {

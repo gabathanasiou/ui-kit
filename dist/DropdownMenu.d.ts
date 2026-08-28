@@ -41,11 +41,15 @@ export interface DropdownMenuProps {
     width?: string;
     theme?: DropdownTheme;
     children: React.ReactNode;
+    /** Extra classes on the popup content (e.g. lifting the z-index above a
+     *  stacked app modal — the kit menu default z-[200] sits under a modal's
+     *  z-[10000]). */
+    contentClassName?: string;
     /** Trigger-anchored scale+fade morph (the modal FLIP language; default
      *  true). prefers-reduced-motion and morph={false} skip it entirely. */
     morph?: boolean;
 }
-export default function DropdownMenu({ open, onClose, onOpenChange, trigger, align, width, theme, children, morph, }: DropdownMenuProps): React.JSX.Element;
+export default function DropdownMenu({ open, onClose, onOpenChange, trigger, align, width, theme, children, morph, contentClassName, }: DropdownMenuProps): React.JSX.Element;
 export interface ItemManagerDropdownProps {
     open: boolean;
     onClose: (open: boolean) => void;
@@ -80,5 +84,7 @@ export interface ItemManagerDropdownProps {
     }) => React.ReactNode;
     /** Passed through to DropdownMenu (trigger-anchored morph, default true). */
     morph?: boolean;
+    /** Passed through to DropdownMenu (popup content classes, e.g. z-index). */
+    contentClassName?: string;
 }
-export declare function ItemManagerDropdown({ open, onClose, items, activeId, onSelect, onRename, onDuplicate, onDelete, onCreate, onImport, onExport, onReset, onTrash, closeOnSelect, readOnly, theme, align, label, header, itemLabel, trigger, minItems, itemRender, morph, }: ItemManagerDropdownProps): React.JSX.Element;
+export declare function ItemManagerDropdown({ open, onClose, items, activeId, onSelect, onRename, onDuplicate, onDelete, onCreate, onImport, onExport, onReset, onTrash, closeOnSelect, readOnly, theme, align, label, header, itemLabel, trigger, minItems, itemRender, morph, contentClassName, }: ItemManagerDropdownProps): React.JSX.Element;

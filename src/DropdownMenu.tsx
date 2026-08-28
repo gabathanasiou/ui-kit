@@ -85,6 +85,10 @@ export interface DropdownMenuProps {
   width?: string;
   theme?: DropdownTheme;
   children: React.ReactNode;
+  /** Extra classes on the popup content (e.g. lifting the z-index above a
+   *  stacked app modal — the kit menu default z-[200] sits under a modal's
+   *  z-[10000]). */
+  contentClassName?: string;
   /** Trigger-anchored scale+fade morph (the modal FLIP language; default
    *  true). prefers-reduced-motion and morph={false} skip it entirely. */
   morph?: boolean;
@@ -100,6 +104,7 @@ export default function DropdownMenu({
   theme = 'dark',
   children,
   morph = true,
+  contentClassName,
 }: DropdownMenuProps) {
   const [activeSub, setActiveSub] = useState<string | null>(null);
   const portalTarget = usePortalTarget();
@@ -163,7 +168,7 @@ export default function DropdownMenu({
             <RadixDropdownMenu.Content
               ref={setContentRef}
               data-theme={theme}
-              className={`${contentClasses} ${width || ''}`}
+              className={`${contentClasses} ${width || ''} ${contentClassName || ''}`}
               align={align === 'left' ? 'start' : 'end'}
               sideOffset={8}
               collisionPadding={8}
@@ -208,6 +213,8 @@ export interface ItemManagerDropdownProps {
   itemRender?: (item: { id: string; name: string }) => React.ReactNode;
   /** Passed through to DropdownMenu (trigger-anchored morph, default true). */
   morph?: boolean;
+  /** Passed through to DropdownMenu (popup content classes, e.g. z-index). */
+  contentClassName?: string;
 }
 
 export function ItemManagerDropdown({
@@ -235,6 +242,7 @@ export function ItemManagerDropdown({
   minItems = 1,
   itemRender,
   morph = true,
+  contentClassName,
 }: ItemManagerDropdownProps) {
   const d = getDropdownClasses(theme);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -292,7 +300,7 @@ export function ItemManagerDropdown({
   const createLabel = itemLabel || header.replace(/S$/, '').replace(/s$/, '');
 
   return (
-    <DropdownMenu open={open} onOpenChange={(o) => { if (o) { setEditingId(null); setEditValue(''); } else { if (editingId && editValue.trim()) { onRename(editingId, editValue.trim()); } setEditingId(null); setEditValue(''); } if (!o || !readOnly) onClose(o); }} width="w-80" theme={theme} align={align} trigger={trigger} morph={morph}>
+    <DropdownMenu open={open} onOpenChange={(o) => { if (o) { setEditingId(null); setEditValue(''); } else { if (editingId && editValue.trim()) { onRename(editingId, editValue.trim()); } setEditingId(null); setEditValue(''); } if (!o || !readOnly) onClose(o); }} width="w-80" theme={theme} align={align} trigger={trigger} morph={morph} contentClassName={contentClassName}>
       <div className={`shrink-0 ${d.headerText}`}>
         {header}
       </div>

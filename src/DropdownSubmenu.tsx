@@ -28,6 +28,13 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
      mounted while the reverse morph plays, then `persisted` drops and it
      unmounts. */
   const [persisted, setPersisted] = useState(subOpen);
+  /* The close morph keeps the sub content mounted (persisted) so Radix keeps
+     `open` true — which also keeps the trigger's `data-state="open"` highlight
+     lit for the whole reverse morph. That left the trigger reading as
+     "selected" together with the item being clicked (or the next trigger)
+     while both menus faded out. Unlight it the instant the sub starts
+     closing: the highlight follows `subOpen`, not the mount state. */
+  const closing = !subOpen && persisted;
 
   useEffect(() => {
     if (subOpen) setPersisted(true);
@@ -49,7 +56,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
     onClosed: () => setPersisted(false),
   });
 
-  const triggerClasses = `w-full text-left ${SUB_ITEM} rounded flex items-center gap-2 outline-none cursor-pointer select-none justify-between ui-item`;
+  const triggerClasses = `w-full text-left ${SUB_ITEM} rounded flex items-center gap-2 outline-none cursor-pointer select-none justify-between ui-item${closing ? ' ui-sub-closing' : ''}`;
 
   const contentClasses = `ui-menu rounded-lg shadow-xl z-[210] p-1 flex flex-col select-none max-h-[min(75vh,30rem)] overflow-y-auto min-w-0 scrollbar-custom ${width || 'w-48'}`;
 
