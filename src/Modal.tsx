@@ -170,6 +170,7 @@ export default function Modal({
 }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
   const [contentReady, setContentReady] = useState(false);
   /* Radix mounts the Portal content in a LATER commit than the Modal's own
      layout effects (ref is null + content absent when [open] effects run, and
@@ -431,6 +432,27 @@ export default function Modal({
     maxHeight: `calc(100vh - ${MAX_EDGE * 2}px)`,
   };
 
+  /* Enter confirms: when nothing interactive is focused (no input/textarea/
+     button/dropdown), Enter clicks the footer's primary action — the LAST
+     footer button by convention (Cancel first, action last; danger buttons
+     sit first with mr-auto). An explicit `data-modal-confirm` marker on a
+     footer button wins over the heuristic. A disabled last button is a
+     no-op (the form must be fixed first, never fall back to Cancel). */
+  const onKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== 'Enter' || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target as HTMLElement;
+    if (t.closest('input, textarea, select, button, a, [contenteditable], [role="button"], [role="menuitem"], [role="option"], [role="radio"], [role="checkbox"]')) return;
+    if (document.querySelector('[data-radix-menu-content][data-state="open"], [data-radix-popper-content-wrapper][data-state="open"]')) return;
+    const footer = footerRef.current;
+    if (!footer) return;
+    const marked = Array.from(footer.querySelectorAll<HTMLButtonElement>('button[data-modal-confirm]'));
+    const buttons = marked.length > 0 ? marked : Array.from(footer.querySelectorAll<HTMLButtonElement>('button'));
+    const confirm = buttons[buttons.length - 1];
+    if (!confirm || confirm.disabled) return;
+    e.preventDefault();
+    confirm.click();
+  }, []);
+
   return (
     <RadixDialog.Root open={open} onOpenChange={(o) => { if (!o) doClose(); }}>
       <RadixDialog.Portal container={portalTarget ?? undefined}>
@@ -445,6 +467,7 @@ export default function Modal({
         />
         <RadixDialog.Content
           ref={setContentRef}
+          onKeyDown={onKeyDown}
           data-modal-stack
           className={`fixed z-[10000] bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden flex flex-col focus:outline-none ${posClasses} ${sizeClasses}`}
           style={{ touchAction: 'manipulation', ...(Object.keys(combinedStyle).length > 0 ? combinedStyle : {}) }}
@@ -479,7 +502,7 @@ export default function Modal({
           </div>
 
           {footer && (
-            <div className="shrink-0">
+            <div ref={footerRef} className="shrink-0">
               {footer}
             </div>
           )}
