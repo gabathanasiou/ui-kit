@@ -149,7 +149,7 @@ function un(e, t, n, o) {
 }
 function dn(e, t) {
   const n = e.cloneNode(!0), o = e.getBoundingClientRect();
-  n.setAttribute("aria-hidden", "true"), n.style.pointerEvents = "none", n.style.position = "fixed", n.style.left = `${o.left}px`, n.style.top = `${o.top}px`, n.style.margin = "0", n.style.visibility = "visible", n.style.transition = "none";
+  n.setAttribute("data-morph-clone", ""), n.setAttribute("aria-hidden", "true"), n.style.pointerEvents = "none", n.style.position = "fixed", n.style.left = `${o.left}px`, n.style.top = `${o.top}px`, n.style.margin = "0", n.style.visibility = "visible", n.style.transition = "none";
   const i = qe(e, t);
   n.style.transformOrigin = `${i.x * 100}% ${i.y * 100}%`, e.ownerDocument.body.appendChild(n), n.getBoundingClientRect(), requestAnimationFrame(() => {
     requestAnimationFrame(() => {

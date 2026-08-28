@@ -124,6 +124,7 @@ export function playOverlayClose(token: Token, el: HTMLElement, getAnchor: (() =
 export function cloneOverlayClose(el: HTMLElement, getAnchor: (() => OverlayRect | null) | null) {
   const clone = el.cloneNode(true) as HTMLElement;
   const r = el.getBoundingClientRect();
+  clone.setAttribute('data-morph-clone', '');
   clone.setAttribute('aria-hidden', 'true');
   clone.style.pointerEvents = 'none';
   clone.style.position = 'fixed';
