@@ -172,10 +172,26 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
 }): (node: T | null) => void {
   const elRef = useRef<T | null>(null);
   const [ready, setReady] = useState(false);
+  /* The ref callback fires with null whenever the panel element leaves the
+     DOM — both when the whole component unmounts AND when a conditional
+     panel is removed while its host stays mounted (SelectDropdown closes by
+     dropping `{open && <panel/>}`). That detach is the unmount-driven close
+     signal — play the clone morph there, not in a component-unmount
+     cleanup (which only fires for the first case). */
   const setContentRef = useCallback((node: T | null) => {
     if (opts.ref) opts.ref.current = node;
-    elRef.current = node;
-    setReady(node !== null);
+    if (node) {
+      elRef.current = node;
+      setReady(true);
+      return;
+    }
+    const el = elRef.current;
+    elRef.current = null;
+    setReady(false);
+    if (!el || !opts.cloneOnUnmount || !visibleRef.current) return;
+    if (el.style.visibility === 'hidden') return; // never painted visible
+    if (!overlayMorphEnabled(morphRef.current)) return;
+    cloneOverlayClose(el, anchorRef.current);
   }, []);
   const visibleRef = useRef(opts.visible);
   visibleRef.current = opts.visible;
@@ -194,7 +210,6 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
     if (!ready || !visibleRef.current || !overlayMorphEnabled(morphRef.current)) return;
     const el = elRef.current;
     if (!el) return;
-    if (typeof console !== 'undefined' && (window as any).__MORPH_DBG) console.log('[morph] open effect fire', { ready, visible: opts.visible, token: token.current });
     playOverlayOpen(token, el, anchorRef.current);
   }, [ready, opts.visible]);
 
@@ -208,18 +223,9 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
     playOverlayClose(token, el, anchorRef.current, () => onClosedRef.current?.());
   }, [opts.visible]);
 
-  // Unmount-driven close (the parent removes this component to close).
-  useLayoutEffect(() => {
-    if (!opts.cloneOnUnmount) return;
-    return () => {
-      const el = elRef.current;
-      if (typeof console !== 'undefined' && (window as any).__MORPH_DBG) console.log('[morph] unmount cleanup', { el: !!el, visible: visibleRef.current, vis: el?.style.visibility, enabled: overlayMorphEnabled(morphRef.current) });
-      if (!el || !visibleRef.current) return;
-      if (el.style.visibility === 'hidden') return; // never painted visible
-      if (!overlayMorphEnabled(morphRef.current)) return;
-      cloneOverlayClose(el, anchorRef.current);
-    };
-  }, []);
+  // Unmount-driven close is handled in the ref callback above: the panel
+  // element leaving the DOM (conditional panel or whole-component unmount)
+  // fires setContentRef(null) — the clone morph plays there.
 
   return setContentRef;
 }
