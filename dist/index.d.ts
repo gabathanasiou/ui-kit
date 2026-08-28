@@ -11,6 +11,8 @@ export { useSmartPosition, useFixedPosition } from './useSmartPosition';
 export { useTouchMode } from './useTouchMode';
 export { default as Button } from './Button';
 export type { ButtonProps } from './Button';
+export { default as ModalFooterButton } from './ModalFooterButton';
+export type { ModalFooterButtonProps } from './ModalFooterButton';
 export { default as DatePicker } from './DatePicker';
 export type { DatePickerProps } from './DatePicker';
 export { default as Checkbox } from './Checkbox';
