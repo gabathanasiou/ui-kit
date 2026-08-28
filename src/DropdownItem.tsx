@@ -60,7 +60,7 @@ export default function DropdownItem({
            while any item is highlighted). Never steal focus from an inner
            editor (item-manager rename inputs live inside items). */
         const host = itemRef.current;
-        if (host && !host.contains(document.activeElement)) host.focus();
+        if (host && !host.contains(document.activeElement)) host.focus({ preventScroll: true });
       }}
       onTouchStart={() => {}}
       disabled={disabled}

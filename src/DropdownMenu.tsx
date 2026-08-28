@@ -149,9 +149,26 @@ export default function DropdownMenu({
     else if (!o) onClose?.();
   }, [onOpenChange, onClose]);
 
-  const triggerNode = React.isValidElement(trigger)
-    ? React.cloneElement(trigger as React.ReactElement<{ ref?: React.Ref<HTMLElement> }>, {
+  /* Reopen-during-close: the trigger click that lands while the close morph
+     is still playing gets swallowed by the guard above (Radix toggles the
+     still-mounted root closed and the toggle is ignored) — the click would
+     be dead and the menu stuck shut for ~300ms. The trigger's own click
+     reverses it: reopening forces `open` back true and the open-morph effect
+     re-runs, canceling the in-flight close. */
+  const persistedRef = useRef(persisted);
+  persistedRef.current = persisted;
+  const triggerOnClick = useCallback(() => {
+    if (!openRef.current && persistedRef.current) onOpenChange?.(true);
+  }, [onOpenChange]);
+
+  const triggerEl = React.isValidElement(trigger) ? (trigger as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>) : null;
+  const triggerNode = triggerEl
+    ? React.cloneElement(triggerEl as React.ReactElement<{ ref?: React.Ref<HTMLElement>; onClick?: (e: React.MouseEvent) => void }>, {
         ref: (node: HTMLElement | null) => { triggerRef.current = node; },
+        onClick: (e: React.MouseEvent) => {
+          triggerEl.props.onClick?.(e);
+          triggerOnClick();
+        },
       })
     : trigger;
 
