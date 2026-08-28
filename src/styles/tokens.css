@@ -275,6 +275,14 @@
   color: var(--ui-item-hover-text);
 }
 
+/* Single-highlight rule: the CSS :hover fill must never coexist with the
+   roving-focus highlight (keyboard arrows / pointer-driven focus via
+   DropdownItem's pointerenter) — when ANY item is [data-highlighted], only
+   that row reads as selected. */
+.ui-menu:has(.ui-item[data-highlighted]) .ui-item:hover {
+  background: transparent;
+}
+
 /* Submenu trigger open state (set by Radix) */
 .ui-item[data-state="open"] {
   background: var(--ui-item-hover-bg);

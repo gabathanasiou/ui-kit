@@ -40,15 +40,27 @@ export default function DropdownItem({
   const theme = useDropdownTheme();
   const d = getDropdownClasses(theme);
   const skipClickRef = useRef(false);
+  const itemRef = useRef<HTMLDivElement>(null);
 
   const variantStyles = variant === 'danger' ? d.itemDanger : d.itemDefault;
 
   return (
     <RadixDropdownMenu.Item
+      ref={itemRef}
       className={`w-full text-left ${ITEM_CLASS} rounded flex items-center gap-2 outline-none cursor-pointer select-none ${variantStyles} ${disabled ? 'opacity-30 pointer-events-none' : ''} ${className}`}
       onSelect={(e) => {
         if (skipClickRef.current) { skipClickRef.current = false; return; }
         if (keepOpen) e.preventDefault(); onClick();
+      }}
+      onPointerEnter={() => {
+        /* Single-highlight rule: the highlight follows the LAST interaction.
+           Radix only moves its roving-focus highlight (data-highlighted) via
+           the keyboard — give the pointer the same lever by focusing the
+           hovered item (preventScroll is on; the CSS :hover fill is suppressed
+           while any item is highlighted). Never steal focus from an inner
+           editor (item-manager rename inputs live inside items). */
+        const host = itemRef.current;
+        if (host && !host.contains(document.activeElement)) host.focus();
       }}
       onTouchStart={() => {}}
       disabled={disabled}
