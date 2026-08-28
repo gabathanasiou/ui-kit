@@ -1,10 +1,11 @@
 "use client";
-import React, { useContext } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronRight } from 'lucide-react';
 import { useDropdownTheme, SubmenuContext } from './DropdownMenu';
 import { IS_COARSE } from './device';
 import { usePortalTarget } from './popout';
+import { useOverlayMorph } from './overlayMorph';
 
 const SUB_ITEM = IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
 
@@ -18,18 +19,44 @@ interface DropdownSubmenuProps {
 }
 
 export default function DropdownSubmenu({ id, label, icon, width, side = 'right', children }: DropdownSubmenuProps) {
-  const { activeSub, setActiveSub } = useContext(SubmenuContext);
+  const { activeSub, setActiveSub, morph } = useContext(SubmenuContext);
   const subOpen = activeSub === id;
   const theme = useDropdownTheme();
   const portalTarget = usePortalTarget();
+  const subTriggerRef = useRef<HTMLDivElement>(null);
+  /* Same close-morph contract as DropdownMenu: Radix keeps the sub content
+     mounted while the reverse morph plays, then `persisted` drops and it
+     unmounts. */
+  const [persisted, setPersisted] = useState(subOpen);
+
+  useEffect(() => {
+    if (subOpen) setPersisted(true);
+  }, [subOpen]);
+
+  // Origin at the entry edge: the submenu grows out of its trigger row
+  // (nearestOverlayOrigin turns the trigger rect into the left/right edge).
+  const anchor = useCallback(() => {
+    const el = subTriggerRef.current;
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { left: r.left, top: r.top, width: r.width, height: r.height };
+  }, []);
+
+  const setContentRef = useOverlayMorph({
+    visible: subOpen,
+    morph,
+    anchor,
+    onClosed: () => setPersisted(false),
+  });
 
   const triggerClasses = `w-full text-left ${SUB_ITEM} rounded flex items-center gap-2 outline-none cursor-pointer select-none justify-between ui-item`;
 
   const contentClasses = `ui-menu rounded-lg shadow-xl z-[210] p-1 flex flex-col select-none max-h-[min(75vh,30rem)] overflow-y-auto min-w-0 scrollbar-custom ${width || 'w-48'}`;
 
   return (
-      <RadixDropdownMenu.Sub open={subOpen} onOpenChange={(o) => setActiveSub(o ? id : null)}>
+      <RadixDropdownMenu.Sub open={subOpen || persisted} onOpenChange={(o) => setActiveSub(o ? id : null)}>
         <RadixDropdownMenu.SubTrigger
+          ref={subTriggerRef}
           className={triggerClasses}
           onTouchStart={() => {}}
           onPointerDown={(e) => {
@@ -50,6 +77,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
       </RadixDropdownMenu.SubTrigger>
       <RadixDropdownMenu.Portal container={portalTarget ?? undefined}>
         <RadixDropdownMenu.SubContent
+          ref={setContentRef}
           data-theme={theme}
           className={contentClasses}
           sideOffset={8}

@@ -4,6 +4,7 @@ import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Pencil, Copy, Trash2, Plus, Check, X, RotateCcw } from 'lucide-react';
 import { usePortalTarget } from './popout';
 import { IS_COARSE } from './device';
+import { useOverlayMorph } from './overlayMorph';
 
 export type DropdownTheme = 'light' | 'dark' | 'blue';
 
@@ -72,9 +73,10 @@ export function getDropdownClasses(theme?: DropdownTheme) {
 export const SubmenuContext = createContext<{
   activeSub: string | null;
   setActiveSub: (id: string | null) => void;
-}>({ activeSub: null, setActiveSub: () => {} });
+  morph: boolean;
+}>({ activeSub: null, setActiveSub: () => {}, morph: true });
 
-interface DropdownMenuProps {
+export interface DropdownMenuProps {
   open: boolean;
   onClose?: () => void;
   onOpenChange?: (open: boolean) => void;
@@ -83,6 +85,9 @@ interface DropdownMenuProps {
   width?: string;
   theme?: DropdownTheme;
   children: React.ReactNode;
+  /** Trigger-anchored scale+fade morph (the modal FLIP language; default
+   *  true). prefers-reduced-motion and morph={false} skip it entirely. */
+  morph?: boolean;
 }
 
 export default function DropdownMenu({
@@ -94,21 +99,69 @@ export default function DropdownMenu({
   width,
   theme = 'dark',
   children,
+  morph = true,
 }: DropdownMenuProps) {
   const [activeSub, setActiveSub] = useState<string | null>(null);
   const portalTarget = usePortalTarget();
+  const triggerRef = useRef<HTMLElement | null>(null);
+  const openRef = useRef(open);
+  openRef.current = open;
+  /* Radix unmounts the content the moment its `open` prop flips false — the
+     close morph needs the content to stay mounted while it plays, so Radix
+     keeps `open` until the morph finishes (the modal owns its dismissal the
+     same way), then `persisted` drops and the content unmounts. */
+  const [persisted, setPersisted] = useState(open);
 
-  const contentClasses = `ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none max-h-[min(75vh,30rem)] overflow-y-auto min-w-0 scrollbar-custom opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 transition-all duration-150 ease-out`;
+  useEffect(() => {
+    if (open) {
+      setPersisted(true);
+    } else {
+      // The parent is closing — collapse any open submenu so it morphs
+      // closed alongside this menu instead of staying open mid-morph.
+      setActiveSub(null);
+    }
+  }, [open]);
+
+  const anchor = useCallback(() => {
+    const el = triggerRef.current;
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { left: r.left, top: r.top, width: r.width, height: r.height };
+  }, []);
+
+  const setContentRef = useOverlayMorph({
+    visible: open,
+    morph,
+    anchor,
+    onClosed: () => setPersisted(false),
+  });
+
+  const handleOpenChange = useCallback((o: boolean) => {
+    // While the close morph plays (open already false, Radix still mounted)
+    // Radix keeps reporting outside-click/Escape — ignore them.
+    if (!o && !openRef.current) return;
+    if (onOpenChange) onOpenChange(o);
+    else if (!o) onClose?.();
+  }, [onOpenChange, onClose]);
+
+  const triggerNode = React.isValidElement(trigger)
+    ? React.cloneElement(trigger as React.ReactElement<{ ref?: React.Ref<HTMLElement> }>, {
+        ref: (node: HTMLElement | null) => { triggerRef.current = node; },
+      })
+    : trigger;
+
+  const contentClasses = `ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none max-h-[min(75vh,30rem)] overflow-y-auto min-w-0 scrollbar-custom`;
 
   return (
-    <RadixDropdownMenu.Root open={open} onOpenChange={(o) => { if (onOpenChange) onOpenChange(o); else if (!o) onClose?.(); }} modal={false}>
+    <RadixDropdownMenu.Root open={open || persisted} onOpenChange={handleOpenChange} modal={false}>
       <RadixDropdownMenu.Trigger asChild>
-        {trigger}
+        {triggerNode}
       </RadixDropdownMenu.Trigger>
       <RadixDropdownMenu.Portal container={portalTarget ?? undefined}>
         <DropdownThemeContext.Provider value={theme}>
-          <SubmenuContext.Provider value={{ activeSub, setActiveSub }}>
+          <SubmenuContext.Provider value={{ activeSub, setActiveSub, morph }}>
             <RadixDropdownMenu.Content
+              ref={setContentRef}
               data-theme={theme}
               className={`${contentClasses} ${width || ''}`}
               align={align === 'left' ? 'start' : 'end'}
@@ -127,7 +180,7 @@ export default function DropdownMenu({
 
 // ── Item Manager Dropdown ──
 
-interface ItemManagerDropdownProps {
+export interface ItemManagerDropdownProps {
   open: boolean;
   onClose: (open: boolean) => void;
   items: { id: string; name: string }[];
@@ -153,6 +206,8 @@ interface ItemManagerDropdownProps {
   /** Renders each item's label (e.g. styled previews) — falls back to the
    *  plain name when omitted. */
   itemRender?: (item: { id: string; name: string }) => React.ReactNode;
+  /** Passed through to DropdownMenu (trigger-anchored morph, default true). */
+  morph?: boolean;
 }
 
 export function ItemManagerDropdown({
@@ -179,6 +234,7 @@ export function ItemManagerDropdown({
   trigger,
   minItems = 1,
   itemRender,
+  morph = true,
 }: ItemManagerDropdownProps) {
   const d = getDropdownClasses(theme);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -236,7 +292,7 @@ export function ItemManagerDropdown({
   const createLabel = itemLabel || header.replace(/S$/, '').replace(/s$/, '');
 
   return (
-    <DropdownMenu open={open} onOpenChange={(o) => { if (o) { setEditingId(null); setEditValue(''); } else { if (editingId && editValue.trim()) { onRename(editingId, editValue.trim()); } setEditingId(null); setEditValue(''); } if (!o || !readOnly) onClose(o); }} width="w-80" theme={theme} align={align} trigger={trigger}>
+    <DropdownMenu open={open} onOpenChange={(o) => { if (o) { setEditingId(null); setEditValue(''); } else { if (editingId && editValue.trim()) { onRename(editingId, editValue.trim()); } setEditingId(null); setEditValue(''); } if (!o || !readOnly) onClose(o); }} width="w-80" theme={theme} align={align} trigger={trigger} morph={morph}>
       <div className={`shrink-0 ${d.headerText}`}>
         {header}
       </div>

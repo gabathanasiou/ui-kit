@@ -30,8 +30,9 @@ export declare function getDropdownClasses(theme?: DropdownTheme): {
 export declare const SubmenuContext: React.Context<{
     activeSub: string | null;
     setActiveSub: (id: string | null) => void;
+    morph: boolean;
 }>;
-interface DropdownMenuProps {
+export interface DropdownMenuProps {
     open: boolean;
     onClose?: () => void;
     onOpenChange?: (open: boolean) => void;
@@ -40,9 +41,12 @@ interface DropdownMenuProps {
     width?: string;
     theme?: DropdownTheme;
     children: React.ReactNode;
+    /** Trigger-anchored scale+fade morph (the modal FLIP language; default
+     *  true). prefers-reduced-motion and morph={false} skip it entirely. */
+    morph?: boolean;
 }
-export default function DropdownMenu({ open, onClose, onOpenChange, trigger, align, width, theme, children, }: DropdownMenuProps): React.JSX.Element;
-interface ItemManagerDropdownProps {
+export default function DropdownMenu({ open, onClose, onOpenChange, trigger, align, width, theme, children, morph, }: DropdownMenuProps): React.JSX.Element;
+export interface ItemManagerDropdownProps {
     open: boolean;
     onClose: (open: boolean) => void;
     items: {
@@ -74,6 +78,7 @@ interface ItemManagerDropdownProps {
         id: string;
         name: string;
     }) => React.ReactNode;
+    /** Passed through to DropdownMenu (trigger-anchored morph, default true). */
+    morph?: boolean;
 }
-export declare function ItemManagerDropdown({ open, onClose, items, activeId, onSelect, onRename, onDuplicate, onDelete, onCreate, onImport, onExport, onReset, onTrash, closeOnSelect, readOnly, theme, align, label, header, itemLabel, trigger, minItems, itemRender, }: ItemManagerDropdownProps): React.JSX.Element;
-export {};
+export declare function ItemManagerDropdown({ open, onClose, items, activeId, onSelect, onRename, onDuplicate, onDelete, onCreate, onImport, onExport, onReset, onTrash, closeOnSelect, readOnly, theme, align, label, header, itemLabel, trigger, minItems, itemRender, morph, }: ItemManagerDropdownProps): React.JSX.Element;

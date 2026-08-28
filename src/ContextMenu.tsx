@@ -1,27 +1,55 @@
 "use client";
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { IS_COARSE } from './device';
 import { useCurrentWindow } from './popout';
+import { useOverlayMorph } from './overlayMorph';
 
 const MARGIN = 8;
 const CTX_ITEM = IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
 const CTX_TEXT = IS_COARSE ? 'text-sm' : 'text-xs';
 
-/**
- * Context menu positioned at (x, y). Used for BOTH desktop right-click and
- * touch long-press — the long-press provider dispatches a synthetic
- * `contextmenu` event, so this component handles both inputs via one path.
- */
-export const ContextMenu: React.FC<{
+export interface ContextMenuProps {
   open: boolean;
   x: number;
   y: number;
   onClose: () => void;
   children: React.ReactNode;
   containerRef?: React.RefObject<HTMLElement>;
-}> = ({ open, x, y, onClose, children, containerRef }) => {
+  /** Morph from the press point (the modal FLIP language; default true).
+   *  prefers-reduced-motion and morph={false} skip it entirely. */
+  morph?: boolean;
+}
+
+/**
+ * Context menu positioned at (x, y). Used for BOTH desktop right-click and
+ * touch long-press — the long-press provider dispatches a synthetic
+ * `contextmenu` event, so this component handles both inputs via one path.
+ * Open morphs out of the press point; close morphs back (the menu stays
+ * mounted while the reverse morph plays, then unmounts).
+ */
+export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, children, containerRef, morph = true }) => {
   const menuRef = React.useRef<HTMLDivElement>(null);
   const currentWindow = useCurrentWindow();
+  /* Keep the menu mounted through the close morph, then unmount it. */
+  const [persisted, setPersisted] = useState(open);
+
+  useEffect(() => {
+    if (open) setPersisted(true);
+  }, [open]);
+
+  const anchor = useCallback(() => ({ left: x, top: y, width: 0, height: 0 }), [x, y]);
+
+  const setContentRef = useOverlayMorph({
+    visible: open,
+    morph,
+    anchor,
+    onClosed: () => setPersisted(false),
+  });
+
+  const setRef = useCallback((node: HTMLDivElement | null) => {
+    menuRef.current = node;
+    setContentRef(node);
+  }, [setContentRef]);
 
   useEffect(() => {
     if (!open || !currentWindow) return;
@@ -50,11 +78,11 @@ export const ContextMenu: React.FC<{
     menuRef.current.style.left = `${left}px`;
   }, [open, x, y, containerRef]);
 
-  if (!open) return null;
+  if (!open && !persisted) return null;
 
   return (
     <div
-      ref={menuRef}
+      ref={setRef}
       data-theme="light"
       className={`fixed ui-menu rounded-lg shadow-xl p-1 z-[9999] ${CTX_TEXT} min-w-[180px] max-h-[85vh] overflow-y-auto scrollbar-custom`}
       style={{ top: y, left: x, touchAction: 'manipulation' }}

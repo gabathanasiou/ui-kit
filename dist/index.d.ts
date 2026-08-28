@@ -1,10 +1,13 @@
 export { default as DropdownMenu, ItemManagerDropdown, DropdownThemeContext, useDropdownTheme, getDropdownClasses, SubmenuContext } from './DropdownMenu';
-export type { DropdownTheme } from './DropdownMenu';
+export type { DropdownTheme, DropdownMenuProps, ItemManagerDropdownProps } from './DropdownMenu';
 export { default as DropdownItem } from './DropdownItem';
 export { default as DropdownSubmenu } from './DropdownSubmenu';
 export { default as ContextMenu, ContextMenuItem, ContextMenuDivider } from './ContextMenu';
+export type { ContextMenuProps } from './ContextMenu';
 export { DialogProvider, useDialog } from './Dialog';
 export { default as Modal, ModalFooter } from './Modal';
+export { useOverlayMorph, overlayMorphEnabled, nearestOverlayOrigin, playOverlayOpen, playOverlayClose, cloneOverlayClose, MORPH_MS, MORPH_EASE, MORPH_OPACITY_MS, ZOOM_FROM } from './overlayMorph';
+export type { OverlayRect } from './overlayMorph';
 export type { ModalProps } from './Modal';
 export { LongPressMenuProvider, useLongPressOptOut, isInteractiveElement } from './useLongPressMenu';
 export { useSmartPosition, useFixedPosition } from './useSmartPosition';
