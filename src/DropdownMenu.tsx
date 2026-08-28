@@ -90,7 +90,7 @@ export default function DropdownMenu({
   onClose,
   onOpenChange,
   trigger,
-  align = 'right',
+  align = 'left',
   width,
   theme = 'dark',
   children,
@@ -144,6 +144,7 @@ interface ItemManagerDropdownProps {
   closeOnSelect?: boolean;
   readOnly?: boolean;
   theme?: DropdownTheme;
+  align?: 'left' | 'right';
   label: string;
   header: string;
   itemLabel?: string;
@@ -171,6 +172,7 @@ export function ItemManagerDropdown({
   closeOnSelect,
   readOnly = false,
   theme,
+  align,
   label,
   header,
   itemLabel,
@@ -234,7 +236,7 @@ export function ItemManagerDropdown({
   const createLabel = itemLabel || header.replace(/S$/, '').replace(/s$/, '');
 
   return (
-    <DropdownMenu open={open} onOpenChange={(o) => { if (o) { setEditingId(null); setEditValue(''); } else { if (editingId && editValue.trim()) { onRename(editingId, editValue.trim()); } setEditingId(null); setEditValue(''); } if (!o || !readOnly) onClose(o); }} width="w-80" theme={theme} trigger={trigger}>
+    <DropdownMenu open={open} onOpenChange={(o) => { if (o) { setEditingId(null); setEditValue(''); } else { if (editingId && editValue.trim()) { onRename(editingId, editValue.trim()); } setEditingId(null); setEditValue(''); } if (!o || !readOnly) onClose(o); }} width="w-80" theme={theme} align={align} trigger={trigger}>
       <div className={`shrink-0 ${d.headerText}`}>
         {header}
       </div>

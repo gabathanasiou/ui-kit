@@ -62,6 +62,7 @@ interface ItemManagerDropdownProps {
     closeOnSelect?: boolean;
     readOnly?: boolean;
     theme?: DropdownTheme;
+    align?: 'left' | 'right';
     label: string;
     header: string;
     itemLabel?: string;
@@ -74,5 +75,5 @@ interface ItemManagerDropdownProps {
         name: string;
     }) => React.ReactNode;
 }
-export declare function ItemManagerDropdown({ open, onClose, items, activeId, onSelect, onRename, onDuplicate, onDelete, onCreate, onImport, onExport, onReset, onTrash, closeOnSelect, readOnly, theme, label, header, itemLabel, trigger, minItems, itemRender, }: ItemManagerDropdownProps): React.JSX.Element;
+export declare function ItemManagerDropdown({ open, onClose, items, activeId, onSelect, onRename, onDuplicate, onDelete, onCreate, onImport, onExport, onReset, onTrash, closeOnSelect, readOnly, theme, align, label, header, itemLabel, trigger, minItems, itemRender, }: ItemManagerDropdownProps): React.JSX.Element;
 export {};
