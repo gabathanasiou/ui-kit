@@ -8,6 +8,7 @@ Shared interaction primitives for Gabriel's apps — extracted from the **lemon_
 - `DropdownMenu` / `DropdownItem` / `DropdownSubmenu` — Radix-wired menus with `onTouchStart` claim trick, tap-vs-drag disambiguation, one `getDropdownClasses()` design-system function, plus `ItemManagerDropdown` (list with rename/duplicate/delete)
 - `ContextMenu` + `LongPressMenuProvider` — long-press ring → synthetic `contextmenu` (touch's right-click), shared with desktop right-click. Opt in with `data-context-menu` on any element; opt out a subtree with `useLongPressOptOut()`
 - `Dialog` — `confirm() / prompt() / alert()` provider (Enter/Esc/click-outside, "don't ask again")
+- `Modal` + `ModalFooter` — draggable dialog with stacked morph (child grows from the modal beneath it, survivor shrinks back), standalone zoom in/out, and animated content-driven size changes; `morph={false}` opts out per-instance
 - `useSmartPosition` / `useFixedPosition` — visualViewport-aware popup positioning (stays above the iOS keyboard)
 - `popout` — `PopoutWindowContext` + portal/document/window helpers
 
@@ -79,3 +80,11 @@ Desktop right-click and touch long-press both fire `onContextMenu` — one handl
 4. In consuming apps: bump the pinned ref in `package.json` (`github:gabathanasiou/ui-kit#v0.2.0`) and `npm install`
 
 Semver: patch/minor = safe to bump; major = breaking changes, migrate apps deliberately.
+
+> **Consumer gotcha — stale Vite optimized deps:** right after a kit bump, a
+> consuming app's dev server may throw `SyntaxError: Indirectly exported
+> binding name 'X' is not found` — Vite is serving its OLD pre-bundled dep
+> cache. Clear it and restart the dev server: `rm -rf node_modules/.vite-*`.
+> The kit ships a committed `dist/` in the repo, so the blocked `prepare`
+> script (npm `allow-scripts`) is fine — `npm install` fetches the built dist
+> directly.
