@@ -20,6 +20,10 @@ interface DropdownItemProps {
     onClick: () => void;
     title?: string;
   };
+  /** Non-interactive node rendered after the label (e.g. a check glyph) —
+   *  sits OUTSIDE the truncating label span so it never gets squeezed or
+   *  ellipsized. */
+  trailing?: React.ReactNode;
 }
 
 export default function DropdownItem({
@@ -31,6 +35,7 @@ export default function DropdownItem({
   children,
   keepOpen = false,
   rightAction,
+  trailing,
 }: DropdownItemProps) {
   const theme = useDropdownTheme();
   const d = getDropdownClasses(theme);
@@ -50,6 +55,7 @@ export default function DropdownItem({
     >
       {icon && <span className={`${d.icon} shrink-0`}>{icon}</span>}
       <span className="flex-1 truncate">{children}</span>
+      {trailing && <span className="shrink-0 ml-1 flex items-center">{trailing}</span>}
       {rightAction && (
         <span
           className={`shrink-0 ml-1 p-0.5 rounded ${d.rightAction}`}

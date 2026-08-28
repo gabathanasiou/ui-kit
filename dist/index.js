@@ -556,37 +556,39 @@ function mn({
   className: i = "",
   children: a,
   keepOpen: c = !1,
-  rightAction: u
+  rightAction: u,
+  trailing: s
 }) {
   xt();
-  const s = yt(), l = $(!1), d = r === "danger" ? s.itemDanger : s.itemDefault;
+  const l = yt(), d = $(!1), h = r === "danger" ? l.itemDanger : l.itemDefault;
   return /* @__PURE__ */ w(
     U.Item,
     {
-      className: `w-full text-left ${hn} rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d} ${n ? "opacity-30 pointer-events-none" : ""} ${i}`,
-      onSelect: (h) => {
-        if (l.current) {
-          l.current = !1;
+      className: `w-full text-left ${hn} rounded flex items-center gap-2 outline-none cursor-pointer select-none ${h} ${n ? "opacity-30 pointer-events-none" : ""} ${i}`,
+      onSelect: (p) => {
+        if (d.current) {
+          d.current = !1;
           return;
         }
-        c && h.preventDefault(), t();
+        c && p.preventDefault(), t();
       },
       onTouchStart: () => {
       },
       disabled: n,
       children: [
-        e && /* @__PURE__ */ o("span", { className: `${s.icon} shrink-0`, children: e }),
+        e && /* @__PURE__ */ o("span", { className: `${l.icon} shrink-0`, children: e }),
         /* @__PURE__ */ o("span", { className: "flex-1 truncate", children: a }),
+        s && /* @__PURE__ */ o("span", { className: "shrink-0 ml-1 flex items-center", children: s }),
         u && /* @__PURE__ */ o(
           "span",
           {
-            className: `shrink-0 ml-1 p-0.5 rounded ${s.rightAction}`,
+            className: `shrink-0 ml-1 p-0.5 rounded ${l.rightAction}`,
             title: u.title,
-            onPointerDown: (h) => {
-              h.stopPropagation(), h.preventDefault(), l.current = !0, u.onClick();
+            onPointerDown: (p) => {
+              p.stopPropagation(), p.preventDefault(), d.current = !0, u.onClick();
             },
-            onClick: (h) => {
-              h.stopPropagation(), h.preventDefault();
+            onClick: (p) => {
+              p.stopPropagation(), p.preventDefault();
             },
             children: u.icon
           }
