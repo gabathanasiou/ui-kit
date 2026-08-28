@@ -245,6 +245,24 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
     playOverlayClose(token, el, anchorRef.current, () => onClosedRef.current?.());
   }, [opts.visible]);
 
+  /* Wheel interceptor: an open Modal's scroll lock (Radix Dialog →
+     react-remove-scroll) preventDefaults every wheel whose target is outside
+     the dialog content — and portaled menus/panels live outside it, so their
+     lists could never be scrolled by wheel inside a modal. Intercept wheels
+     that land inside this overlay at DOCUMENT CAPTURE and stop propagation
+     BEFORE the lock's bubble listener sees them: stopping propagation never
+     cancels the native default action, so the overlay's own scroll still
+     happens; wheels outside the overlay stay locked as intended. */
+  useEffect(() => {
+    if (!ready || !visibleRef.current) return;
+    const onWheel = (e: WheelEvent) => {
+      const el = elRef.current;
+      if (el && el.contains(e.target as Node)) e.stopImmediatePropagation();
+    };
+    document.addEventListener('wheel', onWheel, { capture: true });
+    return () => document.removeEventListener('wheel', onWheel, { capture: true });
+  }, [ready]);
+
   // Unmount-driven close is handled in the ref callback above: the panel
   // element leaving the DOM (conditional panel or whole-component unmount)
   // fires setContentRef(null) — the clone morph plays there.
