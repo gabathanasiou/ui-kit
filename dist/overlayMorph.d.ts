@@ -20,10 +20,12 @@ export declare function nearestOverlayOrigin(panel: OverlayRect, anchor: Overlay
 type Token = {
     current: number;
 };
-/** Open morph: pin the panel at ZOOM_FROM + fade, anchored at the anchor's
- *  nearest corner/edge, then double-rAF to identity (the modal's zoom-in).
- *  The origin is re-measured at the second rAF so late positioning (Radix
- *  popper passes, the app panel's positioning rAF) is captured. */
+/** Open morph: pin the panel at ZOOM_FROM + fade (invisible until the
+ *  transition starts), then double-rAF to identity (the modal's zoom-in).
+ *  The anchor/origin is measured at the SECOND rAF — positioning (Radix
+ *  popper passes, the app panel's positioning rAF) has settled by then, and
+ *  the pinned start frame is invisible anyway (opacity 0), so the origin is
+ *  correct from the very first visible frame. */
 export declare function playOverlayOpen(token: Token, el: HTMLElement, getAnchor: (() => OverlayRect | null) | null, onDone?: () => void): void;
 /** Close morph on the live node: shrink back to the anchor + fade (the
  *  modal's zoom-out). The panel goes pointer-transparent for the duration so

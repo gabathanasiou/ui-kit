@@ -59,10 +59,12 @@ function anchorOf(el: HTMLElement, getAnchor: (() => OverlayRect | null) | null)
   return nearestOverlayOrigin({ left: r.left, top: r.top, width: r.width, height: r.height }, a);
 }
 
-/** Open morph: pin the panel at ZOOM_FROM + fade, anchored at the anchor's
- *  nearest corner/edge, then double-rAF to identity (the modal's zoom-in).
- *  The origin is re-measured at the second rAF so late positioning (Radix
- *  popper passes, the app panel's positioning rAF) is captured. */
+/** Open morph: pin the panel at ZOOM_FROM + fade (invisible until the
+ *  transition starts), then double-rAF to identity (the modal's zoom-in).
+ *  The anchor/origin is measured at the SECOND rAF — positioning (Radix
+ *  popper passes, the app panel's positioning rAF) has settled by then, and
+ *  the pinned start frame is invisible anyway (opacity 0), so the origin is
+ *  correct from the very first visible frame. */
 export function playOverlayOpen(token: Token, el: HTMLElement, getAnchor: (() => OverlayRect | null) | null, onDone?: () => void) {
   const my = ++token.current;
   const prev = { transition: el.style.transition, transform: el.style.transform, transformOrigin: el.style.transformOrigin, opacity: el.style.opacity };
@@ -73,13 +75,10 @@ export function playOverlayOpen(token: Token, el: HTMLElement, getAnchor: (() =>
   void el.getBoundingClientRect();
   requestAnimationFrame(() => {
     if (token.current !== my) return;
-    const o = anchorOf(el, getAnchor);
-    el.style.transformOrigin = `${o.x * 100}% ${o.y * 100}%`;
-    void el.getBoundingClientRect();
     requestAnimationFrame(() => {
       if (token.current !== my) return;
-      const o2 = anchorOf(el, getAnchor);
-      el.style.transformOrigin = `${o2.x * 100}% ${o2.y * 100}%`;
+      const o = anchorOf(el, getAnchor);
+      el.style.transformOrigin = `${o.x * 100}% ${o.y * 100}%`;
       el.style.transition = `transform ${MORPH_MS}ms ${MORPH_EASE}, opacity ${MORPH_OPACITY_MS}ms ease`;
       el.style.transform = 'none';
       el.style.opacity = '';
