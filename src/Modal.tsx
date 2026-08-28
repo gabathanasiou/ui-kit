@@ -192,6 +192,11 @@ export default function Modal({
   const [morphing, setMorphing] = useState(false);
   const animToken = useRef(0);
   const closingRef = useRef(false);
+  const morphRef = useRef(morph);
+  morphRef.current = morph;
+  /* Set when doClose already animated the close (X/Esc/outside/touch) — the
+     unmount clone must not double-play. */
+  const exitedRef = useRef(false);
   /* Imperative mirror of `morphing` for the ResizeObserver callback (refs are
      read outside React renders). */
   const anyAnimRef = useRef(false);
@@ -236,6 +241,7 @@ export default function Modal({
     const stacked = !!el && stackParents(el).length > 0;
     if (!el || !morph || reduceMotion() || stacked) { onClose(); return; }
     closingRef.current = true;
+    exitedRef.current = true;
     beginAnim();
     zoomOut(animToken, el, () => {
       closingRef.current = false;
@@ -243,6 +249,33 @@ export default function Modal({
       onClose();
     });
   }, [morph, onClose]);
+
+  /* Unmount-driven closes (action buttons — Save/Confirm/select call the
+     caller's onClose directly, which unmounts this component before any
+     animation could run): CLONE the content box, swap in the clone (an exact
+     visual copy of the last rendered state) and zoom it out. The clone is
+     a11y-hidden + pointer-transparent so it never intercepts anything; it is
+     stripped of the stack/radix attributes so it can't participate in the
+     stack CSS. Stacked children skip (the survivor's morph-back is the close
+     effect); doClose-animated paths skip (exitedRef). */
+  useLayoutEffect(() => {
+    return () => {
+      const el = contentRef.current;
+      if (!el || exitedRef.current) return;
+      if (!morphRef.current || reduceMotion() || stackParents(el).length > 0) return;
+      const doc = el.ownerDocument;
+      const clone = el.cloneNode(true) as HTMLElement;
+      clone.removeAttribute('data-modal-stack');
+      clone.removeAttribute('data-state');
+      clone.removeAttribute('role');
+      clone.removeAttribute('data-aria-hidden');
+      clone.removeAttribute('tabindex');
+      clone.setAttribute('aria-hidden', 'true');
+      clone.style.pointerEvents = 'none';
+      doc.body.appendChild(clone);
+      zoomOut({ current: 0 }, clone, () => { if (clone.isConnected) clone.remove(); });
+    };
+  }, []);
 
   /* Exit morph: while an open stack-child exists, track its box each frame;
      when it disappears, shrink back from its last box (the CSS fade restores
