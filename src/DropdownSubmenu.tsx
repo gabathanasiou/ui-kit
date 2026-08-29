@@ -20,8 +20,8 @@ interface DropdownSubmenuProps {
 }
 
 export default function DropdownSubmenu({ id, label, icon, width, side = 'right', children }: DropdownSubmenuProps) {
-  const { activeSub, setActiveSub, morph } = useContext(SubmenuContext);
-  const subOpen = activeSub === id;
+  const { chain, setChain, morph } = useContext(SubmenuContext);
+  const subOpen = chain.includes(id);
   const theme = useDropdownTheme();
   const portalTarget = usePortalTarget();
   const subTriggerRef = useRef<HTMLDivElement>(null);
@@ -52,7 +52,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
   rootApiRef.current = rootApi;
   const selfRef = useRef<MenuHighlightItem | null>(null);
   useEffect(() => {
-    const self: MenuHighlightItem = { label, activate: () => setActiveSub(id) };
+    const self: MenuHighlightItem = { label, activate: () => setChain(c => c.includes(id) ? c : [...c, id]) };
     selfRef.current = self;
     return rootApiRef.current?.register(self);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -112,7 +112,16 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
   const contentClasses = `ui-menu rounded-lg shadow-xl z-[210] p-1 flex flex-col select-none max-h-[min(60vh,24rem)] overflow-y-auto min-w-0 scrollbar-custom ${width || 'w-48'}`;
 
   return (
-      <RadixDropdownMenu.Sub open={subOpen || persisted} onOpenChange={(o) => setActiveSub(o ? id : null)}>
+      <RadixDropdownMenu.Sub open={subOpen || persisted} onOpenChange={(o) => setChain(c => {
+        if (!o) {
+          // a duplicate close (grace timeout after the trigger leave) must
+          // NEVER truncate from a missing id — slice(0, -1) would drop the
+          // PARENT sub's entry.
+          const idx = c.indexOf(id);
+          return idx >= 0 ? c.slice(0, idx) : c;
+        }
+        return c.includes(id) ? c : [...c, id];
+      })}>
         <RadixDropdownMenu.SubTrigger
           ref={subTriggerRef}
           data-ei={myIndex >= 0 ? myIndex : undefined}
@@ -126,7 +135,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
             // toggle it closed. Open on tap instead, like a finger.
             if (e.pointerType === 'pen') {
               e.preventDefault();
-              setActiveSub(subOpen ? null : id);
+              setChain(c => subOpen ? c.slice(0, c.indexOf(id)) : [...c, id]);
             }
           }}
         >

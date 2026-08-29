@@ -122,16 +122,26 @@ function LongMenuDemo() {
 
 function SubmenuDemo() {
   const [open, setOpen] = useState(false);
+  const [pick, setPick] = useState<string | null>(null);
   return (
     <div className="row" data-testid="submenu-demo">
       <DropdownMenu open={open} onOpenChange={setOpen} width="w-40"
-        trigger={<Button data-testid="submenu-trigger">Submenu</Button>}
+        trigger={<Button data-testid="submenu-trigger">Submenu {pick ? `— ${pick}` : ''}</Button>}
       >
         <DropdownItem>Plain item</DropdownItem>
-        <DropdownSubmenu label="More…">
-          <DropdownItem>Nested A</DropdownItem>
-          <DropdownItem>Nested B</DropdownItem>
+        <DropdownSubmenu id="more" label="More…">
+          <DropdownItem onClick={() => setPick('Nested A')}>Nested A</DropdownItem>
+          <DropdownItem onClick={() => setPick('Nested B')}>Nested B</DropdownItem>
+          <DropdownSubmenu id="deeper" label="Deeper…">
+            <DropdownItem onClick={() => setPick('Level 3 A')}>Level 3 A</DropdownItem>
+            <DropdownItem onClick={() => setPick('Level 3 B')}>Level 3 B</DropdownItem>
+          </DropdownSubmenu>
         </DropdownSubmenu>
+        <DropdownSubmenu id="danger" label="Danger zone…">
+          <DropdownItem variant="danger" onClick={() => setPick('Delete everything')}>Delete everything</DropdownItem>
+          <DropdownItem variant="danger" onClick={() => setPick('Wipe')}>Wipe</DropdownItem>
+        </DropdownSubmenu>
+        <DropdownItem>Last item</DropdownItem>
       </DropdownMenu>
     </div>
   );

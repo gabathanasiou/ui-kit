@@ -71,11 +71,15 @@ export function getDropdownClasses(theme?: DropdownTheme) {
   };
 }
 
+/* Open submenu CHAIN (nested subs coexist): opening a sub appends its id;
+   closing one truncates it AND its children (a child can never outlive its
+   parent). The root menu stands its key-lock down while the chain is non-empty
+   (the topmost sub owns the keys). */
 export const SubmenuContext = createContext<{
-  activeSub: string | null;
-  setActiveSub: (id: string | null) => void;
+  chain: string[];
+  setChain: (fn: (c: string[]) => string[]) => void;
   morph: boolean;
-}>({ activeSub: null, setActiveSub: () => {}, morph: true });
+}>({ chain: [], setChain: () => {}, morph: true });
 
 // ── Single-highlight context (the EntityDropdown-panel model) ───────────────
 /* ONE highlighted row per surface, written by pointer hover AND the keyboard
@@ -285,7 +289,7 @@ export default function DropdownMenu({
   contentClassName,
   initialHighlightIndex,
 }: DropdownMenuProps) {
-  const [activeSub, setActiveSub] = useState<string | null>(null);
+  const [subChain, setSubChain] = useState<string[]>([]);
   const portalTarget = usePortalTarget();
   const triggerRef = useRef<HTMLElement | null>(null);
   const contentElRef = useRef<HTMLDivElement | null>(null);
@@ -306,7 +310,7 @@ export default function DropdownMenu({
     } else {
       // The parent is closing — collapse any open submenu so it morphs
       // closed alongside this menu instead of staying open mid-morph.
-      setActiveSub(null);
+      setSubChain([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialHighlightIndex]);
@@ -332,7 +336,7 @@ export default function DropdownMenu({
   const lockHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
   useMenuKeys(open, highlight, keysHandlerRef);
   useMenuWheel(open, wheelHandlerRef);
-  useMenuKeyLock(open, highlight, keysHandlerRef, contentElRef, !!activeSub, lockHandlerRef);
+  useMenuKeyLock(open, highlight, keysHandlerRef, contentElRef, subChain.length > 0, lockHandlerRef);
   const lockDocRef = useRef<Document | null>(null);
   const setComposedRef = useCallback((node: HTMLDivElement | null) => {
     if (node) {
@@ -442,7 +446,7 @@ export default function DropdownMenu({
       </RadixDropdownMenu.Trigger>
       <RadixDropdownMenu.Portal container={portalTarget ?? undefined}>
         <DropdownThemeContext.Provider value={theme}>
-          <SubmenuContext.Provider value={{ activeSub, setActiveSub, morph }}>
+          <SubmenuContext.Provider value={{ chain: subChain, setChain: setSubChain, morph }}>
             <MenuHighlightContext.Provider value={highlight}>
               <RadixDropdownMenu.Content
                 ref={setComposedRef}

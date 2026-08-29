@@ -308,6 +308,13 @@
   color: var(--ui-item-hover-text);
 }
 
+/* ...but the single-highlight row wins: a submenu trigger hovered with the
+   mouse (or arrowed) keeps the MOUSE highlight, not the open-state tint. */
+.ui-item[data-state="open"].ui-item-highlighted {
+  background: var(--ui-item-highlight-bg);
+  color: var(--ui-item-highlight-text);
+}
+
 /* Submenu trigger mid close-morph: Radix keeps the trigger's data-state
    "open" while the sub content is persisted for the reverse morph — unlight
    it so the trigger doesn't read as "selected" alongside the item being
