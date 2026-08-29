@@ -200,7 +200,10 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
           <div className="flex flex-wrap gap-1">
             {selected.map(d => {
               const date = new Date(d + 'T00:00:00');
-              const label = date.toLocaleString('default', { month: 'short', day: 'numeric' });
+              // non-current-year dates show the year so the chip is unambiguous
+              const label = date.getFullYear() === today.getFullYear()
+                ? date.toLocaleString('default', { month: 'short', day: 'numeric' })
+                : date.toLocaleString('default', { month: 'short', day: 'numeric', year: 'numeric' });
               return (
                 <button
                   key={d}
