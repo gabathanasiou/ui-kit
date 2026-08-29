@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+/* The kit's classes live OUTSIDE the playground root — Tailwind v4's auto
+   content detection only scans the CSS file's project, so without this the
+   kit's `flex flex-col` / `fixed z-[10000]` utilities are never generated
+   and every kit surface renders unstyled (items in a row, modals static). */
+@source '../../src';
+@import '../../src/styles/tokens.css';
+
+/* The app's recipe: kit menus portal to document.body at z-[200] — beneath
+   the modal overlay (z-9999) — so any dropdown opened inside a Modal would
+   be unclickable. Raise to the in-modal menu layer (app index.css does the
+   same; the kit's DropdownMenu also offers `contentClassName`). */
+.ui-menu {
+  z-index: 10001 !important;
+}

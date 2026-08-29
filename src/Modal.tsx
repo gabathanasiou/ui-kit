@@ -220,8 +220,21 @@ export default function Modal({
   useLayoutEffect(() => {
     if (!open || initRef.current || !contentReady || !contentRef.current) return;
     initRef.current = true;
+    /* Pin the CENTERED position as an explicit left/top (the drag/RO math
+       works on plain pixels, so the centering translate classes are dropped
+       once dragPos is set). Compute it from the viewport + measured size —
+       NEVER from the element's rect: measured while the enter morph is
+       running (or under Tailwind v4's `translate` property) it reads the
+       transformed, off-center box and the modal would stick there. The
+       viewport-center invariant is the same one the size-change animation
+       uses. */
     const r = contentRef.current.getBoundingClientRect();
-    setDragPos({ left: r.left, top: r.top });
+    const vw = currentWindowRef.current?.innerWidth ?? 0;
+    const vh = currentWindowRef.current?.innerHeight ?? 0;
+    setDragPos({
+      left: Math.max(MAX_EDGE, Math.min((vw - r.width) / 2, vw - r.width - MAX_EDGE)),
+      top: Math.max(MAX_EDGE, Math.min((vh - r.height) / 2, vh - r.height - MAX_EDGE)),
+    });
   }, [open, contentReady]);
 
   /* Enter animation: stacked modals grow out of the box beneath them; the

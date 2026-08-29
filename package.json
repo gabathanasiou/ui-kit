@@ -27,7 +27,9 @@
     "build": "npm run build:js && npm run build:types && npm run build:css",
     "build:js": "vite build",
     "build:types": "tsc -p tsconfig.build.json",
-    "build:css": "cp src/styles/tokens.css dist/ui-kit.css"
+    "build:css": "cp src/styles/tokens.css dist/ui-kit.css",
+    "playground": "vite playground",
+    "test:playground": "playwright test -c playground/playwright.config.ts"
   },
   "peerDependencies": {
     "@floating-ui/react-dom": "^2.1.8",
@@ -49,8 +51,10 @@
   },
   "devDependencies": {
     "@floating-ui/react-dom": "^2.1.8",
+    "@playwright/test": "^1.61.1",
     "@radix-ui/react-dialog": "^1.1.16",
     "@radix-ui/react-dropdown-menu": "^2.1.17",
+    "@tailwindcss/vite": "^4.3.3",
     "@tiptap/extension-color": "^3.30.1",
     "@tiptap/extension-link": "^3.30.1",
     "@tiptap/extension-mention": "^3.30.1",
@@ -67,6 +71,7 @@
     "lucide-react": "^0.546.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
+    "tailwindcss": "^4.3.3",
     "typescript": "~5.8.2",
     "vite": "^6.2.3"
   },

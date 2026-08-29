@@ -145,26 +145,44 @@ export default function DropdownMenu({
     // While the close morph plays (open already false, Radix still mounted)
     // Radix keeps reporting outside-click/Escape — ignore them.
     if (!o && !openRef.current) return;
+    // A close that PROCEEDS from a pointerdown ON THE TRIGGER is this same
+    // interaction's toggle-dismiss (Radix reports the trigger as outside the
+    // content). The trigger's own click-phase must then NOT reopen it (see
+    // triggerOnClick) — otherwise one dismiss click closes AND reopens the
+    // menu, interleaving close+open morphs and leaving it stuck.
+    if (!o && triggerPointerDownRef.current) closeFromTriggerPointerDownRef.current = true;
     if (onOpenChange) onOpenChange(o);
     else if (!o) onClose?.();
   }, [onOpenChange, onClose]);
 
-  /* Reopen-during-close: the trigger click that lands while the close morph
-     is still playing gets swallowed by the guard above (Radix toggles the
+  /* Reopen-during-close: a trigger click that lands while the close morph is
+     still playing gets swallowed by the guard above (Radix toggles the
      still-mounted root closed and the toggle is ignored) — the click would
      be dead and the menu stuck shut for ~300ms. The trigger's own click
      reverses it: reopening forces `open` back true and the open-morph effect
-     re-runs, canceling the in-flight close. */
+     re-runs, canceling the in-flight close. EXCEPT for the click whose OWN
+     pointerdown caused the close (the toggle-dismiss above) — that click
+     must stay a dismiss, not reopen what it just closed. */
   const persistedRef = useRef(persisted);
   persistedRef.current = persisted;
+  const triggerPointerDownRef = useRef(false);
+  const closeFromTriggerPointerDownRef = useRef(false);
   const triggerOnClick = useCallback(() => {
-    if (!openRef.current && persistedRef.current) onOpenChange?.(true);
+    if (!openRef.current && persistedRef.current) {
+      if (closeFromTriggerPointerDownRef.current) {
+        closeFromTriggerPointerDownRef.current = false;
+        triggerPointerDownRef.current = false;
+        return;
+      }
+      onOpenChange?.(true);
+    }
   }, [onOpenChange]);
 
   const triggerEl = React.isValidElement(trigger) ? (trigger as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>) : null;
   const triggerNode = triggerEl
-    ? React.cloneElement(triggerEl as React.ReactElement<{ ref?: React.Ref<HTMLElement>; onClick?: (e: React.MouseEvent) => void }>, {
+    ? React.cloneElement(triggerEl as React.ReactElement<{ ref?: React.Ref<HTMLElement>; onClick?: (e: React.MouseEvent) => void; onPointerDown?: (e: React.PointerEvent) => void }>, {
         ref: (node: HTMLElement | null) => { triggerRef.current = node; },
+        onPointerDown: () => { triggerPointerDownRef.current = true; closeFromTriggerPointerDownRef.current = false; },
         onClick: (e: React.MouseEvent) => {
           triggerEl.props.onClick?.(e);
           triggerOnClick();

@@ -88,3 +88,11 @@ Semver: patch/minor = safe to bump; major = breaking changes, migrate apps delib
 > The kit ships a committed `dist/` in the repo, so the blocked `prepare`
 > script (npm `allow-scripts`) is fine — `npm install` fetches the built dist
 > directly.
+
+## Playground & debugging
+
+`npm run playground` serves the component zoo at `:5183` (kit SOURCE, HMR, no
+build) — every button, dropdown, modal and morph surface with testids, for
+reproducing bugs without the app. `npm run test:playground` runs the Playwright
+debug specs (dropdown dismiss, morph clones, modal portals). See `AGENTS.md`
+for the full debugging guide (morph internals, known gotchas, release flow).

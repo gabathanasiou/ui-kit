@@ -196,9 +196,11 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
      dropping `{open && <panel/>}`). That detach is the unmount-driven close
      signal — play the clone morph there, not in a component-unmount
      cleanup (which only fires for the first case). */
+  const nullTaskRef = useRef(0);
   const setContentRef = useCallback((node: T | null) => {
     if (opts.ref) opts.ref.current = node;
     if (node) {
+      nullTaskRef.current = 0;
       elRef.current = node;
       const r = node.getBoundingClientRect();
       if (r.width > 0 || r.height > 0) {
@@ -208,12 +210,22 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
       return;
     }
     const el = elRef.current;
-    elRef.current = null;
-    setReady(false);
-    if (!el || !opts.cloneOnUnmount || !visibleRef.current) return;
-    if (el.style.visibility === 'hidden') return; // never painted visible
-    if (!overlayMorphEnabled(morphRef.current)) return;
-    cloneOverlayClose(el, anchorRef.current, lastRectRef.current);
+    const task = ++nullTaskRef.current;
+    /* React's dev StrictMode remounts every mount (ref: node → null → node
+       in one commit). The spurious null must not play the close clone for a
+       panel that is actually OPENING — defer the close signal one microtask:
+       a StrictMode remount has re-attached the element by then (elRef re-set
+       by the second node call), a real unmount has not. */
+    queueMicrotask(() => {
+      if (task !== nullTaskRef.current) return; // superseded by a newer ref event
+      if (elRef.current !== el) return; // re-attached — StrictMode remount, not a close
+      elRef.current = null;
+      setReady(false);
+      if (!el || !opts.cloneOnUnmount || !visibleRef.current) return;
+      if (el.style.visibility === 'hidden') return; // never painted visible
+      if (!overlayMorphEnabled(morphRef.current)) return;
+      cloneOverlayClose(el, anchorRef.current, lastRectRef.current);
+    });
   }, []);
   const visibleRef = useRef(opts.visible);
   visibleRef.current = opts.visible;
