@@ -967,16 +967,19 @@
   filter: brightness(0.72);
 }
 
-/* Panel-positioned menus (DropdownMenu data-ui-fixed): the content positions
-   itself via useFixedPosition — neutralize the Radix popper wrapper so its
-   translate doesn't double-position the fixed content, and make the wrapper
-   pointer-transparent (the content re-enables itself): a closing menu's
-   wrapper must never intercept the click meant for a control beneath it
-   (e.g. a second menu trigger in the same modal). */
+/* Menu popper wrappers are pointer-transparent (the .ui-menu content
+   re-enables itself): a closing menu's wrapper must never intercept the
+   click/hover meant for a control or trigger beneath it (a second menu
+   trigger in the same modal, a nested sub's trigger row). The wrapper of a
+   data-ui-fixed (self-positioned) menu is ALSO neutralized so its translate
+   doesn't double-position the fixed content. */
+[data-radix-popper-content-wrapper]:has(> .ui-menu) {
+  pointer-events: none;
+}
+
 [data-radix-popper-content-wrapper]:has(> .ui-menu[data-ui-fixed]) {
   transform: none !important;
   will-change: auto;
-  pointer-events: none;
 }
 
 .ui-menu {
@@ -1002,9 +1005,11 @@
   background: rgba(0, 0, 0, 0.2);
 }
 
-.ui-modal-overlay[data-state="closed"] {
+.ui-modal-overlay-closing {
   background: transparent;
-  /* fades out WITH the modal's zoom-out (220ms, the morph easing) */
+  /* fades out WITH the modal's zoom-out (220ms, the morph easing) — the
+     class flips at close-START (the JS closing state; Radix's data-state
+     only turns "closed" after the caller unmounts, too late to fade) */
   transition: background-color 220ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 

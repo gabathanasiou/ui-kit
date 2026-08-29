@@ -202,6 +202,10 @@ export default function Modal({
   const [morphing, setMorphing] = useState(false);
   const animToken = useRef(0);
   const closingRef = useRef(false);
+  /* Mirrored state for the overlay: the dim fades out the moment the close
+     morph STARTS (Radix's data-state only flips "closed" after the caller
+     unmounts — too late for a fade). */
+  const [closing, setClosing] = useState(false);
   const morphRef = useRef(morph);
   morphRef.current = morph;
   /* Set when doClose already animated the close (X/Esc/outside/touch) — the
@@ -264,10 +268,12 @@ export default function Modal({
     const stacked = !!el && stackParents(el).length > 0;
     if (!el || !morph || reduceMotion() || stacked) { onClose(); return; }
     closingRef.current = true;
+    setClosing(true);
     exitedRef.current = true;
     beginAnim();
     zoomOut(animToken, el, () => {
       closingRef.current = false;
+      setClosing(false);
       endAnim();
       onClose();
     });
@@ -479,7 +485,7 @@ export default function Modal({
     <RadixDialog.Root open={open} onOpenChange={(o) => { if (!o) doClose(); }}>
       <RadixDialog.Portal container={portalTarget ?? undefined}>
         <RadixDialog.Overlay
-          className="ui-modal-overlay fixed inset-0 z-[9999]"
+          className={`ui-modal-overlay fixed inset-0 z-[9999]${closing ? ' ui-modal-overlay-closing' : ''}`}
           style={{ touchAction: 'manipulation' }}
           onTouchEnd={(e) => {
             if (document.querySelector('[data-radix-menu-content][data-state="open"], [data-radix-popper-content-wrapper][data-state="open"]')) return;
