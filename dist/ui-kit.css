@@ -33,12 +33,17 @@
   --ui-item-hover-bg: #27272a;
   --ui-item-hover-text: #ffffff;
   --ui-item-active-bg: #3f3f46;
+  --ui-item-highlight-bg: #3f3f46;
+  --ui-item-highlight-text: #ffffff;
+  --ui-item-selected-bg: rgba(37, 99, 235, 0.28);
+  --ui-item-selected-text: #ffffff;
   --ui-sep: #27272a;
   --ui-scroll-thumb: #52525b;
 
-  --ui-row-hover-bg: #27272a;
-  --ui-row-active-bg: rgba(37, 99, 235, 0.2);
-  --ui-row-active-text: #bfdbfe;
+  --ui-row-hover-bg: #3f3f46;
+  --ui-row-active-bg: rgba(37, 99, 235, 0.28);
+  --ui-icon-btn-active-hover-bg: rgba(255, 255, 255, 0.12);
+  --ui-row-active-text: #ffffff;
 
   --ui-danger-text: #f87171;
   --ui-danger-hover-bg: rgba(127, 29, 29, 0.3);
@@ -98,11 +103,16 @@
   --ui-item-hover-bg: #f4f4f5;
   --ui-item-hover-text: #18181b;
   --ui-item-active-bg: #e4e4e7;
+  --ui-item-highlight-bg: #e4e4e7;
+  --ui-item-highlight-text: #18181b;
+  --ui-item-selected-bg: #eff6ff;
+  --ui-item-selected-text: #1d4ed8;
   --ui-sep: #e4e4e7;
   --ui-scroll-thumb: #d4d4d8;
 
-  --ui-row-hover-bg: #f4f4f5;
-  --ui-row-active-bg: rgba(37, 99, 235, 0.1);
+  --ui-row-hover-bg: #e4e4e7;
+  --ui-row-active-bg: #eff6ff;
+  --ui-icon-btn-active-hover-bg: rgba(0, 0, 0, 0.07);
   --ui-row-active-text: #1d4ed8;
 
   --ui-danger-text: #dc2626;
@@ -160,10 +170,15 @@
   --ui-item-hover-bg: rgba(255, 255, 255, 0.1);
   --ui-item-hover-text: #ffffff;
   --ui-item-active-bg: rgba(255, 255, 255, 0.15);
+  --ui-item-highlight-bg: rgba(255, 255, 255, 0.15);
+  --ui-item-highlight-text: #ffffff;
+  --ui-item-selected-bg: rgba(255, 255, 255, 0.18);
+  --ui-item-selected-text: #ffffff;
   --ui-sep: rgba(255, 255, 255, 0.1);
 
-  --ui-row-hover-bg: rgba(255, 255, 255, 0.1);
-  --ui-row-active-bg: rgba(255, 255, 255, 0.15);
+  --ui-row-hover-bg: rgba(255, 255, 255, 0.15);
+  --ui-row-active-bg: rgba(255, 255, 255, 0.18);
+  --ui-icon-btn-active-hover-bg: rgba(255, 255, 255, 0.2);
   --ui-row-active-text: #ffffff;
 
   --ui-danger-text: #fca5a5;
@@ -245,13 +260,7 @@
   transition: none;
 }
 
-@media (any-hover: hover) {
-  .ui-item:hover,
-  .ui-item:focus-visible {
-    background: var(--ui-item-hover-bg);
-    color: var(--ui-item-hover-text);
-  }
-}
+
 
 .ui-item-danger {
   color: var(--ui-danger-text);
@@ -270,23 +279,40 @@
   }
 }
 
-.ui-item[data-highlighted] {
-  background: var(--ui-item-hover-bg);
-  color: var(--ui-item-hover-text);
+/* Single-highlight (the EntityDropdown-panel model): ONE lit row —
+   `.ui-item-highlighted`, written by pointer hover AND the keyboard arrows
+   (latest wins; hover-leave clears a pointer-driven highlight). No CSS
+   :hover fill and Radix's roving-focus `[data-highlighted]` is inert. */
+.ui-item-highlighted {
+  background: var(--ui-item-highlight-bg);
+  color: var(--ui-item-highlight-text);
 }
 
-/* Single-highlight rule: the CSS :hover fill must never coexist with the
-   roving-focus highlight (keyboard arrows / pointer-driven focus via
-   DropdownItem's pointerenter) — when ANY item is [data-highlighted], only
-   that row reads as selected. */
-.ui-menu:has(.ui-item[data-highlighted]) .ui-item:hover {
-  background: transparent;
+/* The CURRENT VALUE (selected) row — the panel's checked-row look: its own
+   subtle background + the trailing Check glyph, distinct from the cursor
+   highlight. The highlight overrides the background while the selected row
+   is lit (rule order below). */
+.ui-item-selected {
+  background: var(--ui-item-selected-bg);
+  color: var(--ui-item-selected-text);
+}
+
+.ui-item-selected.ui-item-highlighted {
+  background: var(--ui-item-highlight-bg);
+  color: var(--ui-item-highlight-text);
 }
 
 /* Submenu trigger open state (set by Radix) */
 .ui-item[data-state="open"] {
   background: var(--ui-item-hover-bg);
   color: var(--ui-item-hover-text);
+}
+
+/* ...but the single-highlight row wins: a submenu trigger hovered with the
+   mouse (or arrowed) keeps the MOUSE highlight, not the open-state tint. */
+.ui-item[data-state="open"].ui-item-highlighted {
+  background: var(--ui-item-highlight-bg);
+  color: var(--ui-item-highlight-text);
 }
 
 /* Submenu trigger mid close-morph: Radix keeps the trigger's data-state
@@ -319,7 +345,8 @@
 @media (any-hover: hover) {
   .ui-icon-btn:hover,
   .ui-icon-btn:focus-visible {
-    color: var(--ui-text);
+    background: var(--ui-icon-btn-active-hover-bg);
+    color: var(--ui-item-hover-text);
   }
 }
 
@@ -330,6 +357,7 @@
 @media (any-hover: hover) {
   .ui-icon-btn-active:hover,
   .ui-icon-btn-active:focus-visible {
+    background: var(--ui-icon-btn-active-hover-bg);
     color: var(--ui-accent-soft-text);
   }
 }
@@ -345,6 +373,7 @@
 @media (any-hover: hover) {
   .ui-icon-btn-danger:hover,
   .ui-icon-btn-danger:focus-visible {
+    background: var(--ui-danger-hover-bg);
     color: var(--ui-danger-text);
   }
 }
@@ -526,6 +555,13 @@
   }
 }
 
+/* ItemManager rows keep Radix's native keyboard (no registered highlight
+   items) — the keyboard-lit row must show the SAME fill as the pointer
+   hover. */
+.ui-row:has([data-highlighted]) {
+  background: var(--ui-row-hover-bg);
+}
+
 .ui-row-active {
   background: var(--ui-row-active-bg);
 }
@@ -539,8 +575,13 @@
 }
 
 @media (any-hover: hover) {
-  .ui-row:hover .ui-row-hover-text {
+  .ui-row:hover .ui-row-hover-text,
+  .ui-row:hover .ui-icon-btn,
+  .ui-row:hover .ui-icon-btn-danger {
     color: var(--ui-item-hover-text);
+  }
+  .ui-row:hover .ui-icon-btn-danger:hover {
+    color: var(--ui-danger-text);
   }
 }
 
@@ -924,4 +965,54 @@
 
 .richtext-editor .rt-token.rt-token-selected {
   filter: brightness(0.72);
+}
+
+/* Menu popper wrappers are pointer-transparent (the .ui-menu content
+   re-enables itself): a closing menu's wrapper must never intercept the
+   click/hover meant for a control or trigger beneath it (a second menu
+   trigger in the same modal, a nested sub's trigger row). The wrapper of a
+   data-ui-fixed (self-positioned) menu is ALSO neutralized so its translate
+   doesn't double-position the fixed content. */
+[data-radix-popper-content-wrapper]:has(> .ui-menu) {
+  pointer-events: none;
+}
+
+[data-radix-popper-content-wrapper]:has(> .ui-menu[data-ui-fixed]) {
+  transform: none !important;
+  will-change: auto;
+}
+
+.ui-menu {
+  pointer-events: auto;
+}
+
+/* ── Modal backdrop dim (roadmap 59) ────────────────────────────────────
+   Exactly ONE dim layer per window, belonging to the TOP open modal. Pure
+   sibling CSS so the swap is SYNCHRONOUS with the DOM (an observer-driven
+   flip paints one frame of double-dim on stacked opens):
+   - the last open overlay dims,
+   - a CLOSING overlay (data-state="closed") clears immediately,
+   - any overlay with an open overlay FOLLOWING it (a non-top stacked modal)
+     clears.
+   The background-color transitions cross-fade, keeping the visible dim
+   constant through stacked opens AND closes (the child fades out while the
+   parent fades back in behind it — alpha compositing holds ~0.2). */
+/* Only the CLOSING overlay fades (the standalone-close dim-out). Stacked
+   swaps are instant — a stacked child unmounts its overlay at once, so the
+   parent's dim must return in the SAME frame or the background visibly dips
+   to 0 and back. */
+.ui-modal-overlay {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.ui-modal-overlay-closing {
+  background: transparent;
+  /* fades out WITH the modal's zoom-out (220ms, the morph easing) — the
+     class flips at close-START (the JS closing state; Radix's data-state
+     only turns "closed" after the caller unmounts, too late to fade) */
+  transition: background-color 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.ui-modal-overlay:has(~ .ui-modal-overlay[data-state="open"]) {
+  background: transparent;
 }

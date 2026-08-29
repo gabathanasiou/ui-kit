@@ -6,6 +6,10 @@ import React from 'react';
  * Theming: `light` (default) renders a white card with zinc-200 borders;
  * `dark` renders the zinc-900 modal look. Selected days fill with the
  * accent; selected-date chips below allow per-date removal.
+ *
+ * Quick jump: clicking the month–year header swaps the day grid for a
+ * 3×4 MONTH GRID with a typable YEAR box (Enter/blur commits, Escape
+ * reverts) — two clicks to any month in any year.
  */
 export interface DatePickerProps {
     selected: string[];

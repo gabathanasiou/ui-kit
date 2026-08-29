@@ -8,6 +8,10 @@ interface DropdownItemProps {
     children: React.ReactNode;
     key?: string;
     keepOpen?: boolean;
+    /** The currently selected value — renders the selected tint (a distinct
+     *  row background + text color, see `.ui-item-selected` tokens). Callers
+     *  that want the panel-style Check glyph pass `trailing={<Check/>}`. */
+    selected?: boolean;
     rightAction?: {
         icon: React.ReactNode;
         onClick: () => void;
@@ -18,5 +22,5 @@ interface DropdownItemProps {
      *  ellipsized. */
     trailing?: React.ReactNode;
 }
-export default function DropdownItem({ onClick, icon, disabled, variant, className, children, keepOpen, rightAction, trailing, }: DropdownItemProps): React.JSX.Element;
+export default function DropdownItem({ onClick, icon, disabled, variant, className, children, keepOpen, selected, rightAction, trailing, }: DropdownItemProps): React.JSX.Element;
 export {};
