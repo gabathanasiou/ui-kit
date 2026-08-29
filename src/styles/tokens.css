@@ -43,6 +43,7 @@
   --ui-row-hover-bg: #3f3f46;
   --ui-row-active-bg: rgba(37, 99, 235, 0.28);
   --ui-icon-btn-active-hover-bg: rgba(255, 255, 255, 0.12);
+  --ui-icon-btn-active-text: #ffffff;
   --ui-row-active-text: #ffffff;
 
   --ui-danger-text: #f87171;
@@ -89,9 +90,9 @@
   --ui-menu-border: #e4e4e7;
   --ui-panel-bg: #ffffff;
   --ui-panel-border: #e4e4e7;
-  --ui-input-bg: #27272a;
-  --ui-input-border: #3f3f46;
-  --ui-input-text: #e4e4e7;
+  --ui-input-bg: #f4f4f5;
+  --ui-input-border: #e4e4e7;
+  --ui-input-text: #18181b;
   --ui-overlay-bg: rgba(0, 0, 0, 0.2);
 
   --ui-text: #3f3f46;
@@ -113,6 +114,7 @@
   --ui-row-hover-bg: #e4e4e7;
   --ui-row-active-bg: #eff6ff;
   --ui-icon-btn-active-hover-bg: rgba(0, 0, 0, 0.07);
+  --ui-icon-btn-active-text: #18181b;
   --ui-row-active-text: #1d4ed8;
 
   --ui-danger-text: #dc2626;
@@ -351,14 +353,14 @@
 }
 
 .ui-icon-btn-active {
-  color: var(--ui-accent-soft-text);
+  color: var(--ui-icon-btn-active-text, var(--ui-accent-soft-text));
 }
 
 @media (any-hover: hover) {
   .ui-icon-btn-active:hover,
   .ui-icon-btn-active:focus-visible {
     background: var(--ui-icon-btn-active-hover-bg);
-    color: var(--ui-accent-soft-text);
+    color: var(--ui-icon-btn-active-text, var(--ui-accent-soft-text));
   }
 }
 

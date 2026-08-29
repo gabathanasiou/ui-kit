@@ -749,14 +749,14 @@ export function ItemManagerDropdown({
                   />
                 </div>
                 <RadixDropdownMenu.Item
-                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer ${d.editConfirm} !text-white`}
+                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer ${d.editConfirm}`}
                   onSelect={e => { e.preventDefault(); commitRename(); }}
                   onTouchStart={() => {}}
                 >
                   <Check className={d.btnIcon} />
                 </RadixDropdownMenu.Item>
                 <RadixDropdownMenu.Item
-                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer mr-1 ${d.editCancel} !text-white`}
+                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer mr-1 ${d.editCancel}`}
                   onSelect={e => { e.preventDefault(); cancelRename(); }}
                   onTouchStart={() => {}}
                 >
