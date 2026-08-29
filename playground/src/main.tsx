@@ -120,6 +120,28 @@ function LongMenuDemo() {
   );
 }
 
+function RightEdgeMenu() {
+  /* The Schedule version-manager pattern: a fixed-width (w-80) menu whose
+     trigger sits at the viewport's right edge. The viewport clamp must use
+     the CONTENT's width (320px), not the trigger's — a clamp against the
+     trigger width leaves the menu cropped at the right edge. */
+  const [open, setOpen] = useState(false);
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen} width="w-80"
+      trigger={
+        <button data-testid="right-edge-trigger"
+          style={{ position: 'fixed', right: 8, top: 210, zIndex: 50, padding: '8px 14px', borderRadius: 8, border: '1px solid #71717a', background: '#18181b', color: '#fafafa', cursor: 'pointer' }}>
+          Edge w-80 menu
+        </button>
+      }
+    >
+      {['Edge A', 'Edge B', 'Edge C'].map(it => (
+        <DropdownItem key={it} onClick={() => setOpen(false)}>{it}</DropdownItem>
+      ))}
+    </DropdownMenu>
+  );
+}
+
 function SubmenuDemo() {
   const [open, setOpen] = useState(false);
   const [pick, setPick] = useState<string | null>(null);
@@ -289,9 +311,14 @@ function PanelDemo() {
   /* The app's DropdownPanel pattern: a conditional panel div + the morph
      controller with cloneOnUnmount. The close plays on a pinned clone. This
      surface reproduces the StrictMode phantom-clone-on-reopen (dev) and the
-     clone rect (must pin at the panel's rect, never at 0,0). */
+     clone rect (must pin at the panel's rect, never at 0,0).
+
+     The panel ALSO mounts at its INITIAL position state (0,0) and reaches
+     its real spot only after a positioning rAF (the app's useFixedPosition)
+     — the rect read at first paint is at the view origin, and the close
+     clone must pin the POSITIONED rect, never that first paint. */
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 240, left: 80 });
+  const [pos, setPos] = useState({ top: 0, left: 0 });
   const panelRef = React.useRef<HTMLDivElement | null>(null);
   const triggerRef = React.useRef<HTMLButtonElement | null>(null);
   const anchor = React.useCallback(() => {
@@ -307,17 +334,27 @@ function PanelDemo() {
     anchor,
     cloneOnUnmount: true,
   });
+  /* The app's positioning pass: one rAF after mount moves the panel from
+     the initial (0,0) to its real position. */
+  React.useEffect(() => {
+    if (!open) return;
+    const raf = requestAnimationFrame(() => setPos({ top: 240, left: 80 }));
+    return () => cancelAnimationFrame(raf);
+  }, [open]);
   return (
     <div className="row" data-testid="panel-demo">
+      {/* fixed so the trigger's viewport position is deterministic regardless
+          of page scroll (Playwright scrolls elements into view before
+          clicking — the panel's anchor math depends on the trigger's spot) */}
       <button
         ref={triggerRef}
         data-testid="panel-trigger"
         onClick={() => setOpen(o => !o)}
-        style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #71717a', background: '#18181b', color: '#fafafa', cursor: 'pointer' }}
+        style={{ position: 'fixed', left: 80, top: 20, zIndex: 50, padding: '8px 14px', borderRadius: 8, border: '1px solid #71717a', background: '#18181b', color: '#fafafa', cursor: 'pointer' }}
       >
         Panel trigger (clone close)
       </button>
-      <span className="label" style={{ marginLeft: 8 }}>
+      <span className="label" style={{ marginLeft: 8, visibility: 'hidden' }}>
         open={String(open)} — panel pins a clone at its rect on close
       </span>
       {open && (
@@ -432,6 +469,7 @@ function App() {
         <UncontrolledMenu />
         <InitialHighlightMenu />
         <LongMenuDemo />
+        <RightEdgeMenu />
         <SubmenuDemo />
         <ItemManagerDemo />
       </section>

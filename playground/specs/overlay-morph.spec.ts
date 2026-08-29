@@ -80,6 +80,25 @@ test('the close clone is pinned at the panel rect, never at the view origin', as
   expect(cloneTop).toBeGreaterThan(10);
 });
 
+test('the close clone shrinks toward the anchor, not the far corner', async ({ page }) => {
+  /* The panel's trigger sits ABOVE the panel: the shrink origin must be the
+     anchor-facing edge (top), not the far corner. A bottom-right origin
+     (100% 100%) makes the clone visibly slide right as it scales down —
+     the detached-node trap (the origin used to be computed from the live
+     node's zero rect, which pinned the far corner). */
+  await page.goto('/');
+  const t = page.getByTestId('panel-trigger');
+
+  await t.click();
+  await page.waitForTimeout(400);
+  await t.click();
+  const clone = page.locator('[data-morph-clone]').first();
+  await expect(clone).toBeAttached();
+  const origin = await clone.evaluate(el => el.style.transformOrigin);
+  expect(origin).not.toBe('100% 100%');
+  expect(origin).toMatch(/^(0%|50%) 0%$/);
+});
+
 test('open and close morphs animate (transform frames mid-flight)', async ({ page }) => {
   await page.goto('/');
   const t = page.getByTestId('panel-trigger');

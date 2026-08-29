@@ -51,10 +51,18 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
   const highlight = useMenuHighlightState();
 
   /* One open overlay at a time: opening the context menu closes any open
-     dropdown first. */
+     dropdown first. Also RESET the single-highlight on open: the highlight
+     state lives in this component (parents toggle `open` on an always-mounted
+     ContextMenu), and a stationary cursor fires no pointerenter for the
+     newly-opened menu (Safari never fires enter for elements that appear
+     under a still cursor) — without the reset, the previously selected item
+     stays lit on every reopen. The same reset DropdownMenu performs with
+     initialHighlightIndex. */
   useEffect(() => {
     if (!open) return;
+    highlight.setHighlighted(-1, 'keyboard');
     return registerOverlayClose(onClose);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, onClose]);
 
   /* Capture the press point at OPEN — the parent resets x/y to 0 when it

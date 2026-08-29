@@ -132,7 +132,12 @@ export function playOverlayClose(token: Token, el: HTMLElement, getAnchor: (() =
  *  be position:absolute in a cell — the clone is hard-pinned fixed at the
  *  live rect, body-level) and zoom the clone out. `fallbackRect` covers the
  *  case where the live node is already detached when the ref fires (its own
- *  rect reads all zeros) — the hook caches the last known rect. */
+ *  rect reads all zeros) — the hook caches the last known rect. The shrink
+ *  ORIGIN is computed from the PINNED rect (`r`), never the live node's: by
+ *  the time the close signal runs the node is usually detached, and a
+ *  zero-size rect makes nearestOverlayOrigin pick the far corner — the clone
+ *  would shrink toward its bottom-right, visibly sliding right as it fades
+ *  instead of collapsing to the anchor. */
 export function cloneOverlayClose(el: HTMLElement, getAnchor: (() => OverlayRect | null) | null, fallbackRect?: OverlayRect | null) {
   const clone = el.cloneNode(true) as HTMLElement;
   const live = el.getBoundingClientRect();
@@ -146,7 +151,10 @@ export function cloneOverlayClose(el: HTMLElement, getAnchor: (() => OverlayRect
   clone.style.margin = '0';
   clone.style.visibility = 'visible';
   clone.style.transition = 'none';
-  const o = anchorOf(el, getAnchor);
+  const a = getAnchor?.() ?? null;
+  const o = a
+    ? nearestOverlayOrigin({ left: r.left, top: r.top, width: r.width, height: r.height }, a)
+    : { x: 0.5, y: 0.5 };
   clone.style.transformOrigin = `${o.x * 100}% ${o.y * 100}%`;
   const doc = el.ownerDocument;
   doc.body.appendChild(clone);
@@ -227,6 +235,26 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
       cloneOverlayClose(el, anchorRef.current, lastRectRef.current);
     });
   }, []);
+  /* The clone cache must track the panel's CURRENT rect, never a stale or
+     mid-motion frame. Three traps: (a) fixed panels mount at their INITIAL
+     position state (0,0) and only reach their real spot after a positioning
+     rAF (the app's useFixedPosition, the kit menu's own) — the rect read at
+     ref-attach is the stale one, and an unmount-driven close then pins its
+     clone at (0,0); (b) a gBCR read while the open zoom is ANIMATING returns
+     the scaled box (an origin/rect a few px off); (c) panels follow the
+     trigger on scroll/resize. Poll once per frame while the element is
+     attached and cache only UNTRANSFORMED frames — the cache is then the
+     last painted, settled rect at any close. One overlay is open at a time,
+     so the loop costs ~one style+layout read per frame while it is. */
+  const refreshRect = useCallback(() => {
+    const el = elRef.current;
+    if (!el) return;
+    if (getComputedStyle(el).transform !== 'none') return; // mid open-morph
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 || r.height > 0) {
+      lastRectRef.current = { left: r.left, top: r.top, width: r.width, height: r.height };
+    }
+  }, []);
   const visibleRef = useRef(opts.visible);
   visibleRef.current = opts.visible;
   const prevVisibleRef = useRef(opts.visible);
@@ -246,6 +274,19 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
     if (!el) return;
     playOverlayOpen(token, el, anchorRef.current);
   }, [ready, opts.visible]);
+
+  // Per-frame cache poll (see refreshRect above).
+  useEffect(() => {
+    if (!ready || !visibleRef.current) return;
+    let raf = 0;
+    const tick = () => {
+      raf = 0;
+      refreshRect();
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { if (raf) cancelAnimationFrame(raf); };
+  }, [ready, refreshRect]);
 
   // Close morph — visible flipped false while the element is still mounted.
   useLayoutEffect(() => {

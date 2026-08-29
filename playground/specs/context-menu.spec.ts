@@ -92,3 +92,29 @@ test('context menu stays static when the page scrolls', async ({ page }) => {
   expect(after!.y).toBeCloseTo(before!.y, 0);
   expect(after!.x).toBeCloseTo(before!.x, 0);
 });
+
+test('context menu: reopening without moving the cursor does not keep the previous highlight', async ({ page }) => {
+  /* The highlight state lives in the always-mounted ContextMenu; a
+     stationary cursor fires no pointerenter for the newly-opened menu
+     (Safari never enters elements that appear under a still cursor) — so
+     without an open-reset, the previously selected item stays lit. Open via
+     the right-edge target: its menu opens away from the cursor, so nothing
+     can legitimately light on reopen in ANY engine. */
+  await page.goto('/');
+  const edge = page.getByTestId('ctx-right-edge');
+
+  await edge.click();
+  await page.waitForTimeout(300);
+  await page.getByRole('menuitem', { name: 'Delete', exact: true }).hover();
+  await expect(litRows(page)).toContainText('Delete');
+
+  // select it — the menu closes, the cursor never moves
+  await page.getByRole('menuitem', { name: 'Delete', exact: true }).click();
+  await expect(page.getByRole('menuitem', { name: /Plain item/ })).toHaveCount(0, { timeout: 5000 });
+
+  // reopen at the SAME spot without moving the mouse
+  await edge.click();
+  await page.waitForTimeout(300);
+  await expect(page.getByRole('menuitem', { name: /Plain item/ })).toBeVisible();
+  await expect(litRows(page)).toHaveCount(0);
+});

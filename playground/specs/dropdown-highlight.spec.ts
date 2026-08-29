@@ -99,6 +99,20 @@ test('a long menu scrolls with the wheel and clamps to the viewport', async ({ p
   expect(after).toBeGreaterThan(before);
 });
 
+test('a fixed-width menu at the right viewport edge stays fully inside it', async ({ page }) => {
+  /* The Schedule version-manager pattern: w-80 (320px) menu under a trigger
+     at the right edge. The viewport clamp must use the CONTENT's width —
+     clamping with the trigger's width leaves the menu cropped at the edge. */
+  await page.goto('/');
+  await page.getByTestId('right-edge-trigger').click();
+  const edgeMenu = page.locator('[role="menu"]', { hasText: 'Edge A' });
+  await expect(edgeMenu).toBeVisible();
+  const box = await edgeMenu.boundingBox();
+  const vw = page.viewportSize()!.width;
+  expect(box!.x + box!.width).toBeLessThanOrEqual(vw);
+  expect(box!.x).toBeGreaterThanOrEqual(0);
+});
+
 test('submenu still opens sideways and its items get their own highlight', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('submenu-trigger').click();

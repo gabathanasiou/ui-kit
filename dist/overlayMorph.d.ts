@@ -41,7 +41,12 @@ export declare function playOverlayClose(token: Token, el: HTMLElement, getAncho
  *  be position:absolute in a cell — the clone is hard-pinned fixed at the
  *  live rect, body-level) and zoom the clone out. `fallbackRect` covers the
  *  case where the live node is already detached when the ref fires (its own
- *  rect reads all zeros) — the hook caches the last known rect. */
+ *  rect reads all zeros) — the hook caches the last known rect. The shrink
+ *  ORIGIN is computed from the PINNED rect (`r`), never the live node's: by
+ *  the time the close signal runs the node is usually detached, and a
+ *  zero-size rect makes nearestOverlayOrigin pick the far corner — the clone
+ *  would shrink toward its bottom-right, visibly sliding right as it fades
+ *  instead of collapsing to the anchor. */
 export declare function cloneOverlayClose(el: HTMLElement, getAnchor: (() => OverlayRect | null) | null, fallbackRect?: OverlayRect | null): void;
 /** The overlay-morph controller. Returns a callback ref for the panel/content
  *  element (compose it with your own ref — e.g. Radix content refs, the app

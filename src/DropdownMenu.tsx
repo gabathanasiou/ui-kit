@@ -412,9 +412,14 @@ export default function DropdownMenu({
       const doc = node.ownerDocument;
       lockDocRef.current = doc;
       doc.addEventListener('keydown', lockHandlerRef.current, { capture: true });
+      /* offsetWidth works while the content is still visibility-hidden —
+         the real panel width for the viewport clamp (see fixedOpts above). */
+      setContentWidth(node.offsetWidth);
+      setContentReady(true);
     } else {
       lockDocRef.current?.removeEventListener('keydown', lockHandlerRef.current, { capture: true });
       lockDocRef.current = null;
+      setContentReady(false);
     }
     contentElRef.current = node;
     setContentRef(node);
@@ -426,13 +431,23 @@ export default function DropdownMenu({
      rAF flips `ready`. Submenus keep the Radix popper side-placement. */
   const [pos, setPos] = useState({ top: 0, left: 0, width: 0, maxH: 320, ready: false } as { top: number; left: number; width: number; maxH: number; bottom?: number; ready?: boolean });
   const [triggerWidth, setTriggerWidth] = useState(0);
+  /* The portal content mounts in a LATER commit than the `open` flip — and
+     the viewport clamp must measure the CONTENT's width, not the trigger's
+     (a `width` class like w-80 makes the panel much wider than its trigger;
+     clamping against the trigger width left fixed-width menus cropped at the
+     viewport edge). The composed ref captures both facts on that later mount. */
+  const [contentReady, setContentReady] = useState(false);
+  const [contentWidth, setContentWidth] = useState(0);
   useEffect(() => {
     if (open && triggerRef.current) setTriggerWidth(triggerRef.current.getBoundingClientRect().width);
   }, [open]);
-  const fixedOpts = useMemo(() => ({ panelWidth: triggerWidth || undefined }), [triggerWidth]);
+  const fixedOpts = useMemo(() => ({ panelWidth: (contentWidth || triggerWidth) || undefined }), [contentWidth, triggerWidth]);
   /* The menu max-height is HARD-CAPPED at 24rem (the content class is
-     overridden by the positioning's inline maxHeight, so the cap lives here). */
-  useFixedPosition(triggerRef, open, (p) => setPos({ ...p, maxH: Math.min(p.maxH, 384), ready: true }), fixedOpts);
+     overridden by the positioning's inline maxHeight, so the cap lives here).
+     Gated on contentReady: the first measure must already know the real panel
+     width (the panel stays visibility-hidden until ready, so there is no
+     flash — one position, the right one). */
+  useFixedPosition(triggerRef, open && contentReady, (p) => setPos({ ...p, maxH: Math.min(p.maxH, 384), ready: true }), fixedOpts);
   /* The panel is `visibility: hidden` until the positioning rAF flips ready —
      and focusing a hidden element is a no-op, so Radix's open autofocus was
      silently dropped (the keyboard stayed on the trigger/BODY and menu keys
