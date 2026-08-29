@@ -169,6 +169,10 @@ export interface ModalProps {
   onReset?: () => void;
   /** Stack/zoom/size transitions on this instance (default true). */
   morph?: boolean;
+  /** Lock the modal open (default true): Esc/backdrop/overlay-touch/X are
+     no-ops and the X button is hidden — the caller decides when it closes
+     (e.g. the Project Manager when no project is open). */
+  closable?: boolean;
   /** Flat "dialog" chrome: no header bar or footer bar (no borders/bands) —
      the title row and the footer row sit on the same surface as the body.
      The Dialog (confirm/prompt/alert) renders through this mode. Same
@@ -187,6 +191,7 @@ export default function Modal({
   onReset,
   morph = true,
   flat = false,
+  closable = true,
 }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -274,7 +279,7 @@ export default function Modal({
      the caller's unmount happens after the animation. Stacked children skip
      the self-zoom (the survivor's morph-back is the close effect). */
   const doClose = useCallback(() => {
-    if (closingRef.current) return;
+    if (!closable || closingRef.current) return;
     const el = contentRef.current;
     const stacked = !!el && stackParents(el).length > 0;
     if (!el || !morph || reduceMotion() || stacked) { onClose(); return; }
@@ -288,7 +293,7 @@ export default function Modal({
       endAnim();
       onClose();
     });
-  }, [morph, onClose]);
+  }, [morph, onClose, closable]);
 
   /* Unmount-driven closes (action buttons — Save/Confirm/select call the
      caller's onClose directly, which unmounts this component before any
@@ -521,9 +526,11 @@ export default function Modal({
               <RadixDialog.Title className={`${FLAT_TITLE} font-bold text-white truncate`}>
                 {title}
               </RadixDialog.Title>
-              <RadixDialog.Close className="text-zinc-500 hover:text-white transition-colors shrink-0">
-                <X className={FLAT_CLOSE} />
-              </RadixDialog.Close>
+              {closable && (
+                <RadixDialog.Close className="text-zinc-500 hover:text-white transition-colors shrink-0">
+                  <X className={FLAT_CLOSE} />
+                </RadixDialog.Close>
+              )}
             </div>
           ) : (
           <div
@@ -545,9 +552,11 @@ export default function Modal({
                   Reset
                 </button>
               )}
-              <RadixDialog.Close className="text-zinc-500 hover:text-white transition-colors shrink-0">
-                <X className={CLOSE_ICON} />
-              </RadixDialog.Close>
+              {closable && (
+                <RadixDialog.Close className="text-zinc-500 hover:text-white transition-colors shrink-0">
+                  <X className={CLOSE_ICON} />
+                </RadixDialog.Close>
+              )}
             </div>
           </div>
           )}
