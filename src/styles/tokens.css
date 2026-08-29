@@ -7,10 +7,10 @@
  *
  * The defaults reproduce the lemon_schedule visuals pixel-for-pixel.
  *
- * HOVER GATING: all hover styles live behind @media (any-hover: hover) so
- * iPadOS (primary pointer stays coarse even with a trackpad/pencil) keeps
- * working — this is the core iOS interaction rule. :active feedback is
- * outside the gate: instant on touch.
+ * HOVER: hover styles are UNGATED so iOS Safari's native tap-to-hover
+ * engages on touch — the first tap applies :hover (highlight/reveal, sticky
+ * until the next tap) and defers the click to the second tap. :active
+ * feedback is instant on touch as always.
  */
 
 :root {
@@ -262,7 +262,16 @@
   transition: none;
 }
 
-
+/* Ungated :hover fill — iOS Safari's native tap-to-hover needs a real
+   :hover rule on the tapped element: the first tap lights the row (sticky)
+   and defers the click to the second tap. The single-highlight suppression
+   below hides this fill while a roving-focus highlight is active, so
+   keyboard and pointer never light two rows at once. */
+.ui-item:hover,
+.ui-item:focus-visible {
+  background: var(--ui-item-hover-bg);
+  color: var(--ui-item-hover-text);
+}
 
 .ui-item-danger {
   color: var(--ui-danger-text);
@@ -273,21 +282,33 @@
   color: var(--ui-danger-active-text);
 }
 
-@media (any-hover: hover) {
-  .ui-item-danger:hover,
-  .ui-item-danger:focus-visible {
-    background: var(--ui-danger-hover-bg);
-    color: var(--ui-danger-hover-text);
-  }
+.ui-item-danger:hover,
+.ui-item-danger:focus-visible {
+  background: var(--ui-danger-hover-bg);
+  color: var(--ui-danger-hover-text);
 }
 
 /* Single-highlight (the EntityDropdown-panel model): ONE lit row —
    `.ui-item-highlighted`, written by pointer hover AND the keyboard arrows
-   (latest wins; hover-leave clears a pointer-driven highlight). No CSS
-   :hover fill and Radix's roving-focus `[data-highlighted]` is inert. */
-.ui-item-highlighted {
+   (latest wins; hover-leave clears a pointer-driven highlight). Radix's
+   roving-focus `[data-highlighted]` is inert. The CSS :hover fill above
+   must never coexist with the roving-focus highlight — when ANY item is
+   [data-highlighted] (keyboard arrows / pointerenter via DropdownItem),
+   only that row reads as selected. */
+.ui-item.ui-item-highlighted {
   background: var(--ui-item-highlight-bg);
   color: var(--ui-item-highlight-text);
+}
+
+/* Single-highlight suppression: while ANY item carries the kit-lit
+   `.ui-item-highlighted` (keyboard arrows / pointerenter via DropdownItem),
+   a DIFFERENT item under the mouse must not show its CSS :hover fill — only
+   the lit row reads as selected. Keyed on the kit class, NOT Radix's
+   roving-focus [data-highlighted]: Radix leaves that attr on the last
+   pointer-hovered item when the keyboard moves the highlight away, so it
+   would suppress the wrong row. */
+.ui-menu:has(.ui-item.ui-item-highlighted) .ui-item:hover:not(.ui-item-highlighted) {
+  background: transparent;
 }
 
 /* The CURRENT VALUE (selected) row — the panel's checked-row look: its own
@@ -344,24 +365,20 @@
   transition: none;
 }
 
-@media (any-hover: hover) {
-  .ui-icon-btn:hover,
-  .ui-icon-btn:focus-visible {
-    background: var(--ui-icon-btn-active-hover-bg);
-    color: var(--ui-item-hover-text);
-  }
+.ui-icon-btn:hover,
+.ui-icon-btn:focus-visible {
+  background: var(--ui-icon-btn-active-hover-bg);
+  color: var(--ui-item-hover-text);
 }
 
 .ui-icon-btn-active {
   color: var(--ui-icon-btn-active-text, var(--ui-accent-soft-text));
 }
 
-@media (any-hover: hover) {
-  .ui-icon-btn-active:hover,
-  .ui-icon-btn-active:focus-visible {
-    background: var(--ui-icon-btn-active-hover-bg);
-    color: var(--ui-icon-btn-active-text, var(--ui-accent-soft-text));
-  }
+.ui-icon-btn-active:hover,
+.ui-icon-btn-active:focus-visible {
+  background: var(--ui-icon-btn-active-hover-bg);
+  color: var(--ui-icon-btn-active-text, var(--ui-accent-soft-text));
 }
 
 .ui-icon-btn-danger {
@@ -379,34 +396,28 @@
   color: var(--ui-danger-active-text);
 }
 
-@media (any-hover: hover) {
-  .ui-icon-btn-danger:hover,
-  .ui-icon-btn-danger:focus-visible {
-    background: var(--ui-danger-hover-bg);
-    color: var(--ui-danger-text);
-  }
+.ui-icon-btn-danger:hover,
+.ui-icon-btn-danger:focus-visible {
+  background: var(--ui-danger-hover-bg);
+  color: var(--ui-danger-text);
 }
 
 .ui-icon-btn-confirm:active {
   color: var(--ui-confirm-hover);
 }
 
-@media (any-hover: hover) {
-  .ui-icon-btn-confirm:hover,
-  .ui-icon-btn-confirm:focus-visible {
-    color: var(--ui-confirm-hover);
-  }
+.ui-icon-btn-confirm:hover,
+.ui-icon-btn-confirm:focus-visible {
+  color: var(--ui-confirm-hover);
 }
 
 .ui-icon-btn-cancel:active {
   color: var(--ui-cancel-hover);
 }
 
-@media (any-hover: hover) {
-  .ui-icon-btn-cancel:hover,
-  .ui-icon-btn-cancel:focus-visible {
-    color: var(--ui-cancel-hover);
-  }
+.ui-icon-btn-cancel:hover,
+.ui-icon-btn-cancel:focus-visible {
+  color: var(--ui-cancel-hover);
 }
 
 /* ── Separators & labels ──────────────────────────────────────────────── */
@@ -482,13 +493,11 @@
   border-color: var(--ui-check-accent);
 }
 
-@media (any-hover: hover) {
-  .ui-checkbox:hover .ui-checkbox-box {
-    border-color: var(--ui-check-hover-border);
-  }
-  .ui-checkbox:hover input:checked + .ui-checkbox-box {
-    border-color: var(--ui-check-hover-border);
-  }
+.ui-checkbox:hover .ui-checkbox-box {
+  border-color: var(--ui-check-hover-border);
+}
+.ui-checkbox:hover input:checked + .ui-checkbox-box {
+  border-color: var(--ui-check-hover-border);
 }
 
 .ui-checkbox-label {
@@ -526,11 +535,9 @@
   transition: none;
 }
 
-@media (any-hover: hover) {
-  .ui-checkbox-pill:hover {
-    background: var(--ui-check-pill-hover-bg);
-    border-color: var(--ui-check-pill-hover-border);
-  }
+.ui-checkbox-pill:hover {
+  background: var(--ui-check-pill-hover-bg);
+  border-color: var(--ui-check-pill-hover-border);
 }
 
 .ui-checkbox-pill .ui-check-indicator {
@@ -558,10 +565,8 @@
   touch-action: manipulation;
 }
 
-@media (any-hover: hover) {
-  .ui-row:hover {
-    background: var(--ui-row-hover-bg);
-  }
+.ui-row:hover {
+  background: var(--ui-row-hover-bg);
 }
 
 /* ItemManager rows keep Radix's native keyboard (no registered highlight
@@ -583,15 +588,13 @@
   color: var(--ui-text);
 }
 
-@media (any-hover: hover) {
-  .ui-row:hover .ui-row-hover-text,
-  .ui-row:hover .ui-icon-btn,
-  .ui-row:hover .ui-icon-btn-danger {
-    color: var(--ui-item-hover-text);
-  }
-  .ui-row:hover .ui-icon-btn-danger:hover {
-    color: var(--ui-danger-text);
-  }
+.ui-row:hover .ui-row-hover-text,
+.ui-row:hover .ui-icon-btn,
+.ui-row:hover .ui-icon-btn-danger {
+  color: var(--ui-item-hover-text);
+}
+.ui-row:hover .ui-icon-btn-danger:hover {
+  color: var(--ui-danger-text);
 }
 
 .ui-disabled {
@@ -637,11 +640,9 @@
   background: var(--ui-btn-hover-bg);
 }
 
-@media (any-hover: hover) {
-  .ui-btn-primary:hover,
-  .ui-btn-primary:focus-visible {
-    background: var(--ui-btn-hover-bg);
-  }
+.ui-btn-primary:hover,
+.ui-btn-primary:focus-visible {
+  background: var(--ui-btn-hover-bg);
 }
 
 .ui-btn-danger {
@@ -653,11 +654,9 @@
   background: var(--ui-danger-solid-hover);
 }
 
-@media (any-hover: hover) {
-  .ui-btn-danger:hover,
-  .ui-btn-danger:focus-visible {
-    background: var(--ui-danger-solid-hover);
-  }
+.ui-btn-danger:hover,
+.ui-btn-danger:focus-visible {
+  background: var(--ui-danger-solid-hover);
 }
 
 .ui-btn-ghost {
@@ -669,15 +668,13 @@
   color: var(--ui-text-strong);
 }
 
-@media (any-hover: hover) {
-  .ui-btn-ghost:hover,
-  .ui-btn-ghost:focus-visible {
-    background: var(--ui-item-hover-bg);
-    color: var(--ui-text-strong);
-  }
+.ui-btn-ghost:hover,
+.ui-btn-ghost:focus-visible {
+  background: var(--ui-item-hover-bg);
+  color: var(--ui-text-strong);
 }
 
-/* ── Muted text that brightens on hover (gated) ───────────────────────── */
+/* ── Muted text that brightens on hover ──────────────────────────────── */
 
 .ui-text {
   color: var(--ui-text);
@@ -692,27 +689,20 @@
   transition: color 150ms ease;
 }
 
-@media (any-hover: hover) {
-  .ui-text-muted-interactive:hover,
-  .ui-text-muted-interactive:focus-visible {
-    color: var(--ui-text-strong);
-  }
+.ui-text-muted-interactive:hover,
+.ui-text-muted-interactive:focus-visible {
+  color: var(--ui-text-strong);
 }
 
-/* ── Reveal-on-hover (touch sees it always) ───────────────────────────── */
+/* ── Reveal-on-hover (hidden until hover/tap; keyboard-reachable) ─────── */
 
 .hover-reveal {
-  opacity: 1;
+  opacity: 0;
 }
-
-@media (any-hover: hover) and (any-pointer: fine) {
-  .hover-reveal {
-    opacity: 0;
-  }
-  .group:hover .hover-reveal,
-  :hover > .hover-reveal {
-    opacity: 1;
-  }
+.group:hover .hover-reveal,
+.group:focus-within .hover-reveal,
+:hover > .hover-reveal {
+  opacity: 1;
 }
 
 
@@ -746,10 +736,8 @@
   color: var(--ui-text-strong);
 }
 
-@media (any-hover: hover) {
-  .ui-checklist-toggleall:hover {
-    color: var(--ui-text-strong);
-  }
+.ui-checklist-toggleall:hover {
+  color: var(--ui-text-strong);
 }
 
 .ui-checklist {
@@ -778,10 +766,8 @@
   transition: none;
 }
 
-@media (any-hover: hover) {
-  .ui-checklist-item:hover {
-    background: var(--ui-check-row-hover-bg);
-  }
+.ui-checklist-item:hover {
+  background: var(--ui-check-row-hover-bg);
 }
 
 .ui-checklist-item-checked {
