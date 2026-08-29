@@ -341,7 +341,7 @@ function at(e, t, n, r) {
   const d = m(r);
   d.current = r;
   const c = m({ text: "", time: 0 });
-  n.current = (s) => {
+  n.current || (n.current = (s) => {
     var p, h;
     if (!u.current) return;
     const l = a.current.items;
@@ -374,7 +374,7 @@ function at(e, t, n, r) {
         }
       }
     }
-  };
+  });
 }
 function ut(e, t, n, r, i, a) {
   const u = m(t);
@@ -382,19 +382,19 @@ function ut(e, t, n, r, i, a) {
   const d = m(e);
   d.current = e;
   const c = m(i);
-  c.current = i, a.current = (s) => {
+  c.current = i, a.current || (a.current = (s) => {
     if (!d.current || c.current) return;
     const l = r.current;
     l && l.contains(s.target) || u.current.items.length === 0 || !(s.key === "ArrowDown" || s.key === "ArrowUp" || s.key === "ArrowLeft" || s.key === "ArrowRight" || s.key === "Enter" || s.key === " " || s.key.length === 1 && !s.ctrlKey && !s.metaKey && !s.altKey) || (s.preventDefault(), s.stopImmediatePropagation(), n.current(s));
-  };
+  });
 }
 function dt(e, t) {
   const n = m(e);
-  n.current = e, t.current = (r) => {
+  n.current = e, t.current || (t.current = (r) => {
     if (!n.current) return;
     const i = r.currentTarget;
     i.scrollHeight > i.clientHeight && (r.preventDefault(), i.scrollTop += r.deltaY);
-  };
+  });
 }
 function _e({
   open: e,

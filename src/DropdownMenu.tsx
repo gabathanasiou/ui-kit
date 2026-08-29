@@ -171,14 +171,13 @@ export function useMenuHighlightState(): MenuHighlightApi {
 
 /** Keyboard for a highlight surface: arrows move the single index, Enter/Space
  *  activate the highlighted item, letter typeahead jumps to the first match
- *  (500ms prefix buffer). The handler is written into `handlerRef` (fresh
- *  closure every render) and ATTACHED by the content's composed ref — the
- *  Radix portal content mounts in a LATER commit than the `open` flip, so a
- *  plain [open] effect would miss it. Registered at CAPTURE with
- *  stopImmediatePropagation so it always beats Radix's own roving focus/
- *  typeahead (which would light a second row). Menus WITHOUT registered
- *  highlight items (ItemManagerDropdown's bespoke rows) keep Radix's native
- *  keyboard handling untouched. */
+ *  (500ms prefix buffer). The handler is created ONCE per hook instance and
+ *  ATTACHED by the content's composed ref — the Radix portal content mounts
+ *  in a LATER commit than the `open` flip, so a plain [open] effect would
+ *  miss it. Registered at CAPTURE with stopImmediatePropagation so it always
+ *  beats Radix's own roving focus/typeahead (which would light a second row).
+ *  Menus WITHOUT registered highlight items (ItemManagerDropdown's bespoke
+ *  rows) keep Radix's native keyboard handling untouched. */
 export function useMenuKeys(
   active: boolean,
   api: MenuHighlightApi,
@@ -194,47 +193,54 @@ export function useMenuKeys(
   const optsRef = useRef(opts);
   optsRef.current = opts;
   const bufferRef = useRef({ text: '', time: 0 });
-  handlerRef.current = (e: KeyboardEvent) => {
-    if (!activeRef.current) return;
-    const items = apiRef.current.items;
-    if (items.length === 0) return; // bespoke surfaces (ItemManager) keep Radix's keyboard
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      const dir = e.key === 'ArrowDown' ? 1 : -1;
-      const next = (highlightedRef.current + dir + items.length) % items.length;
-      apiRef.current.setHighlighted(next, 'keyboard');
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      const idx = highlightedRef.current;
-      if (idx >= 0 && idx < items.length && items[idx].submenu) items[idx].activate();
-    } else if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      optsRef.current?.onCloseSub?.();
-    } else if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      const idx = highlightedRef.current;
-      if (idx >= 0 && idx < items.length) items[idx].activate();
-    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      const now = Date.now();
-      const text = (now - bufferRef.current.time > 500 ? '' : bufferRef.current.text) + e.key.toLowerCase();
-      bufferRef.current = { text, time: now };
-      if (!text) return;
-      const start = highlightedRef.current + 1;
-      for (let i = 0; i < items.length; i++) {
-        const idx = (start + i) % items.length;
-        if (items[idx].label.toLowerCase().startsWith(text)) {
-          apiRef.current.setHighlighted(idx, 'keyboard');
-          return;
+  /* Stable handler — created ONCE, reads everything via refs. The composed
+     ref attaches AND removes this exact function; a per-render reassignment
+     would leave the attached closure on the node after unmount (the cleanup
+     removes the newest closure, not the attached one) and duplicate listeners
+     on the content during ref churn. */
+  if (!handlerRef.current) {
+    handlerRef.current = (e: KeyboardEvent) => {
+      if (!activeRef.current) return;
+      const items = apiRef.current.items;
+      if (items.length === 0) return; // bespoke surfaces (ItemManager) keep Radix's keyboard
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const dir = e.key === 'ArrowDown' ? 1 : -1;
+        const next = (highlightedRef.current + dir + items.length) % items.length;
+        apiRef.current.setHighlighted(next, 'keyboard');
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const idx = highlightedRef.current;
+        if (idx >= 0 && idx < items.length && items[idx].submenu) items[idx].activate();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        optsRef.current?.onCloseSub?.();
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const idx = highlightedRef.current;
+        if (idx >= 0 && idx < items.length) items[idx].activate();
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const now = Date.now();
+        const text = (now - bufferRef.current.time > 500 ? '' : bufferRef.current.text) + e.key.toLowerCase();
+        bufferRef.current = { text, time: now };
+        if (!text) return;
+        const start = highlightedRef.current + 1;
+        for (let i = 0; i < items.length; i++) {
+          const idx = (start + i) % items.length;
+          if (items[idx].label.toLowerCase().startsWith(text)) {
+            apiRef.current.setHighlighted(idx, 'keyboard');
+            return;
+          }
         }
       }
-    }
-  };
+    };
+  }
 }
 
 /** Mini-modal keyboard lock: while a surface is open, the MENU keys
@@ -244,7 +250,7 @@ export function useMenuKeys(
  *  sees them. Events that already target the surface pass through to the
  *  content's listener; every other key (Cmd+Z, Escape, Tab…) is untouched.
  *  Pass `standDown` when a CHILD surface (an open submenu) owns the keys.
- *  The handler is written into `lockHandlerRef` and ATTACHED by the content's
+ *  The handler is created ONCE per hook instance and ATTACHED by the content's
  *  composed ref (the Radix portal mounts later than the open flip — the same
  *  reason useMenuKeys/useMenuWheel attach there). */
 export function useMenuKeyLock(
@@ -261,37 +267,48 @@ export function useMenuKeyLock(
   activeRef.current = active;
   const standDownRef = useRef(standDown);
   standDownRef.current = standDown;
-  lockHandlerRef.current = (e: KeyboardEvent) => {
-    if (!activeRef.current || standDownRef.current) return;
-    const el = contentRef.current;
-    if (el && el.contains(e.target as Node)) return;
-    if (apiRef.current.items.length === 0) return; // bespoke surfaces keep Radix's keys
-    const isMenuKey = e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'ArrowRight'
-      || e.key === 'Enter' || e.key === ' '
-      || (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey);
-    if (!isMenuKey) return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    keysHandlerRef.current(e);
-  };
+  /* Stable handler — created ONCE, reads everything via refs. The composed
+     ref's cleanup removes THIS exact function; a per-render reassignment
+     would leak the attached closure on the DOCUMENT after unmount (the
+     cleanup removes the newest closure, not the attached one) — and a leaked
+     lock from a remounted menu keeps its last activeRef forever, eating menu
+     keys app-wide. */
+  if (!lockHandlerRef.current) {
+    lockHandlerRef.current = (e: KeyboardEvent) => {
+      if (!activeRef.current || standDownRef.current) return;
+      const el = contentRef.current;
+      if (el && el.contains(e.target as Node)) return;
+      if (apiRef.current.items.length === 0) return; // bespoke surfaces keep Radix's keys
+      const isMenuKey = e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'ArrowRight'
+        || e.key === 'Enter' || e.key === ' '
+        || (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey);
+      if (!isMenuKey) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      keysHandlerRef.current(e);
+    };
+  }
 }
 
 /** Manual wheel scrolling for portaled menu content (a Modal's scroll lock
  *  preventDefaults wheels outside the dialog; the v0.1.52 capture interceptor
  *  in useOverlayMorph already stops propagation for the content — this is the
  *  actual scroll, belt and suspenders with the interceptor). Attached by the
- *  content's composed ref (same later-commit reason as useMenuKeys). */
+ *  content's composed ref (same later-commit reason as useMenuKeys); the
+ *  handler is created ONCE so re-attaches during ref churn stay deduped. */
 export function useMenuWheel(active: boolean, handlerRef: React.MutableRefObject<(e: WheelEvent) => void>) {
   const activeRef = useRef(active);
   activeRef.current = active;
-  handlerRef.current = (e: WheelEvent) => {
-    if (!activeRef.current) return;
-    const el = e.currentTarget as HTMLElement;
-    if (el.scrollHeight > el.clientHeight) {
-      e.preventDefault();
-      el.scrollTop += e.deltaY;
-    }
-  };
+  if (!handlerRef.current) {
+    handlerRef.current = (e: WheelEvent) => {
+      if (!activeRef.current) return;
+      const el = e.currentTarget as HTMLElement;
+      if (el.scrollHeight > el.clientHeight) {
+        e.preventDefault();
+        el.scrollTop += e.deltaY;
+      }
+    };
+  }
 }
 
 export interface DropdownMenuProps {

@@ -59,14 +59,13 @@ export declare const useMenuHighlight: () => MenuHighlightApi | null;
 export declare function useMenuHighlightState(): MenuHighlightApi;
 /** Keyboard for a highlight surface: arrows move the single index, Enter/Space
  *  activate the highlighted item, letter typeahead jumps to the first match
- *  (500ms prefix buffer). The handler is written into `handlerRef` (fresh
- *  closure every render) and ATTACHED by the content's composed ref — the
- *  Radix portal content mounts in a LATER commit than the `open` flip, so a
- *  plain [open] effect would miss it. Registered at CAPTURE with
- *  stopImmediatePropagation so it always beats Radix's own roving focus/
- *  typeahead (which would light a second row). Menus WITHOUT registered
- *  highlight items (ItemManagerDropdown's bespoke rows) keep Radix's native
- *  keyboard handling untouched. */
+ *  (500ms prefix buffer). The handler is created ONCE per hook instance and
+ *  ATTACHED by the content's composed ref — the Radix portal content mounts
+ *  in a LATER commit than the `open` flip, so a plain [open] effect would
+ *  miss it. Registered at CAPTURE with stopImmediatePropagation so it always
+ *  beats Radix's own roving focus/typeahead (which would light a second row).
+ *  Menus WITHOUT registered highlight items (ItemManagerDropdown's bespoke
+ *  rows) keep Radix's native keyboard handling untouched. */
 export declare function useMenuKeys(active: boolean, api: MenuHighlightApi, handlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>, opts?: {
     onCloseSub?: () => void;
 }): void;
@@ -77,7 +76,7 @@ export declare function useMenuKeys(active: boolean, api: MenuHighlightApi, hand
  *  sees them. Events that already target the surface pass through to the
  *  content's listener; every other key (Cmd+Z, Escape, Tab…) is untouched.
  *  Pass `standDown` when a CHILD surface (an open submenu) owns the keys.
- *  The handler is written into `lockHandlerRef` and ATTACHED by the content's
+ *  The handler is created ONCE per hook instance and ATTACHED by the content's
  *  composed ref (the Radix portal mounts later than the open flip — the same
  *  reason useMenuKeys/useMenuWheel attach there). */
 export declare function useMenuKeyLock(active: boolean, api: MenuHighlightApi, keysHandlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>, contentRef: React.RefObject<HTMLElement | null>, standDown: boolean, lockHandlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>): void;
@@ -85,7 +84,8 @@ export declare function useMenuKeyLock(active: boolean, api: MenuHighlightApi, k
  *  preventDefaults wheels outside the dialog; the v0.1.52 capture interceptor
  *  in useOverlayMorph already stops propagation for the content — this is the
  *  actual scroll, belt and suspenders with the interceptor). Attached by the
- *  content's composed ref (same later-commit reason as useMenuKeys). */
+ *  content's composed ref (same later-commit reason as useMenuKeys); the
+ *  handler is created ONCE so re-attaches during ref churn stay deduped. */
 export declare function useMenuWheel(active: boolean, handlerRef: React.MutableRefObject<(e: WheelEvent) => void>): void;
 export interface DropdownMenuProps {
     open: boolean;
