@@ -202,10 +202,16 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
               const date = new Date(d + 'T00:00:00');
               const label = date.toLocaleString('default', { month: 'short', day: 'numeric' });
               return (
-                <span key={d} className={`inline-flex items-center gap-1 rounded font-medium ${dark ? 'bg-zinc-700 text-zinc-200' : 'bg-zinc-200 text-zinc-700'} ${chipCls}`}>
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => toggle(d)}
+                  aria-label={`Remove ${label}`}
+                  className={`inline-flex items-center gap-1 rounded font-medium cursor-pointer transition-colors ${dark ? 'bg-zinc-700 text-zinc-200 hover:bg-zinc-600' : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300'} ${chipCls}`}
+                >
                   {label}
-                  <button type="button" onClick={() => toggle(d)} className={`hover:opacity-70 leading-none ${dark ? 'text-zinc-400' : 'text-zinc-500'}`} aria-label={`Remove ${label}`}>&times;</button>
-                </span>
+                  <span className={`leading-none ${dark ? 'text-zinc-400' : 'text-zinc-500'}`} aria-hidden="true">&times;</span>
+                </button>
               );
             })}
           </div>
