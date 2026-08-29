@@ -555,6 +555,13 @@
   }
 }
 
+/* ItemManager rows keep Radix's native keyboard (no registered highlight
+   items) — the keyboard-lit row must show the SAME fill as the pointer
+   hover. */
+.ui-row:has([data-highlighted]) {
+  background: var(--ui-row-hover-bg);
+}
+
 .ui-row-active {
   background: var(--ui-row-active-bg);
 }
@@ -974,4 +981,33 @@
 
 .ui-menu {
   pointer-events: auto;
+}
+
+/* ── Modal backdrop dim (roadmap 59) ────────────────────────────────────
+   Exactly ONE dim layer per window, belonging to the TOP open modal. Pure
+   sibling CSS so the swap is SYNCHRONOUS with the DOM (an observer-driven
+   flip paints one frame of double-dim on stacked opens):
+   - the last open overlay dims,
+   - a CLOSING overlay (data-state="closed") clears immediately,
+   - any overlay with an open overlay FOLLOWING it (a non-top stacked modal)
+     clears.
+   The background-color transitions cross-fade, keeping the visible dim
+   constant through stacked opens AND closes (the child fades out while the
+   parent fades back in behind it — alpha compositing holds ~0.2). */
+/* Only the CLOSING overlay fades (the standalone-close dim-out). Stacked
+   swaps are instant — a stacked child unmounts its overlay at once, so the
+   parent's dim must return in the SAME frame or the background visibly dips
+   to 0 and back. */
+.ui-modal-overlay {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.ui-modal-overlay[data-state="closed"] {
+  background: transparent;
+  /* fades out WITH the modal's zoom-out (220ms, the morph easing) */
+  transition: background-color 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.ui-modal-overlay:has(~ .ui-modal-overlay[data-state="open"]) {
+  background: transparent;
 }

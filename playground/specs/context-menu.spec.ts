@@ -11,12 +11,12 @@ async function openCtx(page: Page) {
   await page.goto('/');
   await page.getByTestId('ctx-target').click();
   await page.waitForTimeout(300);
-  await expect(page.getByRole('button', { name: /Plain item/ })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: /Plain item/ })).toBeVisible();
 }
 
 test('context menu: single highlight on hover and leaving clears it', async ({ page }) => {
   await openCtx(page);
-  await page.getByRole('button', { name: 'Delete', exact: true }).hover();
+  await page.getByRole('menuitem', { name: 'Delete', exact: true }).hover();
   await expect(litRows(page)).toHaveCount(1);
   await expect(litRows(page)).toContainText('Delete');
   await page.mouse.move(700, 150);
@@ -33,57 +33,62 @@ test('context menu: arrows/typeahead/Enter work with the focus elsewhere (key lo
   await page.keyboard.type('d');
   await expect(litRows(page)).toContainText('Delete');
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('button', { name: /Plain item/ })).toHaveCount(0, { timeout: 5000 });
+  await expect(page.getByRole('menuitem', { name: /Plain item/ })).toHaveCount(0, { timeout: 5000 });
 });
 
 test('context menu: nested subs coexist and the parent survives', async ({ page }) => {
   await openCtx(page);
   // open More… → Deeper… — the chain holds both
-  await page.getByRole('button', { name: /More…/ }).hover();
+  await page.getByRole('menuitem', { name: /More…/ }).hover();
   await page.waitForTimeout(400);
-  await page.getByRole('button', { name: /Deeper…/ }).hover();
+  await page.getByRole('menuitem', { name: /Deeper…/ }).hover();
   await page.waitForTimeout(500);
-  await expect(page.getByRole('button', { name: 'Level 3 A' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'Level 3 A' })).toBeVisible();
 
-  // move back to a parent item — the nested sub closes, the parent stays
-  await page.getByRole('button', { name: /Nested B/ }).hover();
-  await page.waitForTimeout(500);
-  await expect(page.getByRole('button', { name: 'Level 3 A' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /Nested B/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Plain item/ })).toBeVisible();
+  // move back to a parent item — the nested sub closes (Radix grace + the
+  // close morph), the parent stays
+  await page.getByRole('menuitem', { name: /Nested B/ }).hover();
+  await page.waitForTimeout(1000);
+  await expect(page.getByRole('menuitem', { name: 'Level 3 A' })).toHaveCount(0);
+  await expect(page.getByRole('menuitem', { name: /Nested B/ })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: /Plain item/ })).toBeVisible();
 
   // pick a level-3 item from a fresh open
-  await page.getByRole('button', { name: /Deeper…/ }).hover();
+  await page.getByRole('menuitem', { name: /Deeper…/ }).hover();
   await page.waitForTimeout(500);
-  await page.getByRole('button', { name: 'Level 3 B' }).click();
+  await page.getByRole('menuitem', { name: 'Level 3 B' }).click();
   await page.waitForTimeout(400);
   await expect(page.getByText(/pick: Level 3 B/)).toBeVisible();
 });
 
 test('mutual exclusion: a dropdown and a context menu never coexist', async ({ page }) => {
   await page.goto('/');
+  // the dropdown menu is the one with the Ctrl items; the context menu is
+  // the one with the plain items
+  const dropdownMenu = page.locator('[role="menu"]', { hasText: 'Hold' });
   // open a dropdown first
   await page.getByTestId('ctrl-menu-trigger').click();
-  await expect(page.locator('[role="menu"]')).toBeVisible();
+  await expect(dropdownMenu).toBeVisible();
   // open the context menu — the dropdown must close
   await page.getByTestId('ctx-target').click();
   await page.waitForTimeout(400);
-  await expect(page.locator('[role="menu"]')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /Plain item/ })).toBeVisible();
+  await expect(dropdownMenu).toHaveCount(0);
+  await expect(page.getByRole('menuitem', { name: /Plain item/ })).toBeVisible();
 
-  // and the reverse: open a dropdown while the context menu is open
-  await page.getByTestId('ctrl-menu-trigger').click();
+  // and the reverse: dismiss the context menu, then open the dropdown
+  await page.keyboard.press('Escape');
   await page.waitForTimeout(400);
-  await expect(page.getByRole('button', { name: /Plain item/ })).toHaveCount(0);
-  await expect(page.locator('[role="menu"]')).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: /Plain item/ })).toHaveCount(0);
+  await page.getByTestId('ctrl-menu-trigger').click();
+  await expect(dropdownMenu).toBeVisible();
 });
 
 test('context menu stays static when the page scrolls', async ({ page }) => {
   await openCtx(page);
-  const before = await page.getByRole('button', { name: /Plain item/ }).boundingBox();
+  const before = await page.getByRole('menuitem', { name: /Plain item/ }).boundingBox();
   await page.evaluate(() => window.scrollTo(0, 150));
   await page.waitForTimeout(250);
-  const after = await page.getByRole('button', { name: /Plain item/ }).boundingBox();
+  const after = await page.getByRole('menuitem', { name: /Plain item/ }).boundingBox();
   expect(after!.y).toBeCloseTo(before!.y, 0);
   expect(after!.x).toBeCloseTo(before!.x, 0);
 });

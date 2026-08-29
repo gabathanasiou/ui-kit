@@ -479,7 +479,7 @@ export default function Modal({
     <RadixDialog.Root open={open} onOpenChange={(o) => { if (!o) doClose(); }}>
       <RadixDialog.Portal container={portalTarget ?? undefined}>
         <RadixDialog.Overlay
-          className="fixed inset-0 z-[9999] bg-transparent"
+          className="ui-modal-overlay fixed inset-0 z-[9999]"
           style={{ touchAction: 'manipulation' }}
           onTouchEnd={(e) => {
             if (document.querySelector('[data-radix-menu-content][data-state="open"], [data-radix-popper-content-wrapper][data-state="open"]')) return;

@@ -128,20 +128,20 @@ function SubmenuDemo() {
       <DropdownMenu open={open} onOpenChange={setOpen} width="w-40"
         trigger={<Button data-testid="submenu-trigger">Submenu {pick ? `— ${pick}` : ''}</Button>}
       >
-        <DropdownItem>Plain item</DropdownItem>
+        <DropdownItem onClick={() => { setPick('Plain item'); setOpen(false); }}>Plain item</DropdownItem>
         <DropdownSubmenu id="more" label="More…">
-          <DropdownItem onClick={() => setPick('Nested A')}>Nested A</DropdownItem>
-          <DropdownItem onClick={() => setPick('Nested B')}>Nested B</DropdownItem>
+          <DropdownItem onClick={() => { setPick('Nested A'); setOpen(false); }}>Nested A</DropdownItem>
+          <DropdownItem onClick={() => { setPick('Nested B'); setOpen(false); }}>Nested B</DropdownItem>
           <DropdownSubmenu id="deeper" label="Deeper…">
-            <DropdownItem onClick={() => setPick('Level 3 A')}>Level 3 A</DropdownItem>
-            <DropdownItem onClick={() => setPick('Level 3 B')}>Level 3 B</DropdownItem>
+            <DropdownItem onClick={() => { setPick('Level 3 A'); setOpen(false); }}>Level 3 A</DropdownItem>
+            <DropdownItem onClick={() => { setPick('Level 3 B'); setOpen(false); }}>Level 3 B</DropdownItem>
           </DropdownSubmenu>
         </DropdownSubmenu>
         <DropdownSubmenu id="danger" label="Danger zone…">
-          <DropdownItem variant="danger" onClick={() => setPick('Delete everything')}>Delete everything</DropdownItem>
-          <DropdownItem variant="danger" onClick={() => setPick('Wipe')}>Wipe</DropdownItem>
+          <DropdownItem variant="danger" onClick={() => { setPick('Delete everything'); setOpen(false); }}>Delete everything</DropdownItem>
+          <DropdownItem variant="danger" onClick={() => { setPick('Wipe'); setOpen(false); }}>Wipe</DropdownItem>
         </DropdownSubmenu>
-        <DropdownItem>Last item</DropdownItem>
+        <DropdownItem onClick={() => { setPick('Last item'); setOpen(false); }}>Last item</DropdownItem>
       </DropdownMenu>
     </div>
   );
@@ -404,6 +404,10 @@ function MiscSection() {
         </ContextMenu>
         <button data-testid="ctx-target" onClick={e => { const r = (e.target as HTMLElement).getBoundingClientRect(); setCtx({ x: r.left + r.width / 2, y: r.bottom + 4 }); }}>
           Open context menu
+        </button>
+        <button data-testid="ctx-right-edge" style={{ position: 'fixed', right: 8, top: 120, zIndex: 50 }}
+          onClick={e => { setCtx({ x: window.innerWidth - 20, y: 140 }); }}>
+          Open ctx menu at right edge
         </button>
         <span className="label" style={{ marginLeft: 8 }}>pick: {pick}</span>
       </div>

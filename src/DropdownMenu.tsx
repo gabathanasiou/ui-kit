@@ -95,7 +95,11 @@ export const SubmenuContext = createContext<{
   chain: string[];
   setChain: (fn: (c: string[]) => string[]) => void;
   morph: boolean;
-}>({ chain: [], setChain: () => {}, morph: true });
+  /** Set when the KEYBOARD opened a sub (ArrowRight/Enter on a trigger row) —
+     pointer-opened subs must NOT pre-light their first item. */
+  keyboardOpened: string | null;
+  setKeyboardOpened: (id: string | null) => void;
+}>({ chain: [], setChain: () => {}, morph: true, keyboardOpened: null, setKeyboardOpened: () => {} });
 
 // ── Single-highlight context (the EntityDropdown-panel model) ───────────────
 /* ONE highlighted row per surface, written by pointer hover AND the keyboard
@@ -108,6 +112,8 @@ export interface MenuHighlightItem {
   /** Text used by the typeahead letter-jump. */
   label: string;
   activate: () => void;
+  /** A submenu trigger row — ArrowRight opens it (the generic activate). */
+  submenu?: boolean;
 }
 
 export interface MenuHighlightApi {
@@ -173,13 +179,20 @@ export function useMenuHighlightState(): MenuHighlightApi {
  *  typeahead (which would light a second row). Menus WITHOUT registered
  *  highlight items (ItemManagerDropdown's bespoke rows) keep Radix's native
  *  keyboard handling untouched. */
-export function useMenuKeys(active: boolean, api: MenuHighlightApi, handlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>) {
+export function useMenuKeys(
+  active: boolean,
+  api: MenuHighlightApi,
+  handlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>,
+  opts?: { onCloseSub?: () => void },
+) {
   const highlightedRef = useRef(-1);
   highlightedRef.current = api.highlightedIndex;
   const apiRef = useRef(api);
   apiRef.current = api;
   const activeRef = useRef(active);
   activeRef.current = active;
+  const optsRef = useRef(opts);
+  optsRef.current = opts;
   const bufferRef = useRef({ text: '', time: 0 });
   handlerRef.current = (e: KeyboardEvent) => {
     if (!activeRef.current) return;
@@ -191,6 +204,15 @@ export function useMenuKeys(active: boolean, api: MenuHighlightApi, handlerRef: 
       const dir = e.key === 'ArrowDown' ? 1 : -1;
       const next = (highlightedRef.current + dir + items.length) % items.length;
       apiRef.current.setHighlighted(next, 'keyboard');
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const idx = highlightedRef.current;
+      if (idx >= 0 && idx < items.length && items[idx].submenu) items[idx].activate();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      optsRef.current?.onCloseSub?.();
     } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       e.stopImmediatePropagation();
@@ -244,7 +266,8 @@ export function useMenuKeyLock(
     const el = contentRef.current;
     if (el && el.contains(e.target as Node)) return;
     if (apiRef.current.items.length === 0) return; // bespoke surfaces keep Radix's keys
-    const isMenuKey = e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' '
+    const isMenuKey = e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'ArrowRight'
+      || e.key === 'Enter' || e.key === ' '
       || (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey);
     if (!isMenuKey) return;
     e.preventDefault();
@@ -306,6 +329,7 @@ export default function DropdownMenu({
   initialHighlightIndex,
 }: DropdownMenuProps) {
   const [subChain, setSubChain] = useState<string[]>([]);
+  const [keyboardOpenedSub, setKeyboardOpenedSub] = useState<string | null>(null);
   const portalTarget = usePortalTarget();
   const triggerRef = useRef<HTMLElement | null>(null);
   const contentElRef = useRef<HTMLDivElement | null>(null);
@@ -352,7 +376,9 @@ export default function DropdownMenu({
   const keysHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
   const wheelHandlerRef = useRef<(e: WheelEvent) => void>(() => {});
   const lockHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
-  useMenuKeys(open, highlight, keysHandlerRef);
+  /* Keys/lock target only the TOPMOST open surface: the root navigates only
+     while no sub is open (the open sub owns the keyboard). */
+  useMenuKeys(open && subChain.length === 0, highlight, keysHandlerRef);
   useMenuWheel(open, wheelHandlerRef);
   useMenuKeyLock(open, highlight, keysHandlerRef, contentElRef, subChain.length > 0, lockHandlerRef);
   const lockDocRef = useRef<Document | null>(null);
@@ -464,7 +490,7 @@ export default function DropdownMenu({
       </RadixDropdownMenu.Trigger>
       <RadixDropdownMenu.Portal container={portalTarget ?? undefined}>
         <DropdownThemeContext.Provider value={theme}>
-          <SubmenuContext.Provider value={{ chain: subChain, setChain: setSubChain, morph }}>
+          <SubmenuContext.Provider value={{ chain: subChain, setChain: setSubChain, morph, keyboardOpened: keyboardOpenedSub, setKeyboardOpened: setKeyboardOpenedSub }}>
             <MenuHighlightContext.Provider value={highlight}>
               <RadixDropdownMenu.Content
                 ref={setComposedRef}
@@ -567,6 +593,56 @@ export function ItemManagerDropdown({
         listRef.current?.querySelector<HTMLElement>('[data-active="1"]')?.scrollIntoView({ block: 'nearest' });
       });
     }
+  }, [open]);
+
+  /* ItemManager keyboard (bespoke — its rows are specialized, not registered
+     highlight items): ArrowUp/Down move between the item ROWS and the footer
+     actions below; ArrowLeft/Right — only while a ROW is focused — focus the
+     row's action buttons (pencil/copy/trash) and move between them. The
+     rename input's arrows pass through untouched. */
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement | null)?.closest?.('input, textarea, [contenteditable]')) return;
+      const menu = listRef.current?.closest('.ui-menu');
+      if (!menu || !menu.contains(e.target as Node)) return;
+      const doc = menu.ownerDocument;
+      const rowNames = [...menu.querySelectorAll<HTMLElement>('[data-active] > [role="menuitem"]:first-child')];
+      const footerItems = [...menu.querySelectorAll<HTMLElement>('div:last-child > [role="menuitem"]')];
+      const vertical = [...rowNames, ...footerItems];
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const a = doc.activeElement as HTMLElement | null;
+        let cur = a ? vertical.indexOf(a) : -1;
+        if (cur < 0 && a) {
+          const row = a.closest('[data-active]');
+          const nameItem = row?.querySelector<HTMLElement>('[role="menuitem"]:first-child');
+          if (nameItem) cur = rowNames.indexOf(nameItem);
+        }
+        const dir = e.key === 'ArrowDown' ? 1 : -1;
+        const next = cur < 0 ? (dir === 1 ? 0 : vertical.length - 1) : (cur + dir + vertical.length) % vertical.length;
+        vertical[next]?.focus({ preventScroll: true });
+        return;
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        const a = doc.activeElement as HTMLElement | null;
+        const row = a?.closest('[data-active]') as HTMLElement | null;
+        if (!row) return; // footer actions have no buttons to move into
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const buttons = [...row.querySelectorAll<HTMLElement>('[role="menuitem"]')].slice(1);
+        if (buttons.length === 0) return;
+        const curBtn = a && row.contains(a) ? buttons.indexOf(a) : -1;
+        const dir = e.key === 'ArrowRight' ? 1 : -1;
+        const next = curBtn < 0 ? 0 : (curBtn + dir + buttons.length) % buttons.length;
+        buttons[next]?.focus({ preventScroll: true });
+        return;
+      }
+    };
+    const doc = listRef.current?.ownerDocument ?? null;
+    doc?.addEventListener('keydown', onKey, { capture: true });
+    return () => doc?.removeEventListener('keydown', onKey, { capture: true });
   }, [open]);
 
   useEffect(() => {

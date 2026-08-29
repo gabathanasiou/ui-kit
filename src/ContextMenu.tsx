@@ -1,13 +1,14 @@
 "use client";
-import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { IS_COARSE } from './device';
 import { useCurrentWindow } from './popout';
 import { useOverlayMorph } from './overlayMorph';
 import { registerOverlayClose } from './overlayRegistry';
+import DropdownSubmenu from './DropdownSubmenu';
 import {
-  SubmenuContext, MenuHighlightContext, useMenuHighlight, useMenuHighlightState,
-  useMenuKeys, useMenuKeyLock, useMenuWheel, menuItemLabel,
+  DropdownThemeContext, SubmenuContext, MenuHighlightContext, useMenuHighlight,
+  useMenuHighlightState, useMenuKeys, useMenuKeyLock, useMenuWheel, menuItemLabel,
 } from './DropdownMenu';
 import type { MenuHighlightItem } from './DropdownMenu';
 
@@ -28,29 +29,26 @@ export interface ContextMenuProps {
 }
 
 /**
- * Context menu positioned at (x, y). Used for BOTH desktop right-click and
- * touch long-press — the long-press provider dispatches a synthetic
- * `contextmenu` event, so this component handles both inputs via one path.
+ * Context menu positioned at (x, y) for BOTH desktop right-click and touch
+ * long-press (the long-press provider dispatches a synthetic `contextmenu`
+ * event). Structurally identical to the kit DropdownMenu — the same Radix
+ * primitives + the shared single-highlight/keyboard/key-lock/wheel/morph
+ * layers — and its submenus ARE `DropdownSubmenu` (Radix side-placement,
+ * portaled: no transformed-ancestor trap, native pointer grace).
  *
- * Shares the kit's menu machinery with the dropdowns: the single-highlight
- * surface (hover + arrows write ONE lit row), keyboard + typeahead, the
- * mini-modal key lock (menu keys never reach the page behind it), wheel
- * scroll, nested submenus via the SubmenuContext chain, and the
- * one-open-overlay-at-a-time registry (a dropdown and a context menu can
- * never coexist). The menu is press-point anchored and stays STATIC where
- * it opened (it does not follow scrolling).
+ * Press-point anchored and STATIC (it does not follow scrolling); the close
+ * morph shrinks back to where the menu was opened.
  */
 export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, children, containerRef, morph = true }) => {
-  const menuRef = React.useRef<HTMLDivElement>(null);
+  const contentElRef = useRef<HTMLDivElement | null>(null);
   const currentWindow = useCurrentWindow();
-  /* Keep the menu mounted through the close morph, then unmount it. */
-  const [persisted, setPersisted] = useState(open);
+  /* The Radix portal content mounts in a LATER commit than the open flip —
+     the viewport clamp must wait for it (a stale clamp leaves the menu
+     cropped at the viewport edge). */
+  const [contentReady, setContentReady] = useState(false);
   const [subChain, setSubChain] = useState<string[]>([]);
+  const [keyboardOpenedSub, setKeyboardOpenedSub] = useState<string | null>(null);
   const highlight = useMenuHighlightState();
-
-  useEffect(() => {
-    if (open) setPersisted(true);
-  }, [open]);
 
   /* One open overlay at a time: opening the context menu closes any open
      dropdown first. */
@@ -66,24 +64,26 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
   if (open) pressRef.current = { left: x, top: y };
   const anchor = useCallback(() => ({ left: pressRef.current.left, top: pressRef.current.top, width: 0, height: 0 }), []);
 
+  /* Unmount-driven CLOSE (the panel pattern): the menu vanishes the moment
+     the parent clears it — no lingering fade that reads as a delay — and the
+     reverse morph plays on a pinned clone shrinking to the press point. */
   const setContentRef = useOverlayMorph({
-    visible: open,
+    visible: true,
     morph,
     anchor,
-    onClosed: () => setPersisted(false),
+    cloneOnUnmount: true,
   });
 
-  /* The Radix portal mounts later than the open flip in the dropdowns; here
-     the content mounts with the open render, but the handler refs are
-     attached at the same seam for symmetry. */
+  /* Same wiring as DropdownMenu: keys/wheel/lock handlers attached in the
+     composed ref (the content mounts in a later commit than the open flip). */
   const keysHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
   const wheelHandlerRef = useRef<(e: WheelEvent) => void>(() => {});
   const lockHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
   useMenuKeys(open, highlight, keysHandlerRef);
   useMenuWheel(open, wheelHandlerRef);
-  useMenuKeyLock(open, highlight, keysHandlerRef, menuRef, subChain.length > 0, lockHandlerRef);
+  useMenuKeyLock(open, highlight, keysHandlerRef, contentElRef, subChain.length > 0, lockHandlerRef);
   const lockDocRef = useRef<Document | null>(null);
-  const setRef = useCallback((node: HTMLDivElement | null) => {
+  const setComposedRef = useCallback((node: HTMLDivElement | null) => {
     if (node) {
       node.addEventListener('keydown', keysHandlerRef.current, { capture: true });
       node.addEventListener('wheel', wheelHandlerRef.current as EventListener, { passive: false } as AddEventListenerOptions);
@@ -94,60 +94,62 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
       lockDocRef.current?.removeEventListener('keydown', lockHandlerRef.current, { capture: true });
       lockDocRef.current = null;
     }
-    menuRef.current = node;
+    contentElRef.current = node;
+    setContentReady(!!node);
     setContentRef(node);
   }, [setContentRef]);
 
-  useEffect(() => {
-    if (!open || !currentWindow) return;
-    const onPointer = (e: PointerEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    currentWindow.addEventListener('pointerdown', onPointer, true);
-    currentWindow.addEventListener('keydown', onKey, true);
-    return () => {
-      currentWindow.removeEventListener('pointerdown', onPointer, true);
-      currentWindow.removeEventListener('keydown', onKey, true);
-    };
-  }, [open, onClose, currentWindow]);
-
+  /* Position at the press point, clamped to the viewport (or container). */
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   useLayoutEffect(() => {
-    if (!open || !menuRef.current) return;
-    const rect = menuRef.current.getBoundingClientRect();
+    if (!open || !contentReady || !contentElRef.current) return;
+    /* offsetWidth/offsetHeight are the UNTRANSFORMED layout dims — the open
+       morph scales the box (0.94), and clamping with the scaled rect would
+       leave the menu overflowing once it settles at full size. */
+    const el = contentElRef.current;
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
     const containerRect = containerRef?.current?.getBoundingClientRect();
     const vw = containerRect ? containerRect.right : currentWindow?.innerWidth ?? 0;
     const vh = containerRect ? containerRect.bottom : currentWindow?.innerHeight ?? 0;
     const minLeft = containerRect ? containerRect.left : 0;
     const minTop = containerRect ? containerRect.top : 0;
-    let top = Math.max(minTop + MARGIN, y);
-    let left = Math.max(minLeft + MARGIN, x);
-    if (left + rect.width > vw) left = vw - rect.width - MARGIN;
-    if (top + rect.height > vh) top = Math.max(minTop + MARGIN, vh - rect.height - MARGIN);
-    menuRef.current.style.top = `${top}px`;
-    menuRef.current.style.left = `${left}px`;
-  }, [open, x, y, containerRef]);
+    let top = Math.max(minTop + MARGIN, pressRef.current.top);
+    let left = Math.max(minLeft + MARGIN, pressRef.current.left);
+    if (left + w > vw) left = vw - w - MARGIN;
+    if (top + h > vh) top = Math.max(minTop + MARGIN, vh - h - MARGIN);
+    setPos({ left, top });
+  }, [open, contentReady, x, y, containerRef]);
 
-  if (!open && !persisted) return null;
+  if (!open) return null;
 
+  /* The hidden full-viewport trigger gives the Radix root its context (the
+     app controls `open`; the trigger's toggle also acts as the outside
+     click-to-close path alongside the content's dismissable layer). */
   return (
-    <SubmenuContext.Provider value={{ chain: subChain, setChain: setSubChain, morph }}>
-      <MenuHighlightContext.Provider value={highlight}>
-        <div
-          ref={setRef}
-          data-theme="light"
-          className={`fixed ui-menu rounded-lg shadow-xl p-1 z-[9999] ${CTX_TEXT} min-w-[180px] max-h-[85vh] overflow-y-auto scrollbar-custom`}
-          style={{ top: y, left: x, touchAction: 'manipulation' }}
-          onPointerLeave={highlight.pointerLeave}
-        >
-          {children}
-        </div>
-      </MenuHighlightContext.Provider>
-    </SubmenuContext.Provider>
+    <RadixDropdownMenu.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }} modal={false}>
+      <RadixDropdownMenu.Trigger asChild>
+        <span style={{ position: 'fixed', inset: 0 }} aria-hidden="true" />
+      </RadixDropdownMenu.Trigger>
+      <RadixDropdownMenu.Portal>
+        <DropdownThemeContext.Provider value="light">
+        <SubmenuContext.Provider value={{ chain: subChain, setChain: setSubChain, morph, keyboardOpened: keyboardOpenedSub, setKeyboardOpened: setKeyboardOpenedSub }}>
+          <MenuHighlightContext.Provider value={highlight}>
+            <RadixDropdownMenu.Content
+              ref={setComposedRef}
+              data-theme="light"
+              data-ui-fixed
+              className={`fixed ui-menu rounded-lg shadow-xl p-1 z-[9999] ${CTX_TEXT} min-w-[180px] max-h-[85vh] overflow-y-auto scrollbar-custom`}
+              style={{ left: pos?.left ?? pressRef.current.left, top: pos?.top ?? pressRef.current.top, touchAction: 'manipulation' }}
+              onPointerLeave={highlight.pointerLeave}
+            >
+              {children}
+            </RadixDropdownMenu.Content>
+          </MenuHighlightContext.Provider>
+        </SubmenuContext.Provider>
+        </DropdownThemeContext.Provider>
+      </RadixDropdownMenu.Portal>
+    </RadixDropdownMenu.Root>
   );
 };
 
@@ -178,10 +180,12 @@ export const ContextMenuItem: React.FC<{
   const highlighted = !disabled && myIndex >= 0 && myIndex === api!.highlightedIndex;
 
   return (
-    <button
+    <RadixDropdownMenu.Item
+      data-ei={myIndex >= 0 ? myIndex : undefined}
       onClick={disabled ? undefined : onClick}
       onPointerEnter={() => { if (!disabled && api && myIndex >= 0) api.setHighlighted(myIndex, 'pointer'); }}
       onTouchStart={() => {}}
+      disabled={disabled}
       className={`w-full text-left ${CTX_ITEM} flex items-center gap-2 rounded cursor-pointer ${
         disabled ? 'opacity-40 cursor-default' :
         variant === 'danger' ? 'ui-item ui-item-danger' : 'ui-item'
@@ -190,179 +194,28 @@ export const ContextMenuItem: React.FC<{
       {icon}
       <span className="flex-1 truncate">{children}</span>
       {trailing && <span className="shrink-0 ml-1 flex items-center">{trailing}</span>}
-    </button>
+    </RadixDropdownMenu.Item>
   );
 };
 
 export const ContextMenuDivider: React.FC = () => (
-  <div className="ui-sep my-1" />
+  <RadixDropdownMenu.Separator className="ui-sep my-1" />
 );
 
 export interface ContextMenuSubProps {
   id: string;
   label: string;
   icon?: React.ReactNode;
+  width?: string;
   side?: 'left' | 'right';
   children: React.ReactNode;
 }
 
-/**
- * Nested submenu inside a ContextMenu — the DropdownSubmenu pattern without
- * Radix: the SubmenuContext CHAIN (nested subs coexist; closing a parent
- * truncates its children), a per-sub highlight surface, the morph anchored
- * to the trigger row, keys + wheel + the key lock (the open sub owns the
- * keys). The panel is positioned at the row's right edge and clamped to the
- * viewport; hover transitions use a short pointer-grace so moving through
- * the trigger into the panel never closes it.
- */
-export const ContextMenuSub: React.FC<ContextMenuSubProps> = ({ id, label, icon, side = 'right', children }) => {
-  const { chain, setChain, morph } = useContext(SubmenuContext);
-  const subOpen = chain.includes(id);
-  const [persisted, setPersisted] = useState(subOpen);
-  const parentApi = useMenuHighlight();
-  const subHighlight = useMenuHighlightState();
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const subRef = useRef<HTMLDivElement>(null);
-  const openTimerRef = useRef<number>(0);
-  const closeTimerRef = useRef<number>(0);
-
-  useEffect(() => {
-    if (subOpen) setPersisted(true);
-  }, [subOpen]);
-  useEffect(() => () => { window.clearTimeout(openTimerRef.current); window.clearTimeout(closeTimerRef.current); }, []);
-
-  const openSub = () => setChain(c => c.includes(id) ? c : [...c, id]);
-  const closeSub = () => setChain(c => { const i = c.indexOf(id); return i >= 0 ? c.slice(0, i) : c; });
-
-  /* The trigger row registers in the PARENT surface's highlight (arrows and
-     typeahead reach it; Enter opens the sub). */
-  const parentApiRef = useRef(parentApi);
-  parentApiRef.current = parentApi;
-  const selfRef = useRef<MenuHighlightItem | null>(null);
-  useEffect(() => {
-    const self: MenuHighlightItem = { label, activate: openSub };
-    selfRef.current = self;
-    return parentApiRef.current?.register(self);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  const myIndex = parentApi && selfRef.current ? parentApi.items.indexOf(selfRef.current) : -1;
-  const rootHighlighted = myIndex >= 0 && myIndex === parentApi!.highlightedIndex;
-
-  const anchor = useCallback(() => {
-    const el = triggerRef.current;
-    if (!el) return null;
-    const r = el.getBoundingClientRect();
-    return { left: r.left, top: r.top, width: r.width, height: r.height };
-  }, []);
-
-  const setContentRef = useOverlayMorph({
-    visible: subOpen,
-    morph,
-    anchor,
-    onClosed: () => setPersisted(false),
-  });
-  const keysHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
-  const wheelHandlerRef = useRef<(e: WheelEvent) => void>(() => {});
-  const lockHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
-  useMenuKeys(subOpen, subHighlight, keysHandlerRef);
-  useMenuWheel(subOpen, wheelHandlerRef);
-  useMenuKeyLock(subOpen, subHighlight, keysHandlerRef, subRef, false, lockHandlerRef);
-  const lockDocRef = useRef<Document | null>(null);
-  const setSubComposedRef = useCallback((node: HTMLDivElement | null) => {
-    if (node) {
-      node.addEventListener('keydown', keysHandlerRef.current, { capture: true });
-      node.addEventListener('wheel', wheelHandlerRef.current as EventListener, { passive: false } as AddEventListenerOptions);
-      const doc = node.ownerDocument;
-      lockDocRef.current = doc;
-      doc.addEventListener('keydown', lockHandlerRef.current, { capture: true });
-    } else {
-      lockDocRef.current?.removeEventListener('keydown', lockHandlerRef.current, { capture: true });
-      lockDocRef.current = null;
-    }
-    subRef.current = node;
-    setContentRef(node);
-  }, [setContentRef]);
-
-  /* Keep the highlighted row visible when arrows/typeahead scroll it out. */
-  useLayoutEffect(() => {
-    if (!subOpen || subHighlight.highlightedIndex < 0) return;
-    const row = subRef.current?.querySelector<HTMLElement>(`[data-ei="${subHighlight.highlightedIndex}"]`);
-    row?.scrollIntoView({ block: 'nearest' });
-  }, [subOpen, subHighlight.highlightedIndex]);
-
-  /* Panel position: at the trigger row's right edge (left edge when
-     side="left"), clamped to the viewport. Static like the context menu. */
-  const [pos, setPos] = useState<{ top: number; left: number; maxH: number } | null>(null);
-  useLayoutEffect(() => {
-    if (!subOpen || !triggerRef.current || !subRef.current) return;
-    const t = triggerRef.current.getBoundingClientRect();
-    const p = subRef.current.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    let left = side === 'right' ? t.right + 2 : t.left - p.width - 2;
-    left = Math.max(MARGIN, Math.min(left, vw - p.width - MARGIN));
-    const top = Math.max(MARGIN, Math.min(t.top, vh - p.height - MARGIN));
-    const maxH = Math.max(120, vh - top - MARGIN);
-    setPos({ top, left, maxH });
-  }, [subOpen, side]);
-
-  const enterTrigger = () => {
-    window.clearTimeout(closeTimerRef.current);
-    if (parentApi && myIndex >= 0) parentApi.setHighlighted(myIndex, 'pointer');
-    if (!subOpen) {
-      window.clearTimeout(openTimerRef.current);
-      openTimerRef.current = window.setTimeout(openSub, 100);
-    }
-  };
-  const leaveTrigger = (e: React.PointerEvent) => {
-    window.clearTimeout(openTimerRef.current);
-    const to = e.relatedTarget as Node | null;
-    if (subRef.current && to && subRef.current.contains(to)) return;
-    window.clearTimeout(closeTimerRef.current);
-    closeTimerRef.current = window.setTimeout(closeSub, 150);
-  };
-  const enterSub = () => window.clearTimeout(closeTimerRef.current);
-  const leaveSub = () => {
-    window.clearTimeout(closeTimerRef.current);
-    closeTimerRef.current = window.setTimeout(closeSub, 150);
-  };
-
-  const triggerCls = `w-full text-left ${CTX_ITEM} flex items-center gap-2 rounded cursor-pointer select-none justify-between ui-item${rootHighlighted ? ' ui-item-highlighted' : ''}`;
-
-  return (
-    <>
-      <button
-        ref={triggerRef}
-        data-ei={myIndex >= 0 ? myIndex : undefined}
-        type="button"
-        onPointerEnter={enterTrigger}
-        onPointerLeave={leaveTrigger}
-        onPointerDown={() => { window.clearTimeout(openTimerRef.current); if (subOpen) closeSub(); else openSub(); }}
-        onTouchStart={() => {}}
-        className={triggerCls}
-      >
-        {side === 'left' && <ChevronRight className={`w-3 h-3 ui-icon rotate-180 order-first`} />}
-        <span className="flex items-center gap-2">
-          {icon && <span className={`ui-icon shrink-0`}>{icon}</span>}
-          {label}
-        </span>
-        {side === 'right' && <ChevronRight className={`w-3 h-3 ui-icon`} />}
-      </button>
-      {(subOpen || persisted) && (
-        <div
-          ref={setSubComposedRef}
-          className={`fixed ui-menu rounded-lg shadow-xl z-[9999] p-1 flex flex-col select-none overflow-y-auto scrollbar-custom min-w-[160px] ${CTX_TEXT}`}
-          style={{ top: pos?.top ?? 0, left: pos?.left ?? 0, maxHeight: pos?.maxH ?? 320, visibility: pos ? 'visible' : 'hidden', touchAction: 'manipulation' }}
-          onPointerEnter={enterSub}
-          onPointerLeave={leaveSub}
-        >
-          <MenuHighlightContext.Provider value={subHighlight}>
-            {children}
-          </MenuHighlightContext.Provider>
-        </div>
-      )}
-    </>
-  );
-};
+/** Nested context submenu — literally the kit `DropdownSubmenu` (the Radix
+ *  side-placement + the SubmenuContext chain + the shared highlight/keys/
+ *  lock/morph layers), lifted above the context menu. */
+export const ContextMenuSub: React.FC<ContextMenuSubProps> = (props) => (
+  <DropdownSubmenu {...props} width={props.width || 'min-w-[180px]!'} contentClassName="z-[10000]" />
+);
 
 export default ContextMenu;

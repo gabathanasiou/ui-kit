@@ -10,18 +10,24 @@ import { useOverlayMorph } from './overlayMorph';
 
 const SUB_ITEM = IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
 
-interface DropdownSubmenuProps {
+export interface DropdownSubmenuProps {
   id: string;
   label: string;
   icon?: React.ReactNode;
   width?: string;
   side?: 'left' | 'right';
   children: React.ReactNode;
+  /** Extra classes on the sub content (e.g. lifting it above a context
+   *  menu's z-index). */
+  contentClassName?: string;
 }
 
-export default function DropdownSubmenu({ id, label, icon, width, side = 'right', children }: DropdownSubmenuProps) {
-  const { chain, setChain, morph } = useContext(SubmenuContext);
+export default function DropdownSubmenu({ id, label, icon, width, side = 'right', children, contentClassName }: DropdownSubmenuProps) {
+  const { chain, setChain, morph, keyboardOpened, setKeyboardOpened } = useContext(SubmenuContext);
   const subOpen = chain.includes(id);
+  /* A surface owns the keyboard only when it is the TOPMOST open one (a
+     nested sub stands the parent's keys down). */
+  const isTopmost = chain[chain.length - 1] === id;
   const theme = useDropdownTheme();
   const portalTarget = usePortalTarget();
   const subTriggerRef = useRef<HTMLDivElement>(null);
@@ -42,6 +48,8 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
     if (subOpen) setPersisted(true);
   }, [subOpen]);
 
+  const closeSub = () => setChain(c => { const i = c.indexOf(id); return i >= 0 ? c.slice(0, i) : c; });
+
   /* The SUB content has its OWN highlight surface (items inside the submenu
      register against this context, not the root's). The trigger ROW registers
      in the ROOT surface so arrows/typeahead can reach it and Enter opens the
@@ -52,7 +60,16 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
   rootApiRef.current = rootApi;
   const selfRef = useRef<MenuHighlightItem | null>(null);
   useEffect(() => {
-    const self: MenuHighlightItem = { label, activate: () => setChain(c => c.includes(id) ? c : [...c, id]) };
+    const self: MenuHighlightItem = {
+      label,
+      activate: () => {
+        // the keyboard path (ArrowRight/Enter) — mark the open so the sub
+        // pre-lights its first item; pointer-opened subs stay unlit
+        setKeyboardOpened(id);
+        setChain(c => c.includes(id) ? c : [...c, id]);
+      },
+      submenu: true,
+    };
     selfRef.current = self;
     return rootApiRef.current?.register(self);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,9 +98,36 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
   const keysHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
   const wheelHandlerRef = useRef<(e: WheelEvent) => void>(() => {});
   const lockHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
-  useMenuKeys(subOpen, highlight, keysHandlerRef);
+  useMenuKeys(subOpen && isTopmost, highlight, keysHandlerRef, {
+    onCloseSub: () => {
+      closeSub();
+      // ArrowLeft returns the highlight to THIS sub's trigger row in the
+      // parent surface.
+      if (rootApi && myIndex >= 0) rootApi.setHighlighted(myIndex, 'keyboard');
+    },
+  });
+  const keyboardOpenedRef = useRef(keyboardOpened);
+  keyboardOpenedRef.current = keyboardOpened;
+  useEffect(() => {
+    if (subOpen) {
+      /* The first item is pre-lit ONLY for keyboard-opened subs (ArrowRight/
+         Enter); a pointer-opened sub starts unlit — the highlight follows the
+         pointer as it enters. Read via a ref so clearing the marker (below)
+         does not re-run this and unlight the item. Keyboard-opened subs also
+         take the FOCUS (the content mounts a commit later, hence the rAF) so
+         the next keys land inside the sub immediately. */
+      if (keyboardOpenedRef.current === id) {
+        highlight.setHighlighted(0, 'keyboard');
+        requestAnimationFrame(() => subContentRef.current?.focus());
+        setKeyboardOpened(null);
+      } else {
+        highlight.setHighlighted(-1, 'keyboard');
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subOpen]);
   useMenuWheel(subOpen, wheelHandlerRef);
-  useMenuKeyLock(subOpen, highlight, keysHandlerRef, subContentRef, false, lockHandlerRef);
+  useMenuKeyLock(subOpen, highlight, keysHandlerRef, subContentRef, !isTopmost, lockHandlerRef);
 
   /* Keep the highlighted row visible when arrows/typeahead scroll it out. */
   React.useLayoutEffect(() => {
@@ -109,7 +153,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
 
   const triggerClasses = `w-full text-left ${SUB_ITEM} rounded flex items-center gap-2 outline-none cursor-pointer select-none justify-between ui-item${rootHighlighted ? ' ui-item-highlighted' : ''}${closing ? ' ui-sub-closing' : ''}`;
 
-  const contentClasses = `ui-menu rounded-lg shadow-xl z-[210] p-1 flex flex-col select-none max-h-[min(60vh,24rem)] overflow-y-auto min-w-0 scrollbar-custom ${width || 'w-48'}`;
+  const contentClasses = `ui-menu rounded-lg shadow-xl z-[210] p-1 flex flex-col select-none max-h-[min(60vh,24rem)] overflow-y-auto min-w-0 scrollbar-custom ${width || 'w-48'} ${contentClassName || ''}`;
 
   return (
       <RadixDropdownMenu.Sub open={subOpen || persisted} onOpenChange={(o) => setChain(c => {
