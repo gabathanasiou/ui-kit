@@ -773,7 +773,7 @@ export function ItemManagerDropdown({
                   <span className={`truncate ${isActive ? d.rowActiveText : ''}`}>{itemRender ? itemRender(item) : item.name}</span>
                 </RadixDropdownMenu.Item>
                 <RadixDropdownMenu.Item
-                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer ${isActive ? d.btnActive : d.btnBase} ${isActive ? '!text-white' : ''}`}
+                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer ${isActive ? d.btnActive : d.btnBase}`}
                   onSelect={e => { e.preventDefault(); startRename(item.id, item.name); }}
                   onTouchStart={() => {}}
                   disabled={readOnly}
@@ -781,7 +781,7 @@ export function ItemManagerDropdown({
                   <Pencil className={d.btnIcon} />
                 </RadixDropdownMenu.Item>
                 <RadixDropdownMenu.Item
-                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer ${isActive ? d.btnActive : d.btnBase} ${isActive ? '!text-white' : ''}`}
+                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer ${isActive ? d.btnActive : d.btnBase}`}
                   onSelect={e => { e.preventDefault(); const newId = onDuplicate(item.id); if (newId) startRename(newId, `${item.name} Copy`); }}
                   onTouchStart={() => {}}
                   disabled={readOnly}
@@ -789,7 +789,7 @@ export function ItemManagerDropdown({
                   <Copy className={d.btnIcon} />
                 </RadixDropdownMenu.Item>
                 <RadixDropdownMenu.Item
-                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer mr-1 ${items.length <= minItems ? d.btnDisabled : isActive ? d.btnDangerActive : d.btnDanger} ${isActive ? '!text-white hover:!text-red-400' : ''}`}
+                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer mr-1 ${items.length <= minItems ? d.btnDisabled : isActive ? d.btnDangerActive : d.btnDanger}`}
                   onSelect={e => { e.preventDefault(); onDelete(item.id); }}
                   onTouchStart={() => {}}
                   disabled={readOnly || items.length <= minItems}

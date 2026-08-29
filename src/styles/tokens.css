@@ -366,6 +366,13 @@
   color: var(--ui-text-faint);
 }
 
+/* The active row's delete button: danger-colored per theme (light = deep red
+   on the pale-blue active row; dark = pale pink) — the item-manager row is
+   themeable, so no hardcoded white icons. */
+.ui-icon-btn-danger.ui-icon-btn-active {
+  color: var(--ui-danger-active-text);
+}
+
 .ui-icon-btn-danger:active {
   color: var(--ui-danger-active-text);
 }
