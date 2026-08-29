@@ -3,7 +3,7 @@ import { useLayoutEffect, useRef, type RefObject } from 'react';
 import { useCurrentWindow } from './popout';
 
 export function useSmartPosition(
-  wrapperRef: RefObject<HTMLElement>,
+  wrapperRef: RefObject<HTMLElement | null>,
   open: boolean,
 ) {
   const currentWindow = useCurrentWindow();
@@ -51,9 +51,10 @@ export function useSmartPosition(
 }
 
 export function useFixedPosition(
-  wrapperRef: RefObject<HTMLElement>,
+  wrapperRef: RefObject<HTMLElement | null>,
   open: boolean,
   setPos: (p: { top: number; left: number; width: number; maxH: number; bottom?: number }) => void,
+  opts?: { panelWidth?: number },
 ) {
   const currentWindow = useCurrentWindow();
   const currentWindowRef = useRef(currentWindow);
@@ -68,7 +69,7 @@ export function useFixedPosition(
       const vw = win.innerWidth;
       const vh = win.visualViewport?.height ?? win.innerHeight;
       const voff = win.visualViewport?.offsetTop ?? 0;
-      const panelWidth = 200;
+      const panelWidth = opts?.panelWidth ?? Math.max(rect.width, 200);
       const gap = 4;
       const minH = 120;
 
@@ -88,5 +89,5 @@ export function useFixedPosition(
         setPos({ top: 0, left, width: rect.width, maxH, bottom: Math.max(0, bottom) });
       }
     });
-  }, [open, wrapperRef]);
+  }, [open, wrapperRef, opts?.panelWidth]);
 }

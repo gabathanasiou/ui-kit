@@ -2,7 +2,8 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronRight } from 'lucide-react';
-import { useDropdownTheme, SubmenuContext } from './DropdownMenu';
+import { useDropdownTheme, SubmenuContext, MenuHighlightContext, useMenuHighlight, useMenuHighlightState, useMenuKeys, useMenuWheel } from './DropdownMenu';
+import type { MenuHighlightItem } from './DropdownMenu';
 import { IS_COARSE } from './device';
 import { usePortalTarget } from './popout';
 import { useOverlayMorph } from './overlayMorph';
@@ -24,6 +25,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
   const theme = useDropdownTheme();
   const portalTarget = usePortalTarget();
   const subTriggerRef = useRef<HTMLDivElement>(null);
+  const subContentRef = useRef<HTMLDivElement>(null);
   /* Same close-morph contract as DropdownMenu: Radix keeps the sub content
      mounted while the reverse morph plays, then `persisted` drops and it
      unmounts. */
@@ -40,6 +42,24 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
     if (subOpen) setPersisted(true);
   }, [subOpen]);
 
+  /* The SUB content has its OWN highlight surface (items inside the submenu
+     register against this context, not the root's). The trigger ROW registers
+     in the ROOT surface so arrows/typeahead can reach it and Enter opens the
+     sub. */
+  const highlight = useMenuHighlightState();
+  const rootApi = useMenuHighlight();
+  const rootApiRef = useRef(rootApi);
+  rootApiRef.current = rootApi;
+  const selfRef = useRef<MenuHighlightItem | null>(null);
+  useEffect(() => {
+    const self: MenuHighlightItem = { label, activate: () => setActiveSub(id) };
+    selfRef.current = self;
+    return rootApiRef.current?.register(self);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const myIndex = rootApi && selfRef.current ? rootApi.items.indexOf(selfRef.current) : -1;
+  const rootHighlighted = myIndex >= 0 && myIndex === rootApi!.highlightedIndex;
+
   // Origin at the entry edge: the submenu grows out of its trigger row
   // (nearestOverlayOrigin turns the trigger rect into the left/right edge).
   const anchor = useCallback(() => {
@@ -55,17 +75,43 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
     anchor,
     onClosed: () => setPersisted(false),
   });
+  /* The Radix portal content mounts in a LATER commit than the open flip —
+     attach the keydown/wheel handlers here (the composed ref), not in an
+     effect. */
+  const keysHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
+  const wheelHandlerRef = useRef<(e: WheelEvent) => void>(() => {});
+  useMenuKeys(subOpen, highlight, keysHandlerRef);
+  useMenuWheel(subOpen, wheelHandlerRef);
 
-  const triggerClasses = `w-full text-left ${SUB_ITEM} rounded flex items-center gap-2 outline-none cursor-pointer select-none justify-between ui-item${closing ? ' ui-sub-closing' : ''}`;
+  /* Keep the highlighted row visible when arrows/typeahead scroll it out. */
+  React.useLayoutEffect(() => {
+    if (!subOpen || highlight.highlightedIndex < 0) return;
+    const row = subContentRef.current?.querySelector<HTMLElement>(`[data-ei="${highlight.highlightedIndex}"]`);
+    row?.scrollIntoView({ block: 'nearest' });
+  }, [subOpen, highlight.highlightedIndex]);
+  const setComposedRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      node.addEventListener('keydown', keysHandlerRef.current, { capture: true });
+      node.addEventListener('wheel', wheelHandlerRef.current as EventListener, { passive: false } as AddEventListenerOptions);
+    }
+    subContentRef.current = node;
+    setContentRef(node);
+  }, [setContentRef]);
 
-  const contentClasses = `ui-menu rounded-lg shadow-xl z-[210] p-1 flex flex-col select-none max-h-[min(75vh,30rem)] overflow-y-auto min-w-0 scrollbar-custom ${width || 'w-48'}`;
+  const triggerClasses = `w-full text-left ${SUB_ITEM} rounded flex items-center gap-2 outline-none cursor-pointer select-none justify-between ui-item${rootHighlighted ? ' ui-item-highlighted' : ''}${closing ? ' ui-sub-closing' : ''}`;
+
+  const contentClasses = `ui-menu rounded-lg shadow-xl z-[210] p-1 flex flex-col select-none max-h-[min(60vh,24rem)] overflow-y-auto min-w-0 scrollbar-custom ${width || 'w-48'}`;
 
   return (
       <RadixDropdownMenu.Sub open={subOpen || persisted} onOpenChange={(o) => setActiveSub(o ? id : null)}>
         <RadixDropdownMenu.SubTrigger
           ref={subTriggerRef}
+          data-ei={myIndex >= 0 ? myIndex : undefined}
           className={triggerClasses}
           onTouchStart={() => {}}
+          onPointerEnter={() => {
+            if (rootApi && myIndex >= 0) rootApi.setHighlighted(myIndex, 'pointer');
+          }}
           onPointerDown={(e) => {
             // Pen is hover-capable: hover opens the submenu, so a tap would
             // toggle it closed. Open on tap instead, like a finger.
@@ -84,14 +130,17 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
       </RadixDropdownMenu.SubTrigger>
       <RadixDropdownMenu.Portal container={portalTarget ?? undefined}>
         <RadixDropdownMenu.SubContent
-          ref={setContentRef}
+          ref={setComposedRef}
           data-theme={theme}
           className={contentClasses}
           sideOffset={8}
           alignOffset={-4}
           collisionPadding={8}
+          onPointerLeave={highlight.pointerLeave}
         >
-          {children}
+          <MenuHighlightContext.Provider value={highlight}>
+            {children}
+          </MenuHighlightContext.Provider>
         </RadixDropdownMenu.SubContent>
       </RadixDropdownMenu.Portal>
     </RadixDropdownMenu.Sub>

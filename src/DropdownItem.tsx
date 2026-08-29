@@ -1,7 +1,8 @@
 "use client";
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useDropdownTheme, getDropdownClasses } from './DropdownMenu';
+import { useDropdownTheme, getDropdownClasses, useMenuHighlight } from './DropdownMenu';
+import type { MenuHighlightItem } from './DropdownMenu';
 import { IS_COARSE } from './device';
 
 const ITEM_CLASS = IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
@@ -15,6 +16,10 @@ interface DropdownItemProps {
   children: React.ReactNode;
   key?: string;
   keepOpen?: boolean;
+  /** The currently selected value — renders the selected tint (a distinct
+   *  row background + text color, see `.ui-item-selected` tokens). Callers
+   *  that want the panel-style Check glyph pass `trailing={<Check/>}`. */
+  selected?: boolean;
   rightAction?: {
     icon: React.ReactNode;
     onClick: () => void;
@@ -26,6 +31,22 @@ interface DropdownItemProps {
   trailing?: React.ReactNode;
 }
 
+/** Text the typeahead letter-jump matches against. Labels are usually plain
+ *  strings but may be wrapped in a span (icons live in the `icon` prop) —
+ *  walk one element level for the text. */
+function itemLabel(children: React.ReactNode): string {
+  const texts: string[] = [];
+  React.Children.forEach(children, child => {
+    if (typeof child === 'string' || typeof child === 'number') {
+      texts.push(String(child));
+    } else if (React.isValidElement<{ children?: React.ReactNode }>(child)) {
+      const inner = child.props.children;
+      if (typeof inner === 'string' || typeof inner === 'number') texts.push(String(inner));
+    }
+  });
+  return texts.join(' ').trim();
+}
+
 export default function DropdownItem({
   onClick,
   icon,
@@ -34,6 +55,7 @@ export default function DropdownItem({
   className = '',
   children,
   keepOpen = false,
+  selected = false,
   rightAction,
   trailing,
 }: DropdownItemProps) {
@@ -41,26 +63,41 @@ export default function DropdownItem({
   const d = getDropdownClasses(theme);
   const skipClickRef = useRef(false);
   const itemRef = useRef<HTMLDivElement>(null);
+  /* Single-highlight (the panel model): register into the NEAREST surface
+     context on mount (registration order = index); pointer hover writes the
+     shared highlightedIndex — NO focus() (the v0.1.53 focus-stealing is
+     gone); the lit row carries `.ui-item-highlighted`. */
+  const api = useMenuHighlight();
+  const apiRef = useRef(api);
+  apiRef.current = api;
+  const selfRef = useRef<MenuHighlightItem | null>(null);
+
+  useEffect(() => {
+    const self: MenuHighlightItem = {
+      label: itemLabel(children),
+      activate: () => { if (!disabled) onClick(); },
+    };
+    selfRef.current = self;
+    return apiRef.current?.register(self);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const myIndex = api && selfRef.current ? api.items.indexOf(selfRef.current) : -1;
+  const highlighted = !disabled && myIndex >= 0 && myIndex === api!.highlightedIndex;
 
   const variantStyles = variant === 'danger' ? d.itemDanger : d.itemDefault;
 
   return (
     <RadixDropdownMenu.Item
       ref={itemRef}
-      className={`w-full text-left ${ITEM_CLASS} rounded flex items-center gap-2 outline-none cursor-pointer select-none ${variantStyles} ${disabled ? 'opacity-30 pointer-events-none' : ''} ${className}`}
+      data-ei={myIndex >= 0 ? myIndex : undefined}
+      className={`w-full text-left ${ITEM_CLASS} rounded flex items-center gap-2 outline-none cursor-pointer select-none ${variantStyles} ${selected ? 'ui-item-selected' : ''} ${highlighted ? 'ui-item-highlighted' : ''} ${disabled ? 'opacity-30 pointer-events-none' : ''} ${className}`}
       onSelect={(e) => {
         if (skipClickRef.current) { skipClickRef.current = false; return; }
         if (keepOpen) e.preventDefault(); onClick();
       }}
       onPointerEnter={() => {
-        /* Single-highlight rule: the highlight follows the LAST interaction.
-           Radix only moves its roving-focus highlight (data-highlighted) via
-           the keyboard — give the pointer the same lever by focusing the
-           hovered item (preventScroll is on; the CSS :hover fill is suppressed
-           while any item is highlighted). Never steal focus from an inner
-           editor (item-manager rename inputs live inside items). */
-        const host = itemRef.current;
-        if (host && !host.contains(document.activeElement)) host.focus({ preventScroll: true });
+        if (!disabled && api && myIndex >= 0) api.setHighlighted(myIndex, 'pointer');
       }}
       onTouchStart={() => {}}
       disabled={disabled}

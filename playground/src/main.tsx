@@ -62,7 +62,7 @@ function CtrlMenu({ theme = 'dark', label = 'Ctrl menu', testId = 'ctrl-menu-tri
         }
       >
         {MENU_ITEMS.map(it => (
-          <DropdownItem key={it} onClick={() => { setPick(it); setOpen(false); }}>
+          <DropdownItem key={it} selected={pick === it} onClick={() => { setPick(it); setOpen(false); }}>
             <span>{it}</span>
           </DropdownItem>
         ))}
@@ -80,6 +80,41 @@ function UncontrolledMenu() {
         trigger={<Button data-testid="uncontrolled-trigger">Uncontrolled menu</Button>}
       >
         {MENU_ITEMS.map(it => <DropdownItem key={it} onClick={() => setOpen(false)}>{it}</DropdownItem>)}
+      </DropdownMenu>
+    </div>
+  );
+}
+
+function InitialHighlightMenu() {
+  /* initialHighlightIndex: opens with the row pre-lit (the panel's
+     single-mode "highlight the current" — CategoryDropdown's pattern). */
+  const [open, setOpen] = useState(false);
+  const [pick, setPick] = useState<string | null>('Travel');
+  return (
+    <div className="row" data-testid="initial-highlight">
+      <DropdownMenu open={open} onOpenChange={setOpen} width="w-44" initialHighlightIndex={1}
+        trigger={<Button data-testid="initial-trigger">Initial highlight {pick ? `— ${pick}` : ''}</Button>}
+      >
+        {MENU_ITEMS.map(it => (
+          <DropdownItem key={it} selected={pick === it} onClick={() => { setPick(it); setOpen(false); }}>{it}</DropdownItem>
+        ))}
+      </DropdownMenu>
+    </div>
+  );
+}
+
+function LongMenuDemo() {
+  /* A 30-item menu — overflows the viewport, exercises the manual wheel
+     scroll + the max-height clamp. */
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="row" data-testid="long-menu">
+      <DropdownMenu open={open} onOpenChange={setOpen}
+        trigger={<Button data-testid="long-trigger">Long menu</Button>}
+      >
+        {Array.from({ length: 30 }, (_, i) => (
+          <DropdownItem key={i} onClick={() => setOpen(false)}>Item {i + 1}</DropdownItem>
+        ))}
       </DropdownMenu>
     </div>
   );
@@ -192,9 +227,11 @@ function StackedModalDemo() {
 function MenuInsideModal() {
   /* The app's portal surface: a DropdownMenu inside a Modal. Radix portals
      the menu content to the body — this exercises portal target, z-order,
-     Escape (must close ONLY the menu), and the morph anchor. */
+     Escape (must close ONLY the menu), the morph anchor, and wheel scroll
+     for a LONG list portaled over the modal. */
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [longMenuOpen, setLongMenuOpen] = useState(false);
   return (
     <div className="row" data-testid="menu-in-modal">
       <Button data-testid="menu-modal-open" onClick={() => setOpen(true)}>Open modal with menu</Button>
@@ -214,6 +251,16 @@ function MenuInsideModal() {
               }
             >
               {MENU_ITEMS.map(it => <DropdownItem key={it} onClick={() => setMenuOpen(false)}>{it}</DropdownItem>)}
+            </DropdownMenu>
+            <p>Long menu over the modal (wheel-scrollable):</p>
+            <DropdownMenu open={longMenuOpen} onOpenChange={setLongMenuOpen} theme="dark"
+              trigger={
+                <Button theme="dark" variant="primary" data-testid="inmodal-long-trigger">Long menu in modal</Button>
+              }
+            >
+              {Array.from({ length: 30 }, (_, i) => (
+                <DropdownItem key={i} onClick={() => setLongMenuOpen(false)}>Item {i + 1}</DropdownItem>
+              ))}
             </DropdownMenu>
             <p>
               Escape while the menu is open must dismiss ONLY the menu — the
@@ -356,6 +403,8 @@ function App() {
         <CtrlMenu />
         <CtrlMenu theme="light" label="Ctrl menu light" testId="ctrl-menu-light-trigger" />
         <UncontrolledMenu />
+        <InitialHighlightMenu />
+        <LongMenuDemo />
         <SubmenuDemo />
         <ItemManagerDemo />
       </section>

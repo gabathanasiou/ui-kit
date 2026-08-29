@@ -1,10 +1,11 @@
 "use client";
-import React, { createContext, useContext, useCallback, useState, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Pencil, Copy, Trash2, Plus, Check, X, RotateCcw } from 'lucide-react';
 import { usePortalTarget } from './popout';
 import { IS_COARSE } from './device';
 import { useOverlayMorph } from './overlayMorph';
+import { useFixedPosition } from './useSmartPosition';
 
 export type DropdownTheme = 'light' | 'dark' | 'blue';
 
@@ -76,6 +77,142 @@ export const SubmenuContext = createContext<{
   morph: boolean;
 }>({ activeSub: null, setActiveSub: () => {}, morph: true });
 
+// ── Single-highlight context (the EntityDropdown-panel model) ───────────────
+/* ONE highlighted row per surface, written by pointer hover AND the keyboard
+   arrows (latest wins); leaving the list clears a POINTER-driven highlight.
+   No CSS hover fills — the lit row is `.ui-item-highlighted` only. Items
+   register into the NEAREST surface context on mount (registration order =
+   index); the registration map is what future search support filters. */
+
+export interface MenuHighlightItem {
+  /** Text used by the typeahead letter-jump. */
+  label: string;
+  activate: () => void;
+}
+
+export interface MenuHighlightApi {
+  items: MenuHighlightItem[];
+  highlightedIndex: number;
+  pointerDriven: boolean;
+  register: (item: MenuHighlightItem) => () => void;
+  setHighlighted: (idx: number, via: 'pointer' | 'keyboard') => void;
+  pointerLeave: () => void;
+}
+
+export const MenuHighlightContext = createContext<MenuHighlightApi | null>(null);
+export const useMenuHighlight = () => useContext(MenuHighlightContext);
+
+export function useMenuHighlightState(): MenuHighlightApi {
+  const itemsRef = useRef<MenuHighlightItem[]>([]);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [pointerDriven, setPointerDriven] = useState(false);
+  /* Version bump on register/unregister: the api memo re-derives `items`
+     from the ref so registered items see themselves (and their index). */
+  const [version, bump] = useState(0);
+
+  const register = useCallback((item: MenuHighlightItem) => {
+    itemsRef.current = [...itemsRef.current, item];
+    bump(v => v + 1);
+    return () => {
+      itemsRef.current = itemsRef.current.filter(i => i !== item);
+      bump(v => v + 1);
+    };
+  }, []);
+
+  const setHighlighted = useCallback((idx: number, via: 'pointer' | 'keyboard') => {
+    setHighlightedIndex(idx);
+    setPointerDriven(via === 'pointer');
+  }, []);
+
+  const pointerLeave = useCallback(() => {
+    setPointerDriven(d => {
+      if (!d) return d;
+      setHighlightedIndex(-1);
+      return false;
+    });
+  }, []);
+
+  const api = useMemo<MenuHighlightApi>(() => ({
+    items: itemsRef.current,
+    highlightedIndex,
+    pointerDriven,
+    register,
+    setHighlighted,
+    pointerLeave,
+  }), [highlightedIndex, pointerDriven, version, register, setHighlighted, pointerLeave]);
+  return api;
+}
+
+/** Keyboard for a highlight surface: arrows move the single index, Enter/Space
+ *  activate the highlighted item, letter typeahead jumps to the first match
+ *  (500ms prefix buffer). The handler is written into `handlerRef` (fresh
+ *  closure every render) and ATTACHED by the content's composed ref — the
+ *  Radix portal content mounts in a LATER commit than the `open` flip, so a
+ *  plain [open] effect would miss it. Registered at CAPTURE with
+ *  stopImmediatePropagation so it always beats Radix's own roving focus/
+ *  typeahead (which would light a second row). Menus WITHOUT registered
+ *  highlight items (ItemManagerDropdown's bespoke rows) keep Radix's native
+ *  keyboard handling untouched. */
+export function useMenuKeys(active: boolean, api: MenuHighlightApi, handlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>) {
+  const highlightedRef = useRef(-1);
+  highlightedRef.current = api.highlightedIndex;
+  const apiRef = useRef(api);
+  apiRef.current = api;
+  const activeRef = useRef(active);
+  activeRef.current = active;
+  const bufferRef = useRef({ text: '', time: 0 });
+  handlerRef.current = (e: KeyboardEvent) => {
+    if (!activeRef.current) return;
+    const items = apiRef.current.items;
+    if (items.length === 0) return; // bespoke surfaces (ItemManager) keep Radix's keyboard
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const dir = e.key === 'ArrowDown' ? 1 : -1;
+      const next = (highlightedRef.current + dir + items.length) % items.length;
+      apiRef.current.setHighlighted(next, 'keyboard');
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const idx = highlightedRef.current;
+      if (idx >= 0 && idx < items.length) items[idx].activate();
+    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const now = Date.now();
+      const text = (now - bufferRef.current.time > 500 ? '' : bufferRef.current.text) + e.key.toLowerCase();
+      bufferRef.current = { text, time: now };
+      if (!text) return;
+      const start = highlightedRef.current + 1;
+      for (let i = 0; i < items.length; i++) {
+        const idx = (start + i) % items.length;
+        if (items[idx].label.toLowerCase().startsWith(text)) {
+          apiRef.current.setHighlighted(idx, 'keyboard');
+          return;
+        }
+      }
+    }
+  };
+}
+
+/** Manual wheel scrolling for portaled menu content (a Modal's scroll lock
+ *  preventDefaults wheels outside the dialog; the v0.1.52 capture interceptor
+ *  in useOverlayMorph already stops propagation for the content — this is the
+ *  actual scroll, belt and suspenders with the interceptor). Attached by the
+ *  content's composed ref (same later-commit reason as useMenuKeys). */
+export function useMenuWheel(active: boolean, handlerRef: React.MutableRefObject<(e: WheelEvent) => void>) {
+  const activeRef = useRef(active);
+  activeRef.current = active;
+  handlerRef.current = (e: WheelEvent) => {
+    if (!activeRef.current) return;
+    const el = e.currentTarget as HTMLElement;
+    if (el.scrollHeight > el.clientHeight) {
+      e.preventDefault();
+      el.scrollTop += e.deltaY;
+    }
+  };
+}
+
 export interface DropdownMenuProps {
   open: boolean;
   onClose?: () => void;
@@ -92,6 +229,9 @@ export interface DropdownMenuProps {
   /** Trigger-anchored scale+fade morph (the modal FLIP language; default
    *  true). prefers-reduced-motion and morph={false} skip it entirely. */
   morph?: boolean;
+  /** Row to light on open (the panel's single-mode "highlight the current"
+   *  behavior — e.g. the active item in a picker list). */
+  initialHighlightIndex?: number;
 }
 
 export default function DropdownMenu({
@@ -105,10 +245,12 @@ export default function DropdownMenu({
   children,
   morph = true,
   contentClassName,
+  initialHighlightIndex,
 }: DropdownMenuProps) {
   const [activeSub, setActiveSub] = useState<string | null>(null);
   const portalTarget = usePortalTarget();
   const triggerRef = useRef<HTMLElement | null>(null);
+  const contentElRef = useRef<HTMLDivElement | null>(null);
   const openRef = useRef(open);
   openRef.current = open;
   /* Radix unmounts the content the moment its `open` prop flips false — the
@@ -117,15 +259,19 @@ export default function DropdownMenu({
      same way), then `persisted` drops and the content unmounts. */
   const [persisted, setPersisted] = useState(open);
 
+  const highlight = useMenuHighlightState();
+
   useEffect(() => {
     if (open) {
       setPersisted(true);
+      highlight.setHighlighted(initialHighlightIndex ?? -1, 'keyboard');
     } else {
       // The parent is closing — collapse any open submenu so it morphs
       // closed alongside this menu instead of staying open mid-morph.
       setActiveSub(null);
     }
-  }, [open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialHighlightIndex]);
 
   const anchor = useCallback(() => {
     const el = triggerRef.current;
@@ -140,6 +286,56 @@ export default function DropdownMenu({
     anchor,
     onClosed: () => setPersisted(false),
   });
+  /* The Radix portal content mounts in a LATER commit than the `open` flip —
+     attach the keydown/wheel handlers here (the composed ref), not in an
+     [open] effect. */
+  const keysHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
+  const wheelHandlerRef = useRef<(e: WheelEvent) => void>(() => {});
+  useMenuKeys(open, highlight, keysHandlerRef);
+  useMenuWheel(open, wheelHandlerRef);
+  const setComposedRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      node.addEventListener('keydown', keysHandlerRef.current, { capture: true });
+      node.addEventListener('wheel', wheelHandlerRef.current as EventListener, { passive: false } as AddEventListenerOptions);
+    }
+    contentElRef.current = node;
+    setContentRef(node);
+  }, [setContentRef]);
+
+  /* Panel positioning (the EntityDropdown-panel model): the ROOT content is
+     fixed below the trigger, width-matched to it (or the `width` class for
+     explicitly-sized menus), viewport-clamped, hidden until the positioning
+     rAF flips `ready`. Submenus keep the Radix popper side-placement. */
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0, maxH: 320, ready: false } as { top: number; left: number; width: number; maxH: number; bottom?: number; ready?: boolean });
+  const [triggerWidth, setTriggerWidth] = useState(0);
+  useEffect(() => {
+    if (open && triggerRef.current) setTriggerWidth(triggerRef.current.getBoundingClientRect().width);
+  }, [open]);
+  const fixedOpts = useMemo(() => ({ panelWidth: triggerWidth || undefined }), [triggerWidth]);
+  /* The menu max-height is HARD-CAPPED at 24rem (the content class is
+     overridden by the positioning's inline maxHeight, so the cap lives here). */
+  useFixedPosition(triggerRef, open, (p) => setPos({ ...p, maxH: Math.min(p.maxH, 384), ready: true }), fixedOpts);
+  /* The panel is `visibility: hidden` until the positioning rAF flips ready —
+     and focusing a hidden element is a no-op, so Radix's open autofocus was
+     silently dropped (the keyboard stayed on the trigger/BODY and menu keys
+     died). Focus the content once it is actually visible; never steal focus
+     from something already inside the menu (a hovered item). */
+  useEffect(() => {
+    if (pos.ready && open) {
+      const el = contentElRef.current;
+      if (el && el.ownerDocument.activeElement !== el && !el.contains(el.ownerDocument.activeElement)) {
+        el.focus();
+      }
+    }
+  }, [pos.ready, open]);
+
+  /* Arrows/typeahead can light a row that is scrolled out of view — keep the
+     highlighted row visible (the panel's scroll-into-view behavior). */
+  useLayoutEffect(() => {
+    if (!open || highlight.highlightedIndex < 0) return;
+    const row = contentElRef.current?.querySelector<HTMLElement>(`[data-ei="${highlight.highlightedIndex}"]`);
+    row?.scrollIntoView({ block: 'nearest' });
+  }, [open, highlight.highlightedIndex]);
 
   const handleOpenChange = useCallback((o: boolean) => {
     // While the close morph plays (open already false, Radix still mounted)
@@ -190,7 +386,7 @@ export default function DropdownMenu({
       })
     : trigger;
 
-  const contentClasses = `ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none max-h-[min(75vh,30rem)] overflow-y-auto min-w-0 scrollbar-custom`;
+  const contentClasses = `ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none max-h-[min(60vh,24rem)] overflow-y-auto min-w-0 scrollbar-custom`;
 
   return (
     <RadixDropdownMenu.Root open={open || persisted} onOpenChange={handleOpenChange} modal={false}>
@@ -200,17 +396,27 @@ export default function DropdownMenu({
       <RadixDropdownMenu.Portal container={portalTarget ?? undefined}>
         <DropdownThemeContext.Provider value={theme}>
           <SubmenuContext.Provider value={{ activeSub, setActiveSub, morph }}>
-            <RadixDropdownMenu.Content
-              ref={setContentRef}
-              data-theme={theme}
-              className={`${contentClasses} ${width || ''} ${contentClassName || ''}`}
-              align={align === 'left' ? 'start' : 'end'}
-              sideOffset={8}
-              collisionPadding={8}
-              style={{ touchAction: 'manipulation' }}
-            >
-              {children}
-            </RadixDropdownMenu.Content>
+            <MenuHighlightContext.Provider value={highlight}>
+              <RadixDropdownMenu.Content
+                ref={setComposedRef}
+                data-theme={theme}
+                data-ui-fixed
+                className={`${contentClasses} ${width || ''} ${contentClassName || ''}`}
+                style={{
+                  touchAction: 'manipulation',
+                  position: 'fixed',
+                  left: pos.left,
+                  top: pos.bottom != null ? undefined : pos.top,
+                  bottom: pos.bottom,
+                  width: width ? undefined : (triggerWidth || undefined),
+                  maxHeight: pos.maxH,
+                  visibility: pos.ready ? 'visible' : 'hidden',
+                }}
+                onPointerLeave={highlight.pointerLeave}
+              >
+                {children}
+              </RadixDropdownMenu.Content>
+            </MenuHighlightContext.Provider>
           </SubmenuContext.Provider>
         </DropdownThemeContext.Provider>
       </RadixDropdownMenu.Portal>
@@ -344,7 +550,7 @@ export function ItemManagerDropdown({
         const isActive = item.id === activeId;
         const isEditing = editingId === item.id;
         return (
-          <div key={item.id} data-active={isActive ? '1' : undefined} className={`flex items-center gap-1 rounded my-0.5 ${isActive ? d.rowActiveBg : d.rowHoverBg} ${editingId && !isEditing ? 'opacity-40 pointer-events-none' : ''}`}>
+          <div key={item.id} data-active={isActive ? '1' : undefined} className={`flex items-center gap-1 rounded my-0.5 ${isActive || isEditing ? d.rowActiveBg : d.rowHoverBg} ${editingId && !isEditing ? 'opacity-40 pointer-events-none' : ''}`}>
             {isEditing ? (
               <>
                 <div className={`flex-1 min-w-0 ${d.itemPad} rounded outline-none flex items-center gap-2`}>
@@ -357,14 +563,14 @@ export function ItemManagerDropdown({
                   />
                 </div>
                 <RadixDropdownMenu.Item
-                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer ${d.editConfirm}`}
+                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer ${d.editConfirm} !text-white`}
                   onSelect={e => { e.preventDefault(); commitRename(); }}
                   onTouchStart={() => {}}
                 >
                   <Check className={d.btnIcon} />
                 </RadixDropdownMenu.Item>
                 <RadixDropdownMenu.Item
-                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer mr-1 ${d.editCancel}`}
+                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer mr-1 ${d.editCancel} !text-white`}
                   onSelect={e => { e.preventDefault(); cancelRename(); }}
                   onTouchStart={() => {}}
                 >
@@ -381,7 +587,7 @@ export function ItemManagerDropdown({
                   <span className={`truncate ${isActive ? d.rowActiveText : ''}`}>{itemRender ? itemRender(item) : item.name}</span>
                 </RadixDropdownMenu.Item>
                 <RadixDropdownMenu.Item
-                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer ${isActive ? d.btnActive : d.btnBase}`}
+                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer ${isActive ? d.btnActive : d.btnBase} ${isActive ? '!text-white' : ''}`}
                   onSelect={e => { e.preventDefault(); startRename(item.id, item.name); }}
                   onTouchStart={() => {}}
                   disabled={readOnly}
@@ -389,7 +595,7 @@ export function ItemManagerDropdown({
                   <Pencil className={d.btnIcon} />
                 </RadixDropdownMenu.Item>
                 <RadixDropdownMenu.Item
-                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer ${isActive ? d.btnActive : d.btnBase}`}
+                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer ${isActive ? d.btnActive : d.btnBase} ${isActive ? '!text-white' : ''}`}
                   onSelect={e => { e.preventDefault(); const newId = onDuplicate(item.id); if (newId) startRename(newId, `${item.name} Copy`); }}
                   onTouchStart={() => {}}
                   disabled={readOnly}
@@ -397,7 +603,7 @@ export function ItemManagerDropdown({
                   <Copy className={d.btnIcon} />
                 </RadixDropdownMenu.Item>
                 <RadixDropdownMenu.Item
-                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer mr-1 ${items.length <= minItems ? d.btnDisabled : isActive ? d.btnDangerActive : d.btnDanger}`}
+                  className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer mr-1 ${items.length <= minItems ? d.btnDisabled : isActive ? d.btnDangerActive : d.btnDanger} ${isActive ? '!text-white hover:!text-red-400' : ''}`}
                   onSelect={e => { e.preventDefault(); onDelete(item.id); }}
                   onTouchStart={() => {}}
                   disabled={readOnly || items.length <= minItems}
@@ -415,7 +621,7 @@ export function ItemManagerDropdown({
           <>
             <RadixDropdownMenu.Separator className={d.separator} />
             <RadixDropdownMenu.Item
-              className={`w-full text-left ${d.itemPad} rounded flex items-center gap-2 transition-colors outline-none cursor-pointer select-none ${d.itemDefault}`}
+              className={`w-full text-left ${d.itemPad} rounded flex items-center gap-2 transition-colors outline-none cursor-pointer select-none ${d.itemDefault} ui-row`}
               onSelect={e => { e.preventDefault(); onReset(); }}
               onTouchStart={() => {}}
               disabled={readOnly}
@@ -430,7 +636,7 @@ export function ItemManagerDropdown({
         )}
         {onCreate && (
           <RadixDropdownMenu.Item
-            className={`w-full text-left ${d.itemPad} rounded flex items-center gap-2 transition-colors outline-none cursor-pointer select-none ${d.itemDefault}`}
+            className={`w-full text-left ${d.itemPad} rounded flex items-center gap-2 transition-colors outline-none cursor-pointer select-none ${d.itemDefault} ui-row`}
             onSelect={e => { e.preventDefault(); const newId = onCreate(); if (newId) startRename(newId, ''); }}
             onTouchStart={() => {}}
             disabled={readOnly}
@@ -441,7 +647,7 @@ export function ItemManagerDropdown({
         )}
         {onImport && (
           <RadixDropdownMenu.Item
-            className={`w-full text-left ${d.itemPad} rounded flex items-center gap-2 transition-colors outline-none cursor-pointer select-none ${d.itemDefault}`}
+            className={`w-full text-left ${d.itemPad} rounded flex items-center gap-2 transition-colors outline-none cursor-pointer select-none ${d.itemDefault} ui-row`}
             onSelect={e => { e.preventDefault(); onImport(); }}
             onTouchStart={() => {}}
             disabled={readOnly}
@@ -452,7 +658,7 @@ export function ItemManagerDropdown({
         )}
         {onExport && (
           <RadixDropdownMenu.Item
-            className={`w-full text-left ${d.itemPad} rounded flex items-center gap-2 transition-colors outline-none cursor-pointer select-none ${d.itemDefault}`}
+            className={`w-full text-left ${d.itemPad} rounded flex items-center gap-2 transition-colors outline-none cursor-pointer select-none ${d.itemDefault} ui-row`}
             onSelect={e => { e.preventDefault(); onExport(); }}
             onTouchStart={() => {}}
             disabled={readOnly}
@@ -463,7 +669,7 @@ export function ItemManagerDropdown({
         )}
         {onTrash && (
           <RadixDropdownMenu.Item
-            className={`w-full text-left ${d.itemPad} rounded flex items-center gap-2 transition-colors outline-none cursor-pointer select-none ${d.itemDefault}`}
+            className={`w-full text-left ${d.itemPad} rounded flex items-center gap-2 transition-colors outline-none cursor-pointer select-none ${d.itemDefault} ui-row`}
             onSelect={e => { e.preventDefault(); onTrash(); }}
             onTouchStart={() => {}}
             disabled={readOnly}
