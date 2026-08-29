@@ -195,6 +195,44 @@ export function useMenuKeys(active: boolean, api: MenuHighlightApi, handlerRef: 
   };
 }
 
+/** Mini-modal keyboard lock: while a surface is open, the MENU keys
+ *  (arrows / Enter / Space / typeahead letters) are captured at the DOCUMENT
+ *  and routed to the surface's own handler even when the keyboard focus sits
+ *  elsewhere (a stripboard canvas, the page body) — the background never
+ *  sees them. Events that already target the surface pass through to the
+ *  content's listener; every other key (Cmd+Z, Escape, Tab…) is untouched.
+ *  Pass `standDown` when a CHILD surface (an open submenu) owns the keys.
+ *  The handler is written into `lockHandlerRef` and ATTACHED by the content's
+ *  composed ref (the Radix portal mounts later than the open flip — the same
+ *  reason useMenuKeys/useMenuWheel attach there). */
+export function useMenuKeyLock(
+  active: boolean,
+  api: MenuHighlightApi,
+  keysHandlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>,
+  contentRef: React.RefObject<HTMLElement | null>,
+  standDown: boolean,
+  lockHandlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>,
+) {
+  const apiRef = useRef(api);
+  apiRef.current = api;
+  const activeRef = useRef(active);
+  activeRef.current = active;
+  const standDownRef = useRef(standDown);
+  standDownRef.current = standDown;
+  lockHandlerRef.current = (e: KeyboardEvent) => {
+    if (!activeRef.current || standDownRef.current) return;
+    const el = contentRef.current;
+    if (el && el.contains(e.target as Node)) return;
+    if (apiRef.current.items.length === 0) return; // bespoke surfaces keep Radix's keys
+    const isMenuKey = e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' '
+      || (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey);
+    if (!isMenuKey) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    keysHandlerRef.current(e);
+  };
+}
+
 /** Manual wheel scrolling for portaled menu content (a Modal's scroll lock
  *  preventDefaults wheels outside the dialog; the v0.1.52 capture interceptor
  *  in useOverlayMorph already stops propagation for the content — this is the
@@ -291,12 +329,21 @@ export default function DropdownMenu({
      [open] effect. */
   const keysHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
   const wheelHandlerRef = useRef<(e: WheelEvent) => void>(() => {});
+  const lockHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
   useMenuKeys(open, highlight, keysHandlerRef);
   useMenuWheel(open, wheelHandlerRef);
+  useMenuKeyLock(open, highlight, keysHandlerRef, contentElRef, !!activeSub, lockHandlerRef);
+  const lockDocRef = useRef<Document | null>(null);
   const setComposedRef = useCallback((node: HTMLDivElement | null) => {
     if (node) {
       node.addEventListener('keydown', keysHandlerRef.current, { capture: true });
       node.addEventListener('wheel', wheelHandlerRef.current as EventListener, { passive: false } as AddEventListenerOptions);
+      const doc = node.ownerDocument;
+      lockDocRef.current = doc;
+      doc.addEventListener('keydown', lockHandlerRef.current, { capture: true });
+    } else {
+      lockDocRef.current?.removeEventListener('keydown', lockHandlerRef.current, { capture: true });
+      lockDocRef.current = null;
     }
     contentElRef.current = node;
     setContentRef(node);

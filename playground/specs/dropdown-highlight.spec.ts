@@ -184,6 +184,22 @@ test('a long menu inside a modal stays above it and wheel-scrolls', async ({ pag
   await expect(modal).toBeVisible();
 });
 
+test('the open menu owns the keyboard even when focus is elsewhere (mini-modal lock)', async ({ page }) => {
+  await openCtrl(page);
+  // deliberately drop the focus to the page body — the menu must still get
+  // the arrows/typeahead/Enter and the background must not
+  await page.evaluate(() => document.activeElement && document.activeElement.blur());
+  await expect.poll(() => page.evaluate(() => document.activeElement.tagName)).toBe('BODY');
+
+  await page.keyboard.press('ArrowDown');
+  await expect(litRows(page)).toContainText('Hold');
+  await page.keyboard.type('t');
+  await expect(litRows(page)).toContainText('Travel');
+  await page.keyboard.press('Enter');
+  await expect(menu(page)).toHaveCount(0, { timeout: 5000 });
+  await expect(page.getByTestId('ctrl-menu-trigger')).toContainText('Travel');
+});
+
 test('the open menu follows the trigger when the page scrolls', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('ctrl-menu-trigger').click();

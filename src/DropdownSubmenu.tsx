@@ -2,7 +2,7 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronRight } from 'lucide-react';
-import { useDropdownTheme, SubmenuContext, MenuHighlightContext, useMenuHighlight, useMenuHighlightState, useMenuKeys, useMenuWheel } from './DropdownMenu';
+import { useDropdownTheme, SubmenuContext, MenuHighlightContext, useMenuHighlight, useMenuHighlightState, useMenuKeys, useMenuKeyLock, useMenuWheel } from './DropdownMenu';
 import type { MenuHighlightItem } from './DropdownMenu';
 import { IS_COARSE } from './device';
 import { usePortalTarget } from './popout';
@@ -80,8 +80,10 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
      effect. */
   const keysHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
   const wheelHandlerRef = useRef<(e: WheelEvent) => void>(() => {});
+  const lockHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
   useMenuKeys(subOpen, highlight, keysHandlerRef);
   useMenuWheel(subOpen, wheelHandlerRef);
+  useMenuKeyLock(subOpen, highlight, keysHandlerRef, subContentRef, false, lockHandlerRef);
 
   /* Keep the highlighted row visible when arrows/typeahead scroll it out. */
   React.useLayoutEffect(() => {
@@ -89,10 +91,17 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
     const row = subContentRef.current?.querySelector<HTMLElement>(`[data-ei="${highlight.highlightedIndex}"]`);
     row?.scrollIntoView({ block: 'nearest' });
   }, [subOpen, highlight.highlightedIndex]);
+  const lockDocRef = useRef<Document | null>(null);
   const setComposedRef = useCallback((node: HTMLDivElement | null) => {
     if (node) {
       node.addEventListener('keydown', keysHandlerRef.current, { capture: true });
       node.addEventListener('wheel', wheelHandlerRef.current as EventListener, { passive: false } as AddEventListenerOptions);
+      const doc = node.ownerDocument;
+      lockDocRef.current = doc;
+      doc.addEventListener('keydown', lockHandlerRef.current, { capture: true });
+    } else {
+      lockDocRef.current?.removeEventListener('keydown', lockHandlerRef.current, { capture: true });
+      lockDocRef.current = null;
     }
     subContentRef.current = node;
     setContentRef(node);
