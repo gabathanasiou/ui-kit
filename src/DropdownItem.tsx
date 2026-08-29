@@ -31,21 +31,8 @@ interface DropdownItemProps {
   trailing?: React.ReactNode;
 }
 
-/** Text the typeahead letter-jump matches against. Labels are usually plain
- *  strings but may be wrapped in a span (icons live in the `icon` prop) —
- *  walk one element level for the text. */
-function itemLabel(children: React.ReactNode): string {
-  const texts: string[] = [];
-  React.Children.forEach(children, child => {
-    if (typeof child === 'string' || typeof child === 'number') {
-      texts.push(String(child));
-    } else if (React.isValidElement<{ children?: React.ReactNode }>(child)) {
-      const inner = child.props.children;
-      if (typeof inner === 'string' || typeof inner === 'number') texts.push(String(inner));
-    }
-  });
-  return texts.join(' ').trim();
-}
+// typeahead label extractor — shared with ContextMenuItem
+import { menuItemLabel as itemLabel } from './DropdownMenu';
 
 export default function DropdownItem({
   onClick,

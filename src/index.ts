@@ -3,7 +3,8 @@ export { default as DropdownMenu, ItemManagerDropdown, DropdownThemeContext, use
 export type { DropdownTheme, DropdownMenuProps, ItemManagerDropdownProps, MenuHighlightApi, MenuHighlightItem } from './DropdownMenu';
 export { default as DropdownItem } from './DropdownItem';
 export { default as DropdownSubmenu } from './DropdownSubmenu';
-export { default as ContextMenu, ContextMenuItem, ContextMenuDivider } from './ContextMenu';
+export { default as ContextMenu, ContextMenuItem, ContextMenuDivider, ContextMenuSub } from './ContextMenu';
+export type { ContextMenuSubProps } from './ContextMenu';
 export type { ContextMenuProps } from './ContextMenu';
 export { DialogProvider, useDialog } from './Dialog';
 export { default as Modal, ModalFooter } from './Modal';

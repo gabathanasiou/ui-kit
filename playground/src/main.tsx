@@ -5,7 +5,7 @@ import {
   Button, DropdownMenu, DropdownItem, DropdownSubmenu,
   ItemManagerDropdown, Modal, ModalFooter, ModalFooterButton, Checkbox,
   Checklist, RadioList, DatePicker, Tooltip, ContextMenu, ContextMenuItem,
-  ContextMenuDivider, useOverlayMorph,
+  ContextMenuDivider, ContextMenuSub, useOverlayMorph,
 } from '../../src/index';
 import type { DropdownTheme } from '../src/index';
 
@@ -372,6 +372,7 @@ function InputsSection() {
 
 function MiscSection() {
   const [ctx, setCtx] = useState<{ x: number; y: number } | null>(null);
+  const [pick, setPick] = useState<string | null>('Nested A');
   return (
     <section data-section="misc">
       <h2>Tooltips + context menu</h2>
@@ -385,14 +386,26 @@ function MiscSection() {
           y={ctx?.y ?? 0}
           onClose={() => setCtx(null)}
         >
-          <ContextMenuItem onSelect={() => setCtx(null)}>Item one</ContextMenuItem>
-          <ContextMenuItem onSelect={() => setCtx(null)}>Item two</ContextMenuItem>
+          <ContextMenuItem selected={pick === 'Plain item'} onClick={() => { setPick('Plain item'); setCtx(null); }}>
+            Plain item {pick === 'Plain item' ? '— current' : ''}
+          </ContextMenuItem>
+          <ContextMenuSub id="more" label="More…">
+            <ContextMenuItem selected={pick === 'Nested A'} onClick={() => { setPick('Nested A'); setCtx(null); }}>
+              Nested A {pick === 'Nested A' ? '— current' : ''}
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => { setPick('Nested B'); setCtx(null); }}>Nested B</ContextMenuItem>
+            <ContextMenuSub id="deeper" label="Deeper…">
+              <ContextMenuItem onClick={() => { setPick('Level 3 A'); setCtx(null); }}>Level 3 A</ContextMenuItem>
+              <ContextMenuItem onClick={() => { setPick('Level 3 B'); setCtx(null); }}>Level 3 B</ContextMenuItem>
+            </ContextMenuSub>
+          </ContextMenuSub>
           <ContextMenuDivider />
-          <ContextMenuItem onSelect={() => setCtx(null)} danger>Delete</ContextMenuItem>
+          <ContextMenuItem variant="danger" onClick={() => { setPick('Delete'); setCtx(null); }}>Delete</ContextMenuItem>
         </ContextMenu>
         <button data-testid="ctx-target" onClick={e => { const r = (e.target as HTMLElement).getBoundingClientRect(); setCtx({ x: r.left + r.width / 2, y: r.bottom + 4 }); }}>
           Open context menu
         </button>
+        <span className="label" style={{ marginLeft: 8 }}>pick: {pick}</span>
       </div>
     </section>
   );

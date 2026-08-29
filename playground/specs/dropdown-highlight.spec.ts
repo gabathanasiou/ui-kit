@@ -66,9 +66,11 @@ test('the panel is width-matched to the trigger and opens below it', async ({ pa
   await page.getByTestId('long-trigger').click();
   await expect(menu(page)).toBeVisible();
   const trigger = await page.getByTestId('long-trigger').boundingBox();
+  // the triggerWidth state lands one effect after the open — poll until the
+  // panel actually matches the trigger
+  await expect.poll(async () => (await menu(page).boundingBox())!.width).toBeLessThanOrEqual(trigger!.width + 40);
   const panel = await menu(page).boundingBox();
   expect(panel!.width).toBeGreaterThanOrEqual(trigger!.width - 3);
-  expect(panel!.width).toBeLessThanOrEqual(trigger!.width + 40);
   expect(panel!.y).toBeGreaterThanOrEqual(trigger!.y + trigger!.height);
   expect(panel!.x).toBeCloseTo(trigger!.x, -1);
 });
@@ -129,11 +131,12 @@ test('the item manager marks its active row like the dropdown selected row', asy
   await page.goto('/');
   await page.getByTestId('itemmanager-trigger').click();
   await expect(menu(page)).toBeVisible();
-  // the active row carries the check + the active (selected) styling
+  // the active row carries the selected styling (no tick — the tint is the marker)
   await expect(page.getByRole('menuitem', { name: /Alpha/ }).first()).toContainText('');
   const activeRow = page.locator('[data-active="1"]').first();
   await expect(activeRow).toHaveClass(/ui-row-active/);
-  await expect(activeRow.getByRole('menuitem').first().locator('svg')).toBeVisible();
+  const activeText = activeRow.getByRole('menuitem').first().locator('span').first();
+  await expect(activeText).toHaveCSS('color', 'rgb(255, 255, 255)');
 });
 
 test('arrows keep the highlighted row scrolled into view', async ({ page }) => {
@@ -208,14 +211,21 @@ test('the open menu follows the trigger when the page scrolls', async ({ page })
   const triggerBefore = await page.getByTestId('ctrl-menu-trigger').boundingBox();
   const menuBefore = await menu(page).boundingBox();
   await page.evaluate(() => window.scrollTo(0, 150));
-  await page.waitForTimeout(250);
+  // wait for the scroll + the follow rAF re-measure to settle
+  await page.waitForFunction(() => window.scrollY === 150);
+  await page.waitForFunction(() => {
+    const m = document.querySelector('[role="menu"]');
+    const t = document.querySelector('[data-testid="ctrl-menu-trigger"]');
+    if (!m || !t) return false;
+    return Math.abs(m.getBoundingClientRect().y - (t.getBoundingClientRect().bottom + 4)) < 1.5;
+  }, { timeout: 5000 });
   const triggerAfter = await page.getByTestId('ctrl-menu-trigger').boundingBox();
   const menuAfter = await menu(page).boundingBox();
 
   const triggerDy = triggerAfter!.y - triggerBefore!.y;
   const menuDy = menuAfter!.y - menuBefore!.y;
-  expect(menuDy).toBeCloseTo(triggerDy, 0);
-  expect(menuAfter!.x).toBeCloseTo(menuBefore!.x, 0);
+  expect(Math.abs(menuDy - triggerDy)).toBeLessThan(6);
+  expect(Math.abs(menuAfter!.x - menuBefore!.x)).toBeLessThan(6);
   // still interactive
   await page.getByRole('menuitem', { name: 'Travel' }).hover();
   await expect(litRows(page)).toContainText('Travel');

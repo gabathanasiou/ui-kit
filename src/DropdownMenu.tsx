@@ -6,6 +6,7 @@ import { usePortalTarget } from './popout';
 import { IS_COARSE } from './device';
 import { useOverlayMorph } from './overlayMorph';
 import { useFixedPosition } from './useSmartPosition';
+import { registerOverlayClose } from './overlayRegistry';
 
 export type DropdownTheme = 'light' | 'dark' | 'blue';
 
@@ -75,6 +76,21 @@ export function getDropdownClasses(theme?: DropdownTheme) {
    closing one truncates it AND its children (a child can never outlive its
    parent). The root menu stands its key-lock down while the chain is non-empty
    (the topmost sub owns the keys). */
+/** Text a typeahead letter-jump matches against — walks one element level
+ *  (labels may be wrapped in a span; icons live in the `icon` prop). */
+export function menuItemLabel(children: React.ReactNode): string {
+  const texts: string[] = [];
+  React.Children.forEach(children, child => {
+    if (typeof child === 'string' || typeof child === 'number') {
+      texts.push(String(child));
+    } else if (React.isValidElement<{ children?: React.ReactNode }>(child)) {
+      const inner = child.props.children;
+      if (typeof inner === 'string' || typeof inner === 'number') texts.push(String(inner));
+    }
+  });
+  return texts.join(' ').trim();
+}
+
 export const SubmenuContext = createContext<{
   chain: string[];
   setChain: (fn: (c: string[]) => string[]) => void;
@@ -307,13 +323,15 @@ export default function DropdownMenu({
     if (open) {
       setPersisted(true);
       highlight.setHighlighted(initialHighlightIndex ?? -1, 'keyboard');
-    } else {
-      // The parent is closing — collapse any open submenu so it morphs
-      // closed alongside this menu instead of staying open mid-morph.
-      setSubChain([]);
+      /* One open overlay at a time: opening this menu closes any other
+         (context menu) first. */
+      return registerOverlayClose(() => { onOpenChange?.(false); onClose?.(); });
     }
+    // The parent is closing — collapse any open submenu so it morphs
+    // closed alongside this menu instead of staying open mid-morph.
+    setSubChain([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initialHighlightIndex]);
+  }, [open, initialHighlightIndex, onOpenChange, onClose]);
 
   const anchor = useCallback(() => {
     const el = triggerRef.current;
