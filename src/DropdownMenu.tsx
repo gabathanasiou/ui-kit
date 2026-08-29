@@ -198,7 +198,9 @@ export function useMenuKeys(
      would leave the attached closure on the node after unmount (the cleanup
      removes the newest closure, not the attached one) and duplicate listeners
      on the content during ref churn. */
-  if (!handlerRef.current) {
+  const keysCreatedRef = useRef(false);
+  if (!keysCreatedRef.current) {
+    keysCreatedRef.current = true;
     handlerRef.current = (e: KeyboardEvent) => {
       if (!activeRef.current) return;
       const items = apiRef.current.items;
@@ -273,7 +275,9 @@ export function useMenuKeyLock(
      cleanup removes the newest closure, not the attached one) — and a leaked
      lock from a remounted menu keeps its last activeRef forever, eating menu
      keys app-wide. */
-  if (!lockHandlerRef.current) {
+  const lockCreatedRef = useRef(false);
+  if (!lockCreatedRef.current) {
+    lockCreatedRef.current = true;
     lockHandlerRef.current = (e: KeyboardEvent) => {
       if (!activeRef.current || standDownRef.current) return;
       const el = contentRef.current;
@@ -299,7 +303,9 @@ export function useMenuKeyLock(
 export function useMenuWheel(active: boolean, handlerRef: React.MutableRefObject<(e: WheelEvent) => void>) {
   const activeRef = useRef(active);
   activeRef.current = active;
-  if (!handlerRef.current) {
+  const wheelCreatedRef = useRef(false);
+  if (!wheelCreatedRef.current) {
+    wheelCreatedRef.current = true;
     handlerRef.current = (e: WheelEvent) => {
       if (!activeRef.current) return;
       const el = e.currentTarget as HTMLElement;
