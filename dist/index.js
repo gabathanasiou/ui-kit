@@ -516,7 +516,10 @@ function He({
           left: L.left,
           top: L.bottom != null ? void 0 : L.top,
           bottom: L.bottom,
-          width: l ? void 0 : $ || void 0,
+          /* No width class: the menu sizes to its CONTENT (text must
+             never clip) but never narrower than the trigger — the
+             min-width floor keeps the trigger-matched look. */
+          minWidth: l ? void 0 : $ || void 0,
           maxHeight: L.maxH,
           visibility: L.ready ? "visible" : "hidden"
         },

@@ -541,7 +541,10 @@ export default function DropdownMenu({
                   left: pos.left,
                   top: pos.bottom != null ? undefined : pos.top,
                   bottom: pos.bottom,
-                  width: width ? undefined : (triggerWidth || undefined),
+                  /* No width class: the menu sizes to its CONTENT (text must
+                     never clip) but never narrower than the trigger — the
+                     min-width floor keeps the trigger-matched look. */
+                  minWidth: width ? undefined : (triggerWidth || undefined),
                   maxHeight: pos.maxH,
                   visibility: pos.ready ? 'visible' : 'hidden',
                 }}
