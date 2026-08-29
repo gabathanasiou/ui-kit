@@ -55,8 +55,13 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
   }, [viewYear, viewMonth]);
 
   const dark = theme === 'dark';
-  const cellCls = IS_COARSE ? 'py-2' : 'py-1.5';
-  const chipCls = IS_COARSE ? 'text-xs px-2 py-1' : 'text-[10px] px-1.5 py-0.5';
+  /* Coarse pointers (iPad/mobile): bigger touch targets + readable text —
+     the kit's standard sizing up (menus, modals, footer buttons). */
+  const navBtnCls = IS_COARSE ? 'p-2' : 'p-1';
+  const navIconCls = IS_COARSE ? 'w-5 h-5' : 'w-4 h-4';
+  const dayHeaderCls = IS_COARSE ? 'text-[11px] py-2' : 'text-[10px] py-1.5';
+  const cellCls = IS_COARSE ? 'py-2.5 text-sm' : 'py-1.5 text-xs';
+  const chipCls = IS_COARSE ? 'text-xs px-2.5 py-1.5' : 'text-[10px] px-1.5 py-0.5';
 
   return (
     <div className={`border rounded-lg overflow-hidden w-full ${dark ? 'border-zinc-700 bg-zinc-900' : 'border-zinc-200 bg-white'} ${className}`}>
@@ -64,10 +69,10 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
         <button
           type="button"
           onClick={() => { if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); } else setViewMonth(m => m - 1); }}
-          className={`p-1 rounded transition-colors ${dark ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100' : 'text-zinc-600 hover:bg-zinc-200'}`}
+          className={`${navBtnCls} rounded transition-colors ${dark ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100' : 'text-zinc-600 hover:bg-zinc-200'}`}
           aria-label="Previous month"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className={navIconCls} />
         </button>
         <span className={`text-sm font-semibold ${dark ? 'text-zinc-100' : 'text-zinc-800'}`}>
           {new Date(viewYear, viewMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}
@@ -75,15 +80,15 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
         <button
           type="button"
           onClick={() => { if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); } else setViewMonth(m => m + 1); }}
-          className={`p-1 rounded transition-colors ${dark ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100' : 'text-zinc-600 hover:bg-zinc-200'}`}
+          className={`${navBtnCls} rounded transition-colors ${dark ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100' : 'text-zinc-600 hover:bg-zinc-200'}`}
           aria-label="Next month"
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className={navIconCls} />
         </button>
       </div>
       <div className="grid grid-cols-7 text-center">
         {DAYS.map(d => (
-          <div key={d} className={`text-[10px] font-semibold uppercase tracking-wider py-1.5 border-b ${dark ? 'text-zinc-500 border-zinc-800' : 'text-zinc-400 border-zinc-100'}`}>{d}</div>
+          <div key={d} className={`${dayHeaderCls} font-semibold uppercase tracking-wider border-b ${dark ? 'text-zinc-500 border-zinc-800' : 'text-zinc-400 border-zinc-100'}`}>{d}</div>
         ))}
         {cells.map(cell => (
           cell.empty ? (
@@ -93,7 +98,7 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
               key={cell.key}
               type="button"
               onClick={() => toggle(cell.key)}
-              className={`${cellCls} text-xs font-medium transition-colors border-b ${dark ? 'text-zinc-300 hover:bg-zinc-800 border-zinc-800/60' : 'text-zinc-700 hover:bg-zinc-100 border-zinc-50'} ${
+              className={`${cellCls} font-medium transition-colors border-b ${dark ? 'text-zinc-300 hover:bg-zinc-800 border-zinc-800/60' : 'text-zinc-700 hover:bg-zinc-100 border-zinc-50'} ${
                 selectedSet.has(cell.key)
                   ? dark ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-zinc-900 text-white hover:bg-zinc-800'
                   : ''
