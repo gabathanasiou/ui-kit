@@ -5,7 +5,7 @@ import {
   Button, DropdownMenu, DropdownItem, DropdownSubmenu,
   ItemManagerDropdown, Modal, ModalFooter, ModalFooterButton, Checkbox,
   Checklist, RadioList, DatePicker, Tooltip, ContextMenu, ContextMenuItem,
-  ContextMenuDivider, ContextMenuSub, useOverlayMorph,
+  ContextMenuDivider, ContextMenuSub, useOverlayMorph, DialogProvider, useDialog,
 } from '../../src/index';
 import type { DropdownTheme } from '../src/index';
 
@@ -452,6 +452,57 @@ function MiscSection() {
   );
 }
 
+// ── 4. Dialogs (Modal sub-elements) ─────────────────────────────────────────
+
+function DialogsSection() {
+  const dialog = useDialog();
+  const [last, setLast] = useState<string>('—');
+  const [hostOpen, setHostOpen] = useState(false);
+  return (
+    <section data-section="dialogs">
+      <h2>Dialogs — confirm / prompt / alert render through the Modal (morph + dim)</h2>
+      <div className="row">
+        <Button data-testid="dlg-confirm" onClick={async () => { const ok = await dialog.confirm({ title: 'Delete Scene?', message: 'This can be restored from Trash.' }); setLast(`confirm → ${ok}`); }}>
+          Confirm
+        </Button>
+        <Button data-testid="dlg-danger" onClick={async () => { const ok = await dialog.confirm({ title: 'Empty Trash?', message: 'Permanently delete all trash items?', danger: true, suppressKey: 'playground_dnwa_empty_trash' }); setLast(`danger → ${ok}`); }}>
+          Danger confirm + DNWA
+        </Button>
+        <Button data-testid="dlg-prompt" onClick={async () => { const v = await dialog.prompt({ title: 'Project Name', defaultValue: 'Untitled Project', placeholder: 'Project name' }); setLast(`prompt → ${v}`); }}>
+          Prompt
+        </Button>
+        <Button data-testid="dlg-alert" onClick={async () => { await dialog.alert({ title: 'Saved', message: 'Your project is up to date.' }); setLast('alert → ok'); }}>
+          Alert
+        </Button>
+        <Button data-testid="dlg-over-host" onClick={() => setHostOpen(true)}>
+          Dialog over host modal
+        </Button>
+        <span className="label">last: {last}</span>
+      </div>
+      {hostOpen && (
+        <Modal
+          open
+          onClose={() => setHostOpen(false)}
+          title="Host modal"
+          width="max-w-md"
+          footer={
+            <ModalFooter>
+              <ModalFooterButton variant="ghost" onClick={() => setHostOpen(false)}>Close</ModalFooterButton>
+            </ModalFooter>
+          }
+        >
+          <div className="p-6 space-y-5">
+            <p>An alert opened here morphs OUT OF THIS BOX (stack FLIP); the dim stays one layer.</p>
+            <Button data-testid="dlg-in-host" onClick={async () => { const ok = await dialog.confirm({ title: 'Over modal', message: 'Confirm from inside the host modal.', danger: true }); setLast(`over-modal → ${ok}`); }}>
+              Danger confirm over modal
+            </Button>
+          </div>
+        </Modal>
+      )}
+    </section>
+  );
+}
+
 // ── App ─────────────────────────────────────────────────────────────────────
 
 function App() {
@@ -479,6 +530,7 @@ function App() {
         <StackedModalDemo />
         <MenuInsideModal />
       </section>
+      <DialogsSection />
       <section data-section="morph-panels">
         <h2>useOverlayMorph clone panels (the app DropdownPanel pattern)</h2>
         <PanelDemo />
@@ -491,6 +543,8 @@ function App() {
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <DialogProvider>
+      <App />
+    </DialogProvider>
   </React.StrictMode>,
 );

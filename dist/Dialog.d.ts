@@ -1,17 +1,17 @@
 import React from 'react';
-interface ConfirmOptions {
+export interface ConfirmOptions {
     title: string;
     message?: string;
     danger?: boolean;
     suppressKey?: string;
 }
-interface PromptOptions {
+export interface PromptOptions {
     title: string;
     defaultValue?: string;
     placeholder?: string;
     message?: string;
 }
-interface AlertOptions {
+export interface AlertOptions {
     title: string;
     message?: string;
 }

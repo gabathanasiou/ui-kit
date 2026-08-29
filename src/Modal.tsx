@@ -147,6 +147,11 @@ const HEADER_PX = IS_COARSE ? 'px-6' : 'px-5';
 const HEADER_PY = IS_COARSE ? 'py-3' : 'py-2.5';
 const TITLE_SIZE = IS_COARSE ? 'text-sm' : 'text-xs';
 const CLOSE_ICON = IS_COARSE ? 'w-4 h-4' : 'w-3.5 h-3.5';
+const FLAT_TITLE = IS_COARSE ? 'text-base' : 'text-sm';
+const FLAT_CLOSE = IS_COARSE ? 'w-5 h-5' : 'w-4 h-4';
+const FLAT_PAD = IS_COARSE ? 'px-6' : 'px-5';
+const FLAT_TOP = IS_COARSE ? 'pt-6' : 'pt-5';
+const FLAT_BOTTOM = IS_COARSE ? 'pb-6' : 'pb-5';
 const RESET_TEXT = IS_COARSE ? 'text-xs' : 'text-[10px]';
 const RESET_ICON = IS_COARSE ? 'w-3.5 h-3.5' : 'w-3 h-3';
 const RESET_PAD = IS_COARSE ? 'px-2.5 py-1.5' : 'px-2 py-1';
@@ -164,6 +169,11 @@ export interface ModalProps {
   onReset?: () => void;
   /** Stack/zoom/size transitions on this instance (default true). */
   morph?: boolean;
+  /** Flat "dialog" chrome: no header bar or footer bar (no borders/bands) —
+     the title row and the footer row sit on the same surface as the body.
+     The Dialog (confirm/prompt/alert) renders through this mode. Same
+     animations, drag and Enter-confirm as the regular chrome. */
+  flat?: boolean;
 }
 
 export default function Modal({
@@ -176,6 +186,7 @@ export default function Modal({
   children,
   onReset,
   morph = true,
+  flat = false,
 }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -500,6 +511,21 @@ export default function Modal({
           className={`fixed z-[10000] bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden flex flex-col focus:outline-none ${posClasses} ${sizeClasses}`}
           style={{ touchAction: 'manipulation', ...(Object.keys(combinedStyle).length > 0 ? combinedStyle : {}) }}
         >
+          {flat ? (
+            <div
+              className={`flex items-center justify-between ${FLAT_PAD} ${FLAT_TOP} pb-4 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              onPointerDown={(e) => { if (!morphing) onPointerDown(e); }}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+            >
+              <RadixDialog.Title className={`${FLAT_TITLE} font-bold text-white truncate`}>
+                {title}
+              </RadixDialog.Title>
+              <RadixDialog.Close className="text-zinc-500 hover:text-white transition-colors shrink-0">
+                <X className={FLAT_CLOSE} />
+              </RadixDialog.Close>
+            </div>
+          ) : (
           <div
             className={`flex items-center justify-between ${HEADER_PX} ${HEADER_PY} border-b border-zinc-800 shrink-0 bg-zinc-950 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
             onPointerDown={(e) => { if (!morphing) onPointerDown(e); }}
@@ -524,14 +550,17 @@ export default function Modal({
               </RadixDialog.Close>
             </div>
           </div>
+          )}
 
-          <div ref={bodyRef} className="overflow-y-auto flex-1 bg-zinc-900 text-zinc-100">
+          <div ref={bodyRef} className={`overflow-y-auto flex-1 bg-zinc-900 text-zinc-100${flat ? ` ${FLAT_PAD} pb-4` : ''}`}>
             {children}
           </div>
 
           {footer && (
-            <div ref={footerRef} className="shrink-0">
-              {footer}
+            <div ref={footerRef} className={flat ? `${FLAT_PAD} ${FLAT_BOTTOM}` : 'shrink-0'}>
+              {flat ? (
+                <div className="flex items-center justify-end gap-2">{footer}</div>
+              ) : footer}
             </div>
           )}
         </RadixDialog.Content>

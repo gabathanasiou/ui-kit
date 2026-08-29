@@ -16,7 +16,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: 'npx vite playground --config playground/vite.config.ts',
+    command: 'npx vite . --config ./vite.config.ts',
     url: 'http://localhost:5183',
     reuseExistingServer: true,
     timeout: 30_000,

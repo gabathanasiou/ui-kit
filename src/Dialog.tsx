@@ -1,36 +1,38 @@
 "use client";
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
-import * as RadixDialog from '@radix-ui/react-dialog';
-import { X } from 'lucide-react';
 import { IS_COARSE } from './device';
-import { usePortalTarget, useCurrentWindow } from './popout';
+import Modal from './Modal';
+import ModalFooterButton from './ModalFooterButton';
 import Checkbox from './Checkbox';
 
-const DIALOG_PAD = IS_COARSE ? 'p-6' : 'p-5';
-const DIALOG_TITLE = IS_COARSE ? 'text-base' : 'text-sm';
-const DIALOG_CLOSE = IS_COARSE ? 'w-5 h-5' : 'w-4 h-4';
+/* Confirm/prompt/alert dialogs render THROUGH the kit Modal (this file used
+   to be its own Radix Dialog with bespoke chrome) — they inherit the whole
+   Modal language for free: the standalone zoom-in/out, the stack FLIP morph
+   (a dialog opened over a modal grows out of the modal's box), the
+   one-dim-per-window backdrop (tokens.css [data-modal-stack]) and the
+   footer Enter-confirm. The flat chrome keeps the classic dialog look — no
+   header bar, no footer bar, the title row and buttons on the same surface
+   as the body. The useDialog() API is unchanged. */
+
+const DIALOG_BODY = IS_COARSE ? 'space-y-5' : 'space-y-4';
 const DIALOG_DESC = IS_COARSE ? 'text-sm' : 'text-xs';
 const DIALOG_INPUT = IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
-const DIALOG_BTN = IS_COARSE ? 'px-4 py-2.5 text-sm' : 'px-3 py-1.5 text-xs';
-const DLG_EDGE_H = IS_COARSE ? 'left-3 right-3 h-[10px]' : 'left-2 right-2 h-[6px]';
-const DLG_EDGE_V = IS_COARSE ? 'top-3 bottom-3 w-[10px]' : 'top-2 bottom-2 w-[6px]';
-const DLG_CORNER = IS_COARSE ? 'w-[14px] h-[14px]' : 'w-[10px] h-[10px]';
 
-interface ConfirmOptions {
+export interface ConfirmOptions {
   title: string;
   message?: string;
   danger?: boolean;
   suppressKey?: string;
 }
 
-interface PromptOptions {
+export interface PromptOptions {
   title: string;
   defaultValue?: string;
   placeholder?: string;
   message?: string;
 }
 
-interface AlertOptions {
+export interface AlertOptions {
   title: string;
   message?: string;
 }
@@ -58,93 +60,7 @@ export function useDialog() {
 export function DialogProvider({ children }: { children: React.ReactNode }) {
   const [dialog, setDialog] = useState<DialogState>(null);
   const [suppressCheck, setSuppressCheck] = useState(false);
-  const portalTarget = usePortalTarget();
-  const currentWindow = useCurrentWindow();
-  const currentWindowRef = useRef(currentWindow);
-  currentWindowRef.current = currentWindow;
   const inputRef = useRef<HTMLInputElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [dragPos, setDragPos] = useState<{ left: number; top: number } | null>(null);
-  const dragRef = useRef<{ startX: number; startY: number; posX: number; posY: number } | null>(null);
-  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
-  const resizeRef = useRef<{ dir: 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'; startX: number; startY: number; startL: number; startT: number; startW: number; startH: number } | null>(null);
-
-  const isDragging = dragRef.current !== null;
-  const isResizing = resizeRef.current !== null;
-
-  useEffect(() => {
-    if (!dialog) { setDragPos(null); setSize(null); }
-  }, [dialog]);
-
-  const captureRect = useCallback((): { left: number; top: number; width: number; height: number } | null => {
-    const el = contentRef.current;
-    if (!el) return null;
-    const r = el.getBoundingClientRect();
-    return { left: r.left, top: r.top, width: r.width, height: r.height };
-  }, []);
-
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest('button')) return;
-    const r = captureRect(); if (!r) return;
-    setDragPos(r); setSize({ w: r.width, h: r.height });
-    dragRef.current = { startX: e.clientX, startY: e.clientY, posX: r.left, posY: r.top };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [captureRect]);
-
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    const d = dragRef.current;
-    if (!d) return;
-    e.preventDefault();
-    setDragPos({ left: d.posX + e.clientX - d.startX, top: d.posY + e.clientY - d.startY });
-  }, []);
-
-  const onPointerUp = useCallback(() => { dragRef.current = null; }, []);
-
-  const startResize = useCallback((dir: 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw') => (e: React.PointerEvent) => {
-    e.stopPropagation();
-    const r = captureRect(); if (!r) return;
-    setDragPos(r); setSize({ w: r.width, h: r.height });
-    resizeRef.current = { dir, startX: e.clientX, startY: e.clientY, startL: r.left, startT: r.top, startW: r.width, startH: r.height };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [captureRect]);
-
-  const MIN_W = 200, MIN_H = 100, MAX_EDGE = 32;
-
-  const onResizeMove = useCallback((e: React.PointerEvent) => {
-    const rs = resizeRef.current;
-    if (!rs) return;
-    e.preventDefault();
-    const dx = e.clientX - rs.startX;
-    const dy = e.clientY - rs.startY;
-    let newW = rs.startW, newH = rs.startH, newL = rs.startL, newT = rs.startT;
-
-    if (rs.dir.includes('e')) newW = rs.startW + dx;
-    if (rs.dir.includes('w')) { newW = rs.startW - dx; newL = rs.startL + dx; }
-    if (rs.dir.includes('s')) newH = rs.startH + dy;
-    if (rs.dir.includes('n')) { newH = rs.startH - dy; newT = rs.startT + dy; }
-
-    const win = currentWindowRef.current;
-    if (!win) return;
-    const vw = win.innerWidth, vh = win.innerHeight;
-    newW = Math.max(MIN_W, Math.min(newW, vw - MAX_EDGE * 2));
-    newH = Math.max(MIN_H, Math.min(newH, vh - MAX_EDGE * 2));
-    if (rs.dir.includes('w')) newL = Math.max(MAX_EDGE, Math.min(newL, vw - newW - MAX_EDGE));
-    if (rs.dir.includes('n')) newT = Math.max(MAX_EDGE, Math.min(newT, vh - newH - MAX_EDGE));
-
-    setSize({ w: newW, h: newH });
-    setDragPos({ left: newL, top: newT });
-  }, []);
-
-  const onResizeUp = useCallback(() => { resizeRef.current = null; }, []);
-
-  const close = useCallback(() => {
-    if (dialog) {
-      if (dialog.kind === 'confirm') dialog.resolve(false);
-      else if (dialog.kind === 'prompt') dialog.resolve(null);
-      else dialog.resolve();
-      setDialog(null);
-    }
-  }, [dialog]);
 
   const confirm = useCallback((opts: ConfirmOptions): Promise<boolean> => {
     if (opts.suppressKey) {
@@ -178,135 +94,113 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
     }
   }, [dialog]);
 
-  const resolvePrompt = () => {
-    if (!dialog || dialog.kind !== 'prompt') return;
-    dialog.resolve(inputRef.current?.value?.trim() || null);
+  const confirmAction = useCallback(() => {
+    if (!dialog) return;
+    if (dialog.kind === 'confirm') {
+      const opts = dialog.options as ConfirmOptions;
+      if (opts.suppressKey && suppressCheck) {
+        localStorage.setItem(opts.suppressKey, String(Date.now() + 86400000));
+      }
+      dialog.resolve(true);
+    } else if (dialog.kind === 'prompt') {
+      dialog.resolve(inputRef.current?.value?.trim() || null);
+    } else {
+      dialog.resolve();
+    }
     setDialog(null);
-  };
+  }, [dialog, suppressCheck]);
 
   const open = dialog !== null;
+
+  /* Enter = the primary action, ALWAYS — including when focus sits on the X
+     close button (Radix focuses the first tabbable on open, which would
+     otherwise make Enter cancel). Captured at document level so the
+     content-level Modal Enter-confirm and any focused button never compete. */
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter' || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      confirmAction();
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [open, confirmAction]);
+
+  const cancelAction = useCallback(() => {
+    if (!dialog) return;
+    if (dialog.kind === 'confirm') dialog.resolve(false);
+    else if (dialog.kind === 'prompt') dialog.resolve(null);
+    else dialog.resolve();
+    setDialog(null);
+  }, [dialog]);
 
   return (
     <DialogContext.Provider value={{ confirm, prompt, alert }}>
       {children}
 
-      <RadixDialog.Root open={open} onOpenChange={(o) => { if (!o) close(); }} modal={true}>
-        <RadixDialog.Portal container={portalTarget ?? undefined}>
-          <RadixDialog.Overlay className="fixed inset-0 z-[10000] ui-overlay" />
-          <RadixDialog.Content
-            ref={contentRef}
-            data-theme="dark"
-            className={`fixed z-[10000] ui-dialog rounded-lg shadow-xl ${DIALOG_PAD} space-y-4 focus:outline-none ${dragPos || size ? '' : 'left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2'} ${size ? '' : 'w-full max-w-sm'}`}
-            style={{ ...(dragPos ? { left: dragPos.left, top: dragPos.top } : {}), ...(size ? { width: size.w, height: size.h } : {}) }}
-            onEscapeKeyDown={(e) => {
-              close();
-              e.preventDefault();
-            }}
-            onPointerDownOutside={(e) => {
-              close();
-              e.preventDefault();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                if (dialog?.kind === 'prompt' && e.target instanceof HTMLInputElement) return;
-                e.preventDefault();
-                if (!dialog) return;
-                if (dialog.kind === 'confirm') { dialog.resolve(true); setDialog(null); }
-                else if (dialog.kind === 'prompt') resolvePrompt();
-                else { dialog.resolve(); setDialog(null); }
-              }
-            }}
-          >
-            <div
-              className={`flex items-center justify-between ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-            >
-              <RadixDialog.Title className={`${DIALOG_TITLE} ui-dialog-title`}>
-                {dialog?.options.title}
-              </RadixDialog.Title>
-              <RadixDialog.Close className="ui-icon-btn p-0.5 rounded">
-                <X className={DIALOG_CLOSE} />
-              </RadixDialog.Close>
-            </div>
-
-            {dialog?.options.message && (
-              <RadixDialog.Description className={`${DIALOG_DESC} ui-dialog-text`}>
-                {dialog.options.message}
-              </RadixDialog.Description>
-            )}
-
-            {dialog?.kind === 'confirm' && (dialog.options as ConfirmOptions).suppressKey && (
-              <Checkbox
-                block
-                checked={suppressCheck}
-                onChange={setSuppressCheck}
-                tone="danger"
-                label="Don't ask again (24 hours)"
-              />
-            )}
-
-            {dialog?.kind === 'prompt' && (
-              <input
-                ref={inputRef}
-                type="text"
-                defaultValue={dialog.options.defaultValue || ''}
-                placeholder={dialog.options.placeholder}
-                onKeyDown={e => { if (e.key === 'Enter') resolvePrompt(); }}
-                className={`w-full ${DIALOG_INPUT} ui-input`}
-              />
-            )}
-
-            <div className="flex items-center justify-end gap-2 pt-1">
-              {dialog?.kind !== 'alert' && (
-                <button
-                  onClick={() => {
-                    const d = dialog;
-                    if (!d) return;
-                    if (d.kind === 'confirm') { d.resolve(false); setDialog(null); }
-                    else if (d.kind === 'prompt') { d.resolve(null); setDialog(null); }
-                  }}
-                  className={`${DIALOG_BTN} ui-btn ui-btn-ghost`}
-                >
+      <Modal
+        open={open}
+        onClose={cancelAction}
+        title={dialog?.options.title ?? ''}
+        width="max-w-sm"
+        flat
+        footer={
+          dialog && (
+            <>
+              {dialog.kind !== 'alert' && (
+                <ModalFooterButton variant="ghost" onClick={cancelAction}>
                   Cancel
-                </button>
+                </ModalFooterButton>
               )}
-              <button
-                onClick={() => {
-                  if (!dialog) return;
-                   if (dialog.kind === 'confirm') {
-                     const opts = dialog.options as ConfirmOptions;
-                     if (opts.suppressKey && suppressCheck) {
-                       localStorage.setItem(opts.suppressKey, String(Date.now() + 86400000));
-                     }
-                     dialog.resolve(true); setDialog(null);
-                   }
-                  else if (dialog.kind === 'prompt') resolvePrompt();
-                  else { dialog.resolve(); setDialog(null); }
-                }}
-                className={`${DIALOG_BTN} ui-btn ${
-                  dialog?.kind === 'confirm' && dialog.options.danger
-                    ? 'ui-btn-danger'
-                    : 'ui-btn-primary'
-                }`}
-              >
-                {dialog?.kind === 'alert' ? 'OK' : dialog?.kind === 'confirm' ? 'Confirm' : 'Save'}
-              </button>
-            </div>
-            <div className="absolute inset-0 pointer-events-none">
-              <div className={`absolute ${DLG_EDGE_H} top-0 cursor-n-resize pointer-events-auto`} onPointerDown={startResize('n')} onPointerMove={onResizeMove} onPointerUp={onResizeUp} />
-              <div className={`absolute ${DLG_EDGE_H} bottom-0 cursor-s-resize pointer-events-auto`} onPointerDown={startResize('s')} onPointerMove={onResizeMove} onPointerUp={onResizeUp} />
-              <div className={`absolute ${DLG_EDGE_V} left-0 cursor-w-resize pointer-events-auto`} onPointerDown={startResize('w')} onPointerMove={onResizeMove} onPointerUp={onResizeUp} />
-              <div className={`absolute ${DLG_EDGE_V} right-0 cursor-e-resize pointer-events-auto`} onPointerDown={startResize('e')} onPointerMove={onResizeMove} onPointerUp={onResizeUp} />
-              <div className={`absolute top-0 left-0 ${DLG_CORNER} cursor-nw-resize pointer-events-auto`} onPointerDown={startResize('nw')} onPointerMove={onResizeMove} onPointerUp={onResizeUp} />
-              <div className={`absolute top-0 right-0 ${DLG_CORNER} cursor-ne-resize pointer-events-auto`} onPointerDown={startResize('ne')} onPointerMove={onResizeMove} onPointerUp={onResizeUp} />
-              <div className={`absolute bottom-0 left-0 ${DLG_CORNER} cursor-sw-resize pointer-events-auto`} onPointerDown={startResize('sw')} onPointerMove={onResizeMove} onPointerUp={onResizeUp} />
-              <div className={`absolute bottom-0 right-0 ${DLG_CORNER} cursor-se-resize pointer-events-auto`} onPointerDown={startResize('se')} onPointerMove={onResizeMove} onPointerUp={onResizeUp} />
-            </div>
-          </RadixDialog.Content>
-        </RadixDialog.Portal>
-      </RadixDialog.Root>
+              {dialog.kind === 'alert' ? (
+                <ModalFooterButton onClick={confirmAction}>OK</ModalFooterButton>
+              ) : dialog.kind === 'confirm' ? (
+                <ModalFooterButton
+                  data-modal-confirm
+                  variant="danger-solid"
+                  onClick={confirmAction}
+                >
+                  Confirm
+                </ModalFooterButton>
+              ) : (
+                <ModalFooterButton data-modal-confirm onClick={confirmAction}>
+                  Save
+                </ModalFooterButton>
+              )}
+            </>
+          )
+        }
+      >
+        <div className={DIALOG_BODY}>
+          {dialog?.options.message && (
+            <p className={`${DIALOG_DESC} text-zinc-400 leading-relaxed`}>
+              {dialog.options.message}
+            </p>
+          )}
+
+          {dialog?.kind === 'confirm' && (dialog.options as ConfirmOptions).suppressKey && (
+            <Checkbox
+              block
+              checked={suppressCheck}
+              onChange={setSuppressCheck}
+              tone="danger"
+              label="Don't ask again (24 hours)"
+            />
+          )}
+
+          {dialog?.kind === 'prompt' && (
+            <input
+              ref={inputRef}
+              type="text"
+              defaultValue={dialog.options.defaultValue || ''}
+              placeholder={dialog.options.placeholder}
+              className={`w-full ${DIALOG_INPUT} ui-input`}
+            />
+          )}
+        </div>
+      </Modal>
     </DialogContext.Provider>
   );
 }
