@@ -62,7 +62,9 @@ export function useFixedPosition(
   useLayoutEffect(() => {
     if (!open || !wrapperRef.current) return;
     const el = wrapperRef.current;
-    requestAnimationFrame(() => {
+    let raf = 0;
+    const measure = () => {
+      raf = 0;
       const rect = el.getBoundingClientRect();
       const win = currentWindowRef.current;
       if (!win) return;
@@ -88,6 +90,20 @@ export function useFixedPosition(
         const bottom = voff + vh - (rect.top - gap);
         setPos({ top: 0, left, width: rect.width, maxH, bottom: Math.max(0, bottom) });
       }
-    });
+    };
+    const schedule = () => { if (!raf) raf = requestAnimationFrame(measure); };
+    /* Follow the trigger: any scroll (capture catches inner containers and
+       the modal's body) or resize can move the anchor under a fixed panel —
+       re-measure so the overlay tracks it. */
+    const win = currentWindowRef.current ?? null;
+    const doc = win?.document ?? null;
+    schedule();
+    doc?.addEventListener('scroll', schedule, { capture: true, passive: true });
+    win?.addEventListener('resize', schedule);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      doc?.removeEventListener('scroll', schedule, { capture: true });
+      win?.removeEventListener('resize', schedule);
+    };
   }, [open, wrapperRef, opts?.panelWidth]);
 }

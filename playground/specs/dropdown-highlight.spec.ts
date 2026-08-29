@@ -183,3 +183,24 @@ test('a long menu inside a modal stays above it and wheel-scrolls', async ({ pag
   await expect(menu(page)).toHaveCount(0, { timeout: 5000 });
   await expect(modal).toBeVisible();
 });
+
+test('the open menu follows the trigger when the page scrolls', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('ctrl-menu-trigger').click();
+  await expect(menu(page)).toBeVisible();
+
+  const triggerBefore = await page.getByTestId('ctrl-menu-trigger').boundingBox();
+  const menuBefore = await menu(page).boundingBox();
+  await page.evaluate(() => window.scrollTo(0, 150));
+  await page.waitForTimeout(250);
+  const triggerAfter = await page.getByTestId('ctrl-menu-trigger').boundingBox();
+  const menuAfter = await menu(page).boundingBox();
+
+  const triggerDy = triggerAfter!.y - triggerBefore!.y;
+  const menuDy = menuAfter!.y - menuBefore!.y;
+  expect(menuDy).toBeCloseTo(triggerDy, 0);
+  expect(menuAfter!.x).toBeCloseTo(menuBefore!.x, 0);
+  // still interactive
+  await page.getByRole('menuitem', { name: 'Travel' }).hover();
+  await expect(litRows(page)).toContainText('Travel');
+});
