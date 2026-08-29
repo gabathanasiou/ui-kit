@@ -59,7 +59,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
     return registerOverlayClose(onClose);
   }, [open, onClose]);
 
-  const anchor = useCallback(() => ({ left: x, top: y, width: 0, height: 0 }), [x, y]);
+  /* Capture the press point at OPEN — the parent resets x/y to 0 when it
+     clears the state on close, and the close morph's anchor must still point
+     at where the menu was opened (never the top-left corner). */
+  const pressRef = useRef({ left: x, top: y });
+  if (open) pressRef.current = { left: x, top: y };
+  const anchor = useCallback(() => ({ left: pressRef.current.left, top: pressRef.current.top, width: 0, height: 0 }), []);
 
   const setContentRef = useOverlayMorph({
     visible: open,
@@ -303,6 +308,7 @@ export const ContextMenuSub: React.FC<ContextMenuSubProps> = ({ id, label, icon,
 
   const enterTrigger = () => {
     window.clearTimeout(closeTimerRef.current);
+    if (parentApi && myIndex >= 0) parentApi.setHighlighted(myIndex, 'pointer');
     if (!subOpen) {
       window.clearTimeout(openTimerRef.current);
       openTimerRef.current = window.setTimeout(openSub, 100);
