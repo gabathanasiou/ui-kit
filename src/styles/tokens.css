@@ -318,8 +318,10 @@
   pointer-events: none;
 }
 
-.ui-item:active {
+.ui-item:active::before {
   background: var(--ui-item-active-bg);
+}
+.ui-item:active {
   transition: none;
 }
 
