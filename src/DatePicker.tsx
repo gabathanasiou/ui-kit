@@ -34,13 +34,23 @@ export interface DatePickerProps {
   theme?: 'light' | 'dark';
   /** Collapse the selected-date chip row when nothing is picked. */
   showChips?: boolean;
+  /** Seed the visible month/year on MOUNT from this ISO `YYYY-MM-DD` date
+   *  (defaults to today's month). Lets the panel open on the relevant month
+   *  instead of always landing on today — mount-scoped, so a fresh mount
+   *  (e.g. a chrome panel that mounts per open) re-seeds every time. */
+  initialView?: string;
   className?: string;
 }
 
-export default function DatePicker({ selected, onChange, theme = 'light', showChips = true, className = '' }: DatePickerProps) {
+export default function DatePicker({ selected, onChange, theme = 'light', showChips = true, className = '', initialView }: DatePickerProps) {
   const today = new Date();
-  const [viewYear, setViewYear] = useState(today.getFullYear());
-  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const seed = (() => {
+    if (!initialView) return today;
+    const d = new Date(initialView + 'T00:00:00');
+    return isNaN(d.getTime()) ? today : d;
+  })();
+  const [viewYear, setViewYear] = useState(seed.getFullYear());
+  const [viewMonth, setViewMonth] = useState(seed.getMonth());
   const [view, setView] = useState<'days' | 'months'>('days');
   const [yearDraft, setYearDraft] = useState<string | null>(null);
 

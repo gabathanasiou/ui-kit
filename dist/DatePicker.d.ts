@@ -17,6 +17,11 @@ export interface DatePickerProps {
     theme?: 'light' | 'dark';
     /** Collapse the selected-date chip row when nothing is picked. */
     showChips?: boolean;
+    /** Seed the visible month/year on MOUNT from this ISO `YYYY-MM-DD` date
+     *  (defaults to today's month). Lets the panel open on the relevant month
+     *  instead of always landing on today — mount-scoped, so a fresh mount
+     *  (e.g. a chrome panel that mounts per open) re-seeds every time. */
+    initialView?: string;
     className?: string;
 }
-export default function DatePicker({ selected, onChange, theme, showChips, className }: DatePickerProps): React.JSX.Element;
+export default function DatePicker({ selected, onChange, theme, showChips, className, initialView }: DatePickerProps): React.JSX.Element;
