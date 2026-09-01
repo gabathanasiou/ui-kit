@@ -1,7 +1,7 @@
 "use client";
 import React, { useRef } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useDropdownTheme, getDropdownClasses, useHighlightRow } from './DropdownMenu';
+import { useDropdownTheme, getDropdownClasses, useHighlightRow, useMenuSearch } from './DropdownMenu';
 import { useCoarseScale, coarsePx } from './device';
 
 // typeahead label extractor — shared with ContextMenuItem
@@ -59,13 +59,20 @@ export default function DropdownItem({
     disabled,
   });
 
+  /* Searchable menus: the api's `items` is the filtered set, so a row filtered
+     out by the query has myIndex -1 → hide it (it also can't be lit or pointed
+     at). Rows keep their Radix registration so the set returns when the query
+     clears. */
+  const { query } = useMenuSearch();
+  const hidden = query.trim() !== '' && myIndex < 0;
+
   const variantStyles = variant === 'danger' ? d.itemDanger : d.itemDefault;
 
   return (
     <RadixDropdownMenu.Item
       ref={itemRef}
       data-ei={myIndex >= 0 ? myIndex : undefined}
-      style={ITEM_STYLE} className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${variantStyles} ${selected ? 'ui-item-selected' : ''} ${highlighted ? 'ui-item-highlighted' : ''} ${disabled ? 'opacity-30 pointer-events-none' : ''} ${className}`}
+      style={{ ...ITEM_STYLE, display: hidden ? 'none' : undefined }} className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${variantStyles} ${selected ? 'ui-item-selected' : ''} ${highlighted ? 'ui-item-highlighted' : ''} ${disabled ? 'opacity-30 pointer-events-none' : ''} ${className}`}
       onSelect={(e) => {
         if (skipClickRef.current) { skipClickRef.current = false; return; }
         if (keepOpen) e.preventDefault(); onClick();

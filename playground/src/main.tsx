@@ -199,6 +199,80 @@ function ItemManagerDemo() {
   );
 }
 
+const TIMEZONES = [
+  'Africa/Johannesburg', 'Africa/Lagos', 'America/Argentina/Buenos_Aires', 'America/Chicago',
+  'America/Los_Angeles', 'America/New_York', 'America/Sao_Paulo', 'America/Toronto',
+  'America/Vancouver', 'Asia/Dubai', 'Asia/Singapore', 'Asia/Tokyo', 'Australia/Melbourne',
+  'Australia/Sydney', 'Europe/Berlin', 'Europe/London', 'Europe/Paris', 'Pacific/Auckland',
+];
+
+function SearchableMenuDemo() {
+  /* `searchable`: a search input auto-focuses at the top of the panel; typing
+     filters the rows by label (non-matches hide), arrows move the single
+     highlight over the VISIBLE rows, Enter/click selects. The typeahead
+     letter-jump yields to the input (letters go into the field). Two variants:
+     dark (default) + light theme — the search box is theme-aware. */
+  const [open, setOpen] = useState(false);
+  const [lightOpen, setLightOpen] = useState(false);
+  const [pick, setPick] = useState<string | null>(null);
+  return (
+    <div className="row" data-testid="searchable-menu">
+      <DropdownMenu open={open} onOpenChange={setOpen} width="w-64"
+        searchable searchPlaceholder="Search timezones…"
+        trigger={<Button data-testid="searchable-trigger">Searchable menu {pick ? `— ${pick}` : ''}</Button>}
+      >
+        {TIMEZONES.map(tz => (
+          <DropdownItem key={tz} selected={pick === tz} onClick={() => { setPick(tz); setOpen(false); }}>
+            {tz}
+          </DropdownItem>
+        ))}
+      </DropdownMenu>
+      <DropdownMenu open={lightOpen} onOpenChange={setLightOpen} width="w-64" theme="light"
+        searchable searchPlaceholder="Search (light)…"
+        trigger={<Button theme="light" variant="primary" data-testid="searchable-light-trigger">Searchable menu (light) {pick ? `— ${pick}` : ''}</Button>}
+      >
+        {TIMEZONES.map(tz => (
+          <DropdownItem key={tz} selected={pick === tz} onClick={() => { setPick(tz); setOpen(false); }}>
+            {tz}
+          </DropdownItem>
+        ))}
+      </DropdownMenu>
+    </div>
+  );
+}
+
+function SearchableTriggerDemo() {
+  /* Trigger-as-search (combobox): the trigger field IS the search box. The
+     query is CONTROLLED (`searchValue`/`onSearchValueChange`) — the menu
+     filters by it and renders NO box inside the panel. The field's own
+     keystrokes are never hijacked by the menu's key-lock. */
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const inputSize = useInputSize();
+  return (
+    <div className="row" data-testid="searchable-trigger-demo">
+      <DropdownMenu open={open} onOpenChange={setOpen} width="w-72"
+        searchable searchValue={q} onSearchValueChange={setQ}
+        trigger={
+          <input
+            data-testid="searchable-trigger-input"
+            value={q}
+            placeholder="Type to search timezones…"
+            onFocus={() => setOpen(true)}
+            onChange={e => { setQ(e.target.value); setOpen(true); }}
+            className="w-72 ui-input"
+            style={inputSize}
+          />
+        }
+      >
+        {TIMEZONES.map(tz => (
+          <DropdownItem key={tz} onClick={() => { setQ(tz); setOpen(false); }}>{tz}</DropdownItem>
+        ))}
+      </DropdownMenu>
+    </div>
+  );
+}
+
 // ── 3. Modals + portals ──────────────────────────────────────────────────────
 
 function BasicModalDemo() {
@@ -868,11 +942,13 @@ function App() {
       </p>
       <ButtonSection />
       <section data-section="dropdowns">
-        <h2>DropdownMenus — controlled / uncontrolled / submenu / item manager</h2>
+        <h2>DropdownMenus — controlled / uncontrolled / submenu / item manager / searchable</h2>
         <CtrlMenu />
         <CtrlMenu theme="light" label="Ctrl menu light" testId="ctrl-menu-light-trigger" />
         <UncontrolledMenu />
         <InitialHighlightMenu />
+        <SearchableMenuDemo />
+        <SearchableTriggerDemo />
         <LongMenuDemo />
         <RightEdgeMenu />
         <SubmenuDemo />

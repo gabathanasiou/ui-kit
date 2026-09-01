@@ -1,9 +1,9 @@
 "use client";
 import React, { createContext, useContext, useCallback, useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Pencil, Copy, Trash2, Plus, Check, X, RotateCcw } from 'lucide-react';
+import { Pencil, Copy, Trash2, Plus, Check, X, RotateCcw, Search } from 'lucide-react';
 import { usePortalTarget, useCurrentDocument } from './popout';
-import { IS_COARSE, getCoarseScale } from './device';
+import { IS_COARSE, getCoarseScale, useCoarseScale, coarsePx } from './device';
 import { useOverlayMorph } from './overlayMorph';
 import { useFixedPosition } from './useSmartPosition';
 import { registerOverlayClose } from './overlayRegistry';
@@ -131,7 +131,15 @@ export interface MenuHighlightApi {
 export const MenuHighlightContext = createContext<MenuHighlightApi | null>(null);
 export const useMenuHighlight = () => useContext(MenuHighlightContext);
 
-export function useMenuHighlightState(): MenuHighlightApi {
+/** Live query for `searchable` menus. `DropdownItem` rows read this to hide
+ *  themselves when filtered out; the menu owns the state (the input renders in
+ *  the kit's DropdownMenu). */
+export const MenuSearchContext = createContext<{ query: string; setQuery: (q: string) => void }>({ query: '', setQuery: () => {} });
+export const useMenuSearch = () => useContext(MenuSearchContext);
+
+const ALWAYS_VISIBLE = () => true;
+
+export function useMenuHighlightState(filter?: (item: MenuHighlightItem) => boolean): MenuHighlightApi {
   const itemsRef = useRef<MenuHighlightItem[]>([]);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [pointerDriven, setPointerDriven] = useState(false);
@@ -162,13 +170,16 @@ export function useMenuHighlightState(): MenuHighlightApi {
   }, []);
 
   const api = useMemo<MenuHighlightApi>(() => ({
-    items: itemsRef.current,
+    /* A `filter` (the searchable query) narrows the exposed items — hidden
+       rows drop out of indexing entirely, so the single highlight, the
+       arrows and the typeahead all operate on the VISIBLE set only. */
+    items: filter ? itemsRef.current.filter(filter) : itemsRef.current,
     highlightedIndex,
     pointerDriven,
     register,
     setHighlighted,
     pointerLeave,
-  }), [highlightedIndex, pointerDriven, version, register, setHighlighted, pointerLeave]);
+  }), [highlightedIndex, pointerDriven, version, register, setHighlighted, pointerLeave, filter]);
   return api;
 }
 
@@ -213,7 +224,7 @@ export function useMenuKeys(
   active: boolean,
   api: MenuHighlightApi,
   handlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>,
-  opts?: { onCloseSub?: () => void },
+  opts?: { onCloseSub?: () => void; onFieldKey?: (e: KeyboardEvent) => boolean },
 ) {
   const highlightedRef = useRef(-1);
   highlightedRef.current = api.highlightedIndex;
@@ -234,6 +245,24 @@ export function useMenuKeys(
     keysCreatedRef.current = true;
     handlerRef.current = (e: KeyboardEvent) => {
       if (!activeRef.current) return;
+      /* A focused field inside the menu (the searchable input) owns its keys:
+         printable chars + Enter + Escape are swallowed AT CAPTURE
+         (stopImmediatePropagation) so Radix's own roving focus/typeahead never
+         lights or FOCUSES a menu row — without the stop, typing "e" lets
+         Radix's typeahead focus the first matching item and steal focus from
+         the field. `onFieldKey` (the searchable menu) does the work — Enter
+         activates the highlighted row, Escape clears the query then closes —
+         and returns whether to preventDefault (chars: NO, the browser inserts
+         them and the separate `input` event keeps the controlled field
+         updating; Enter/Escape: YES). Arrows still navigate the visible rows. */
+      const t = e.target as HTMLElement | null;
+      const inField = !!t && !!t.closest('input, textarea, [contenteditable]');
+      if (inField && (e.key.length === 1 || e.key === 'Enter' || e.key === 'Escape')) {
+        const prevent = optsRef.current?.onFieldKey?.(e);
+        e.stopImmediatePropagation();
+        if (prevent) e.preventDefault();
+        return;
+      }
       const items = apiRef.current.items;
       if (items.length === 0) return; // bespoke surfaces (ItemManager) keep Radix's keyboard
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -293,6 +322,7 @@ export function useMenuKeyLock(
   contentRef: React.RefObject<HTMLElement | null>,
   standDown: boolean,
   lockHandlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>,
+  opts?: { ignoreFields?: boolean },
 ) {
   const apiRef = useRef(api);
   apiRef.current = api;
@@ -300,6 +330,8 @@ export function useMenuKeyLock(
   activeRef.current = active;
   const standDownRef = useRef(standDown);
   standDownRef.current = standDown;
+  const ignoreFieldsRef = useRef(opts?.ignoreFields);
+  ignoreFieldsRef.current = opts?.ignoreFields;
   /* Stable handler — created ONCE, reads everything via refs. The composed
      ref's cleanup removes THIS exact function; a per-render reassignment
      would leak the attached closure on the DOCUMENT after unmount (the
@@ -313,6 +345,13 @@ export function useMenuKeyLock(
       if (!activeRef.current || standDownRef.current) return;
       const el = contentRef.current;
       if (el && el.contains(e.target as Node)) return;
+      /* Trigger-as-search (external mode): the trigger field lives OUTSIDE the
+         content — its keystrokes (letters/space/Enter) belong to the field,
+         so the lock must not hijack them. Everything else still locks. */
+      if (ignoreFieldsRef.current) {
+        const t = e.target as HTMLElement | null;
+        if (t && t.closest('input, textarea, [contenteditable]')) return;
+      }
       if (apiRef.current.items.length === 0) return; // bespoke surfaces keep Radix's keys
       const isMenuKey = e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'ArrowRight'
         || e.key === 'Enter' || e.key === ' '
@@ -339,7 +378,11 @@ export function useMenuWheel(active: boolean, handlerRef: React.MutableRefObject
     wheelCreatedRef.current = true;
     handlerRef.current = (e: WheelEvent) => {
       if (!activeRef.current) return;
-      const el = e.currentTarget as HTMLElement;
+      /* Searchable menus scroll their INNER items scroller ([data-menu-items],
+         kept below the pinned search box) — everything else scrolls the
+         content itself. */
+      const host = e.currentTarget as HTMLElement;
+      const el = host.querySelector<HTMLElement>('[data-menu-items]') ?? host;
       if (el.scrollHeight > el.clientHeight) {
         e.preventDefault();
         el.scrollTop += e.deltaY;
@@ -367,6 +410,25 @@ export interface DropdownMenuProps {
   /** Row to light on open (the panel's single-mode "highlight the current"
    *  behavior — e.g. the active item in a picker list). */
   initialHighlightIndex?: number;
+  /** Render a search input at the top of the panel (auto-focused on open):
+   *  typing filters the registered `DropdownItem`s by their label (the
+   *  rich-text `@`-autocomplete model, lifted into the menu). Arrows move the
+   *  single highlight over the VISIBLE rows; Enter (in the input or on a row)
+   *  activates the highlighted row, falling back to the first visible one. */
+  searchable?: boolean;
+  searchPlaceholder?: string;
+  /** Custom label matcher for the search filter — defaults to a
+   *  case-insensitive substring match. Receives the trimmed query + the item
+   *  label; return true to keep the row. */
+  searchFilter?: (query: string, label: string) => boolean;
+  /** Controlled search query. When provided (with `searchable`) the menu uses
+   *  THIS value as the filter and does NOT render its own search box — the
+   *  trigger itself (typically the text field that opens the menu) IS the
+   *  search box. Wire the field to it and open on focus/typing:
+   *    <input value={q} onFocus={() => setOpen(true)}
+   *           onChange={e => { setQ(e.target.value); setOpen(true); }} /> */
+  searchValue?: string;
+  onSearchValueChange?: (q: string) => void;
 }
 
 export default function DropdownMenu({
@@ -381,6 +443,11 @@ export default function DropdownMenu({
   morph = true,
   contentClassName,
   initialHighlightIndex,
+  searchable = false,
+  searchPlaceholder,
+  searchFilter,
+  searchValue,
+  onSearchValueChange,
 }: DropdownMenuProps) {
   const [subChain, setSubChain] = useState<string[]>([]);
   const [keyboardOpenedSub, setKeyboardOpenedSub] = useState<string | null>(null);
@@ -396,11 +463,54 @@ export default function DropdownMenu({
      same way), then `persisted` drops and the content unmounts. */
   const [persisted, setPersisted] = useState(open);
 
-  const highlight = useMenuHighlightState();
+  /* Searchable state: the query narrows the registered highlight items to the
+     visible set (the arrows/typeahead/highlight all operate on it). Two modes:
+     - INTERNAL box: the menu owns `internalQuery` and renders a search input.
+     - EXTERNAL/trigger-as-search (searchValue is controlled): the caller's
+       trigger field IS the search box — the query is bound to it and no box
+       renders inside the panel. Reset the internal query on each open. */
+  const [internalQuery, setInternalQuery] = useState('');
+  const externalSearch = searchable && searchValue !== undefined;
+  const query = externalSearch ? searchValue : internalQuery;
+  const setQuery = externalSearch ? (onSearchValueChange ?? (() => {})) : setInternalQuery;
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  /* Subscribe to the global coarse knob so a LIVE scale change re-derives the
+     search box's item-sized padding/font (same recipe as DropdownItem). */
+  const coarseScale = useCoarseScale();
+  const searchBoxStyle = {
+    padding: `${coarsePx(8, 12, coarseScale)}px ${coarsePx(12, 16, coarseScale)}px`,
+    fontSize: `${coarsePx(12, 14, coarseScale)}px`,
+  };
+  /* The items scroller's scrollbar reserves layout width on the RIGHT (the
+     kit's always-visible thin scrollbar) — so the rows are narrower than the
+     full-width search box. Pad the box by the same gutter so they always line
+     up, re-measuring when the scrollbar appears/disappears (filters, window
+     size). */
+  const [searchGutter, setSearchGutter] = useState(0);
+  const internalSearch = searchable && !externalSearch;
+  useEffect(() => {
+    if (!internalSearch || !open) return;
+    const scroller = contentElRef.current?.querySelector<HTMLElement>('[data-menu-items]');
+    if (!scroller) return;
+    const measure = () => setSearchGutter(scroller.offsetWidth - scroller.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(scroller);
+    return () => ro.disconnect();
+  }, [open, internalSearch, query]);
+  const filter = useMemo<((item: MenuHighlightItem) => boolean) | undefined>(() => {
+    if (!searchable) return undefined;
+    const q = query.trim().toLowerCase();
+    if (!q) return ALWAYS_VISIBLE;
+    return (it: MenuHighlightItem) => (searchFilter ? searchFilter(q, it.label) : it.label.toLowerCase().includes(q));
+  }, [query, searchable, searchFilter]);
+
+  const highlight = useMenuHighlightState(filter);
 
   useEffect(() => {
     if (open) {
       setPersisted(true);
+      if (!externalSearch) setInternalQuery('');
       highlight.setHighlighted(initialHighlightIndex ?? -1, 'keyboard');
       /* One open overlay at a time: opening this menu closes any other
          (context menu) first. */
@@ -461,11 +571,29 @@ export default function DropdownMenu({
   const keysHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
   const wheelHandlerRef = useRef<(e: WheelEvent) => void>(() => {});
   const lockHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
+  /* Field keys (the internal search box): Enter activates the highlighted (or
+     first visible) row; Escape closes the dropdown like any other menu.
+     Letters return false so the char is inserted and the `input` event drives
+     the controlled query. */
+  const onFieldKey = useCallback((e: KeyboardEvent): boolean => {
+    if (e.key === 'Enter') {
+      const idx = highlight.highlightedIndex;
+      const item = highlight.items[idx >= 0 ? idx : 0];
+      item?.activate();
+      return true;
+    }
+    if (e.key === 'Escape') {
+      onOpenChange?.(false);
+      onClose?.();
+      return true;
+    }
+    return false;
+  }, [highlight, onOpenChange, onClose]);
   /* Keys/lock target only the TOPMOST open surface: the root navigates only
      while no sub is open (the open sub owns the keyboard). */
-  useMenuKeys(open && subChain.length === 0, highlight, keysHandlerRef);
+  useMenuKeys(open && subChain.length === 0, highlight, keysHandlerRef, { onFieldKey });
   useMenuWheel(open, wheelHandlerRef);
-  useMenuKeyLock(open, highlight, keysHandlerRef, contentElRef, subChain.length > 0, lockHandlerRef);
+  useMenuKeyLock(open, highlight, keysHandlerRef, contentElRef, subChain.length > 0, lockHandlerRef, { ignoreFields: externalSearch });
   const lockDocRef = useRef<Document | null>(null);
   const setComposedRef = useCallback((node: HTMLDivElement | null) => {
     if (node) {
@@ -517,12 +645,30 @@ export default function DropdownMenu({
      from something already inside the menu (a hovered item). */
   useEffect(() => {
     if (pos.ready && open) {
+      if (searchable) {
+        searchInputRef.current?.focus();
+        return;
+      }
       const el = contentElRef.current;
       if (el && el.ownerDocument.activeElement !== el && !el.contains(el.ownerDocument.activeElement)) {
         el.focus();
       }
     }
-  }, [pos.ready, open]);
+  }, [pos.ready, open, searchable]);
+
+  /* Searchable: keep the single highlight on a VISIBLE row as the filter
+     narrows the list — when the highlighted index leaves the visible set
+     (filter changed, or nothing lit on open), light the first row. */
+  useEffect(() => {
+    if (!open || !searchable) return;
+    if (highlight.items.length === 0) {
+      if (highlight.highlightedIndex !== -1) highlight.setHighlighted(-1, 'keyboard');
+      return;
+    }
+    const hi = highlight.highlightedIndex;
+    if (hi < 0 || hi >= highlight.items.length) highlight.setHighlighted(0, 'keyboard');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, query, searchable, highlight.items.length]);
 
   /* Arrows/typeahead can light a row that is scrolled out of view — keep the
      highlighted row visible (the panel's scroll-into-view behavior). */
@@ -581,7 +727,7 @@ export default function DropdownMenu({
       })
     : trigger;
 
-  const contentClasses = `ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none max-h-[min(60vh,24rem)] overflow-y-auto min-w-0 scrollbar-custom`;
+  const contentClasses = `ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none max-h-[min(60vh,24rem)] min-w-0 ${internalSearch ? 'overflow-hidden' : 'overflow-y-auto scrollbar-custom'}`;
 
   return (
     <RadixDropdownMenu.Root open={open || persisted} onOpenChange={handleOpenChange} modal={false}>
@@ -592,28 +738,64 @@ export default function DropdownMenu({
         <DropdownThemeContext.Provider value={theme}>
           <SubmenuContext.Provider value={{ chain: subChain, setChain: setSubChain, morph, keyboardOpened: keyboardOpenedSub, setKeyboardOpened: setKeyboardOpenedSub }}>
             <MenuHighlightContext.Provider value={highlight}>
-              <RadixDropdownMenu.Content
-                ref={setComposedRef}
-                data-theme={theme}
-                data-ui-fixed
-                className={`${contentClasses} ${width || ''} ${contentClassName || ''}`}
-                style={{
-                  touchAction: 'manipulation',
-                  position: 'fixed',
-                  left: pos.left,
-                  top: pos.bottom != null ? undefined : pos.top,
-                  bottom: pos.bottom,
-                  /* No width class: the menu sizes to its CONTENT (text must
-                     never clip) but never narrower than the trigger — the
-                     min-width floor keeps the trigger-matched look. */
-                  minWidth: width ? undefined : (triggerWidth || undefined),
-                  maxHeight: pos.maxH,
-                  visibility: pos.ready ? 'visible' : 'hidden',
-                }}
-                onPointerLeave={highlight.pointerLeave}
-              >
-                {children}
-              </RadixDropdownMenu.Content>
+              <MenuSearchContext.Provider value={{ query, setQuery }}>
+                <RadixDropdownMenu.Content
+                  ref={setComposedRef}
+                  data-theme={theme}
+                  data-ui-fixed
+                  className={`${contentClasses} ${width || ''} ${contentClassName || ''}`}
+                  style={{
+                    touchAction: 'manipulation',
+                    position: 'fixed',
+                    left: pos.left,
+                    top: pos.bottom != null ? undefined : pos.top,
+                    bottom: pos.bottom,
+                    /* No width class: the menu sizes to its CONTENT (text must
+                       never clip) but never narrower than the trigger — the
+                       min-width floor keeps the trigger-matched look. */
+                    minWidth: width ? undefined : (triggerWidth || undefined),
+                    maxHeight: pos.maxH,
+                    visibility: pos.ready ? 'visible' : 'hidden',
+                  }}
+                  onPointerLeave={highlight.pointerLeave}
+                >
+                  {internalSearch && (
+                    <div className="shrink-0 px-0 pt-1 pb-2" style={{ paddingRight: searchGutter }}>
+                      <div className="ui-item ui-item-highlighted flex items-center gap-2 rounded" style={searchBoxStyle}>
+                        <Search className="w-3.5 h-3.5 shrink-0 ui-icon" />
+                        <input
+                          ref={searchInputRef}
+                          value={query}
+                          onChange={e => setQuery(e.target.value)}
+                          placeholder={searchPlaceholder ?? 'Search…'}
+                          className="flex-1 min-w-0 bg-transparent outline-none text-current placeholder:text-current placeholder:opacity-50 cursor-text"
+                        />
+                        {query ? (
+                          <button
+                            type="button"
+                            tabIndex={-1}
+                            aria-label="Clear search"
+                            className="shrink-0 ui-icon-btn rounded flex items-center justify-center p-1 -m-1"
+                            onPointerDown={e => e.stopPropagation()}
+                            onClick={() => { setQuery(''); searchInputRef.current?.focus(); }}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <span className="w-3.5 h-3.5 shrink-0" />
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {internalSearch ? (
+                    <div data-menu-items className="flex-1 min-h-0 overflow-y-auto scrollbar-custom flex flex-col">
+                      {children}
+                    </div>
+                  ) : (
+                    children
+                  )}
+                </RadixDropdownMenu.Content>
+              </MenuSearchContext.Provider>
             </MenuHighlightContext.Provider>
           </SubmenuContext.Provider>
         </DropdownThemeContext.Provider>
