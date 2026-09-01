@@ -20,6 +20,7 @@
   --ui-panel-bg: #18181b;
   --ui-panel-border: #27272a;
   --ui-input-bg: #27272a;
+  --ui-input-hover-bg: rgba(255, 255, 255, 0.04);
   --ui-input-border: #3f3f46;
   --ui-input-text: #e4e4e7;
   /* Section cards (CardSection) — a RAISED surface, deliberately distinct
@@ -43,6 +44,8 @@
   --ui-item-highlight-text: #ffffff;
   --ui-item-selected-bg: rgba(37, 99, 235, 0.28);
   --ui-item-selected-text: #ffffff;
+  --ui-item-highlight-wash: #ffffff;
+  --ui-item-highlight-wash-opacity: 18%;
   --ui-sep: #27272a;
   --ui-scroll-thumb: #52525b;
 
@@ -97,6 +100,7 @@
   --ui-panel-bg: #ffffff;
   --ui-panel-border: #e4e4e7;
   --ui-input-bg: #f4f4f5;
+  --ui-input-hover-bg: rgba(0, 0, 0, 0.04);
   --ui-input-border: #e4e4e7;
   --ui-input-text: #18181b;
   --ui-card-bg: #fafafa;
@@ -115,8 +119,10 @@
   --ui-item-active-bg: #e4e4e7;
   --ui-item-highlight-bg: #e4e4e7;
   --ui-item-highlight-text: #18181b;
-  --ui-item-selected-bg: #eff6ff;
+  --ui-item-selected-bg: #bfdbfe;
   --ui-item-selected-text: #1d4ed8;
+  --ui-item-highlight-wash: #ffffff;
+  --ui-item-highlight-wash-opacity: 35%;
   --ui-sep: #e4e4e7;
   --ui-scroll-thumb: #d4d4d8;
 
@@ -167,6 +173,7 @@
   --ui-panel-bg: #1e293b;
   --ui-panel-border: rgba(255, 255, 255, 0.1);
   --ui-input-bg: rgba(255, 255, 255, 0.1);
+  --ui-input-hover-bg: rgba(255, 255, 255, 0.06);
   --ui-input-border: rgba(255, 255, 255, 0.1);
   --ui-input-text: #ffffff;
   --ui-card-bg: rgba(255, 255, 255, 0.06);
@@ -188,6 +195,8 @@
   --ui-item-highlight-text: #ffffff;
   --ui-item-selected-bg: rgba(255, 255, 255, 0.18);
   --ui-item-selected-text: #ffffff;
+  --ui-item-highlight-wash: #ffffff;
+  --ui-item-highlight-wash-opacity: 18%;
   --ui-sep: rgba(255, 255, 255, 0.1);
 
   --ui-row-hover-bg: rgba(255, 255, 255, 0.15);
@@ -297,9 +306,14 @@
   -webkit-user-select: none;
 }
 
+/* Press feedback: SQUEEZE the current background into a smaller pill — an
+   inset ring in the panel color cuts 2px into the fill on mousedown (no
+   layout shift, no color swap), then springs back. The row radius bumps so
+   the ring's inner corners stay rounded (6 − 2 = 4px). */
 .ui-item:active {
-  background: var(--ui-item-active-bg);
   transition: none;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 2px var(--ui-panel-bg);
 }
 
 /* Ungated :hover fill — iOS Safari's native tap-to-hover needs a real
@@ -320,6 +334,7 @@
 .ui-item-danger:active {
   background: var(--ui-danger-active-bg);
   color: var(--ui-danger-active-text);
+  box-shadow: inset 0 0 0 2px var(--ui-panel-bg);
 }
 
 .ui-item-danger:hover,
@@ -353,16 +368,25 @@
 
 /* The CURRENT VALUE (selected) row — the panel's checked-row look: its own
    subtle background + the trailing Check glyph, distinct from the cursor
-   highlight. The highlight overrides the background while the selected row
-   is lit (rule order below). */
+   highlight. When lit, the wash keeps the selection visible (rule below). */
 .ui-item-selected {
   background: var(--ui-item-selected-bg);
   color: var(--ui-item-selected-text);
 }
 
 .ui-item-selected.ui-item-highlighted {
-  background: var(--ui-item-highlight-bg);
-  color: var(--ui-item-highlight-text);
+  /* A lit SELECTED row keeps its selected tint AND its selected text — the
+     cursor is a gentle wash over the selected background, never an opaque
+     gray that flattens the selection. The wash color is per-theme (white
+     everywhere today): on DARK themes it brightens the muted blue, on LIGHT
+     themes it LIGHTENS the strong blue — so the selected state reads clearly
+     at rest and the cursor is a soft lift over it. */
+  background-color: var(--ui-item-selected-bg);
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--ui-item-highlight-wash) var(--ui-item-highlight-wash-opacity), transparent),
+    color-mix(in srgb, var(--ui-item-highlight-wash) var(--ui-item-highlight-wash-opacity), transparent)
+  );
+  color: var(--ui-item-selected-text);
 }
 
 /* Submenu trigger open state (set by Radix) */
@@ -474,11 +498,19 @@
 
 .ui-input {
   touch-action: manipulation;
-  background: var(--ui-input-bg);
+  background: transparent;
   border: 1px solid var(--ui-input-border);
   color: var(--ui-input-text);
   border-radius: var(--ui-radius-input);
   outline: none;
+}
+
+/* Subtle fill while the pointer is over the field OR it's being edited
+   (focused) — the checkbox-pill hover feel; the field stays border-only
+   otherwise. */
+.ui-input:hover,
+.ui-input:focus {
+  background: var(--ui-input-hover-bg);
 }
 
 .ui-input::placeholder {
@@ -593,6 +625,26 @@
   color: var(--ui-danger-solid);
 }
 
+/* The SHARED CheckMark indicator — standalone (Checklist rows, where there's
+   no hidden input for the `:checked +` sibling rule): the `-checked` class
+   drives the accent fill, the danger tone overrides it. */
+.ui-check-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--ui-text-faint);
+  transition: color 120ms ease;
+}
+
+.ui-check-indicator.ui-check-indicator-checked {
+  color: var(--ui-check-accent);
+}
+
+.ui-check-indicator.ui-check-indicator-checked.ui-check-tone-danger {
+  color: var(--ui-danger-solid);
+}
+
 .ui-checkbox-pill.ui-disabled {
   opacity: 0.45;
   background: transparent;
@@ -603,6 +655,13 @@
 
 .ui-row {
   touch-action: manipulation;
+}
+
+/* Same press squeeze as .ui-item: the current row fill recedes to a smaller
+   pill on mousedown via an inset panel ring. */
+.ui-row:active {
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 2px var(--ui-panel-bg);
 }
 
 .ui-row:hover {
@@ -618,6 +677,14 @@
 
 .ui-row-active {
   background: var(--ui-row-active-bg);
+}
+
+/* An ACTIVE row that is hovered / keyboard-lit keeps its selected tint — the
+   cursor is the same gentle wash used for a selected DropdownItem, never an
+   opaque gray that flattens the selection. */
+.ui-row-active:hover,
+.ui-row-active:has([data-highlighted]) {
+  background: color-mix(in srgb, var(--ui-item-highlight-wash) var(--ui-item-highlight-wash-opacity), var(--ui-row-active-bg));
 }
 
 .ui-row-active-text {
@@ -819,21 +886,6 @@
   background: var(--ui-check-row-bg);
 }
 
-.ui-checklist-box {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border: 1px solid var(--ui-check-border);
-  color: var(--ui-check-check);
-  transition: background-color 120ms ease, border-color 120ms ease;
-}
-
-.ui-checklist-item-checked .ui-checklist-box {
-  background: var(--ui-check-accent);
-  border-color: var(--ui-check-accent);
-}
-
 .ui-checklist-label {
   min-width: 0;
   overflow: hidden;
@@ -948,10 +1000,10 @@
 .richtext-editor { cursor: text; }
 
 .richtext-editor .tiptap {
-  background: #18181b;
-  border: 1px solid #3f3f46;
-  border-radius: 6px;
-  color: #e4e4e7;
+  background: transparent;
+  border: 1px solid var(--ui-input-border);
+  border-radius: var(--ui-radius-input);
+  color: var(--ui-input-text);
   line-height: 1.5;
   outline: none;
   overflow-y: auto;
@@ -959,9 +1011,15 @@
   padding: 6px 8px;
   height: 100%;
   min-height: 100%;
+  transition: background-color 120ms ease;
 }
 
-.richtext-editor .tiptap:focus { border-color: #52525b; }
+/* Same subtle fill as .ui-input — border-only until hovered/being edited. */
+.richtext-editor .tiptap:hover,
+.richtext-editor .tiptap:focus {
+  background: var(--ui-input-hover-bg);
+}
+.richtext-editor .tiptap:focus { border-color: var(--ui-text-muted); }
 .richtext-editor .tiptap:focus-visible { outline: none; }
 
 .richtext-editor .tiptap p.is-empty::before {

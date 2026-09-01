@@ -2,6 +2,14 @@ import React from 'react';
 export type DropdownTheme = 'light' | 'dark' | 'blue';
 export declare const DropdownThemeContext: React.Context<DropdownTheme>;
 export declare const useDropdownTheme: () => DropdownTheme;
+/** Shared row sizing for menu items AND item-manager rows (padding + font +
+ *  line-height, coarse-scaled) — ONE knob to resize every dropdown row
+ *  globally. Consumers spread it as an inline style. */
+export declare function useItemSize(): {
+    padding: string;
+    fontSize: string;
+    lineHeight: string;
+};
 export declare function getDropdownClasses(theme?: DropdownTheme): {
     itemDefault: string;
     itemDanger: string;
@@ -56,7 +64,18 @@ export interface MenuHighlightApi {
 }
 export declare const MenuHighlightContext: React.Context<MenuHighlightApi | null>;
 export declare const useMenuHighlight: () => MenuHighlightApi | null;
-export declare function useMenuHighlightState(): MenuHighlightApi;
+/** Live query for `searchable` menus. `DropdownItem` rows read this to hide
+ *  themselves when filtered out; the menu owns the state (the input renders in
+ *  the kit's DropdownMenu). */
+export declare const MenuSearchContext: React.Context<{
+    query: string;
+    setQuery: (q: string) => void;
+}>;
+export declare const useMenuSearch: () => {
+    query: string;
+    setQuery: (q: string) => void;
+};
+export declare function useMenuHighlightState(filter?: (item: MenuHighlightItem) => boolean): MenuHighlightApi;
 /** Single-highlight row registration for a surface item — the SHARED contract
  *  behind both `DropdownItem` (Radix Item) and the rich-text `@` autocomplete
  *  rows (rendered outside a Radix menu, in an isolated root). Registers into
@@ -85,6 +104,7 @@ export declare function useHighlightRow(opts: {
  *  rows) keep Radix's native keyboard handling untouched. */
 export declare function useMenuKeys(active: boolean, api: MenuHighlightApi, handlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>, opts?: {
     onCloseSub?: () => void;
+    onFieldKey?: (e: KeyboardEvent) => boolean;
 }): void;
 /** Mini-modal keyboard lock: while a surface is open, the MENU keys
  *  (arrows / Enter / Space / typeahead letters) are captured at the DOCUMENT
@@ -96,7 +116,9 @@ export declare function useMenuKeys(active: boolean, api: MenuHighlightApi, hand
  *  The handler is created ONCE per hook instance and ATTACHED by the content's
  *  composed ref (the Radix portal mounts later than the open flip — the same
  *  reason useMenuKeys/useMenuWheel attach there). */
-export declare function useMenuKeyLock(active: boolean, api: MenuHighlightApi, keysHandlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>, contentRef: React.RefObject<HTMLElement | null>, standDown: boolean, lockHandlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>): void;
+export declare function useMenuKeyLock(active: boolean, api: MenuHighlightApi, keysHandlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>, contentRef: React.RefObject<HTMLElement | null>, standDown: boolean, lockHandlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>, opts?: {
+    ignoreFields?: boolean;
+}): void;
 /** Manual wheel scrolling for portaled menu content (a Modal's scroll lock
  *  preventDefaults wheels outside the dialog; the v0.1.52 capture interceptor
  *  in useOverlayMorph already stops propagation for the content — this is the
@@ -123,8 +145,27 @@ export interface DropdownMenuProps {
     /** Row to light on open (the panel's single-mode "highlight the current"
      *  behavior — e.g. the active item in a picker list). */
     initialHighlightIndex?: number;
+    /** Render a search input at the top of the panel (auto-focused on open):
+     *  typing filters the registered `DropdownItem`s by their label (the
+     *  rich-text `@`-autocomplete model, lifted into the menu). Arrows move the
+     *  single highlight over the VISIBLE rows; Enter (in the input or on a row)
+     *  activates the highlighted row, falling back to the first visible one. */
+    searchable?: boolean;
+    searchPlaceholder?: string;
+    /** Custom label matcher for the search filter — defaults to a
+     *  case-insensitive substring match. Receives the trimmed query + the item
+     *  label; return true to keep the row. */
+    searchFilter?: (query: string, label: string) => boolean;
+    /** Controlled search query. When provided (with `searchable`) the menu uses
+     *  THIS value as the filter and does NOT render its own search box — the
+     *  trigger itself (typically the text field that opens the menu) IS the
+     *  search box. Wire the field to it and open on focus/typing:
+     *    <input value={q} onFocus={() => setOpen(true)}
+     *           onChange={e => { setQ(e.target.value); setOpen(true); }} /> */
+    searchValue?: string;
+    onSearchValueChange?: (q: string) => void;
 }
-export default function DropdownMenu({ open, onClose, onOpenChange, trigger, align, width, theme, children, morph, contentClassName, initialHighlightIndex, }: DropdownMenuProps): React.JSX.Element;
+export default function DropdownMenu({ open, onClose, onOpenChange, trigger, align, width, theme, children, morph, contentClassName, initialHighlightIndex, searchable, searchPlaceholder, searchFilter, searchValue, onSearchValueChange, }: DropdownMenuProps): React.JSX.Element;
 export interface ItemManagerDropdownProps {
     open: boolean;
     onClose: (open: boolean) => void;

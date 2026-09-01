@@ -16,5 +16,8 @@ import React from 'react';
  */
 export interface ModalFooterButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'hero' | 'ghost' | 'danger' | 'danger-solid';
+    /** Hero accent color — how the ONE primary action reads (default zinc).
+     *  Color the Save/OK/Add button per context (e.g. `tone="accent"` blue). */
+    tone?: 'zinc' | 'accent' | 'danger';
 }
-export default function ModalFooterButton({ variant, className, type, ...rest }: ModalFooterButtonProps): React.JSX.Element;
+export default function ModalFooterButton({ variant, tone, className, type, ...rest }: ModalFooterButtonProps): React.JSX.Element;

@@ -14,6 +14,15 @@ import React from 'react';
  * Sizes adapt for touch (IS_COARSE); hover styles live behind the any-hover
  * gate in tokens.css.
  */
+/** The shared checkbox indicator — the danger-confirm pill style: a rounded
+ *  square that fills with the tone color + white check when checked (outline
+ *  at rest). Used by `Checkbox` (`pill` variant) AND `Checklist` so every
+ *  multi-select checkbox looks identical. Colorable via `tone` (accent/danger). */
+export declare function CheckMark({ checked, size, tone }: {
+    checked: boolean;
+    size: number;
+    tone?: 'accent' | 'danger';
+}): React.JSX.Element;
 export interface CheckboxProps {
     checked: boolean;
     onChange: (checked: boolean) => void;

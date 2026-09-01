@@ -1,4 +1,4 @@
-export { default as DropdownMenu, ItemManagerDropdown, DropdownThemeContext, useDropdownTheme, getDropdownClasses, SubmenuContext, MenuHighlightContext, useMenuHighlight } from './DropdownMenu';
+export { default as DropdownMenu, ItemManagerDropdown, DropdownThemeContext, useDropdownTheme, getDropdownClasses, SubmenuContext, MenuHighlightContext, useMenuHighlight, MenuSearchContext, useMenuSearch, useItemSize } from './DropdownMenu';
 export type { DropdownTheme, DropdownMenuProps, ItemManagerDropdownProps, MenuHighlightApi, MenuHighlightItem } from './DropdownMenu';
 export { default as DropdownItem } from './DropdownItem';
 export { default as DropdownSubmenu } from './DropdownSubmenu';
@@ -19,7 +19,7 @@ export { default as ModalFooterButton } from './ModalFooterButton';
 export type { ModalFooterButtonProps } from './ModalFooterButton';
 export { default as DatePicker } from './DatePicker';
 export type { DatePickerProps } from './DatePicker';
-export { default as Checkbox } from './Checkbox';
+export { default as Checkbox, CheckMark } from './Checkbox';
 export type { CheckboxProps } from './Checkbox';
 export { default as Checklist } from './Checklist';
 export type { ChecklistProps, ChecklistItem } from './Checklist';
