@@ -4,6 +4,7 @@ import { IS_COARSE, useCoarse, useCoarseScale, useCoarseSize, coarsePx } from '.
 import Modal from './Modal';
 import ModalFooterButton from './ModalFooterButton';
 import Checkbox from './Checkbox';
+import { useInputSize } from './input';
 
 /* Confirm/prompt/alert dialogs render THROUGH the kit Modal (this file used
    to be its own Radix Dialog with bespoke chrome) — they inherit the whole
@@ -60,7 +61,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
   const scale = useCoarseScale();
   const bodyGap = coarsePx(16, 20, scale);
   const descFs = coarsePx(12, 14, scale);
-  const inputSize = useCoarseSize({ px: 12, py: 8, fs: 12 }, { px: 16, py: 12, fs: 14 });
+  const inputSize = useInputSize();
   /* Mirror of `dialog` for the request helpers (they're stable useCallbacks
      and can't read the state). */
   const dialogRef = useRef(dialog);

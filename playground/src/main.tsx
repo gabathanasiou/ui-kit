@@ -7,7 +7,7 @@ import {
   Checklist, RadioList, DatePicker, Tooltip, ContextMenu, ContextMenuItem,
   ContextMenuDivider, ContextMenuSub, useOverlayMorph, DialogProvider, useDialog,
   RichTextEditor, FormatToolbar, LongPressMenuProvider, RICH_TEXT_STATE_IDLE,
-  CardSection, inputCls, setCoarseScale, useCoarseScale, IS_COARSE,
+  CardSection, setCoarseScale, useCoarseScale, useInputSize, IS_COARSE,
 } from '../../src/index';
 import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem } from '../../src/index';
 
@@ -669,6 +669,7 @@ function DialogSpawnDemo() {
 }
 
 function CardSectionDemo() {
+  const inputSize = useInputSize();
   const [open, setOpen] = useState(false);
   const [a, setA] = useState(false);
   const [b, setB] = useState(false);
@@ -688,17 +689,17 @@ function CardSectionDemo() {
           <div className="p-5 space-y-4">
             <p className="label">Sections (raised .ui-card) vs fields (.ui-input) — distinct fills via tokens.</p>
             <CardSection title="Project details" count="2" collapsed={a} onToggle={() => setA(!a)}>
-              <input className={`w-full ${inputCls()}`} placeholder="Title…" />
-              <input className={`w-full ${inputCls()}`} placeholder="Studio…" />
+              <input style={inputSize} className="w-full ui-input" placeholder="Title…" />
+              <input style={inputSize} className="w-full ui-input" placeholder="Studio…" />
             </CardSection>
             <CardSection title="Dates" count="3" collapsed={b} onToggle={() => setB(!b)}>
               <div className="flex items-center gap-2 px-1 py-1">
                 <span className="text-[10px] text-zinc-500 w-20 shrink-0">Shooting</span>
-                <input className={`flex-1 ${inputCls()}`} defaultValue="Jun 3" />
+                <input style={inputSize} className="flex-1 ui-input" defaultValue="Jun 3" />
               </div>
               <div className="flex items-center gap-2 px-1 py-1">
                 <span className="text-[10px] text-zinc-500 w-20 shrink-0">Prep</span>
-                <input className={`flex-1 ${inputCls()}`} defaultValue="May 20" />
+                <input style={inputSize} className="flex-1 ui-input" defaultValue="May 20" />
               </div>
             </CardSection>
             <CardSection title="Danger zone" count="1" tone="danger" collapsed={c} onToggle={() => setC(!c)}>

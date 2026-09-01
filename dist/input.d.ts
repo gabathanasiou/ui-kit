@@ -10,3 +10,12 @@
  * `size` picks the vertical rhythm: `'md'` (default, modal/dialog bodies) or
  *  `'sm'` (compact chrome fields). */
 export declare function inputCls(size?: 'md' | 'sm'): string;
+/** PROPORTIONAL input sizing (spread as an inline style next to `ui-input`):
+ *  interpolates by the global coarseScale so fields scale with the slider. The
+ *  `md` size is vertically MATCHED to the kit Button (same padding + font), so
+ *  a textbox sits level with an adjacent button. Tailwind can't JIT runtime
+ *  classes, hence inline styles. */
+export declare function useInputSize(size?: 'md' | 'sm'): {
+    padding: string;
+    fontSize: string;
+};
