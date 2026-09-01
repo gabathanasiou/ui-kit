@@ -672,6 +672,7 @@ function CardSectionDemo() {
   const [open, setOpen] = useState(false);
   const [a, setA] = useState(false);
   const [b, setB] = useState(false);
+  const [c, setC] = useState(false);
   return (
     <div className="row" data-testid="card-section-demo">
       <Button data-testid="card-open" onClick={() => setOpen(true)}>Modal with sections (CardSection)</Button>
@@ -699,6 +700,9 @@ function CardSectionDemo() {
                 <span className="text-[10px] text-zinc-500 w-20 shrink-0">Prep</span>
                 <input className={`flex-1 ${inputCls()}`} defaultValue="May 20" />
               </div>
+            </CardSection>
+            <CardSection title="Danger zone" count="1" tone="danger" collapsed={c} onToggle={() => setC(!c)}>
+              <button className="w-full text-left text-xs text-red-400 hover:bg-red-950/30 rounded px-2 py-1.5">Delete project…</button>
             </CardSection>
           </div>
         </Modal>

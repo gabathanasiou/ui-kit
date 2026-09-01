@@ -1486,7 +1486,7 @@ function xr({ checked: e, onChange: t, disabled: n = !1, label: r, id: a, classN
   );
 }
 function yr(e = "md") {
-  return e === "sm" ? `${$ ? "px-3 py-2 text-sm" : "px-2 py-1.5 text-xs"} ui-input` : `${$ ? "px-4 py-3 text-sm" : "px-3 py-2 text-xs"} ui-input`;
+  return e === "sm" ? `${$ ? "px-3 py-2 text-sm" : "px-2 py-1.5 text-xs"} ui-input` : `${$ ? "px-3.5 py-2.5 text-sm" : "px-2.5 py-1.5 text-xs"} ui-input`;
 }
 const vr = $ ? "space-y-5" : "space-y-4", wr = $ ? "text-sm" : "text-xs", kr = yr(), sn = _e(null);
 function Si() {
@@ -2652,26 +2652,27 @@ const ni = ["Helvetica", "Arial", "Times New Roman", "Georgia", "Courier New"], 
     ] })
   ] });
 };
-function Ji({ title: e, icon: t, count: n, collapsed: r, onToggle: a, trailing: o, bodyClass: l, dataProps: u, children: c }) {
-  return /* @__PURE__ */ N("div", { ...u, className: "ui-card", children: [
+function Ji({ title: e, icon: t, count: n, tone: r = "default", collapsed: a, onToggle: o, trailing: l, bodyClass: u, className: c = "", dataProps: f, children: s }) {
+  const h = r === "danger" ? "ui-item-danger" : "text-zinc-500";
+  return /* @__PURE__ */ N("div", { ...f, className: `ui-card ${r === "danger" ? "ui-card-danger" : ""} ${c}`, children: [
     /* @__PURE__ */ N("div", { className: "flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 ui-row transition-colors", children: [
       /* @__PURE__ */ N(
         "button",
         {
           type: "button",
-          onClick: a,
+          onClick: o,
           className: "flex items-center gap-2 flex-1 min-w-0 text-left cursor-pointer",
           children: [
-            r ? /* @__PURE__ */ i(Ze, { className: "w-3.5 h-3.5 text-zinc-500 shrink-0" }) : /* @__PURE__ */ i(xt, { className: "w-3.5 h-3.5 text-zinc-500 shrink-0" }),
+            a ? /* @__PURE__ */ i(Ze, { className: `w-3.5 h-3.5 shrink-0 ${h}` }) : /* @__PURE__ */ i(xt, { className: `w-3.5 h-3.5 shrink-0 ${h}` }),
             t,
-            /* @__PURE__ */ i("span", { className: "text-xs font-semibold text-zinc-200 truncate", children: e }),
+            /* @__PURE__ */ i("span", { className: `text-xs font-semibold truncate ${r === "danger" ? "ui-item-danger" : "text-zinc-200"}`, children: e }),
             n && /* @__PURE__ */ i("span", { className: "text-[10px] text-zinc-500 shrink-0", children: n })
           ]
         }
       ),
-      o && /* @__PURE__ */ i("div", { className: "shrink-0", children: o })
+      l && /* @__PURE__ */ i("div", { className: "shrink-0", children: l })
     ] }),
-    !r && c && /* @__PURE__ */ i("div", { className: l || "ui-card-band border-t p-1.5 space-y-1", children: c })
+    !a && s && /* @__PURE__ */ i("div", { className: u || "ui-card-band border-t p-1.5 space-y-1", children: s })
   ] });
 }
 export {

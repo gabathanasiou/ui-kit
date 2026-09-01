@@ -19,15 +19,21 @@ export interface CardSectionProps {
     icon?: React.ReactNode;
     /** Trailing count badge (e.g. "3 days" or "2 rules"). */
     count?: React.ReactNode;
+    /** Section tone — `danger` tints the header + a left accent bar with the
+       danger token. Pass `className` for any custom color (e.g. a blue
+       section via inline style / Tailwind). */
+    tone?: 'default' | 'danger';
     collapsed: boolean;
     onToggle: () => void;
     /** Right-aligned header actions (e.g. "Add Rule"). */
     trailing?: React.ReactNode;
     /** Body wrapper classes (default = the card band). */
     bodyClass?: string;
+    /** Extra classes on the card shell (custom colors, spacing). */
+    className?: string;
     /** data-* attributes for tests/agents (e.g. `{ 'data-kind': 'travel' }`). */
     dataProps?: Record<string, string>;
     children?: React.ReactNode;
 }
-export declare function CardSection({ title, icon, count, collapsed, onToggle, trailing, bodyClass, dataProps, children }: CardSectionProps): React.JSX.Element;
+export declare function CardSection({ title, icon, count, tone, collapsed, onToggle, trailing, bodyClass, className, dataProps, children }: CardSectionProps): React.JSX.Element;
 export default CardSection;

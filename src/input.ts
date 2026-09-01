@@ -14,5 +14,5 @@ export function inputCls(size: 'md' | 'sm' = 'md'): string {
   if (size === 'sm') {
     return `${IS_COARSE ? 'px-3 py-2 text-sm' : 'px-2 py-1.5 text-xs'} ui-input`;
   }
-  return `${IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs'} ui-input`;
+  return `${IS_COARSE ? 'px-3.5 py-2.5 text-sm' : 'px-2.5 py-1.5 text-xs'} ui-input`;
 }

@@ -273,6 +273,18 @@
   border-color: var(--ui-card-border);
 }
 
+/* Danger-toned section card: the WHOLE card (header + band) tints with the
+   danger color — header chevron/icon/title carry .ui-item-danger for the
+   same tint. */
+.ui-card-danger {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.28);
+}
+
+.ui-card-danger .ui-card-band {
+  background: rgba(239, 68, 68, 0.05);
+}
+
 /* ── Menu items ────────────────────────────────────────────────────────── */
 
 .ui-item {
