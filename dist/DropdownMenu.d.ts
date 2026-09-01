@@ -57,6 +57,23 @@ export interface MenuHighlightApi {
 export declare const MenuHighlightContext: React.Context<MenuHighlightApi | null>;
 export declare const useMenuHighlight: () => MenuHighlightApi | null;
 export declare function useMenuHighlightState(): MenuHighlightApi;
+/** Single-highlight row registration for a surface item — the SHARED contract
+ *  behind both `DropdownItem` (Radix Item) and the rich-text `@` autocomplete
+ *  rows (rendered outside a Radix menu, in an isolated root). Registers into
+ *  the NEAREST MenuHighlightContext on mount (registration order = index);
+ *  returns the row's index + whether it is the lit row + a pointer-hover
+ *  setter. Menus without a provider get `api: null` → unlit, unregistered
+ *  rows (bespoke surfaces keep their own behavior). */
+export declare function useHighlightRow(opts: {
+    label: () => string;
+    activate: () => void;
+    disabled?: boolean;
+}): {
+    api: MenuHighlightApi | null;
+    myIndex: number;
+    highlighted: boolean;
+    setPointer: (idx: number) => void;
+};
 /** Keyboard for a highlight surface: arrows move the single index, Enter/Space
  *  activate the highlighted item, letter typeahead jumps to the first match
  *  (500ms prefix buffer). The handler is created ONCE per hook instance and

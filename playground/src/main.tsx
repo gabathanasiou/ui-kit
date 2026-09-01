@@ -6,8 +6,9 @@ import {
   ItemManagerDropdown, Modal, ModalFooter, ModalFooterButton, Checkbox,
   Checklist, RadioList, DatePicker, Tooltip, ContextMenu, ContextMenuItem,
   ContextMenuDivider, ContextMenuSub, useOverlayMorph, DialogProvider, useDialog,
+  RichTextEditor, FormatToolbar, LongPressMenuProvider, RICH_TEXT_STATE_IDLE,
 } from '../../src/index';
-import type { DropdownTheme } from '../src/index';
+import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem } from '../../src/index';
 
 /* ────────────────────────────────────────────────────────────────────────────
    ui-kit playground — the component zoo + debugging surfaces.
@@ -479,6 +480,146 @@ function InputsSection() {
   );
 }
 
+const RT_TOKENS: TokenItem[] = [
+  { key: 'cast.lead', label: 'LEAD', color: { text: '#3b82f6', bg: 'rgba(59,130,246,0.14)' }, group: 'CAST' },
+  { key: 'cast.supp', label: 'SUPP', color: { text: '#8b5cf6', bg: 'rgba(139,92,246,0.14)' }, group: 'CAST' },
+  { key: 'scene.num', label: 'SC #', color: { text: '#10b981', bg: 'rgba(16,185,129,0.14)' }, group: 'SCENE' },
+  { key: 'scene.int_ext', label: 'INT/EXT', color: { text: '#f59e0b', bg: 'rgba(245,158,11,0.14)' }, group: 'SCENE' },
+  { key: 'scene.loc', label: 'LOCATION', color: { text: '#ef4444', bg: 'rgba(239,68,68,0.14)' }, group: 'SCENE' },
+  { key: 'day.1', label: 'DAY 1', color: { text: '#06b6d4', bg: 'rgba(6,182,212,0.14)' }, group: 'DAY' },
+];
+
+const resolveRTToken = (key: string) => {
+  const t = RT_TOKENS.find(x => x.key === key);
+  return t ? { label: t.label, color: t.color } : null;
+};
+
+const filterRTTokens = (q: string) =>
+  RT_TOKENS.filter(t => (t.key + ' ' + t.label).toLowerCase().includes(q.toLowerCase()));
+
+function RichTextDemo() {
+  const editorRef = React.useRef<RichTextEditorHandle>(null);
+  const [value, setValue] = useState('');
+  const [active, setActive] = useState<RichTextState>(RICH_TEXT_STATE_IDLE);
+  const [lastClick, setLastClick] = useState('—');
+  return (
+    <div data-testid="rt-demo">
+      <p className="label">
+        TipTap editor: type <b>@</b> for the token autocomplete, select text and hit the
+        toolbar, click a chip to select it (the stored value below stays byte-compatible
+        plain <code>{'{{key}}'}</code> text).
+      </p>
+      <div className="row">
+        <FormatToolbar editorRef={editorRef} disabled={false} active={active} />
+        <Button data-testid="rt-insert" variant="subtle" onClick={() => editorRef.current?.insertToken('cast.lead')}>
+          Insert cast.lead
+        </Button>
+        <Button variant="subtle" onClick={() => editorRef.current?.insertToken('scene.loc')}>
+          Insert scene.loc
+        </Button>
+      </div>
+      <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-4" data-testid="rt-editor">
+        <RichTextEditor
+          ref={editorRef}
+          value={value}
+          onChange={setValue}
+          onStateChange={setActive}
+          placeholder="Write… type @ to insert a token"
+          resolveToken={resolveRTToken}
+          suggestionItems={filterRTTokens}
+          onTokenClick={(key) => setLastClick(key)}
+        />
+      </div>
+      <div className="row">
+        <span className="label" data-testid="rt-output">stored: {value ? value.slice(0, 140) : '(empty)'}</span>
+        <span className="label">chip click: {lastClick}</span>
+      </div>
+    </div>
+  );
+}
+
+function LongPressDemo() {
+  const [ctx, setCtx] = useState<{ x: number; y: number } | null>(null);
+  const [pick, setPick] = useState('—');
+  return (
+    <div className="row" data-testid="lp-demo">
+      <LongPressMenuProvider>
+        <div
+          data-context-menu
+          data-testid="lp-target"
+          onContextMenu={(e) => { e.preventDefault(); setCtx({ x: e.clientX, y: e.clientY }); }}
+          style={{ border: '1px dashed #a1a1aa', padding: '14px 18px', borderRadius: 8, fontSize: 12, color: '#a1a1aa' }}
+        >
+          Hold ~500ms on touch (or right-click on desktop)
+        </div>
+      </LongPressMenuProvider>
+      <ContextMenu open={!!ctx} x={ctx?.x ?? 0} y={ctx?.y ?? 0} onClose={() => setCtx(null)}>
+        <ContextMenuItem selected={pick === 'Rename'} onClick={() => { setPick('Rename'); setCtx(null); }}>Rename</ContextMenuItem>
+        <ContextMenuItem selected={pick === 'Duplicate'} onClick={() => { setPick('Duplicate'); setCtx(null); }}>Duplicate</ContextMenuItem>
+        <ContextMenuDivider />
+        <ContextMenuItem variant="danger" onClick={() => { setPick('Delete'); setCtx(null); }}>Delete</ContextMenuItem>
+      </ContextMenu>
+      <span className="label">pick: {pick}</span>
+    </div>
+  );
+}
+
+function RichTextModalDemo() {
+  const [open, setOpen] = useState(false);
+  const editorRef = React.useRef<RichTextEditorHandle>(null);
+  const [value, setValue] = useState('');
+  const [active, setActive] = useState<RichTextState>(RICH_TEXT_STATE_IDLE);
+  const [ctx, setCtx] = useState<{ x: number; y: number } | null>(null);
+  const [pick, setPick] = useState('—');
+  return (
+    <div className="row" data-testid="rt-modal-demo">
+      <Button data-testid="rt-modal-open" onClick={() => setOpen(true)}>Modal with rich text + long-press</Button>
+      {open && (
+        <Modal open onClose={() => setOpen(false)} title="Rich text + long-press" width="max-w-lg"
+          footer={
+            <ModalFooter>
+              <ModalFooterButton variant="ghost" onClick={() => setOpen(false)}>Cancel</ModalFooterButton>
+              <ModalFooterButton onClick={() => setOpen(false)}>Save</ModalFooterButton>
+            </ModalFooter>
+          }
+        >
+          <div className="p-5 space-y-4">
+            <p className="label">Editor inside a modal — type @ for tokens, use the toolbar, or long-press the box (touch).</p>
+            <FormatToolbar editorRef={editorRef} disabled={false} active={active} />
+            <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-4" data-testid="rt-modal-editor">
+              <RichTextEditor
+                ref={editorRef}
+                value={value}
+                onChange={setValue}
+                onStateChange={setActive}
+                placeholder="Write… @ = token"
+                resolveToken={resolveRTToken}
+                suggestionItems={filterRTTokens}
+              />
+            </div>
+            <LongPressMenuProvider>
+              <div
+                data-context-menu
+                data-testid="rt-lp-target"
+                onContextMenu={(e) => { e.preventDefault(); setCtx({ x: e.clientX, y: e.clientY }); }}
+                style={{ border: '1px dashed #3f3f46', padding: '12px 16px', borderRadius: 8, fontSize: 12, color: '#a1a1aa' }}
+              >
+                Long-press me (touch) for a menu
+              </div>
+            </LongPressMenuProvider>
+            <ContextMenu open={!!ctx} x={ctx?.x ?? 0} y={ctx?.y ?? 0} onClose={() => setCtx(null)}>
+              <ContextMenuItem onClick={() => { setPick('Inline action'); setCtx(null); }}>Inline action</ContextMenuItem>
+              <ContextMenuDivider />
+              <ContextMenuItem variant="danger" onClick={() => { setPick('Delete'); setCtx(null); }}>Delete</ContextMenuItem>
+            </ContextMenu>
+            <span className="label">pick: {pick}</span>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
 function MiscSection() {
   const [ctx, setCtx] = useState<{ x: number; y: number } | null>(null);
   const [pick, setPick] = useState<string | null>('Nested A');
@@ -605,13 +746,19 @@ function App() {
         <ItemManagerDemo />
       </section>
       <section data-section="modals">
-        <h2>Modals — basic / stacked / menu-inside / keyboard-test</h2>
+        <h2>Modals — basic / stacked / menu-inside / keyboard-test / rich-text</h2>
         <BasicModalDemo />
         <KeyboardModalDemo />
         <StackedModalDemo />
         <MenuInsideModal />
+        <RichTextModalDemo />
       </section>
       <DialogsSection />
+      <section data-section="rich-text">
+        <h2>Rich text editor (TipTap) + long-press menu</h2>
+        <RichTextDemo />
+        <LongPressDemo />
+      </section>
       <section data-section="morph-panels">
         <h2>useOverlayMorph clone panels (the app DropdownPanel pattern)</h2>
         <PanelDemo />

@@ -144,7 +144,10 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
   const tokenExtension = React.useMemo(() => {
     const suggestion: Omit<SuggestionOptions<TokenItem, { field: string }>, 'editor'> = {
       char: '@',
-      // default allowedPrefixes (space) — a mid-word `@` does not trigger
+      // Any prefix — `@` fires mid-word too (emails aren't a concern in the
+      // film-schedule text blocks); a space-only prefix made the popup feel
+      // dead when typing after a letter.
+      allowedPrefixes: null,
       items: ({ query }) => itemsRef.current?.(query) ?? [],
       command: ({ editor: ed, range, props }) => {
         ed.chain().focus().insertContentAt(range, { type: 'token', attrs: { field: props.field } }).run();

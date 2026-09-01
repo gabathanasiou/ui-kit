@@ -169,6 +169,34 @@ export function useMenuHighlightState(): MenuHighlightApi {
   return api;
 }
 
+/** Single-highlight row registration for a surface item — the SHARED contract
+ *  behind both `DropdownItem` (Radix Item) and the rich-text `@` autocomplete
+ *  rows (rendered outside a Radix menu, in an isolated root). Registers into
+ *  the NEAREST MenuHighlightContext on mount (registration order = index);
+ *  returns the row's index + whether it is the lit row + a pointer-hover
+ *  setter. Menus without a provider get `api: null` → unlit, unregistered
+ *  rows (bespoke surfaces keep their own behavior). */
+export function useHighlightRow(opts: { label: () => string; activate: () => void; disabled?: boolean }) {
+  const api = useMenuHighlight();
+  const apiRef = useRef(api);
+  apiRef.current = api;
+  const selfRef = useRef<MenuHighlightItem | null>(null);
+
+  useEffect(() => {
+    const self: MenuHighlightItem = { label: opts.label(), activate: opts.activate };
+    selfRef.current = self;
+    return apiRef.current?.register(self);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const myIndex = api && selfRef.current ? api.items.indexOf(selfRef.current) : -1;
+  const highlighted = !!api && !opts.disabled && myIndex >= 0 && myIndex === api.highlightedIndex;
+  const setPointer = (idx: number) => {
+    if (!opts.disabled && api && idx >= 0) api.setHighlighted(idx, 'pointer');
+  };
+  return { api, myIndex, highlighted, setPointer };
+}
+
 /** Keyboard for a highlight surface: arrows move the single index, Enter/Space
  *  activate the highlighted item, letter typeahead jumps to the first match
  *  (500ms prefix buffer). The handler is created ONCE per hook instance and

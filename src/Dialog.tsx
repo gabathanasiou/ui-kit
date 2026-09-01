@@ -143,6 +143,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
       <Modal
         open={open}
         onClose={cancelAction}
+        closable={dialog?.kind !== 'alert'}
         title={dialog?.options.title ?? ''}
         width="max-w-sm"
         flat

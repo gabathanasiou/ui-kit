@@ -1,8 +1,7 @@
 "use client";
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useDropdownTheme, getDropdownClasses, useMenuHighlight } from './DropdownMenu';
-import type { MenuHighlightItem } from './DropdownMenu';
+import { useDropdownTheme, getDropdownClasses, useHighlightRow } from './DropdownMenu';
 import { IS_COARSE } from './device';
 
 const ITEM_CLASS = IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
@@ -50,27 +49,15 @@ export default function DropdownItem({
   const d = getDropdownClasses(theme);
   const skipClickRef = useRef(false);
   const itemRef = useRef<HTMLDivElement>(null);
-  /* Single-highlight (the panel model): register into the NEAREST surface
-     context on mount (registration order = index); pointer hover writes the
-     shared highlightedIndex — NO focus() (the v0.1.53 focus-stealing is
-     gone); the lit row carries `.ui-item-highlighted`. */
-  const api = useMenuHighlight();
-  const apiRef = useRef(api);
-  apiRef.current = api;
-  const selfRef = useRef<MenuHighlightItem | null>(null);
-
-  useEffect(() => {
-    const self: MenuHighlightItem = {
-      label: itemLabel(children),
-      activate: () => { if (!disabled) onClick(); },
-    };
-    selfRef.current = self;
-    return apiRef.current?.register(self);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const myIndex = api && selfRef.current ? api.items.indexOf(selfRef.current) : -1;
-  const highlighted = !disabled && myIndex >= 0 && myIndex === api!.highlightedIndex;
+  /* Single-highlight (the panel model) via the shared row contract — register
+     into the NEAREST surface context on mount (registration order = index);
+     pointer hover writes the shared highlightedIndex — NO focus() (the
+     v0.1.53 focus-stealing is gone); the lit row carries `.ui-item-highlighted`. */
+  const { myIndex, highlighted, setPointer } = useHighlightRow({
+    label: () => itemLabel(children),
+    activate: () => { if (!disabled) onClick(); },
+    disabled,
+  });
 
   const variantStyles = variant === 'danger' ? d.itemDanger : d.itemDefault;
 
@@ -83,9 +70,7 @@ export default function DropdownItem({
         if (skipClickRef.current) { skipClickRef.current = false; return; }
         if (keepOpen) e.preventDefault(); onClick();
       }}
-      onPointerEnter={() => {
-        if (!disabled && api && myIndex >= 0) api.setHighlighted(myIndex, 'pointer');
-      }}
+      onPointerEnter={() => { setPointer(myIndex); }}
       onTouchStart={() => {}}
       disabled={disabled}
     >

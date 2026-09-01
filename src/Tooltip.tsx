@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { usePortalTarget, useCurrentWindow } from './popout';
+import { IS_COARSE } from './device';
 
 export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> = ({ content, children }) => {
   const portalTarget = usePortalTarget();
@@ -31,8 +32,8 @@ export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> =
       {children}
       {show && createPortal(
         <div
-          className="fixed px-2.5 py-1.5 bg-zinc-900 text-white text-[10px] rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-white/20"
-          style={{ left: pos.x, top: pos.y - 20, transform: 'translate(-50%, -100%)', zIndex: 99999 }}
+          className={`fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-white/20 ${IS_COARSE ? 'px-3 py-1.5 bg-zinc-900 text-white text-xs' : 'px-2.5 py-1.5 bg-zinc-900 text-white text-[10px]'}`}
+          style={{ left: pos.x, top: pos.y - (IS_COARSE ? 24 : 20), transform: 'translate(-50%, -100%)', zIndex: 99999 }}
         >
           {content.split('\n• ').map((line, i) => (
             <div key={i} className={i > 0 ? 'mt-0.5 pt-0.5 border-t border-zinc-700' : ''}>{line}</div>

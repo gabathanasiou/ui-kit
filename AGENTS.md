@@ -152,7 +152,8 @@ stays mounted while the close morph plays; `onClosed` drops persisted):
 - **Dialogs close by `open` flip, not unmount**: DialogProvider keeps `<Modal
   open>` mounted, so the open→closed transition clones + morphs (the same clone
   as unmount closes) — alerts fade like standalone modals. Never remove that
-  open-flip clone.
+  open-flip clone. **Alerts are `closable={false}`** — no X, no Escape, no
+  backdrop dismiss; only OK closes (alerts need attention).
 - **iPad keyboard**: detection is dual — the keyboard either shrinks the VISUAL
   viewport (`visualViewport.height << innerHeight`) or the LAYOUT viewport
   (innerHeight drops while innerWidth stays). A settle timer keeps the flag

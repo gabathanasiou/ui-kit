@@ -100,7 +100,14 @@ test('alert: OK resolves', async ({ page }) => {
   const dialog = page.getByRole('dialog');
   await expect(dialog).toContainText('Your project is up to date.');
   await expect(dialog.getByRole('button', { name: 'Cancel' })).toHaveCount(0);
+  /* Alerts need attention: NOT dismissible by outside click, Escape, or an X
+     button — only OK closes. */
+  await expect(dialog.getByRole('button', { name: 'Close' })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await page.mouse.click(10, 10);
+  await expect(page.getByRole('dialog')).toHaveCount(1);
   await dialog.getByRole('button', { name: 'OK' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByTestId('dlg-alert').locator('..')).toContainText('alert → ok');
 });
 

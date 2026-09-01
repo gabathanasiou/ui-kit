@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+import { IS_COARSE } from './device';
 
 /**
  * Toolbar/action button — the shared button recipe so consumer toolbars stop
@@ -12,8 +13,9 @@ import React from 'react';
  *  - `danger-ghost` — destructive action in text+ghost form
  *
  * Themes: `light` (default, light toolbars/pages) and `dark` (dark toolbars).
- * Sizes are baked in (toolbar micro scale); pass `className` for extras
- * (active/toggled states, width utilities). Hover styles are Tailwind
+ * Sizes are baked in (toolbar micro scale; coarse-pointer devices — iPad —
+ * get the touch-size bump like the rest of the kit); pass `className` for
+ * extras (active/toggled states, width utilities). Hover styles are Tailwind
  * `hover:` variants — the consuming app's any-hover gate applies.
  *
  * DROPDOWN TRIGGERS: Radix sets `data-state="open"` on the trigger while its
@@ -27,24 +29,27 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   cloud?: boolean;
 }
 
-const BASE = 'inline-flex items-center gap-1.5 rounded text-xs font-semibold transition-colors cursor-pointer select-none whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed';
+const PAD = IS_COARSE ? 'px-3.5 py-2 text-sm' : 'px-2.5 py-1 text-xs';
+const PAD_PRIMARY = IS_COARSE ? 'px-4 py-2 text-sm' : 'px-3 py-1 text-xs';
+
+const BASE = `inline-flex items-center rounded font-semibold transition-colors cursor-pointer select-none whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed ${IS_COARSE ? 'gap-2' : 'gap-1.5'}`;
 
 type VariantSpec = { base: string; open: string };
 
 const VARIANTS: Record<'light' | 'dark', Record<NonNullable<ButtonProps['variant']>, VariantSpec>> = {
   light: {
-    subtle: { base: 'px-2.5 py-1 text-zinc-600 hover:bg-zinc-200', open: 'bg-zinc-200! text-zinc-900' },
-    primary: { base: 'px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-white', open: 'bg-zinc-800!' },
-    'danger-ghost': { base: 'px-2.5 py-1 text-rose-600 hover:bg-rose-50', open: 'bg-rose-50!' },
+    subtle: { base: `${PAD} text-zinc-600 hover:bg-zinc-200`, open: 'bg-zinc-200! text-zinc-900' },
+    primary: { base: `${PAD_PRIMARY} bg-zinc-900 hover:bg-zinc-800 text-white`, open: 'bg-zinc-800!' },
+    'danger-ghost': { base: `${PAD} text-rose-600 hover:bg-rose-50`, open: 'bg-rose-50!' },
   },
   dark: {
-    subtle: { base: 'px-2.5 py-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800', open: 'bg-zinc-800! text-zinc-300' },
-    primary: { base: 'px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-white', open: 'bg-zinc-700!' },
-    'danger-ghost': { base: 'px-2.5 py-1 text-red-400 hover:bg-rose-950/40', open: 'bg-rose-950/40!' },
+    subtle: { base: `${PAD} text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800`, open: 'bg-zinc-800! text-zinc-300' },
+    primary: { base: `${PAD_PRIMARY} bg-zinc-800 hover:bg-zinc-700 text-white`, open: 'bg-zinc-700!' },
+    'danger-ghost': { base: `${PAD} text-red-400 hover:bg-rose-950/40`, open: 'bg-rose-950/40!' },
   },
 };
 
-const CLOUD_PRIMARY_BASE = 'px-3 py-1 bg-blue-950 hover:bg-blue-900 text-white';
+const CLOUD_PRIMARY_BASE = `${PAD_PRIMARY} bg-blue-950 hover:bg-blue-900 text-white`;
 const CLOUD_PRIMARY_OPEN = 'bg-blue-900!';
 
 export default function Button({
