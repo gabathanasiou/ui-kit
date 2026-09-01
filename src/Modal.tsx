@@ -270,12 +270,6 @@ export default function Modal({
 
   useLayoutEffect(() => {
     if (!open || initRef.current || !contentReady || !contentRef.current) return;
-    /* TEMPORARY (iPad keyboard): on coarse-pointer devices keep the modal
-       CSS-centred (left-1/2 top-1/2 -translate-*) instead of pinning an
-       explicit centred dragPos — the browser then keeps it dead-centre through
-       any viewport/keyboard resize and nothing can snap it. Drag still works:
-       the first drag pins the position. */
-    if (IS_COARSE) return;
     initRef.current = true;
     /* Pin the CENTERED position as an explicit left/top (the drag/RO math
        works on plain pixels, so the centering translate classes are dropped
@@ -437,10 +431,6 @@ export default function Modal({
      linearly together → the center is constant); dragged ones keep their top
      edge. Fires during an animation are skipped (re-anchored after). */
   useEffect(() => {
-    /* TEMPORARY (iPad keyboard): skip the height-FLIP on coarse-pointer
-       devices too — CSS centering keeps the modal centred through any size
-       change without the JS re-centring (which is what snapped it). */
-    if (IS_COARSE) return;
     if (!contentReady || !morph || reduceMotion() || !contentRef.current) return;
     const el = contentRef.current;
     let lastH = Math.round(el.getBoundingClientRect().height);
@@ -532,10 +522,6 @@ export default function Modal({
      grows back it must follow. Un-dragged modals re-centre, dragged ones
      keep their top edge and just re-clamp. */
   useEffect(() => {
-    /* TEMPORARY (iPad keyboard): skip all the JS keyboard/reposition logic on
-       coarse-pointer devices — CSS centering already keeps the modal pinned to
-       the screen centre. */
-    if (IS_COARSE) return;
     if (!open) return;
     const win = currentWindowRef.current ?? null;
     const vv = win?.visualViewport ?? null;
@@ -598,10 +584,12 @@ export default function Modal({
             top: Math.max(vb.top + MAX_EDGE, Math.min(vb.top + (vb.height - r.height) / 2, vb.bottom - r.height - MAX_EDGE)),
           });
         };
-        if (kbNow) {
-          /* Keyboard genuinely up — move only when it actually covers the
-             modal (bottom past the visible viewport) or a Safari pan pushed
-             the top off-screen. Never push an uncovered modal around. */
+        if (kbNow && !IS_COARSE) {
+          /* Keyboard genuinely up (desktop/coarse with a keyboard — but on
+             touch the modal stays put: the keyboard simply covers the bottom,
+             never pushes it). Move only when it actually covers the modal
+             (bottom past the visible viewport) or a Safari pan pushed the top
+             off-screen. Never push an uncovered modal around. */
           if (draggedRef.current) { if (!fits) setDragPos(clampPos(r.left, r.top)); return; }
           if (fits) return;
           reposition();
@@ -623,11 +611,32 @@ export default function Modal({
     };
     vv.addEventListener('resize', onVvChange);
     vv.addEventListener('scroll', onVvChange);
-    win.addEventListener('orientationchange', onVvChange);
+    /* Orientation: ALWAYS re-centre un-dragged modals (not just when they
+       don't fit) — after a rotate the old centre is the wrong spot. Runs in
+       the shared rAF so it coalesces with a same-frame vv resize. */
+    const onOrientation = () => {
+      if (closingRef.current || dragRef.current) return;
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const el = contentRef.current;
+        if (!el) return;
+        const win2 = currentWindowRef.current ?? null;
+        const vb = viewportBox(win2);
+        const vw = win2?.innerWidth ?? 0;
+        const r = el.getBoundingClientRect();
+        if (draggedRef.current) { setDragPos(clampPos(r.left, r.top)); return; }
+        setDragPos({
+          left: Math.max(MAX_EDGE, Math.min((vw - r.width) / 2, vw - r.width - MAX_EDGE)),
+          top: Math.max(vb.top + MAX_EDGE, Math.min(vb.top + (vb.height - r.height) / 2, vb.bottom - r.height - MAX_EDGE)),
+        });
+      });
+    };
+    win.addEventListener('orientationchange', onOrientation);
     return () => {
       vv.removeEventListener('resize', onVvChange);
       vv.removeEventListener('scroll', onVvChange);
-      win.removeEventListener('orientationchange', onVvChange);
+      win.removeEventListener('orientationchange', onOrientation);
       if (raf) cancelAnimationFrame(raf);
       if (kbClearTimerRef.current) clearTimeout(kbClearTimerRef.current);
     };
@@ -652,6 +661,34 @@ export default function Modal({
   const onPointerUp = useCallback(() => { dragRef.current = null; }, []);
 
   const isDragging = dragRef.current !== null;
+
+  /* Double-click / double-tap the HEADER to re-centre the modal (e.g. after
+     dragging it off-centre, or the keyboard nudged it). Time-windowed clicks
+     (300ms) so it works for mouse AND touch (iOS doesn't reliably fire
+     dblclick). Resets the dragged flag so future content-height changes
+     re-centre again. */
+  const recenter = useCallback(() => {
+    draggedRef.current = false;
+    const win = currentWindowRef.current ?? null;
+    const vb = viewportBox(win);
+    const vw = win?.innerWidth ?? 0;
+    const el = contentRef.current;
+    const r = el ? el.getBoundingClientRect() : { width: 0, height: 0 };
+    setDragPos({
+      left: Math.max(MAX_EDGE, Math.min((vw - r.width) / 2, vw - r.width - MAX_EDGE)),
+      top: Math.max(vb.top + MAX_EDGE, Math.min(vb.top + (vb.height - r.height) / 2, vb.bottom - r.height - MAX_EDGE)),
+    });
+  }, []);
+  const lastHeaderTapRef = useRef(0);
+  const onHeaderClick = useCallback(() => {
+    const now = Date.now();
+    if (now - lastHeaderTapRef.current < 300) {
+      lastHeaderTapRef.current = 0;
+      recenter();
+    } else {
+      lastHeaderTapRef.current = now;
+    }
+  }, [recenter]);
 
   const hasExplicit = dragPos !== null;
 
@@ -726,6 +763,7 @@ export default function Modal({
               onPointerDown={(e) => { if (!morphing) onPointerDown(e); }}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
+              onClick={onHeaderClick}
             >
               <RadixDialog.Title className={`${FLAT_TITLE} font-bold text-white truncate`}>
                 {title}
@@ -742,6 +780,7 @@ export default function Modal({
             onPointerDown={(e) => { if (!morphing) onPointerDown(e); }}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
+            onClick={onHeaderClick}
           >
             <div className="flex items-center gap-2 min-w-0">
               {icon && <span className="text-zinc-400 shrink-0">{icon}</span>}
