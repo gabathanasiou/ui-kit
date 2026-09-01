@@ -8,6 +8,10 @@ import React from 'react';
  *  - `primary`     — solid call-to-action (Save, Add, Print); light theme
  *                    supports cloud-project coloring via the `cloud` prop
  *  - `danger-ghost` — destructive action in text+ghost form
+ *  - `tab`         — the mini-tab recipe (PageToolbar sub-tabs): solid dark
+ *                    pill when `active`, quiet hover otherwise
+ *  - `tab-header`  — the top-tab recipe (AppHeader header tabs): inverted
+ *                    white pill when `active`, quiet hover on the dark header
  *
  * Themes: `light` (default, light toolbars/pages) and `dark` (dark toolbars).
  * Sizes are baked in (toolbar micro scale; coarse-pointer devices — iPad —
@@ -16,17 +20,21 @@ import React from 'react';
  * utilities). Hover styles are Tailwind `hover:` variants — the consuming
  * app's any-hover gate applies.
  *
+ * For `tab`/`tab-header`, `active` means "this tab is selected" and applies the
+ * variant's baked active fill (NOT the blue toggle tint the base variants use).
+ *
  * DROPDOWN TRIGGERS: Radix sets `data-state="open"` on the trigger while its
  * menu is open — the button then keeps its HOVER look (the `open` class per
  * variant) so an open dropdown's trigger stays visibly pressed/active.
  */
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'subtle' | 'primary' | 'danger-ghost';
+    variant?: 'subtle' | 'primary' | 'danger-ghost' | 'tab' | 'tab-header';
     theme?: 'light' | 'dark';
     /** Cloud-project coloring (light primary: blue-950 instead of zinc-900). */
     cloud?: boolean;
     /** Toggled/pressed state (e.g. a lit formatting-toolbar toggle) — applies an
-     *  accent tint so the button reads as ON. */
+     *  accent tint so the button reads as ON. On `tab`/`tab-header` it fills the
+     *  selected-tab pill instead. */
     active?: boolean;
 }
 export default function Button({ variant, theme, cloud, active, className, type, ...rest }: ButtonProps): React.JSX.Element;
