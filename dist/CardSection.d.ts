@@ -4,7 +4,8 @@ import React from 'react';
  * rows inside" pattern (day-type sections, rules, cast groups). The card fill
  * comes from its OWN surface token (--ui-card-bg), deliberately distinct from
  * text-field fills (--ui-input-bg), so sections read as raised panels, not
- * inputs. Dark + light themes via the kit tokens.
+ * inputs. Dark + light themes via the kit tokens; touch devices get the coarse
+ * header/toggle bump.
  *
  * Header: chevron + icon + title + count, with an optional right-aligned
  * `trailing` action (e.g. "Add Rule") OUTSIDE the toggle button (never nest a

@@ -1,13 +1,15 @@
 "use client";
 import React from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { IS_COARSE } from './device';
 
 /**
  * Collapsible section card for a modal/panel body — the "one card per item,
  * rows inside" pattern (day-type sections, rules, cast groups). The card fill
  * comes from its OWN surface token (--ui-card-bg), deliberately distinct from
  * text-field fills (--ui-input-bg), so sections read as raised panels, not
- * inputs. Dark + light themes via the kit tokens.
+ * inputs. Dark + light themes via the kit tokens; touch devices get the coarse
+ * header/toggle bump.
  *
  * Header: chevron + icon + title + count, with an optional right-aligned
  * `trailing` action (e.g. "Add Rule") OUTSIDE the toggle button (never nest a
@@ -40,21 +42,25 @@ export interface CardSectionProps {
 }
 
 export function CardSection({ title, icon, count, tone = 'default', collapsed, onToggle, trailing, bodyClass, className = '', dataProps, children }: CardSectionProps) {
+  const headPad = IS_COARSE ? 'px-3.5 py-3' : 'px-3 py-2';
+  const titleCls = IS_COARSE ? 'text-sm' : 'text-xs';
+  const chevronCls = IS_COARSE ? 'w-4 h-4' : 'w-3.5 h-3.5';
+  const countCls = IS_COARSE ? 'text-xs' : 'text-[10px]';
   return (
     <div {...dataProps} className={`ui-card ${tone === 'danger' ? 'ui-card-danger' : ''} ${className}`}>
       {/* Transparent-ish hover (white/5) so it reads on ANY card color — the
          old ui-row gray clash showed on tinted cards. Title + chevron stay
          neutral/white regardless of tone (the tone is the background). */}
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 hover:bg-white/5 transition-colors">
+      <div className={`flex flex-wrap items-center gap-x-2 gap-y-1 ${headPad} hover:bg-white/5 transition-colors`}>
         <button
           type="button"
           onClick={onToggle}
           className="flex items-center gap-2 flex-1 min-w-0 text-left cursor-pointer"
         >
-          {collapsed ? <ChevronRight className="w-3.5 h-3.5 text-zinc-400 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-400 shrink-0" />}
+          {collapsed ? <ChevronRight className={`${chevronCls} text-zinc-400 shrink-0`} /> : <ChevronDown className={`${chevronCls} text-zinc-400 shrink-0`} />}
           {icon}
-          <span className="text-xs font-semibold text-zinc-200 truncate">{title}</span>
-          {count && <span className="text-[10px] text-zinc-500 shrink-0">{count}</span>}
+          <span className={`font-semibold text-zinc-200 truncate ${titleCls}`}>{title}</span>
+          {count && <span className={`text-zinc-500 shrink-0 ${countCls}`}>{count}</span>}
         </button>
         {trailing && <div className="shrink-0">{trailing}</div>}
       </div>
