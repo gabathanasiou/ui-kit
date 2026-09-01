@@ -46,18 +46,17 @@ test('context menu: nested subs coexist and the parent survives', async ({ page 
   await expect(page.getByRole('menuitem', { name: 'Level 3 A' })).toBeVisible();
 
   // move back to a parent item — the nested sub closes (Radix grace + the
-  // close morph), the parent stays
+  // close morph), the parent stays. Poll (web-first): the close morph keeps
+  // the sub content mounted for ~280ms, and under dev-server load the Radix
+  // grace + morph + unmount can exceed any fixed sleep.
   await page.getByRole('menuitem', { name: /Nested B/ }).hover();
-  await page.waitForTimeout(1000);
-  await expect(page.getByRole('menuitem', { name: 'Level 3 A' })).toHaveCount(0);
+  await expect(page.getByRole('menuitem', { name: 'Level 3 A' })).toHaveCount(0, { timeout: 3000 });
   await expect(page.getByRole('menuitem', { name: /Nested B/ })).toBeVisible();
   await expect(page.getByRole('menuitem', { name: /Plain item/ })).toBeVisible();
 
   // pick a level-3 item from a fresh open
   await page.getByRole('menuitem', { name: /Deeper…/ }).hover();
-  await page.waitForTimeout(500);
   await page.getByRole('menuitem', { name: 'Level 3 B' }).click();
-  await page.waitForTimeout(400);
   await expect(page.getByText(/pick: Level 3 B/)).toBeVisible();
 });
 
