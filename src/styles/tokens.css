@@ -303,9 +303,12 @@
   -webkit-user-select: none;
 }
 
+/* Press feedback: SQUEEZE the current background into a smaller pill — an
+   inset ring in the panel color cuts 2px into the fill on mousedown (no
+   layout shift, no color swap), then springs back. */
 .ui-item:active {
-  background: var(--ui-item-active-bg);
   transition: none;
+  box-shadow: inset 0 0 0 2px var(--ui-panel-bg);
 }
 
 /* Ungated :hover fill — iOS Safari's native tap-to-hover needs a real
@@ -326,6 +329,7 @@
 .ui-item-danger:active {
   background: var(--ui-danger-active-bg);
   color: var(--ui-danger-active-text);
+  box-shadow: inset 0 0 0 2px var(--ui-panel-bg);
 }
 
 .ui-item-danger:hover,
