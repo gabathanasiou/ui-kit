@@ -2341,7 +2341,7 @@ const Gi = ({
           /* @__PURE__ */ E(
             "div",
             {
-              className: "fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-white/20 bg-zinc-900 text-white",
+              className: "fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-white/20 bg-zinc-900 text-white pointer-events-none",
               style: { ...o, left: m.x, top: m.y - 4, transform: "translate(-50%, -100%)", zIndex: 99999 },
               children: [
                 e.split(`
