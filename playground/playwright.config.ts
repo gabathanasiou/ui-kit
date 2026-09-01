@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 /* Playground specs — run against the playground dev server (kit SOURCE, no
    build needed). The dev server runs StrictMode (main.tsx wraps in
@@ -21,4 +21,18 @@ export default defineConfig({
     reuseExistingServer: true,
     timeout: 30_000,
   },
+  projects: [
+    {
+      name: 'desktop',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'ipad',
+      use: {
+        ...devices['iPad Pro 11'],
+        browserName: 'webkit',
+        hasTouch: true,
+      },
+    },
+  ],
 });

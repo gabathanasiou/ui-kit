@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useCallback, useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Pencil, Copy, Trash2, Plus, Check, X, RotateCcw } from 'lucide-react';
-import { usePortalTarget } from './popout';
+import { usePortalTarget, useCurrentDocument } from './popout';
 import { IS_COARSE } from './device';
 import { useOverlayMorph } from './overlayMorph';
 import { useFixedPosition } from './useSmartPosition';
@@ -354,6 +354,7 @@ export default function DropdownMenu({
   const [subChain, setSubChain] = useState<string[]>([]);
   const [keyboardOpenedSub, setKeyboardOpenedSub] = useState<string | null>(null);
   const portalTarget = usePortalTarget();
+  const currentDocument = useCurrentDocument();
   const triggerRef = useRef<HTMLElement | null>(null);
   const contentElRef = useRef<HTMLDivElement | null>(null);
   const openRef = useRef(open);
@@ -379,6 +380,36 @@ export default function DropdownMenu({
     setSubChain([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialHighlightIndex, onOpenChange, onClose]);
+
+  /* Touch dismissal gap (iPad): Radix's DismissableLayer defers TOUCH
+     outside-dismissal to the `click` event (a touch that becomes a scroll
+     shouldn't dismiss the menu). A modal DRAG is pointerdown + pointermove +
+     pointerup with no click — the deferred dismissal never fires, so dragging
+     a modal leaves an open menu stuck on iPad (mouse/pen dismiss immediately
+     on pointerdown, which is why Mac works). The app's DropdownPanel closes on
+     any outside pointerdown (`useDropdown`); give the kit menu the same model
+     for touch: dismiss on a TOUCH pointerdown outside the menu (content + open
+     submenus) and outside the trigger (Radix owns the trigger toggle). Gate on
+     touch only — a non-gated listener would double-dismiss with Radix's own
+     pointerdown handling for mouse/pen. */
+  useEffect(() => {
+    if (!open || !currentDocument) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch') return;
+      const t = e.target as Node | null;
+      if (!t) return;
+      if (contentElRef.current && contentElRef.current.contains(t)) return;
+      if (triggerRef.current && triggerRef.current.contains(t)) return;
+      /* An open submenu's content portals as a SIBLING of the root content —
+         exclude it too so a tap inside a submenu item still selects it (Radix
+         Content and SubContent both carry `data-radix-menu-content`). */
+      if (t instanceof Element && t.closest('[data-radix-menu-content]')) return;
+      onOpenChange?.(false);
+      onClose?.();
+    };
+    currentDocument.addEventListener('pointerdown', onPointerDown, { capture: true });
+    return () => currentDocument.removeEventListener('pointerdown', onPointerDown, { capture: true });
+  }, [open, currentDocument, onOpenChange, onClose]);
 
   const anchor = useCallback(() => {
     const el = triggerRef.current;
