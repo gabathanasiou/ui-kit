@@ -13,6 +13,18 @@ export type DropdownTheme = 'light' | 'dark' | 'blue';
 export const DropdownThemeContext = createContext<DropdownTheme>('dark');
 export const useDropdownTheme = () => useContext(DropdownThemeContext);
 
+/** Shared row sizing for menu items AND item-manager rows (padding + font +
+ *  line-height, coarse-scaled) — ONE knob to resize every dropdown row
+ *  globally. Consumers spread it as an inline style. */
+export function useItemSize() {
+  const scale = useCoarseScale();
+  return {
+    padding: `${coarsePx(8, 12, scale)}px ${coarsePx(12, 16, scale)}px`,
+    fontSize: `${coarsePx(12, 14, scale)}px`,
+    lineHeight: `${coarsePx(16, 20, scale)}px`,
+  };
+}
+
 // ── Single source of truth for all dropdown styling ──
 // Colors/interactions come from tokens.css (.ui-*) via [data-theme]; only
 // layout/size utilities are inlined. Coarse sizing is gated on the global
@@ -898,6 +910,7 @@ export function ItemManagerDropdown({
   contentClassName,
 }: ItemManagerDropdownProps) {
   const d = getDropdownClasses(theme);
+  const itemSize = useItemSize();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -1015,7 +1028,7 @@ export function ItemManagerDropdown({
           <div key={item.id} data-active={isActive ? '1' : undefined} className={`flex items-center gap-1 rounded ${isActive || isEditing ? d.rowActiveBg : d.rowHoverBg} ${editingId && !isEditing ? 'opacity-40 pointer-events-none' : ''}`}>
             {isEditing ? (
               <>
-                <div className={`flex-1 min-w-0 ${d.itemPad} rounded outline-none flex items-center gap-2`}>
+                <div className="flex-1 min-w-0 rounded outline-none flex items-center gap-2" style={itemSize}>
                   <input
                     ref={inputRef}
                     value={editValue}
@@ -1042,7 +1055,8 @@ export function ItemManagerDropdown({
             ) : (
               <>
                 <RadixDropdownMenu.Item
-                  className={`flex-1 min-w-0 ${d.itemPad} rounded outline-none cursor-pointer flex items-center ${d.rowText} ${isActive ? '' : d.rowTextHover}`}
+                  style={itemSize}
+                  className={`flex-1 min-w-0 rounded outline-none cursor-pointer flex items-center ${d.rowText} ${isActive ? '' : d.rowTextHover}`}
                   onSelect={closeOnSelect ? () => { onSelect(item.id); } : e => { e.preventDefault(); onSelect(item.id); }}
                   onTouchStart={() => {}}
                 >

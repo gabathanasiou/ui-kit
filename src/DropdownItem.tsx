@@ -1,8 +1,7 @@
 "use client";
 import React, { useRef } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useDropdownTheme, getDropdownClasses, useHighlightRow, useMenuSearch } from './DropdownMenu';
-import { useCoarseScale, coarsePx } from './device';
+import { useDropdownTheme, getDropdownClasses, useHighlightRow, useMenuSearch, useItemSize } from './DropdownMenu';
 
 // typeahead label extractor — shared with ContextMenuItem
 import { menuItemLabel as itemLabel } from './DropdownMenu';
@@ -45,8 +44,7 @@ export default function DropdownItem({
 }: DropdownItemProps) {
   const theme = useDropdownTheme();
   const d = getDropdownClasses(theme);
-  const scale = useCoarseScale();
-  const ITEM_STYLE = { padding: `${coarsePx(8, 12, scale)}px ${coarsePx(12, 16, scale)}px`, fontSize: coarsePx(12, 14, scale) };
+  const itemSize = useItemSize();
   const skipClickRef = useRef(false);
   const itemRef = useRef<HTMLDivElement>(null);
   /* Single-highlight (the panel model) via the shared row contract — register
@@ -72,7 +70,7 @@ export default function DropdownItem({
     <RadixDropdownMenu.Item
       ref={itemRef}
       data-ei={myIndex >= 0 ? myIndex : undefined}
-      style={{ ...ITEM_STYLE, display: hidden ? 'none' : undefined }} className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${variantStyles} ${selected ? 'ui-item-selected' : ''} ${highlighted ? 'ui-item-highlighted' : ''} ${disabled ? 'opacity-30 pointer-events-none' : ''} ${className}`}
+      style={{ ...itemSize, display: hidden ? 'none' : undefined }} className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${variantStyles} ${selected ? 'ui-item-selected' : ''} ${highlighted ? 'ui-item-highlighted' : ''} ${disabled ? 'opacity-30 pointer-events-none' : ''} ${className}`}
       onSelect={(e) => {
         if (skipClickRef.current) { skipClickRef.current = false; return; }
         if (keepOpen) e.preventDefault(); onClick();

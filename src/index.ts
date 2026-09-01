@@ -1,5 +1,5 @@
 "use client";
-export { default as DropdownMenu, ItemManagerDropdown, DropdownThemeContext, useDropdownTheme, getDropdownClasses, SubmenuContext, MenuHighlightContext, useMenuHighlight, MenuSearchContext, useMenuSearch } from './DropdownMenu';
+export { default as DropdownMenu, ItemManagerDropdown, DropdownThemeContext, useDropdownTheme, getDropdownClasses, SubmenuContext, MenuHighlightContext, useMenuHighlight, MenuSearchContext, useMenuSearch, useItemSize } from './DropdownMenu';
 export type { DropdownTheme, DropdownMenuProps, ItemManagerDropdownProps, MenuHighlightApi, MenuHighlightItem } from './DropdownMenu';
 export { default as DropdownItem } from './DropdownItem';
 export { default as DropdownSubmenu } from './DropdownSubmenu';
