@@ -29,6 +29,7 @@ export function useInputSize(size: 'md' | 'sm' = 'md'): { padding: string; fontS
   if (size === 'sm') {
     return useCoarseSize({ px: 8, py: 6, fs: 12 }, { px: 12, py: 8, fs: 14 });
   }
-  // Matches Button subtle: desktop py-1 px-2.5 text-xs / coarse py-2 px-3.5 text-sm
-  return useCoarseSize({ px: 10, py: 4, fs: 12 }, { px: 14, py: 8, fs: 14 });
+  // A touch taller than the Button subtle (py +1 each side), so fields read
+  // as inputs beside buttons but sit nearly level.
+  return useCoarseSize({ px: 10, py: 5, fs: 12 }, { px: 14, py: 9, fs: 14 });
 }

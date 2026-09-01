@@ -1561,7 +1561,7 @@ function Ai(e = "md") {
   return e === "sm" ? `${t ? "px-3 py-2 text-sm" : "px-2 py-1.5 text-xs"} ui-input` : `${t ? "px-4 py-3 text-sm" : "px-3 py-2 text-xs"} ui-input`;
 }
 function Er(e = "md") {
-  return e === "sm" ? Oe({ px: 8, py: 6, fs: 12 }, { px: 12, py: 8, fs: 14 }) : Oe({ px: 10, py: 4, fs: 12 }, { px: 14, py: 8, fs: 14 });
+  return e === "sm" ? Oe({ px: 8, py: 6, fs: 12 }, { px: 12, py: 8, fs: 14 }) : Oe({ px: 10, py: 5, fs: 12 }, { px: 14, py: 9, fs: 14 });
 }
 const Rn = je(null);
 function Pi() {
