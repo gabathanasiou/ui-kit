@@ -21,7 +21,7 @@ export function useItemSize() {
   return {
     padding: `${coarsePx(8, 12, scale)}px ${coarsePx(12, 16, scale)}px`,
     fontSize: `${coarsePx(12, 14, scale)}px`,
-    lineHeight: `${coarsePx(16, 20, scale)}px`,
+    lineHeight: `${coarsePx(18, 22, scale)}px`,
   };
 }
 
