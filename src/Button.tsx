@@ -57,7 +57,7 @@ export default function Button({
   const tabSize = useCoarseSize({ px: 12, py: 6, fs: 12 }, { px: 16, py: 10, fs: 14 });
   const PAD = '';
   const PAD_PRIMARY = '';
-  const BASE = 'inline-flex items-center rounded font-semibold transition-colors cursor-pointer select-none whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed';
+  const BASE = 'inline-flex items-center rounded font-semibold transition cursor-pointer select-none whitespace-nowrap active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed';
 
   /* The mini-tab recipe (PageToolbar sub-tabs): a solid dark pill when active,
      quiet hover when not. `dark` theme only affects the inactive hover (the

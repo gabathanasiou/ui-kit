@@ -25,7 +25,7 @@ export interface ModalFooterButtonProps
   tone?: 'zinc' | 'accent' | 'danger';
 }
 
-const BASE = `inline-flex items-center gap-2 rounded-lg text-xs transition-colors cursor-pointer select-none whitespace-nowrap`;
+const BASE = `inline-flex items-center gap-2 rounded-lg text-xs transition cursor-pointer select-none whitespace-nowrap active:scale-[0.97]`;
 
 /* The hero primary-action fill, colorable by tone. The border is kept lighter
    than the fill on hover so the button never loses its edge (bg-zinc-700 on
