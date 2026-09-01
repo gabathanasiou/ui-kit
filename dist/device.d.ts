@@ -7,7 +7,9 @@ export declare function getCoarseScale(): number;
 export declare function useCoarse(): boolean;
 /** Reactive numeric coarse scale (0…1) — for controllers/displays. */
 export declare function useCoarseScale(): number;
-/** Interpolate a desktop→coarse pixel pair by the coarse scale (0…1). */
+/** Interpolate a desktop→coarse pixel pair by the coarse scale (0…1). On FINE
+ *  devices (non-coarse pointer) this ALWAYS returns the desktop value — the
+ *  knob only ever affects coarse devices, never desktops. */
 export declare function coarsePx(desktop: number, coarse: number, scale: number): number;
 /** A padding + font-size pair interpolated by the coarse scale — returned as
  *  an INLINE style (Tailwind can't JIT arbitrary classes generated at runtime,

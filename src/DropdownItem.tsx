@@ -46,7 +46,7 @@ export default function DropdownItem({
   const theme = useDropdownTheme();
   const d = getDropdownClasses(theme);
   const scale = useCoarseScale();
-  const ITEM_STYLE = { padding: `${coarsePx(12, 16, scale)}px ${coarsePx(8, 12, scale)}px`, fontSize: coarsePx(12, 14, scale) };
+  const ITEM_STYLE = { padding: `${coarsePx(8, 12, scale)}px ${coarsePx(12, 16, scale)}px`, fontSize: coarsePx(12, 14, scale) };
   const skipClickRef = useRef(false);
   const itemRef = useRef<HTMLDivElement>(null);
   /* Single-highlight (the panel model) via the shared row contract — register

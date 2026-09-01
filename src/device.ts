@@ -43,8 +43,11 @@ export function useCoarseScale(): number {
   return _coarseScale;
 }
 
-/** Interpolate a desktop→coarse pixel pair by the coarse scale (0…1). */
+/** Interpolate a desktop→coarse pixel pair by the coarse scale (0…1). On FINE
+ *  devices (non-coarse pointer) this ALWAYS returns the desktop value — the
+ *  knob only ever affects coarse devices, never desktops. */
 export function coarsePx(desktop: number, coarse: number, scale: number): number {
+  if (!IS_COARSE) return desktop;
   return Math.round(desktop + (coarse - desktop) * scale);
 }
 

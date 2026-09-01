@@ -151,7 +151,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
   }, [setContentRef]);
 
   const scale = useCoarseScale();
-  const SUB_ITEM_STYLE = { padding: `${coarsePx(12, 16, scale)}px ${coarsePx(8, 12, scale)}px`, fontSize: coarsePx(12, 14, scale) };
+  const SUB_ITEM_STYLE = { padding: `${coarsePx(8, 12, scale)}px ${coarsePx(12, 16, scale)}px`, fontSize: coarsePx(12, 14, scale) };
   const triggerClasses = `w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none justify-between ui-item${rootHighlighted ? ' ui-item-highlighted' : ''}${closing ? ' ui-sub-closing' : ''}`;
 
   const contentClasses = `ui-menu rounded-lg shadow-xl z-[210] p-1 flex flex-col select-none max-h-[min(60vh,24rem)] overflow-y-auto min-w-0 scrollbar-custom ${width || 'w-48'} ${contentClassName || ''}`;

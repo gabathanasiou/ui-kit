@@ -173,7 +173,7 @@ export const ContextMenuItem: React.FC<{
   children: React.ReactNode;
 }> = ({ onClick, variant = 'default', icon, disabled = false, selected = false, trailing, children }) => {
   const scale = useCoarseScale();
-  const CTX_ITEM_STYLE = { padding: `${coarsePx(12, 16, scale)}px ${coarsePx(8, 12, scale)}px`, fontSize: coarsePx(12, 14, scale) };
+  const CTX_ITEM_STYLE = { padding: `${coarsePx(8, 12, scale)}px ${coarsePx(12, 16, scale)}px`, fontSize: coarsePx(12, 14, scale) };
   const api = useMenuHighlight();
   const apiRef = useRef(api);
   apiRef.current = api;
