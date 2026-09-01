@@ -780,7 +780,7 @@ export default function DropdownMenu({
       })
     : trigger;
 
-  const contentClasses = `ui-menu rounded-lg shadow-xl z-[200] px-1 flex flex-col select-none max-h-[min(60vh,24rem)] min-w-0 ${internalSearch ? 'overflow-hidden' : 'overflow-y-auto scrollbar-custom'}`;
+  const contentClasses = `ui-menu rounded-lg shadow-xl z-[200] px-1 pt-px pb-px flex flex-col select-none max-h-[min(60vh,24rem)] min-w-0 ${internalSearch ? 'overflow-hidden' : 'overflow-y-auto scrollbar-custom'}`;
 
   return (
     <RadixDropdownMenu.Root open={open || persisted} onOpenChange={handleOpenChange} modal={false}>
