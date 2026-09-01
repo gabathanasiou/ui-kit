@@ -40,18 +40,20 @@ export interface CardSectionProps {
 }
 
 export function CardSection({ title, icon, count, tone = 'default', collapsed, onToggle, trailing, bodyClass, className = '', dataProps, children }: CardSectionProps) {
-  const accent = tone === 'danger' ? 'ui-item-danger' : 'text-zinc-500';
   return (
     <div {...dataProps} className={`ui-card ${tone === 'danger' ? 'ui-card-danger' : ''} ${className}`}>
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 ui-row transition-colors">
+      {/* Transparent-ish hover (white/5) so it reads on ANY card color — the
+         old ui-row gray clash showed on tinted cards. Title + chevron stay
+         neutral/white regardless of tone (the tone is the background). */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 hover:bg-white/5 transition-colors">
         <button
           type="button"
           onClick={onToggle}
           className="flex items-center gap-2 flex-1 min-w-0 text-left cursor-pointer"
         >
-          {collapsed ? <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${accent}`} /> : <ChevronDown className={`w-3.5 h-3.5 shrink-0 ${accent}`} />}
+          {collapsed ? <ChevronRight className="w-3.5 h-3.5 text-zinc-400 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-400 shrink-0" />}
           {icon}
-          <span className={`text-xs font-semibold truncate ${tone === 'danger' ? 'ui-item-danger' : 'text-zinc-200'}`}>{title}</span>
+          <span className="text-xs font-semibold text-zinc-200 truncate">{title}</span>
           {count && <span className="text-[10px] text-zinc-500 shrink-0">{count}</span>}
         </button>
         {trailing && <div className="shrink-0">{trailing}</div>}

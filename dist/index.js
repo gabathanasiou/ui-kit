@@ -2653,9 +2653,8 @@ const ni = ["Helvetica", "Arial", "Times New Roman", "Georgia", "Courier New"], 
   ] });
 };
 function Ji({ title: e, icon: t, count: n, tone: r = "default", collapsed: a, onToggle: o, trailing: l, bodyClass: u, className: c = "", dataProps: f, children: s }) {
-  const h = r === "danger" ? "ui-item-danger" : "text-zinc-500";
   return /* @__PURE__ */ N("div", { ...f, className: `ui-card ${r === "danger" ? "ui-card-danger" : ""} ${c}`, children: [
-    /* @__PURE__ */ N("div", { className: "flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 ui-row transition-colors", children: [
+    /* @__PURE__ */ N("div", { className: "flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 hover:bg-white/5 transition-colors", children: [
       /* @__PURE__ */ N(
         "button",
         {
@@ -2663,9 +2662,9 @@ function Ji({ title: e, icon: t, count: n, tone: r = "default", collapsed: a, on
           onClick: o,
           className: "flex items-center gap-2 flex-1 min-w-0 text-left cursor-pointer",
           children: [
-            a ? /* @__PURE__ */ i(Ze, { className: `w-3.5 h-3.5 shrink-0 ${h}` }) : /* @__PURE__ */ i(xt, { className: `w-3.5 h-3.5 shrink-0 ${h}` }),
+            a ? /* @__PURE__ */ i(Ze, { className: "w-3.5 h-3.5 text-zinc-400 shrink-0" }) : /* @__PURE__ */ i(xt, { className: "w-3.5 h-3.5 text-zinc-400 shrink-0" }),
             t,
-            /* @__PURE__ */ i("span", { className: `text-xs font-semibold truncate ${r === "danger" ? "ui-item-danger" : "text-zinc-200"}`, children: e }),
+            /* @__PURE__ */ i("span", { className: "text-xs font-semibold text-zinc-200 truncate", children: e }),
             n && /* @__PURE__ */ i("span", { className: "text-[10px] text-zinc-500 shrink-0", children: n })
           ]
         }
