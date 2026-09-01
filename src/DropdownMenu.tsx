@@ -976,16 +976,26 @@ export function ItemManagerDropdown({
   }, [open]);
 
   useEffect(() => {
-    if (editingId) {
-      requestAnimationFrame(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      });
-      const item = items.find(i => i.id === editingId);
-      if (item && !editValue) {
-        setEditValue(item.name);
-      }
-    }
+    if (!editingId) return;
+    const item = items.find(i => i.id === editingId);
+    if (item && !editValue) setEditValue(item.name);
+    const raf = requestAnimationFrame(() => {
+      const el = inputRef.current;
+      if (!el) return;
+      el.focus();
+      el.select();
+    });
+    /* Radix restores focus to the menu content after an item select — in the
+       CREATE flow the new row mounts and the input focuses, then Radix's own
+       focus tick lands a beat later and steals it back. Re-assert then. */
+    const timer = window.setTimeout(() => {
+      const el = inputRef.current;
+      if (editingId && el && el.ownerDocument.activeElement !== el) el.focus();
+    }, 30);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(timer);
+    };
   }, [editingId]);
 
   useEffect(() => {
@@ -1028,13 +1038,15 @@ export function ItemManagerDropdown({
           <div key={item.id} data-active={isActive ? '1' : undefined} className={`flex items-center gap-1 rounded ${isActive || isEditing ? d.rowActiveBg : d.rowHoverBg} ${editingId && !isEditing ? 'opacity-40 pointer-events-none' : ''}`}>
             {isEditing ? (
               <>
-                <div className="flex-1 min-w-0 rounded outline-none flex items-center gap-2" style={itemSize}>
+                <div className="flex-1 min-w-0 flex items-center">
                   <input
                     ref={inputRef}
+                    autoFocus
                     value={editValue}
                     onChange={e => setEditValue(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitRename(); } if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancelRename(); } }}
-                    className={`w-full border rounded ${d.input}`}
+                    className="w-full outline-none bg-transparent placeholder:text-current placeholder:opacity-50"
+                    style={itemSize}
                   />
                 </div>
                 <RadixDropdownMenu.Item
