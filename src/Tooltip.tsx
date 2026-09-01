@@ -13,12 +13,15 @@ export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> =
   const [show, setShow] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const ref = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const updatePos = () => {
     if (!ref.current) return;
     const r = ref.current.getBoundingClientRect();
     setPos({ x: r.left + r.width / 2, y: r.top });
   };
+
+  useEffect(() => () => { if (closeTimer.current) clearTimeout(closeTimer.current); }, []);
 
   useEffect(() => {
     if (show && currentWindow) { updatePos(); currentWindow.addEventListener('scroll', updatePos, true); }
@@ -29,8 +32,8 @@ export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> =
     <div
       ref={ref}
       className="inline-flex"
-      onMouseEnter={() => { updatePos(); setShow(true); }}
-      onMouseLeave={() => setShow(false)}
+      onMouseEnter={() => { if (closeTimer.current) clearTimeout(closeTimer.current); updatePos(); setShow(true); }}
+      onMouseLeave={() => { closeTimer.current = setTimeout(() => setShow(false), 150); }}
     >
       {children}
       {show && createPortal(
