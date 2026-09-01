@@ -676,13 +676,21 @@ export default function Modal({
      footer button by convention (Cancel first, action last; danger buttons
      sit first with mr-auto). An explicit `data-modal-confirm` marker on a
      footer button wins over the heuristic. A disabled last button is a
-     no-op (the form must be fixed first, never fall back to Cancel). */
+     no-op (the form must be fixed first, never fall back to Cancel).
+     EXCEPTION: the modal CHROME buttons (the X close button, or a footer
+     button that Radix focused on open) still redirect Enter to the primary
+     action — Enter on a dialog means "the main option" (Save/OK/Confirm),
+     not a native click on whichever chrome button has focus. Body buttons
+     keep their native Enter. */
   const onKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key !== 'Enter' || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return;
     const t = e.target as HTMLElement;
-    if (t.closest('input, textarea, select, button, a, [contenteditable], [role="button"], [role="menuitem"], [role="option"], [role="radio"], [role="checkbox"]')) return;
-    if (document.querySelector('[data-radix-menu-content][data-state="open"], [data-radix-popper-content-wrapper][data-state="open"]')) return;
     const footer = footerRef.current;
+    const chromeFocused =
+      !!t.closest('[data-modal-close]') ||
+      (!!footer && footer.contains(t) && !!t.closest('button, a, [role="button"]'));
+    if (!chromeFocused && t.closest('input, textarea, select, button, a, [contenteditable], [role="button"], [role="menuitem"], [role="option"], [role="radio"], [role="checkbox"]')) return;
+    if (document.querySelector('[data-radix-menu-content][data-state="open"], [data-radix-popper-content-wrapper][data-state="open"]')) return;
     if (!footer) return;
     const marked = Array.from(footer.querySelectorAll<HTMLButtonElement>('button[data-modal-confirm]'));
     const buttons = marked.length > 0 ? marked : Array.from(footer.querySelectorAll<HTMLButtonElement>('button'));
@@ -723,7 +731,7 @@ export default function Modal({
                 {title}
               </RadixDialog.Title>
               {closable && (
-                <RadixDialog.Close className="text-zinc-500 hover:text-white transition-colors shrink-0">
+                <RadixDialog.Close data-modal-close className="text-zinc-500 hover:text-white transition-colors shrink-0">
                   <X className={FLAT_CLOSE} />
                 </RadixDialog.Close>
               )}
@@ -749,7 +757,7 @@ export default function Modal({
                 </button>
               )}
               {closable && (
-                <RadixDialog.Close className="text-zinc-500 hover:text-white transition-colors shrink-0">
+                <RadixDialog.Close data-modal-close className="text-zinc-500 hover:text-white transition-colors shrink-0">
                   <X className={CLOSE_ICON} />
                 </RadixDialog.Close>
               )}
