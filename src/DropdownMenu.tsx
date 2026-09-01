@@ -985,16 +985,25 @@ export function ItemManagerDropdown({
       el.focus();
       el.select();
     });
-    /* Radix restores focus to the menu content after an item select — in the
-       CREATE flow the new row mounts and the input focuses, then Radix's own
-       focus tick lands a beat later and steals it back. Re-assert then. */
-    const timer = window.setTimeout(() => {
+    /* Focus guard: Radix restores focus to the menu content after an item
+       select (and the browser can blur on the click tail), so in the CREATE
+       flow the input's focus can be stolen a few frames after it mounts. Poll
+       every 50ms and re-assert until the input actually holds focus (gives up
+       after ~400ms — never fights the user indefinitely). */
+    let attempts = 0;
+    const guard = window.setInterval(() => {
       const el = inputRef.current;
-      if (editingId && el && el.ownerDocument.activeElement !== el) el.focus();
-    }, 30);
+      if (!el) return;
+      if (el.ownerDocument.activeElement === el || attempts > 8) {
+        clearInterval(guard);
+        return;
+      }
+      attempts++;
+      el.focus();
+    }, 50);
     return () => {
       cancelAnimationFrame(raf);
-      clearTimeout(timer);
+      clearInterval(guard);
     };
   }, [editingId]);
 
