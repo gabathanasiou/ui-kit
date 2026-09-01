@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { useCoarseScale, coarsePx } from './device';
+import { CheckMark } from './Checkbox';
 
 /**
  * Checklist — a bordered "word list of checkboxes" (the Days-to-Print /
@@ -86,13 +87,7 @@ export default function Checklist({
               className={`ui-checklist-item ${checked ? 'ui-checklist-item-checked' : ''}`}
               style={{ padding: `${itemPadY}px ${itemPadX}px`, fontSize: itemFs }}
             >
-              <span className="ui-checklist-box" style={{ width: checkDim, height: checkDim }} aria-hidden>
-                {checked && (
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
-              </span>
+              <CheckMark checked={checked} size={checkDim} />
               {item.leading != null && <span className="ui-checklist-leading">{item.leading}</span>}
               <span className="ui-checklist-label">{item.label}</span>
               {item.secondary != null && <span className="ui-checklist-secondary">{item.secondary}</span>}

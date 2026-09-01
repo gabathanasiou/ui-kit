@@ -17,6 +17,31 @@ import { useCoarseScale, coarsePx } from './device';
  * Sizes adapt for touch (IS_COARSE); hover styles live behind the any-hover
  * gate in tokens.css.
  */
+
+/** The shared checkbox indicator — the danger-confirm pill style: a rounded
+ *  square that fills with the tone color + white check when checked (outline
+ *  at rest). Used by `Checkbox` (`pill` variant) AND `Checklist` so every
+ *  multi-select checkbox looks identical. Colorable via `tone` (accent/danger). */
+export function CheckMark({ checked, size, tone = 'accent' }: { checked: boolean; size: number; tone?: 'accent' | 'danger' }) {
+  return (
+    <span
+      className={`ui-check-indicator ${checked ? 'ui-check-indicator-checked' : ''} ${tone === 'danger' ? 'ui-check-tone-danger' : ''}`}
+      aria-hidden
+    >
+      {checked ? (
+        <svg viewBox="0 0 16 16" style={{ width: size, height: size }} aria-hidden>
+          <rect x="1" y="1" width="14" height="14" rx="3.5" fill="currentColor" />
+          <path d="M4.5 8.2 L7 10.7 L11.5 5.8" stroke="#ffffff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 16 16" style={{ width: size, height: size }} aria-hidden>
+          <rect x="1" y="1" width="14" height="14" rx="3.5" fill="none" stroke="currentColor" strokeWidth={1.5} />
+        </svg>
+      )}
+    </span>
+  );
+}
+
 export interface CheckboxProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
@@ -58,18 +83,7 @@ export default function Checkbox({ checked, onChange, disabled = false, label, i
         className="sr-only"
       />
       {pill ? (
-        <span className="ui-check-indicator" aria-hidden>
-          {checked ? (
-            <svg viewBox="0 0 16 16" style={{ width: boxDim, height: boxDim }} aria-hidden>
-              <rect x="1" y="1" width="14" height="14" rx="3.5" fill="currentColor" />
-              <path d="M4.5 8.2 L7 10.7 L11.5 5.8" stroke="#ffffff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 16 16" style={{ width: boxDim, height: boxDim }} aria-hidden>
-              <rect x="1" y="1" width="14" height="14" rx="3.5" fill="none" stroke="currentColor" strokeWidth={1.5} />
-            </svg>
-          )}
-        </span>
+        <CheckMark checked={checked} size={boxDim} tone={tone} />
       ) : (
         <span className="ui-checkbox-box" style={{ width: boxDim, height: boxDim }} aria-hidden>
           {checked && (

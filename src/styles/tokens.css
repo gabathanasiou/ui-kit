@@ -614,6 +614,26 @@
   color: var(--ui-danger-solid);
 }
 
+/* The SHARED CheckMark indicator — standalone (Checklist rows, where there's
+   no hidden input for the `:checked +` sibling rule): the `-checked` class
+   drives the accent fill, the danger tone overrides it. */
+.ui-check-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--ui-text-faint);
+  transition: color 120ms ease;
+}
+
+.ui-check-indicator.ui-check-indicator-checked {
+  color: var(--ui-check-accent);
+}
+
+.ui-check-indicator.ui-check-indicator-checked.ui-check-tone-danger {
+  color: var(--ui-danger-solid);
+}
+
 .ui-checkbox-pill.ui-disabled {
   opacity: 0.45;
   background: transparent;
@@ -853,21 +873,6 @@
 
 .ui-checklist-item-checked:hover {
   background: var(--ui-check-row-bg);
-}
-
-.ui-checklist-box {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border: 1px solid var(--ui-check-border);
-  color: var(--ui-check-check);
-  transition: background-color 120ms ease, border-color 120ms ease;
-}
-
-.ui-checklist-item-checked .ui-checklist-box {
-  background: var(--ui-check-accent);
-  border-color: var(--ui-check-accent);
 }
 
 .ui-checklist-label {
