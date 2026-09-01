@@ -473,6 +473,12 @@ export default function DropdownMenu({
   const externalSearch = searchable && searchValue !== undefined;
   const query = externalSearch ? searchValue : internalQuery;
   const setQuery = externalSearch ? (onSearchValueChange ?? (() => {})) : setInternalQuery;
+  /* External (trigger-as-search): until the user actually TYPES, the filter is
+     a no-op so clicking a filled field shows the WHOLE list (the value is just
+     the field's committed text, not a query). The injected trigger onKeyDown
+     flips this on the first printable key; it resets on open/close/select. */
+  const [typedSinceOpen, setTypedSinceOpen] = useState(false);
+  const filterQuery = externalSearch && !typedSinceOpen ? '' : query;
   const searchInputRef = useRef<HTMLInputElement>(null);
   /* Subscribe to the global coarse knob so a LIVE scale change re-derives the
      search box's item-sized padding/font (same recipe as DropdownItem). */
@@ -500,10 +506,10 @@ export default function DropdownMenu({
   }, [open, internalSearch, query]);
   const filter = useMemo<((item: MenuHighlightItem) => boolean) | undefined>(() => {
     if (!searchable) return undefined;
-    const q = query.trim().toLowerCase();
+    const q = filterQuery.trim().toLowerCase();
     if (!q) return ALWAYS_VISIBLE;
     return (it: MenuHighlightItem) => (searchFilter ? searchFilter(q, it.label) : it.label.toLowerCase().includes(q));
-  }, [query, searchable, searchFilter]);
+  }, [filterQuery, searchable, searchFilter]);
 
   const highlight = useMenuHighlightState(filter);
 
@@ -511,6 +517,7 @@ export default function DropdownMenu({
     if (open) {
       setPersisted(true);
       if (!externalSearch) setInternalQuery('');
+      setTypedSinceOpen(false);
       highlight.setHighlighted(initialHighlightIndex ?? -1, 'keyboard');
       /* One open overlay at a time: opening this menu closes any other
          (context menu) first. */
@@ -519,6 +526,7 @@ export default function DropdownMenu({
     // The parent is closing — collapse any open submenu so it morphs
     // closed alongside this menu instead of staying open mid-morph.
     setSubChain([]);
+    setTypedSinceOpen(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialHighlightIndex, onOpenChange, onClose]);
 
@@ -715,19 +723,43 @@ export default function DropdownMenu({
     }
   }, [onOpenChange]);
 
-  const triggerEl = React.isValidElement(trigger) ? (trigger as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>) : null;
+  const triggerEl = React.isValidElement(trigger) ? (trigger as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void; onKeyDown?: (e: React.KeyboardEvent) => void }>) : null;
   const triggerNode = triggerEl
-    ? React.cloneElement(triggerEl as React.ReactElement<{ ref?: React.Ref<HTMLElement>; onClick?: (e: React.MouseEvent) => void; onPointerDown?: (e: React.PointerEvent) => void }>, {
+    ? React.cloneElement(triggerEl as React.ReactElement<{ ref?: React.Ref<HTMLElement>; onClick?: (e: React.MouseEvent) => void; onPointerDown?: (e: React.PointerEvent) => void; onKeyDown?: (e: React.KeyboardEvent) => void }>, {
         ref: (node: HTMLElement | null) => { triggerRef.current = node; },
         onPointerDown: () => { triggerPointerDownRef.current = true; closeFromTriggerPointerDownRef.current = false; },
         onClick: (e: React.MouseEvent) => {
           triggerEl.props.onClick?.(e);
           triggerOnClick();
         },
+        /* Combobox mode (externalSearch): the trigger field IS the search box,
+           so it also drives the menu's keyboard — arrows move the single
+           highlight, Enter activates the highlighted (or first visible) row,
+           and a printable key flips the filter live (the committed value was
+           just showing the full list until the first keystroke). */
+        onKeyDown: (e: React.KeyboardEvent) => {
+          triggerEl.props.onKeyDown?.(e);
+          if (!externalSearch || !openRef.current) return;
+          if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            setTypedSinceOpen(true);
+          } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            const items = highlight.items;
+            if (items.length === 0) return;
+            const dir = e.key === 'ArrowDown' ? 1 : -1;
+            const next = (highlight.highlightedIndex + dir + items.length) % items.length;
+            highlight.setHighlighted(next, 'keyboard');
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const idx = highlight.highlightedIndex;
+            const item = highlight.items[idx >= 0 ? idx : 0];
+            item?.activate();
+          }
+        },
       })
     : trigger;
 
-  const contentClasses = `ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none max-h-[min(60vh,24rem)] min-w-0 ${internalSearch ? 'overflow-hidden' : 'overflow-y-auto scrollbar-custom'}`;
+  const contentClasses = `ui-menu rounded-lg shadow-xl z-[200] p-[3px_6px] flex flex-col select-none max-h-[min(60vh,24rem)] min-w-0 ${internalSearch ? 'overflow-hidden' : 'overflow-y-auto scrollbar-custom'}`;
 
   return (
     <RadixDropdownMenu.Root open={open || persisted} onOpenChange={handleOpenChange} modal={false}>
@@ -760,7 +792,7 @@ export default function DropdownMenu({
                   onPointerLeave={highlight.pointerLeave}
                 >
                   {internalSearch && (
-                    <div className="shrink-0 px-0 pt-1 pb-2" style={{ paddingRight: searchGutter }}>
+                    <div className="shrink-0 px-0 pt-1 pb-1" style={{ paddingRight: searchGutter }}>
                       <div className="ui-item ui-item-highlighted flex items-center gap-2 rounded" style={searchBoxStyle}>
                         <Search className="w-3.5 h-3.5 shrink-0 ui-icon" />
                         <input
