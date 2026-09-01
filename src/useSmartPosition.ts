@@ -110,11 +110,17 @@ export function useFixedPosition(
       const spaceAbove = rect.top - vb.top - gap - 16;
 
       if (spaceBelow >= minH || spaceBelow >= spaceAbove) {
-        const top = Math.min(rect.bottom + gap, vb.bottom);
-        const maxH = Math.max(minH, vb.bottom - top - 16);
+        /* Open below the trigger — but CLAMP the top so the menu never
+           extends off-screen: when the trigger sits at the viewport bottom
+           with less than a menu-height of room, the old maxH floor (120px)
+           pinned the top near the edge and pushed the whole menu out of
+           view ("the menu disappears instead of flipping"). Keep at least
+           40px of the menu visible. */
+        const top = Math.min(rect.bottom + gap, Math.max(vb.top, vb.bottom - 40));
+        const maxH = Math.max(32, vb.bottom - top - 16);
         setPos({ top, left, width: rect.width, maxH });
       } else {
-        const maxH = Math.max(minH, Math.min(spaceAbove, 360));
+        const maxH = Math.max(32, Math.min(spaceAbove, 360));
         const bottom = vb.bottom - (rect.top - gap);
         setPos({ top: 0, left, width: rect.width, maxH, bottom: Math.max(0, bottom) });
       }
