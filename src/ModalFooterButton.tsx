@@ -20,12 +20,23 @@ import { useCoarseSize } from './device';
 export interface ModalFooterButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'hero' | 'ghost' | 'danger' | 'danger-solid';
+  /** Hero accent color — how the ONE primary action reads (default zinc).
+   *  Color the Save/OK/Add button per context (e.g. `tone="accent"` blue). */
+  tone?: 'zinc' | 'accent' | 'danger';
 }
 
 const BASE = `inline-flex items-center gap-2 rounded-lg text-xs transition-colors cursor-pointer select-none whitespace-nowrap`;
 
-const VARIANTS: Record<NonNullable<ModalFooterButtonProps['variant']>, string> = {
-  hero: 'bg-zinc-800 text-white font-semibold border border-zinc-700 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed',
+/* The hero primary-action fill, colorable by tone. The border is kept lighter
+   than the fill on hover so the button never loses its edge (bg-zinc-700 on
+   a zinc-700 border used to vanish). */
+const HERO_TONES: Record<NonNullable<ModalFooterButtonProps['tone']>, string> = {
+  zinc: 'bg-zinc-800 text-white font-semibold border border-zinc-700 hover:bg-zinc-700 hover:border-zinc-500 disabled:opacity-40 disabled:cursor-not-allowed',
+  accent: 'bg-blue-600 text-white font-semibold border border-blue-500 hover:bg-blue-500 hover:border-blue-400 disabled:opacity-40 disabled:cursor-not-allowed',
+  danger: 'bg-red-600 text-white font-semibold border border-red-500 hover:bg-red-500 hover:border-red-400 disabled:opacity-40 disabled:cursor-not-allowed',
+};
+
+const VARIANTS: Record<Exclude<NonNullable<ModalFooterButtonProps['variant']>, 'hero'>, string> = {
   ghost: 'text-zinc-400 font-medium hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-50',
   danger: 'text-red-400 font-medium hover:bg-red-900/30 hover:text-red-300 disabled:opacity-50',
   'danger-solid':
@@ -34,6 +45,7 @@ const VARIANTS: Record<NonNullable<ModalFooterButtonProps['variant']>, string> =
 
 export default function ModalFooterButton({
   variant = 'hero',
+  tone = 'zinc',
   className = '',
   type = 'button',
   ...rest
@@ -43,7 +55,7 @@ export default function ModalFooterButton({
     <button
       type={type}
       style={size}
-      className={`${BASE} ${VARIANTS[variant]} ${className}`}
+      className={`${BASE} ${variant === 'hero' ? HERO_TONES[tone] : VARIANTS[variant]} ${className}`}
       {...rest}
     />
   );
