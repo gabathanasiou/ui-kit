@@ -270,9 +270,18 @@ export function useMenuKeys(
       const t = e.target as HTMLElement | null;
       const inField = !!t && !!t.closest('input, textarea, [contenteditable]');
       if (inField && (e.key.length === 1 || e.key === 'Enter' || e.key === 'Escape')) {
+        /* Swallow the key ONLY when the menu actually owns it — a searchable
+           menu (onFieldKey + registered items) routes the key itself; any menu
+           WITH registered items must still stop Radix's typeahead from stealing
+           focus. Otherwise (ItemManager's rename input — no items, no
+           onFieldKey) let the key reach the field so its own Enter/Escape
+           handlers run. */
         const prevent = optsRef.current?.onFieldKey?.(e);
-        e.stopImmediatePropagation();
-        if (prevent) e.preventDefault();
+        const ownsKey = !!optsRef.current?.onFieldKey || apiRef.current.items.length > 0;
+        if (ownsKey) {
+          e.stopImmediatePropagation();
+          if (prevent) e.preventDefault();
+        }
         return;
       }
       const items = apiRef.current.items;
@@ -913,6 +922,11 @@ export function ItemManagerDropdown({
   const itemSize = useItemSize();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  /* Live ref so commitRename reads the LATEST value from any closure (the
+     document-capture Enter handler is registered once per editingId and would
+     otherwise commit a stale value). */
+  const editValueRef = useRef(editValue);
+  editValueRef.current = editValue;
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -933,7 +947,18 @@ export function ItemManagerDropdown({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement | null)?.closest?.('input, textarea, [contenteditable]')) return;
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest('input, textarea, [contenteditable]')) {
+        /* The rename input's own onKeyDown is unreachable — Radix's popper
+           content wrapper stops keydown at capture before the portal content,
+           so the browser never delivers it to the input. Handle Enter (commit)
+           / Escape (cancel) here at DOCUMENT capture, which fires first. */
+        if (editingId && target === inputRef.current) {
+          if (e.key === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); commitRename(); }
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); cancelRename(); }
+        }
+        return;
+      }
       const menu = listRef.current?.closest('.ui-menu');
       if (!menu || !menu.contains(e.target as Node)) return;
       const doc = menu.ownerDocument;
@@ -973,7 +998,7 @@ export function ItemManagerDropdown({
     const doc = listRef.current?.ownerDocument ?? null;
     doc?.addEventListener('keydown', onKey, { capture: true });
     return () => doc?.removeEventListener('keydown', onKey, { capture: true });
-  }, [open]);
+  }, [open, editingId]);
 
   useEffect(() => {
     if (!editingId) return;
@@ -986,20 +1011,24 @@ export function ItemManagerDropdown({
       el.select();
     });
     /* Focus guard: Radix restores focus to the menu content after an item
-       select (and the browser can blur on the click tail), so in the CREATE
-       flow the input's focus can be stolen a few frames after it mounts. Poll
-       every 50ms and re-assert until the input actually holds focus (gives up
-       after ~400ms — never fights the user indefinitely). */
+       select, and webkit's focus lands ~250ms late, so in the CREATE flow the
+       input's focus can be stolen several frames after it mounts. Poll for the
+       FULL window (600ms) and re-assert whenever the input isn't the active
+       element — never stop just because one tick saw it focused. */
     let attempts = 0;
     const guard = window.setInterval(() => {
       const el = inputRef.current;
-      if (!el) return;
-      if (el.ownerDocument.activeElement === el || attempts > 8) {
+      attempts++;
+      if (!el || attempts > 12) {
         clearInterval(guard);
         return;
       }
-      attempts++;
-      el.focus();
+      if (el.ownerDocument.activeElement !== el) {
+        el.focus();
+        /* Re-assert the select-all too — webkit drops the selection when the
+           focus is stolen and restored, leaving the caret stranded. */
+        el.select();
+      }
     }, 50);
     return () => {
       cancelAnimationFrame(raf);
@@ -1022,8 +1051,8 @@ export function ItemManagerDropdown({
   };
 
   const commitRename = () => {
-    if (editingId && editValue.trim()) {
-      onRename(editingId, editValue.trim());
+    if (editingId && editValueRef.current.trim()) {
+      onRename(editingId, editValueRef.current.trim());
     }
     setEditingId(null);
   };
