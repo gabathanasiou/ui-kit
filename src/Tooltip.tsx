@@ -36,7 +36,7 @@ export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> =
       {show && createPortal(
         <div
           className="fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-white/20 bg-zinc-900 text-white"
-          style={{ ...tipStyle, left: pos.x, top: pos.y - 20, transform: 'translate(-50%, -100%)', zIndex: 99999 }}
+          style={{ ...tipStyle, left: pos.x, top: pos.y - 4, transform: 'translate(-50%, -100%)', zIndex: 99999 }}
         >
           {content.split('\n• ').map((line, i) => (
             <div key={i} className={i > 0 ? 'mt-0.5 pt-0.5 border-t border-zinc-700' : ''}>{line}</div>
