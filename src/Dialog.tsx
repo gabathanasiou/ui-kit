@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
-import { IS_COARSE } from './device';
+import { IS_COARSE, useCoarse } from './device';
 import Modal from './Modal';
 import ModalFooterButton from './ModalFooterButton';
 import Checkbox from './Checkbox';
@@ -14,10 +14,6 @@ import { inputCls } from './input';
    footer Enter-confirm. The flat chrome keeps the classic dialog look — no
    header bar, no footer bar, the title row and buttons on the same surface
    as the body. The useDialog() API is unchanged. */
-
-const DIALOG_BODY = IS_COARSE ? 'space-y-5' : 'space-y-4';
-const DIALOG_DESC = IS_COARSE ? 'text-sm' : 'text-xs';
-const DIALOG_INPUT = inputCls();
 
 export interface ConfirmOptions {
   title: string;
@@ -62,6 +58,10 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
   const [dialog, setDialog] = useState<DialogState>(null);
   const [suppressCheck, setSuppressCheck] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const coarse = useCoarse();
+  const DIALOG_BODY = coarse ? 'space-y-5' : 'space-y-4';
+  const DIALOG_DESC = coarse ? 'text-sm' : 'text-xs';
+  const DIALOG_INPUT = inputCls();
   /* Mirror of `dialog` for the request helpers (they're stable useCallbacks
      and can't read the state). */
   const dialogRef = useRef(dialog);

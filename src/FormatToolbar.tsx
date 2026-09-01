@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { ChevronDown, Check, Underline as UnderlineIcon, Strikethrough, Link as LinkIcon } from 'lucide-react';
 import DropdownMenu from './DropdownMenu';
 import DropdownItem from './DropdownItem';
-import { TB_TOGGLE, TB_TOGGLE_ON, TB_TOGGLE_OFF, TB_DIVIDER, TB_PICKER, TB_BTN, TB_INPUT } from './EditorChrome';
+import { TB_TOGGLE, TB_TOGGLE_ON, TB_TOGGLE_OFF, TB_DIVIDER, TB_PICKER, TB_BTN, TB_INPUT, useToolbarChrome } from './EditorChrome';
 import { Tooltip } from './Tooltip';
 import type { RichTextEditorHandle, RichTextState } from './RichTextEditor';
 
@@ -27,6 +27,7 @@ const NoColorDot: React.FC<{ className?: string }> = ({ className = 'w-3 h-3' })
 
 export const FontMenu: React.FC<{ value: string; disabled: boolean; onChange: (f: string) => void }> = ({ value, disabled, onChange }) => {
   const [open, setOpen] = useState(false);
+  const chrome = useToolbarChrome();
   return (
     <DropdownMenu
       open={open}
@@ -34,7 +35,7 @@ export const FontMenu: React.FC<{ value: string; disabled: boolean; onChange: (f
       theme="dark"
       width="w-44"
       trigger={
-        <button type="button" disabled={disabled} className={`${TB_PICKER} disabled:pointer-events-none`}>
+        <button type="button" disabled={disabled} style={chrome.control} className={`${TB_PICKER} disabled:pointer-events-none`}>
           <span className="truncate" style={{ fontFamily: value || 'Helvetica' }}>{value || 'Helvetica'}</span>
           <ChevronDown className="w-3 h-3 text-zinc-500 shrink-0" />
         </button>
@@ -53,6 +54,7 @@ export const FontMenu: React.FC<{ value: string; disabled: boolean; onChange: (f
 
 const LinkMenu: React.FC<{ editorRef: React.RefObject<RichTextEditorHandle | null>; disabled: boolean; active: boolean }> = ({ editorRef, disabled, active }) => {
   const [open, setOpen] = useState(false);
+  const chrome = useToolbarChrome();
   const [url, setUrl] = useState('');
   const apply = () => {
     const trimmed = url.trim();
@@ -72,7 +74,7 @@ const LinkMenu: React.FC<{ editorRef: React.RefObject<RichTextEditorHandle | nul
           type="button"
           disabled={disabled}
           onMouseDown={e => e.preventDefault()}
-          className={`${TB_TOGGLE} ${active ? TB_TOGGLE_ON : TB_TOGGLE_OFF}`}
+          style={chrome.toggle} className={`${TB_TOGGLE} ${active ? TB_TOGGLE_ON : TB_TOGGLE_OFF}`}
           title="Link"
           aria-label="Link"
         >
@@ -87,15 +89,15 @@ const LinkMenu: React.FC<{ editorRef: React.RefObject<RichTextEditorHandle | nul
           placeholder="https://…"
           autoFocus
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); apply(); } }}
-          className={TB_INPUT + ' w-full'}
+          style={chrome.input} className={TB_INPUT + ' w-full'}
         />
         <div className="flex items-center gap-2">
-          <button onClick={apply} className={TB_BTN} disabled={!url.trim()}>
+          <button onClick={apply} style={chrome.control} className={TB_BTN} disabled={!url.trim()}>
             Apply
           </button>
           <button
             onClick={() => { editorRef.current?.exec('unlink'); setOpen(false); }}
-            className={TB_BTN}
+            style={chrome.control} className={TB_BTN}
           >
             Remove
           </button>
@@ -120,21 +122,22 @@ export interface FormatToolbarProps {
 export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disabled, active, lockedFormatting, trailing }) => {
   const [colorOpen, setColorOpen] = useState(false);
   const run = (cmd: string, value?: string) => editorRef.current?.exec(cmd, value);
+  const chrome = useToolbarChrome();
   const toggle = (on: boolean) => `${TB_TOGGLE} ${on ? TB_TOGGLE_ON : TB_TOGGLE_OFF}`;
   const locked = (axis: 'bold' | 'italic') => !!lockedFormatting?.[axis];
   return (
     <div className="flex items-center gap-1">
       <Tooltip content={lockedFormatting?.bold || 'Bold'}>
-        <button aria-label="Bold" disabled={disabled || locked('bold')} onMouseDown={e => e.preventDefault()} onClick={() => run('bold')} className={`${toggle((active?.bold ?? false) || locked('bold'))} font-bold`}>B</button>
+        <button aria-label="Bold" disabled={disabled || locked('bold')} onMouseDown={e => e.preventDefault()} onClick={() => run('bold')} style={chrome.toggle} className={`${toggle((active?.bold ?? false) || locked('bold'))} font-bold`}>B</button>
       </Tooltip>
       <Tooltip content={lockedFormatting?.italic || 'Italic'}>
-        <button aria-label="Italic" disabled={disabled || locked('italic')} onMouseDown={e => e.preventDefault()} onClick={() => run('italic')} className={`${toggle((active?.italic ?? false) || locked('italic'))} italic`}>I</button>
+        <button aria-label="Italic" disabled={disabled || locked('italic')} onMouseDown={e => e.preventDefault()} onClick={() => run('italic')} style={chrome.toggle} className={`${toggle((active?.italic ?? false) || locked('italic'))} italic`}>I</button>
       </Tooltip>
       <Tooltip content="Underline">
-        <button aria-label="Underline" disabled={disabled} onMouseDown={e => e.preventDefault()} onClick={() => run('underline')} className={toggle(active?.underline ?? false)}><UnderlineIcon className="w-3 h-3" /></button>
+        <button aria-label="Underline" disabled={disabled} onMouseDown={e => e.preventDefault()} onClick={() => run('underline')} style={chrome.toggle} className={toggle(active?.underline ?? false)}><UnderlineIcon className="w-3 h-3" /></button>
       </Tooltip>
       <Tooltip content="Strikethrough">
-        <button aria-label="Strikethrough" disabled={disabled} onMouseDown={e => e.preventDefault()} onClick={() => run('strikeThrough')} className={toggle(active?.strike ?? false)}><Strikethrough className="w-3 h-3" /></button>
+        <button aria-label="Strikethrough" disabled={disabled} onMouseDown={e => e.preventDefault()} onClick={() => run('strikeThrough')} style={chrome.toggle} className={toggle(active?.strike ?? false)}><Strikethrough className="w-3 h-3" /></button>
       </Tooltip>
       <div className={TB_DIVIDER} />
       <LinkMenu editorRef={editorRef} disabled={disabled} active={active?.link ?? false} />
@@ -145,7 +148,7 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disable
         theme="dark"
         width="w-36"
         trigger={
-          <button type="button" disabled={disabled} className={`${TB_PICKER} disabled:pointer-events-none`} title="Text color">
+          <button type="button" disabled={disabled} style={chrome.control} className={`${TB_PICKER} disabled:pointer-events-none`} title="Text color">
             {active?.color
               ? <span className="w-3 h-3 rounded-full border border-zinc-600 shrink-0" style={{ background: active.color }} />
               : <NoColorDot />}

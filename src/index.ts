@@ -34,6 +34,12 @@ export {
   useLastPointerType,
   getHardwareKeyboard,
   useHardwareKeyboard,
+  setCoarseScale,
+  getCoarseScale,
+  useCoarse,
+  useCoarseScale,
+  useCoarseSize,
+  coarsePx,
 } from './device';
 export { PopoutWindowContext, usePopoutWindow, usePortalTarget, useCurrentDocument, useCurrentWindow } from './popout';
 export { default as FloatingChrome } from './FloatingChrome';

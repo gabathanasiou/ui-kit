@@ -1,7 +1,7 @@
 "use client";
 import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { IS_COARSE } from './device';
+import { useCoarse } from './device';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -94,13 +94,14 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
   const dark = theme === 'dark';
   /* Coarse pointers (iPad/mobile): bigger touch targets + readable text —
      the kit's standard sizing up (menus, modals, footer buttons). */
-  const navBtnCls = IS_COARSE ? 'p-2' : 'p-1';
-  const navIconCls = IS_COARSE ? 'w-5 h-5' : 'w-4 h-4';
-  const dayHeaderCls = IS_COARSE ? 'text-[11px] py-2' : 'text-[10px] py-1.5';
-  const cellCls = IS_COARSE ? 'py-2.5 text-sm' : 'py-1.5 text-xs';
-  const monthCellCls = IS_COARSE ? 'py-3 text-sm' : 'py-2 text-xs';
-  const chipCls = IS_COARSE ? 'text-xs px-2.5 py-1.5' : 'text-[10px] px-1.5 py-0.5';
-  const yearInputCls = IS_COARSE
+  const coarse = useCoarse();
+  const navBtnCls = coarse ? 'p-2' : 'p-1';
+  const navIconCls = coarse ? 'w-5 h-5' : 'w-4 h-4';
+  const dayHeaderCls = coarse ? 'text-[11px] py-2' : 'text-[10px] py-1.5';
+  const cellCls = coarse ? 'py-2.5 text-sm' : 'py-1.5 text-xs';
+  const monthCellCls = coarse ? 'py-3 text-sm' : 'py-2 text-xs';
+  const chipCls = coarse ? 'text-xs px-2.5 py-1.5' : 'text-[10px] px-1.5 py-0.5';
+  const yearInputCls = coarse
     ? `w-20 text-sm text-center font-semibold rounded outline-none py-0.5 ${dark ? 'bg-zinc-700 text-zinc-100 focus:bg-zinc-600' : 'bg-zinc-200 text-zinc-800 focus:bg-zinc-300'}`
     : `w-16 text-sm text-center font-semibold rounded outline-none py-0.5 ${dark ? 'bg-zinc-700 text-zinc-100 focus:bg-zinc-600' : 'bg-zinc-200 text-zinc-800 focus:bg-zinc-300'}`;
 
@@ -173,7 +174,7 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
             <button
               type="button"
               onClick={() => { setViewYear(today.getFullYear()); setViewMonth(today.getMonth()); setView('days'); }}
-              className={`px-3 ${IS_COARSE ? 'py-2.5 text-sm' : 'py-1.5 text-xs'} font-semibold rounded transition-colors ${dark ? 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'}`}
+              className={`px-3 ${coarse ? 'py-2.5 text-sm' : 'py-1.5 text-xs'} font-semibold rounded transition-colors ${dark ? 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'}`}
             >
               Today
             </button>

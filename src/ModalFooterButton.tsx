@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { IS_COARSE } from './device';
+import { useCoarse, useCoarseSize } from './device';
 
 /**
  * Modal footer button — the canonical "one hero, rest ghost" recipe so
@@ -22,9 +22,7 @@ export interface ModalFooterButtonProps
   variant?: 'hero' | 'ghost' | 'danger' | 'danger-solid';
 }
 
-const BASE = `inline-flex items-center gap-2 rounded-lg text-xs transition-colors cursor-pointer select-none whitespace-nowrap ${
-  IS_COARSE ? 'px-7 py-2.5 text-sm' : 'px-6 py-2'
-}`;
+const BASE = `inline-flex items-center gap-2 rounded-lg text-xs transition-colors cursor-pointer select-none whitespace-nowrap`;
 
 const VARIANTS: Record<NonNullable<ModalFooterButtonProps['variant']>, string> = {
   hero: 'bg-zinc-800 text-white font-semibold border border-zinc-700 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed',
@@ -40,10 +38,14 @@ export default function ModalFooterButton({
   type = 'button',
   ...rest
 }: ModalFooterButtonProps) {
+  const coarse = useCoarse();
+  const size = useCoarseSize({ px: 24, py: 8, fs: 12 }, { px: 28, py: 10, fs: 14 });
+  const PAD = coarse ? '' : 'px-6 py-2';
   return (
     <button
       type={type}
-      className={`${BASE} ${VARIANTS[variant]} ${className}`}
+      style={size}
+      className={`${BASE} ${PAD} ${VARIANTS[variant]} ${className}`}
       {...rest}
     />
   );

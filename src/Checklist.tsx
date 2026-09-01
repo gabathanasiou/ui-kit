@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { IS_COARSE } from './device';
+import { useCoarse } from './device';
 
 /**
  * Checklist — a bordered "word list of checkboxes" (the Days-to-Print /
@@ -55,8 +55,9 @@ export default function Checklist({
     if (selected instanceof Set) return selected.has(id);
     return (selected as readonly (string | number)[]).includes(id);
   };
-  const itemPad = IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
-  const checkCls = IS_COARSE ? 'w-5 h-5 rounded-md' : 'w-4 h-4 rounded';
+  const coarse = useCoarse();
+  const itemPad = coarse ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
+  const checkCls = coarse ? 'w-5 h-5 rounded-md' : 'w-4 h-4 rounded';
   const showHeader = title != null || onToggleAll != null;
   return (
     <div className={className} {...(theme ? { 'data-theme': theme } : {})}>

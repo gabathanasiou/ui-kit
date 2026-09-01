@@ -11,9 +11,10 @@ import React from 'react';
  *
  * Themes: `light` (default, light toolbars/pages) and `dark` (dark toolbars).
  * Sizes are baked in (toolbar micro scale; coarse-pointer devices — iPad —
- * get the touch-size bump like the rest of the kit); pass `className` for
- * extras (active/toggled states, width utilities). Hover styles are Tailwind
- * `hover:` variants — the consuming app's any-hover gate applies.
+ * get the touch-size bump like the rest of the kit, gated by the global
+ * coarseScale knob); pass `className` for extras (active/toggled states, width
+ * utilities). Hover styles are Tailwind `hover:` variants — the consuming
+ * app's any-hover gate applies.
  *
  * DROPDOWN TRIGGERS: Radix sets `data-state="open"` on the trigger while its
  * menu is open — the button then keeps its HOVER look (the `open` class per

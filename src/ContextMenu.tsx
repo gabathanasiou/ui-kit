@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
-import { IS_COARSE } from './device';
+import { useCoarse } from './device';
 import { useCurrentWindow } from './popout';
 import { useOverlayMorph } from './overlayMorph';
 import { registerOverlayClose } from './overlayRegistry';
@@ -13,8 +13,6 @@ import {
 import type { MenuHighlightItem } from './DropdownMenu';
 
 const MARGIN = 8;
-const CTX_ITEM = IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
-const CTX_TEXT = IS_COARSE ? 'text-sm' : 'text-xs';
 
 export interface ContextMenuProps {
   open: boolean;
@@ -40,6 +38,8 @@ export interface ContextMenuProps {
  * morph shrinks back to where the menu was opened.
  */
 export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, children, containerRef, morph = true }) => {
+  const coarse = useCoarse();
+  const CTX_TEXT = coarse ? 'text-sm' : 'text-xs';
   const contentElRef = useRef<HTMLDivElement | null>(null);
   const currentWindow = useCurrentWindow();
   /* The Radix portal content mounts in a LATER commit than the open flip —
@@ -172,6 +172,8 @@ export const ContextMenuItem: React.FC<{
   trailing?: React.ReactNode;
   children: React.ReactNode;
 }> = ({ onClick, variant = 'default', icon, disabled = false, selected = false, trailing, children }) => {
+  const coarse = useCoarse();
+  const CTX_ITEM = coarse ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
   const api = useMenuHighlight();
   const apiRef = useRef(api);
   apiRef.current = api;

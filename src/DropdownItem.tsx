@@ -2,9 +2,10 @@
 import React, { useRef } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useDropdownTheme, getDropdownClasses, useHighlightRow } from './DropdownMenu';
-import { IS_COARSE } from './device';
+import { useCoarse } from './device';
 
-const ITEM_CLASS = IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
+// typeahead label extractor — shared with ContextMenuItem
+import { menuItemLabel as itemLabel } from './DropdownMenu';
 
 interface DropdownItemProps {
   onClick: () => void;
@@ -30,9 +31,6 @@ interface DropdownItemProps {
   trailing?: React.ReactNode;
 }
 
-// typeahead label extractor — shared with ContextMenuItem
-import { menuItemLabel as itemLabel } from './DropdownMenu';
-
 export default function DropdownItem({
   onClick,
   icon,
@@ -47,6 +45,8 @@ export default function DropdownItem({
 }: DropdownItemProps) {
   const theme = useDropdownTheme();
   const d = getDropdownClasses(theme);
+  const coarse = useCoarse();
+  const ITEM_CLASS = coarse ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
   const skipClickRef = useRef(false);
   const itemRef = useRef<HTMLDivElement>(null);
   /* Single-highlight (the panel model) via the shared row contract — register

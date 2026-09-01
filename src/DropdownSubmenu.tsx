@@ -4,11 +4,10 @@ import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronRight } from 'lucide-react';
 import { useDropdownTheme, SubmenuContext, MenuHighlightContext, useMenuHighlight, useMenuHighlightState, useMenuKeys, useMenuKeyLock, useMenuWheel } from './DropdownMenu';
 import type { MenuHighlightItem } from './DropdownMenu';
-import { IS_COARSE } from './device';
+import { useCoarse } from './device';
 import { usePortalTarget } from './popout';
 import { useOverlayMorph } from './overlayMorph';
 
-const SUB_ITEM = IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
 
 export interface DropdownSubmenuProps {
   id: string;
@@ -151,6 +150,8 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
     setContentRef(node);
   }, [setContentRef]);
 
+  const coarse = useCoarse();
+  const SUB_ITEM = coarse ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
   const triggerClasses = `w-full text-left ${SUB_ITEM} rounded flex items-center gap-2 outline-none cursor-pointer select-none justify-between ui-item${rootHighlighted ? ' ui-item-highlighted' : ''}${closing ? ' ui-sub-closing' : ''}`;
 
   const contentClasses = `ui-menu rounded-lg shadow-xl z-[210] p-1 flex flex-col select-none max-h-[min(60vh,24rem)] overflow-y-auto min-w-0 scrollbar-custom ${width || 'w-48'} ${contentClassName || ''}`;

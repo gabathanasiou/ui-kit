@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { IS_COARSE } from './device';
+import { useCoarse } from './device';
 
 /**
  * Collapsible section card for a modal/panel body — the "one card per item,
@@ -42,10 +42,11 @@ export interface CardSectionProps {
 }
 
 export function CardSection({ title, icon, count, tone = 'default', collapsed, onToggle, trailing, bodyClass, className = '', dataProps, children }: CardSectionProps) {
-  const headPad = IS_COARSE ? 'px-3.5 py-3' : 'px-3 py-2';
-  const titleCls = IS_COARSE ? 'text-sm' : 'text-xs';
-  const chevronCls = IS_COARSE ? 'w-4 h-4' : 'w-3.5 h-3.5';
-  const countCls = IS_COARSE ? 'text-xs' : 'text-[10px]';
+  const coarse = useCoarse();
+  const headPad = coarse ? 'px-3.5 py-3' : 'px-3 py-2';
+  const titleCls = coarse ? 'text-sm' : 'text-xs';
+  const chevronCls = coarse ? 'w-4 h-4' : 'w-3.5 h-3.5';
+  const countCls = coarse ? 'text-xs' : 'text-[10px]';
   return (
     <div {...dataProps} className={`ui-card ${tone === 'danger' ? 'ui-card-danger' : ''} ${className}`}>
       {/* Transparent-ish hover (white/5) so it reads on ANY card color — the

@@ -1,10 +1,30 @@
 "use client";
 import React from 'react';
 import { ArrowUp, ArrowDown, Copy, Trash2 } from 'lucide-react';
-import { IS_COARSE } from './device';
+import { IS_COARSE, useCoarseScale, coarsePx } from './device';
 import { Tooltip } from './Tooltip';
 
 // ---- dark editor-toolbox vocabulary (touch devices scale up — app pattern) ----
+
+/** Proportional coarse sizes for the editor-chrome toolbar (TB_* constants
+ *  are load-time; this returns INLINE sizes interpolated by the global
+ *  coarseScale — Tailwind can't JIT runtime classes). Consumers spread it on
+ *  their toggle/btn/input elements. */
+export function useToolbarChrome() {
+  const scale = useCoarseScale();
+  const dim = coarsePx(28, 40, scale);   // toggle square
+  const h = coarsePx(28, 40, scale);     // btn/picker height
+  const px = coarsePx(10, 14, scale);    // btn/picker horizontal pad
+  const fs = coarsePx(10, 14, scale);    // btn/picker font
+  const ipx = coarsePx(8, 10, scale);    // input horizontal pad
+  return IS_COARSE
+    ? {
+        toggle: { width: dim, height: dim },
+        control: { height: h, padding: `0 ${px}px`, fontSize: fs },
+        input: { height: h, padding: `0 ${ipx}px`, fontSize: fs },
+      }
+    : {};
+}
 
 export const TB_ROW_LABEL = IS_COARSE ? 'text-xs font-semibold text-zinc-600 uppercase tracking-wider shrink-0 w-24' : 'text-[9px] font-semibold text-zinc-600 uppercase tracking-wider shrink-0 w-16';
 export const TB_BTN = IS_COARSE ? 'h-10 px-3.5 text-sm font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 disabled:opacity-30 flex items-center gap-2 transition-colors' : 'h-7 px-2.5 text-[10px] font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 disabled:opacity-30 flex items-center gap-1.5 transition-colors';

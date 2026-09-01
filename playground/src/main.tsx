@@ -7,7 +7,7 @@ import {
   Checklist, RadioList, DatePicker, Tooltip, ContextMenu, ContextMenuItem,
   ContextMenuDivider, ContextMenuSub, useOverlayMorph, DialogProvider, useDialog,
   RichTextEditor, FormatToolbar, LongPressMenuProvider, RICH_TEXT_STATE_IDLE,
-  CardSection, inputCls,
+  CardSection, inputCls, setCoarseScale, useCoarseScale, IS_COARSE,
 } from '../../src/index';
 import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem } from '../../src/index';
 
@@ -817,9 +817,50 @@ function DialogsSection() {
 
 // ── App ─────────────────────────────────────────────────────────────────────
 
+/* GLOBAL coarse-scaling controller — setCoarseScale() drives EVERY kit
+   component (they all read the scale via useCoarse at render). Off (0) =
+   desktop sizes everywhere; Full (1) = touch sizes on coarse devices. */
+function CoarseScaleControl() {
+  const scale = useCoarseScale();
+  const options = [
+    { v: 0, label: 'Off' },
+    { v: 0.5, label: '50%' },
+    { v: 1, label: 'Full' },
+  ];
+  return (
+    <div className="row" data-testid="coarse-control" style={{ position: 'sticky', top: 0, zIndex: 60, background: '#fafafa', borderBottom: '1px dashed #a1a1aa', padding: '8px 16px', margin: 0 }}>
+      <span className="label" style={{ width: 'auto' }}>Coarse scale (global):</span>
+      {options.map(o => (
+        <button key={o.v} data-testid={`coarse-${o.v}`} onClick={() => setCoarseScale(o.v)}
+          style={{ border: o.v === scale ? '2px solid #3b82f6' : '1px solid #a1a1aa', padding: '4px 12px', borderRadius: 6, background: o.v === scale ? '#eff6ff' : '#fff', color: '#18181b', cursor: 'pointer', fontSize: 12 }}>
+          {o.label}
+        </button>
+      ))}
+      <input
+        data-testid="coarse-custom"
+        type="range" min="0" max="1" step="0.05" value={scale}
+        onChange={e => setCoarseScale(parseFloat(e.target.value))}
+        style={{ width: 160 }}
+      />
+      <input
+        data-testid="coarse-custom-num"
+        type="number" min="0" max="100" step="5" value={Math.round(scale * 100)}
+        onChange={e => setCoarseScale((parseFloat(e.target.value) || 0) / 100)}
+        style={{ width: 64, padding: '2px 6px', borderRadius: 4, border: '1px solid #a1a1aa' }}
+      />
+      <span style={{ fontSize: 12, color: '#52525b' }}>%</span>
+      <button data-testid="coarse-reset" onClick={() => setCoarseScale(1)} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #a1a1aa', background: '#fff', color: '#18181b', cursor: 'pointer', fontSize: 12 }}>
+        Reset
+      </button>
+      <span className="label">current: {scale} {IS_COARSE ? '(coarse device)' : '(fine device — no effect)'}</span>
+    </div>
+  );
+}
+
 function App() {
   return (
     <>
+      <CoarseScaleControl />
       <h1 style={{ margin: '20px 16px 0', fontSize: 18 }}>ui-kit playground — component zoo &amp; bug repro surfaces</h1>
       <p style={{ margin: '4px 16px 0', fontSize: 12, color: '#71717a' }}>
         DropdownMenu: use the trigger click to dismiss (that's the buggy path). Panels: open/close twice (StrictMode phantom clone).

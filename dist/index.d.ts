@@ -25,7 +25,7 @@ export { default as Checklist } from './Checklist';
 export type { ChecklistProps, ChecklistItem } from './Checklist';
 export { default as RadioList } from './RadioList';
 export type { RadioListProps, RadioListItem } from './RadioList';
-export { IS_COARSE, IS_TOUCH_CAPABLE, isTouchLike, getLastPointerType, useLastPointerType, getHardwareKeyboard, useHardwareKeyboard, } from './device';
+export { IS_COARSE, IS_TOUCH_CAPABLE, isTouchLike, getLastPointerType, useLastPointerType, getHardwareKeyboard, useHardwareKeyboard, setCoarseScale, getCoarseScale, useCoarse, useCoarseScale, useCoarseSize, coarsePx, } from './device';
 export { PopoutWindowContext, usePopoutWindow, usePortalTarget, useCurrentDocument, useCurrentWindow } from './popout';
 export { default as FloatingChrome } from './FloatingChrome';
 export type { FloatingChromeProps, AnchorMode } from './FloatingChrome';

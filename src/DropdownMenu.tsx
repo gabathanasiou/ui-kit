@@ -3,7 +3,7 @@ import React, { createContext, useContext, useCallback, useState, useRef, useEff
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Pencil, Copy, Trash2, Plus, Check, X, RotateCcw } from 'lucide-react';
 import { usePortalTarget, useCurrentDocument } from './popout';
-import { IS_COARSE } from './device';
+import { IS_COARSE, getCoarseScale } from './device';
 import { useOverlayMorph } from './overlayMorph';
 import { useFixedPosition } from './useSmartPosition';
 import { registerOverlayClose } from './overlayRegistry';
@@ -15,13 +15,16 @@ export const useDropdownTheme = () => useContext(DropdownThemeContext);
 
 // ── Single source of truth for all dropdown styling ──
 // Colors/interactions come from tokens.css (.ui-*) via [data-theme]; only
-// layout/size utilities are inlined.
+// layout/size utilities are inlined. Coarse sizing is gated on the global
+// coarseScale knob (getCoarseScale() > 0) read AT CALL TIME — callers render
+// through useCoarse() so a scale change re-renders and re-derives these.
 
-const ITEM_PAD = IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
-const HEADER_PAD = IS_COARSE ? 'px-3 pt-3 pb-2' : 'px-3 pt-2 pb-1';
-const HEADER_TEXT = IS_COARSE ? 'text-xs' : 'text-[10px]';
+const ITEM_PAD = (coarse: boolean) => (coarse ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs');
+const HEADER_PAD = (coarse: boolean) => (coarse ? 'px-3 pt-3 pb-2' : 'px-3 pt-2 pb-1');
+const HEADER_TEXT = (coarse: boolean) => (coarse ? 'text-xs' : 'text-[10px]');
 
 export function getDropdownClasses(theme?: DropdownTheme) {
+  const coarse = IS_COARSE && getCoarseScale() > 0;
   return {
     // Item text & hover
     itemDefault: 'ui-item',
@@ -37,14 +40,14 @@ export function getDropdownClasses(theme?: DropdownTheme) {
     separator: 'ui-sep my-1',
 
     // Header
-    headerPad: HEADER_PAD,
-    headerText: `${HEADER_PAD} font-semibold uppercase tracking-wider ${HEADER_TEXT} ui-label`,
+    headerPad: HEADER_PAD(coarse),
+    headerText: `${HEADER_PAD(coarse)} font-semibold uppercase tracking-wider ${HEADER_TEXT(coarse)} ui-label`,
 
     // Item padding
-    itemPad: ITEM_PAD,
+    itemPad: ITEM_PAD(coarse),
 
     // Input
-    input: IS_COARSE
+    input: coarse
       ? 'px-3 py-2 text-sm ui-input'
       : 'px-1.5 py-0.5 text-xs ui-input',
 
@@ -67,7 +70,7 @@ export function getDropdownClasses(theme?: DropdownTheme) {
     editCancel: 'ui-icon-btn ui-icon-btn-cancel',
 
     // Sizes (item-manager specific)
-    btnSize: IS_COARSE ? 'w-8 h-8' : 'w-6 h-6',
+    btnSize: coarse ? 'w-8 h-8' : 'w-6 h-6',
     btnIcon: 'w-3.5 h-3.5',
   };
 }

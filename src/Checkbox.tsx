@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { IS_COARSE } from './device';
+import { useCoarse } from './device';
 
 /**
  * Themeable checkbox: a visually-hidden native input (a11y, focus, form
@@ -34,15 +34,16 @@ export interface CheckboxProps {
 
 export default function Checkbox({ checked, onChange, disabled = false, label, id, className = '', labelClassName = '', theme, variant = 'pill', tone = 'accent', block = false }: CheckboxProps) {
   const pill = variant !== 'plain';
-  const indicatorCls = IS_COARSE ? 'w-5 h-5' : 'w-4 h-4';
-  const boxCls = IS_COARSE ? 'w-5 h-5 rounded-md' : 'w-4 h-4 rounded';
-  const markCls = IS_COARSE ? 'w-3.5 h-3.5' : 'w-3 h-3';
-  const labelCls = IS_COARSE ? 'text-sm' : 'text-xs';
-  const pillPad = IS_COARSE ? 'px-4 py-3' : 'px-3 py-2.5';
+  const coarse = useCoarse();
+  const indicatorCls = coarse ? 'w-5 h-5' : 'w-4 h-4';
+  const boxCls = coarse ? 'w-5 h-5 rounded-md' : 'w-4 h-4 rounded';
+  const markCls = coarse ? 'w-3.5 h-3.5' : 'w-3 h-3';
+  const labelCls = coarse ? 'text-sm' : 'text-xs';
+  const pillPad = coarse ? 'px-4 py-3' : 'px-3 py-2.5';
   return (
     <label
       className={`ui-checkbox ${pill ? `ui-checkbox-pill ${pillPad} rounded-lg` : ''} ${tone === 'danger' ? 'ui-checkbox-tone-danger' : ''} ${disabled ? 'ui-disabled' : ''} ${className}`}
-      style={{ display: block ? 'flex' : 'inline-flex', alignItems: 'center', gap: IS_COARSE ? 10 : 8 }}
+      style={{ display: block ? 'flex' : 'inline-flex', alignItems: 'center', gap: coarse ? 10 : 8 }}
       onClick={(e) => e.stopPropagation()}
       {...(theme ? { 'data-theme': theme } : {})}
     >

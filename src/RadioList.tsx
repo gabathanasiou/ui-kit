@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { IS_COARSE } from './device';
+import { useCoarse } from './device';
 
 /**
  * RadioList — single-select sibling of Checklist: the same bordered word-list
@@ -44,8 +44,9 @@ export default function RadioList({
   theme,
   className = '',
 }: RadioListProps) {
-  const itemPad = compact ? 'px-2.5 py-1.5 text-xs' : IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
-  const circleCls = compact ? 'w-3.5 h-3.5' : IS_COARSE ? 'w-5 h-5' : 'w-4 h-4';
+  const coarse = useCoarse();
+  const itemPad = compact ? 'px-2.5 py-1.5 text-xs' : coarse ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
+  const circleCls = compact ? 'w-3.5 h-3.5' : coarse ? 'w-5 h-5' : 'w-4 h-4';
   return (
     <div className={className} {...(theme ? { 'data-theme': theme } : {})}>
       {title != null && (
