@@ -481,12 +481,12 @@ function InputsSection() {
 }
 
 const RT_TOKENS: TokenItem[] = [
-  { key: 'cast.lead', label: 'LEAD', color: { text: '#3b82f6', bg: 'rgba(59,130,246,0.14)' }, group: 'CAST' },
-  { key: 'cast.supp', label: 'SUPP', color: { text: '#8b5cf6', bg: 'rgba(139,92,246,0.14)' }, group: 'CAST' },
-  { key: 'scene.num', label: 'SC #', color: { text: '#10b981', bg: 'rgba(16,185,129,0.14)' }, group: 'SCENE' },
-  { key: 'scene.int_ext', label: 'INT/EXT', color: { text: '#f59e0b', bg: 'rgba(245,158,11,0.14)' }, group: 'SCENE' },
-  { key: 'scene.loc', label: 'LOCATION', color: { text: '#ef4444', bg: 'rgba(239,68,68,0.14)' }, group: 'SCENE' },
-  { key: 'day.1', label: 'DAY 1', color: { text: '#06b6d4', bg: 'rgba(6,182,212,0.14)' }, group: 'DAY' },
+  { key: 'cast.lead', label: 'Lead', color: { text: '#3b82f6', bg: 'rgba(59,130,246,0.14)' }, group: 'CAST' },
+  { key: 'cast.supp', label: 'Supporting', color: { text: '#8b5cf6', bg: 'rgba(139,92,246,0.14)' }, group: 'CAST' },
+  { key: 'scene.num', label: 'Scene #', color: { text: '#10b981', bg: 'rgba(16,185,129,0.14)' }, group: 'SCENE' },
+  { key: 'scene.int_ext', label: 'Int/Ext', color: { text: '#f59e0b', bg: 'rgba(245,158,11,0.14)' }, group: 'SCENE' },
+  { key: 'scene.loc', label: 'Location', color: { text: '#ef4444', bg: 'rgba(239,68,68,0.14)' }, group: 'SCENE' },
+  { key: 'day.1', label: 'Day 1', color: { text: '#06b6d4', bg: 'rgba(6,182,212,0.14)' }, group: 'DAY' },
 ];
 
 const resolveRTToken = (key: string) => {

@@ -49,11 +49,13 @@ export const TokenChipView: React.FC<NodeViewProps> = ({ node, selected, extensi
       style={{
         background: color.text,
         color: '#fff',
-        borderRadius: 2,
-        padding: 4,
+        borderRadius: 10,
+        padding: '0 6px',
         margin: '0 2px',
         fontWeight: 600,
         whiteSpace: 'nowrap',
+        fontSize: 'inherit',
+        lineHeight: 'inherit',
       }}
       onMouseDown={(e: React.MouseEvent) => {
         // Clicking the chip selects the whole atom (native NodeSelection) so
