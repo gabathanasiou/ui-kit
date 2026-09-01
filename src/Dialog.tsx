@@ -61,6 +61,22 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
   const [dialog, setDialog] = useState<DialogState>(null);
   const [suppressCheck, setSuppressCheck] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  /* Mirror of `dialog` for the request helpers (they're stable useCallbacks
+     and can't read the state). */
+  const dialogRef = useRef(dialog);
+  dialogRef.current = dialog;
+
+  /* Single-slot semantics: a NEW dialog request supersedes the current one —
+     resolve the pending dialog as DISMISSED (confirm→false, prompt→null,
+     alert→resolved) so its awaited promise never hangs ("the danger confirm
+     closed the prompt" — the prompt's await now settles instead of sticking). */
+  const dismissCurrent = useCallback(() => {
+    const cur = dialogRef.current;
+    if (!cur) return;
+    if (cur.kind === 'confirm') cur.resolve(false);
+    else if (cur.kind === 'prompt') cur.resolve(null);
+    else cur.resolve();
+  }, []);
 
   const confirm = useCallback((opts: ConfirmOptions): Promise<boolean> => {
     if (opts.suppressKey) {
@@ -70,22 +86,25 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
       }
     }
     return new Promise(resolve => {
+      dismissCurrent();
       setSuppressCheck(false);
       setDialog({ kind: 'confirm', options: opts, resolve });
     });
-  }, []);
+  }, [dismissCurrent]);
 
   const prompt = useCallback((opts: PromptOptions): Promise<string | null> => {
     return new Promise(resolve => {
+      dismissCurrent();
       setDialog({ kind: 'prompt', options: opts, resolve });
     });
-  }, []);
+  }, [dismissCurrent]);
 
   const alert = useCallback((opts: AlertOptions): Promise<void> => {
     return new Promise(resolve => {
+      dismissCurrent();
       setDialog({ kind: 'alert', options: opts, resolve });
     });
-  }, []);
+  }, [dismissCurrent]);
 
   useEffect(() => {
     if (dialog) {
@@ -140,10 +159,20 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
     <DialogContext.Provider value={{ confirm, prompt, alert }}>
       {children}
 
+      {/* Conditional render (NOT always-mounted): closing unmounts the Modal,
+         so the close uses the UNMOUNT-driven clone — which captures the
+         INTACT content DOM. An always-mounted <Modal open> would tear down
+         the footer/children (footer={dialog && …}) in the same commit that
+         flips open, and the open-flip clone would snapshot a stripped-down
+         dialog (the weird half-size close animation). */}
+      {open && (
       <Modal
-        open={open}
+        open
         onClose={cancelAction}
         closable={dialog?.kind !== 'alert'}
+        /* Dialogs WITH a Cancel dismiss on backdrop (outside-click = Cancel);
+           alerts have no Cancel — they need attention, backdrop is a no-op. */
+        dismissOnBackdrop={dialog?.kind !== 'alert'}
         title={dialog?.options.title ?? ''}
         width="max-w-sm"
         flat
@@ -202,6 +231,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
           )}
         </div>
       </Modal>
+      )}
     </DialogContext.Provider>
   );
 }

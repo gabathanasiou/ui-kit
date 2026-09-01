@@ -27,6 +27,12 @@ test('confirm dialog: flat chrome, cancel/confirm resolve', async ({ page }) => 
   await page.getByTestId('dlg-confirm').click();
   await page.getByRole('button', { name: 'Confirm' }).click();
   await expect(page.getByTestId('dlg-confirm').locator('..')).toContainText('confirm → true');
+
+  /* Dialogs WITH a Cancel dismiss on backdrop (outside-click = Cancel). */
+  await page.getByTestId('dlg-confirm').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.mouse.click(10, 10);
+  await expect(page.getByTestId('dlg-confirm').locator('..')).toContainText('confirm → false');
 });
 
 test('danger confirm: red solid confirm + DNWA checkbox', async ({ page }) => {

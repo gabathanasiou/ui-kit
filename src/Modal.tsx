@@ -185,6 +185,11 @@ export interface ModalProps {
      no-ops and the X button is hidden — the caller decides when it closes
      (e.g. the Project Manager when no project is open). */
   closable?: boolean;
+  /** Block BACKDROP dismissal only (default true) — a click/tap outside the
+     modal is a no-op, while Esc, the X and the caller's buttons still work.
+     Dialogs use it so every type "needs attention": pick an explicit action,
+     the backdrop never dismisses. */
+  dismissOnBackdrop?: boolean;
   /** Flat "dialog" chrome: no header bar or footer bar (no borders/bands) —
      the title row and the footer row sit on the same surface as the body.
      The Dialog (confirm/prompt/alert) renders through this mode. Same
@@ -204,6 +209,7 @@ export default function Modal({
   morph = true,
   flat = false,
   closable = true,
+  dismissOnBackdrop = true,
 }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -695,12 +701,13 @@ export default function Modal({
           onTouchEnd={(e) => {
             if (document.querySelector('[data-radix-menu-content][data-state="open"], [data-radix-popper-content-wrapper][data-state="open"]')) return;
             e.preventDefault();
-            doClose();
+            if (dismissOnBackdrop) doClose();
           }}
         />
         <RadixDialog.Content
           ref={setContentRef}
           onKeyDown={onKeyDown}
+          onInteractOutside={(e) => { if (!dismissOnBackdrop) e.preventDefault(); }}
           data-modal-stack
           className={`fixed z-[10000] bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden flex flex-col focus:outline-none ${posClasses} ${sizeClasses}`}
           style={{ touchAction: 'manipulation', ...(Object.keys(combinedStyle).length > 0 ? combinedStyle : {}) }}

@@ -620,6 +620,53 @@ function RichTextModalDemo() {
   );
 }
 
+function DialogSpawnDemo() {
+  /* A dialog spawning ANOTHER dialog — the child stacks over the parent and
+     FLIP-morphs out of its box (the same stack morph as dialogs-over-modals).
+     Back/Cancel close the nested dialog and reveal the outer one; Save closes
+     both. The nested surface is a flat Modal so the demo controls the footer. */
+  const [hostOpen, setHostOpen] = useState(false);
+  const [nestedOpen, setNestedOpen] = useState(false);
+  const [last, setLast] = useState('—');
+  return (
+    <div className="row" data-testid="dlg-spawn-demo">
+      <Button data-testid="dlg-spawn-open" onClick={() => setHostOpen(true)}>Dialog that spawns another dialog</Button>
+      <span className="label">last: {last}</span>
+      {hostOpen && (
+        <Modal open onClose={() => setHostOpen(false)} title="Outer dialog" width="max-w-sm" flat
+          footer={
+            <>
+              <ModalFooterButton variant="ghost" onClick={() => setHostOpen(false)}>Cancel</ModalFooterButton>
+              <ModalFooterButton data-modal-confirm onClick={() => setHostOpen(false)}>Confirm</ModalFooterButton>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <p className="label">Spawn the nested dialog — it grows OUT of this box (stack FLIP).</p>
+            <Button data-testid="dlg-spawn-child" variant="subtle" onClick={() => setNestedOpen(true)}>Spawn nested dialog</Button>
+          </div>
+        </Modal>
+      )}
+      {nestedOpen && (
+        <Modal open onClose={() => setNestedOpen(false)} title="Nested dialog" width="max-w-sm" flat
+          footer={
+            <>
+              <ModalFooterButton variant="ghost" data-testid="dlg-nested-back" onClick={() => setNestedOpen(false)}>Back</ModalFooterButton>
+              <ModalFooterButton variant="ghost" data-testid="dlg-nested-cancel" onClick={() => { setLast('cancelled'); setNestedOpen(false); setHostOpen(false); }}>Cancel</ModalFooterButton>
+              <ModalFooterButton data-modal-confirm data-testid="dlg-nested-save" onClick={() => { setLast('nested → saved'); setNestedOpen(false); setHostOpen(false); }}>Save</ModalFooterButton>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <p className="label">Back → return to the outer dialog. Cancel → abort everything. Save → closes both.</p>
+            <input data-testid="dlg-nested-input" className="w-full px-3 py-2 text-sm ui-input" placeholder="Some field…" />
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
 function MiscSection() {
   const [ctx, setCtx] = useState<{ x: number; y: number } | null>(null);
   const [pick, setPick] = useState<string | null>('Nested A');
@@ -754,6 +801,10 @@ function App() {
         <RichTextModalDemo />
       </section>
       <DialogsSection />
+      <section data-section="dialog-spawn">
+        <h2>Dialog spawning another dialog (nested providers — stack FLIP)</h2>
+        <DialogSpawnDemo />
+      </section>
       <section data-section="rich-text">
         <h2>Rich text editor (TipTap) + long-press menu</h2>
         <RichTextDemo />
