@@ -316,6 +316,24 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
     return () => document.removeEventListener('wheel', onWheel, { capture: true });
   }, [ready]);
 
+  /* Touch-scroll twin of the wheel interceptor: the same react-remove-scroll
+     lock (Radix Dialog) ALSO cancels touch scrolling — its non-passive
+     document touchmove listener preventDefaults every touchmove whose target
+     is outside the dialog content, and portaled overlays live outside it. On
+     iPad (no wheel) a dropdown inside a modal was therefore completely
+     unscrollable by finger. Stop propagation at document capture BEFORE the
+     lock's bubble listener sees the event — stopping propagation never
+     cancels the native default action, so the overlay's own scroll proceeds. */
+  useEffect(() => {
+    if (!ready || !visibleRef.current) return;
+    const onTouchMove = (e: TouchEvent) => {
+      const el = elRef.current;
+      if (el && el.contains(e.target as Node)) e.stopImmediatePropagation();
+    };
+    document.addEventListener('touchmove', onTouchMove, { capture: true });
+    return () => document.removeEventListener('touchmove', onTouchMove, { capture: true });
+  }, [ready]);
+
   // Unmount-driven close is handled in the ref callback above: the panel
   // element leaving the DOM (conditional panel or whole-component unmount)
   // fires setContentRef(null) — the clone morph plays there.

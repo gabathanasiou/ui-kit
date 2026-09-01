@@ -2,6 +2,18 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 import { useCurrentWindow } from './popout';
 
+/** The visible viewport box. On iPad the software keyboard + Safari chrome
+ *  live in the VISUAL viewport: `window.innerHeight` is the full layout
+ *  viewport, so anything positioned against it ends up under the keyboard.
+ *  `visualViewport.height`/`offsetTop` are the real visible bounds. */
+function viewportBox(win: Window | null): { top: number; height: number; bottom: number } {
+  if (!win) return { top: 0, height: 0, bottom: 0 };
+  const vv = win.visualViewport;
+  const top = vv ? vv.offsetTop : 0;
+  const height = vv ? vv.height : win.innerHeight;
+  return { top, height, bottom: top + height };
+}
+
 export function useSmartPosition(
   wrapperRef: RefObject<HTMLElement | null>,
   open: boolean,
@@ -9,7 +21,7 @@ export function useSmartPosition(
   const currentWindow = useCurrentWindow();
   const currentWindowRef = useRef(currentWindow);
   currentWindowRef.current = currentWindow;
-  useLayoutEffect(() => {
+  const apply = () => {
     if (!open || !wrapperRef.current) return;
     const dropdown = wrapperRef.current.querySelector('.absolute') as HTMLElement | null;
     if (!dropdown) return;
@@ -25,7 +37,7 @@ export function useSmartPosition(
     const wrapperRect = wrapperRef.current.getBoundingClientRect();
     const ddRect = dropdown.getBoundingClientRect();
     const vw = win.innerWidth;
-    const vh = win.innerHeight;
+    const vb = viewportBox(win);
 
     const overflowRight = ddRect.right - vw;
     if (overflowRight > 0) {
@@ -37,16 +49,33 @@ export function useSmartPosition(
       dropdown.style.left = `${-wrapperRect.left + 4}px`;
     }
 
-    if (ddRect.bottom > vh + 4) {
+    if (ddRect.bottom > vb.bottom + 4) {
       dropdown.style.top = 'auto';
       dropdown.style.bottom = '100%';
       const newRect = dropdown.getBoundingClientRect();
-      if (newRect.top < 0) {
+      if (newRect.top < vb.top) {
         dropdown.style.bottom = 'auto';
-        dropdown.style.top = `${-wrapperRect.top + 4}px`;
-        dropdown.style.maxHeight = `${vh - 8}px`;
+        dropdown.style.top = `${-wrapperRect.top + vb.top + 4}px`;
+        dropdown.style.maxHeight = `${vb.height - 8}px`;
       }
     }
+  };
+  useLayoutEffect(() => {
+    apply();
+    if (!open) return;
+    const win = currentWindowRef.current;
+    /* The iOS keyboard resizes the VISUAL viewport, not the window — and it
+       fires resize/scroll on `window.visualViewport`, never on `window`. Keep
+       relative panels inside the visible area as the keyboard opens/closes. */
+    const vv = win?.visualViewport ?? null;
+    vv?.addEventListener('resize', apply);
+    vv?.addEventListener('scroll', apply);
+    win?.addEventListener('resize', apply);
+    return () => {
+      vv?.removeEventListener('resize', apply);
+      vv?.removeEventListener('scroll', apply);
+      win?.removeEventListener('resize', apply);
+    };
   }, [open, wrapperRef]);
 }
 
@@ -69,8 +98,7 @@ export function useFixedPosition(
       const win = currentWindowRef.current;
       if (!win) return;
       const vw = win.innerWidth;
-      const vh = win.visualViewport?.height ?? win.innerHeight;
-      const voff = win.visualViewport?.offsetTop ?? 0;
+      const vb = viewportBox(win);
       const panelWidth = opts?.panelWidth ?? Math.max(rect.width, 200);
       const gap = 4;
       const minH = 120;
@@ -78,16 +106,16 @@ export function useFixedPosition(
       let left = Math.max(0, rect.left);
       if (left + panelWidth > vw) left = Math.max(0, vw - panelWidth - 8);
 
-      const spaceBelow = voff + vh - rect.bottom - gap - 16;
-      const spaceAbove = rect.top - voff - gap - 16;
+      const spaceBelow = vb.bottom - rect.bottom - gap - 16;
+      const spaceAbove = rect.top - vb.top - gap - 16;
 
       if (spaceBelow >= minH || spaceBelow >= spaceAbove) {
-        const top = Math.min(rect.bottom + gap, voff + vh);
-        const maxH = Math.max(minH, voff + vh - top - 16);
+        const top = Math.min(rect.bottom + gap, vb.bottom);
+        const maxH = Math.max(minH, vb.bottom - top - 16);
         setPos({ top, left, width: rect.width, maxH });
       } else {
         const maxH = Math.max(minH, Math.min(spaceAbove, 360));
-        const bottom = voff + vh - (rect.top - gap);
+        const bottom = vb.bottom - (rect.top - gap);
         setPos({ top: 0, left, width: rect.width, maxH, bottom: Math.max(0, bottom) });
       }
     };
@@ -100,10 +128,20 @@ export function useFixedPosition(
     schedule();
     doc?.addEventListener('scroll', schedule, { capture: true, passive: true });
     win?.addEventListener('resize', schedule);
+    /* The iOS keyboard lives in the visual viewport: opening it fires resize
+       on `window.visualViewport`, NOT `window`, and inside a modal the page
+       can't scroll (react-remove-scroll) so no scroll event saves us either —
+       a panel open near the keyboard kept its stale, too-low position. Re-measure
+       on visualViewport resize/scroll so panels stay inside the visible area. */
+    const vv = win?.visualViewport ?? null;
+    vv?.addEventListener('resize', schedule);
+    vv?.addEventListener('scroll', schedule);
     return () => {
       if (raf) cancelAnimationFrame(raf);
       doc?.removeEventListener('scroll', schedule, { capture: true });
       win?.removeEventListener('resize', schedule);
+      vv?.removeEventListener('resize', schedule);
+      vv?.removeEventListener('scroll', schedule);
     };
   }, [open, wrapperRef, opts?.panelWidth]);
 }

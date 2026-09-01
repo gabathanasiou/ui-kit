@@ -38,6 +38,18 @@ function reduceMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+/** The visible viewport box. On iPad the software keyboard + Safari chrome
+ *  live in the VISUAL viewport: `window.innerHeight` is the full layout
+ *  viewport, so a modal centred against it lands under the keyboard / off
+ *  centre. `visualViewport.height`/`offsetTop` are the real visible bounds. */
+function viewportBox(win: Window | null): { top: number; height: number; bottom: number } {
+  if (!win) return { top: 0, height: 0, bottom: 0 };
+  const vv = win.visualViewport;
+  const top = vv ? vv.offsetTop : 0;
+  const height = vv ? vv.height : win.innerHeight;
+  return { top, height, bottom: top + height };
+}
+
 /** Rect-to-rect map: how to transform an element occupying `from` so it
  *  visually sits on `to` (origin top-left). */
 function rectMap(from: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>, to: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>) {
@@ -249,11 +261,12 @@ export default function Modal({
        viewport-center invariant is the same one the size-change animation
        uses. */
     const r = contentRef.current.getBoundingClientRect();
-    const vw = currentWindowRef.current?.innerWidth ?? 0;
-    const vh = currentWindowRef.current?.innerHeight ?? 0;
+    const win = currentWindowRef.current ?? null;
+    const vw = win?.innerWidth ?? 0;
+    const vb = viewportBox(win);
     setDragPos({
       left: Math.max(MAX_EDGE, Math.min((vw - r.width) / 2, vw - r.width - MAX_EDGE)),
-      top: Math.max(MAX_EDGE, Math.min((vh - r.height) / 2, vh - r.height - MAX_EDGE)),
+      top: Math.max(vb.top + MAX_EDGE, Math.min(vb.top + (vb.height - r.height) / 2, vb.bottom - r.height - MAX_EDGE)),
     });
   }, [open, contentReady]);
 
@@ -338,6 +351,10 @@ export default function Modal({
       raf = 0;
       const children = stackChildren(el);
       if (children.length > 0) {
+        /* A new child is stacking — release any fade-recovery override so the
+           CSS `:has` stack fade can hide this modal again (roadmap 71). */
+        el.style.opacity = '';
+        el.style.pointerEvents = '';
         lastChildRect = children[children.length - 1].getBoundingClientRect();
         hadOpenChild = true;
         raf = requestAnimationFrame(poll);
@@ -348,6 +365,20 @@ export default function Modal({
           playMorph(animToken, el, lastChildRect, endAnim);
         }
         lastChildRect = null;
+        /* Stack-fade recovery (roadmap 71): the tokens.css `:has` fade should
+           bring the survivor back to opacity 1, but iOS Safari can leave its
+           composited layer stuck at opacity 0 after a stacked child unmounts —
+           the reported "previous modal invisible but still there" freeze.
+           Watchdog: once the 180ms fade window has passed, if the survivor is
+           still faded, pin it back INLINE (inline wins over the :has rule);
+           the next stack-open releases the override so future fades work. */
+        const win = currentWindowRef.current ?? null;
+        win?.setTimeout(() => {
+          if (!el || !el.isConnected) return;
+          if (getComputedStyle(el).opacity === '1') return;
+          el.style.opacity = '1';
+          el.style.pointerEvents = '';
+        }, 240);
       }
     };
     const obs = new MutationObserver(() => {
@@ -382,15 +413,15 @@ export default function Modal({
       lastH = h;
       beginAnim();
       const r = el.getBoundingClientRect();
-      /* Keep un-dragged modals centered on the VIEWPORT (center = vh/2 is the
-         invariant — not the previous state, so chained animations over
-         transient sizes never drift). Pin the box at the old height with the
-         top already at its centered position, then animate height + top
-         together (both interpolate linearly → center is constant). */
+      /* Keep un-dragged modals centered on the VISIBLE viewport (center =
+         offsetTop + vh/2 is the invariant — not the previous state, so chained
+         animations over transient sizes never drift). Pin the box at the old
+         height with the top already at its centered position, then animate
+         height + top together (both interpolate linearly → center is constant). */
       const centerLock = !draggedRef.current;
-      const vh = currentWindowRef.current?.innerHeight ?? 0;
-      const topPin = centerLock ? (vh - from) / 2 : r.top;
-      const topEnd = centerLock ? (vh - h) / 2 : r.top;
+      const vb = viewportBox(currentWindowRef.current ?? null);
+      const topPin = centerLock ? vb.top + (vb.height - from) / 2 : r.top;
+      const topEnd = centerLock ? vb.top + (vb.height - h) / 2 : r.top;
       el.style.transition = 'none';
       el.style.height = `${from}px`;
       if (centerLock) el.style.top = `${topPin}px`;
@@ -434,16 +465,55 @@ export default function Modal({
   }, []);
 
   const clampPos = useCallback((left: number, top: number) => {
-    const vw = currentWindowRef.current?.innerWidth ?? 0;
-    const vh = currentWindowRef.current?.innerHeight ?? 0;
+    const win = currentWindowRef.current ?? null;
+    const vw = win?.innerWidth ?? 0;
+    const vb = viewportBox(win);
     const r = captureRect();
     const w = r ? r.width : Math.min(vw - MAX_EDGE * 2, 576);
-    const h = r ? r.height : Math.min(vh - MAX_EDGE * 2, 400);
+    const h = r ? r.height : Math.min(vb.height - MAX_EDGE * 2, 400);
     return {
       left: Math.max(MAX_EDGE, Math.min(left, vw - w - MAX_EDGE)),
-      top: Math.max(MAX_EDGE, Math.min(top, vh - h - MAX_EDGE)),
+      top: Math.max(vb.top + MAX_EDGE, Math.min(top, vb.bottom - h - MAX_EDGE)),
     };
   }, [captureRect]);
+
+  /* Keyboard / Safari-chrome re-centre: the software keyboard lives in the
+     VISUAL viewport — opening/closing it fires resize/scroll on
+     `window.visualViewport`, never on `window`, so no size change reaches the
+     RO above. When the visible area shrinks (keyboard up) the modal must
+     re-centre into it and re-clamp (never end up under the keyboard); when it
+     grows back it must follow. Un-dragged modals re-centre, dragged ones
+     keep their top edge and just re-clamp. */
+  useEffect(() => {
+    if (!open) return;
+    const win = currentWindowRef.current ?? null;
+    const vv = win?.visualViewport ?? null;
+    if (!win || !vv) return;
+    const onVvChange = () => {
+      if (closingRef.current || dragRef.current) return;
+      const el = contentRef.current;
+      if (!el) return;
+      const vb = viewportBox(currentWindowRef.current ?? null);
+      const r = el.getBoundingClientRect();
+      if (draggedRef.current) {
+        setDragPos(clampPos(r.left, r.top));
+        return;
+      }
+      const vw = currentWindowRef.current?.innerWidth ?? 0;
+      setDragPos({
+        left: Math.max(MAX_EDGE, Math.min((vw - r.width) / 2, vw - r.width - MAX_EDGE)),
+        top: Math.max(vb.top + MAX_EDGE, Math.min(vb.top + (vb.height - r.height) / 2, vb.bottom - r.height - MAX_EDGE)),
+      });
+    };
+    vv.addEventListener('resize', onVvChange);
+    vv.addEventListener('scroll', onVvChange);
+    win.addEventListener('orientationchange', onVvChange);
+    return () => {
+      vv.removeEventListener('resize', onVvChange);
+      vv.removeEventListener('scroll', onVvChange);
+      win.removeEventListener('orientationchange', onVvChange);
+    };
+  }, [open, clampPos]);
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
