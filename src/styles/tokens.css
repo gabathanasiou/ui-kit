@@ -626,6 +626,13 @@
   touch-action: manipulation;
 }
 
+/* Same press squeeze as .ui-item: the current row fill recedes to a smaller
+   pill on mousedown via an inset panel ring. */
+.ui-row:active {
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 2px var(--ui-panel-bg);
+}
+
 .ui-row:hover {
   background: var(--ui-row-hover-bg);
 }
