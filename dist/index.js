@@ -1414,10 +1414,10 @@ function kr({
     m - pt.current < 300 ? (pt.current = 0, Zt()) : pt.current = m;
   }, [Zt]), Qt = te !== null, An = Qt ? "" : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2", Mn = `${l ? `${l} w-full` : "max-w-xl w-full"}`, en = {
     ...Qt ? { left: te.left, top: te.top } : {},
-    width: `min(100%, calc(100vw - ${Q * 2}px))`,
+    width: `min(100%, calc(100dvw - ${Q * 2}px))`,
     /* Keyboard up: drop the max-height clamp entirely so the modal can exit
        the visible viewport at its natural size instead of being compressed. */
-    ...ke ? {} : { maxHeight: `calc(100vh - ${Q * 2}px)` }
+    ...ke ? {} : { maxHeight: `calc(100dvh - ${Q * 2}px)` }
   }, Pn = V((m) => {
     if (m.key !== "Enter" || m.shiftKey || m.metaKey || m.ctrlKey || m.altKey) return;
     const D = m.target, I = p.current;

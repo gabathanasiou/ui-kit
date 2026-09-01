@@ -704,10 +704,10 @@ export default function Modal({
      viewport makes tall modals unusably short. */
   const combinedStyle: React.CSSProperties = {
     ...(hasExplicit ? { left: dragPos!.left, top: dragPos!.top } : {}),
-    width: `min(100%, calc(100vw - ${MAX_EDGE * 2}px))`,
+    width: `min(100%, calc(100dvw - ${MAX_EDGE * 2}px))`,
     /* Keyboard up: drop the max-height clamp entirely so the modal can exit
        the visible viewport at its natural size instead of being compressed. */
-    ...(kbOpen ? {} : { maxHeight: `calc(100vh - ${MAX_EDGE * 2}px)` }),
+    ...(kbOpen ? {} : { maxHeight: `calc(100dvh - ${MAX_EDGE * 2}px)` }),
   };
 
   /* Enter confirms: when nothing interactive is focused (no input/textarea/
