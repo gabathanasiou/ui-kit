@@ -7,6 +7,7 @@ import {
   Checklist, RadioList, DatePicker, Tooltip, ContextMenu, ContextMenuItem,
   ContextMenuDivider, ContextMenuSub, useOverlayMorph, DialogProvider, useDialog,
   RichTextEditor, FormatToolbar, LongPressMenuProvider, RICH_TEXT_STATE_IDLE,
+  CardSection, inputCls,
 } from '../../src/index';
 import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem } from '../../src/index';
 
@@ -667,6 +668,45 @@ function DialogSpawnDemo() {
   );
 }
 
+function CardSectionDemo() {
+  const [open, setOpen] = useState(false);
+  const [a, setA] = useState(false);
+  const [b, setB] = useState(false);
+  return (
+    <div className="row" data-testid="card-section-demo">
+      <Button data-testid="card-open" onClick={() => setOpen(true)}>Modal with sections (CardSection)</Button>
+      {open && (
+        <Modal open onClose={() => setOpen(false)} title="Sections + fields" width="max-w-lg"
+          footer={
+            <ModalFooter>
+              <ModalFooterButton variant="ghost" onClick={() => setOpen(false)}>Cancel</ModalFooterButton>
+              <ModalFooterButton onClick={() => setOpen(false)}>Save</ModalFooterButton>
+            </ModalFooter>
+          }
+        >
+          <div className="p-5 space-y-4">
+            <p className="label">Sections (raised .ui-card) vs fields (.ui-input) — distinct fills via tokens.</p>
+            <CardSection title="Project details" count="2" collapsed={a} onToggle={() => setA(!a)}>
+              <input className={`w-full ${inputCls()}`} placeholder="Title…" />
+              <input className={`w-full ${inputCls()}`} placeholder="Studio…" />
+            </CardSection>
+            <CardSection title="Dates" count="3" collapsed={b} onToggle={() => setB(!b)}>
+              <div className="flex items-center gap-2 px-1 py-1">
+                <span className="text-[10px] text-zinc-500 w-20 shrink-0">Shooting</span>
+                <input className={`flex-1 ${inputCls()}`} defaultValue="Jun 3" />
+              </div>
+              <div className="flex items-center gap-2 px-1 py-1">
+                <span className="text-[10px] text-zinc-500 w-20 shrink-0">Prep</span>
+                <input className={`flex-1 ${inputCls()}`} defaultValue="May 20" />
+              </div>
+            </CardSection>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
 function MiscSection() {
   const [ctx, setCtx] = useState<{ x: number; y: number } | null>(null);
   const [pick, setPick] = useState<string | null>('Nested A');
@@ -813,6 +853,10 @@ function App() {
       <section data-section="morph-panels">
         <h2>useOverlayMorph clone panels (the app DropdownPanel pattern)</h2>
         <PanelDemo />
+      </section>
+      <section data-section="card-sections">
+        <h2>CardSection (modal sections) + inputCls</h2>
+        <CardSectionDemo />
       </section>
       <InputsSection />
       <MiscSection />

@@ -22,6 +22,12 @@
   --ui-input-bg: #27272a;
   --ui-input-border: #3f3f46;
   --ui-input-text: #e4e4e7;
+  /* Section cards (CardSection) — a RAISED surface, deliberately distinct
+     from text-field fills (--ui-input-bg) so sections read as panels, not
+     inputs. */
+  --ui-card-bg: rgba(255, 255, 255, 0.05);
+  --ui-card-border: #3f3f46;
+  --ui-card-band: rgba(0, 0, 0, 0.18);
   --ui-overlay-bg: rgba(0, 0, 0, 0.2);
 
   --ui-text: #d4d4d8;
@@ -93,6 +99,9 @@
   --ui-input-bg: #f4f4f5;
   --ui-input-border: #e4e4e7;
   --ui-input-text: #18181b;
+  --ui-card-bg: #fafafa;
+  --ui-card-border: #e4e4e7;
+  --ui-card-band: #f4f4f5;
   --ui-overlay-bg: rgba(0, 0, 0, 0.2);
 
   --ui-text: #3f3f46;
@@ -160,6 +169,9 @@
   --ui-input-bg: rgba(255, 255, 255, 0.1);
   --ui-input-border: rgba(255, 255, 255, 0.1);
   --ui-input-text: #ffffff;
+  --ui-card-bg: rgba(255, 255, 255, 0.06);
+  --ui-card-border: rgba(255, 255, 255, 0.12);
+  --ui-card-band: rgba(0, 0, 0, 0.2);
   --ui-overlay-bg: rgba(0, 0, 0, 0.3);
 
   --ui-text: #ffffff;
@@ -243,6 +255,22 @@
   font-family: Helvetica Neue, Helvetica, system-ui, sans-serif;
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* ── Section cards (CardSection) ─────────────────────────────────────── */
+
+.ui-card {
+  touch-action: manipulation;
+  background: var(--ui-card-bg);
+  border: 1px solid var(--ui-card-border);
+  color: var(--ui-text);
+  border-radius: var(--ui-radius-menu);
+  overflow: hidden;
+}
+
+.ui-card-band {
+  background: var(--ui-card-band);
+  border-color: var(--ui-card-border);
 }
 
 /* ── Menu items ────────────────────────────────────────────────────────── */

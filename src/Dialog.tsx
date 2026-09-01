@@ -4,6 +4,7 @@ import { IS_COARSE } from './device';
 import Modal from './Modal';
 import ModalFooterButton from './ModalFooterButton';
 import Checkbox from './Checkbox';
+import { inputCls } from './input';
 
 /* Confirm/prompt/alert dialogs render THROUGH the kit Modal (this file used
    to be its own Radix Dialog with bespoke chrome) — they inherit the whole
@@ -16,7 +17,7 @@ import Checkbox from './Checkbox';
 
 const DIALOG_BODY = IS_COARSE ? 'space-y-5' : 'space-y-4';
 const DIALOG_DESC = IS_COARSE ? 'text-sm' : 'text-xs';
-const DIALOG_INPUT = IS_COARSE ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
+const DIALOG_INPUT = inputCls();
 
 export interface ConfirmOptions {
   title: string;
@@ -226,7 +227,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
               type="text"
               defaultValue={dialog.options.defaultValue || ''}
               placeholder={dialog.options.placeholder}
-              className={`w-full ${DIALOG_INPUT} ui-input`}
+              className={`w-full ${DIALOG_INPUT}`}
             />
           )}
         </div>
