@@ -301,29 +301,10 @@
   transition: background-color 150ms ease, color 150ms ease;
   user-select: none;
   -webkit-user-select: none;
-  /* The fill is a ::before PILL (positioned, own radius, behind the content):
-     inset 2px top/bottom so stacked fills keep a uniform 4px gap — no borders
-     or background-clip, so nothing ever shifts layout or clips corners. */
-  position: relative;
-  z-index: 0;
 }
 
-.ui-item::before {
-  content: '';
-  position: absolute;
-  inset: 2px 0;
-  border-radius: 4px;
-  background: transparent;
-  z-index: -1;
-  pointer-events: none;
-}
-
-.ui-item:active::before {
-  background: var(--ui-item-active-bg);
-  /* Grow 1px beyond the resting pills (inset 2px 0 → 1px 0) on press. */
-  inset: 1px 0;
-}
 .ui-item:active {
+  background: var(--ui-item-active-bg);
   transition: none;
 }
 
@@ -332,12 +313,9 @@
    and defers the click to the second tap. The single-highlight suppression
    below hides this fill while a roving-focus highlight is active, so
    keyboard and pointer never light two rows at once. */
-.ui-item:hover::before,
-.ui-item:focus-visible::before {
-  background: var(--ui-item-hover-bg);
-}
 .ui-item:hover,
 .ui-item:focus-visible {
+  background: var(--ui-item-hover-bg);
   color: var(--ui-item-hover-text);
 }
 
@@ -345,19 +323,14 @@
   color: var(--ui-danger-text);
 }
 
-.ui-item-danger:active::before {
-  background: var(--ui-danger-active-bg);
-}
 .ui-item-danger:active {
+  background: var(--ui-danger-active-bg);
   color: var(--ui-danger-active-text);
 }
 
-.ui-item-danger:hover::before,
-.ui-item-danger:focus-visible::before {
-  background: var(--ui-danger-hover-bg);
-}
 .ui-item-danger:hover,
 .ui-item-danger:focus-visible {
+  background: var(--ui-danger-hover-bg);
   color: var(--ui-danger-hover-text);
 }
 
@@ -368,10 +341,8 @@
    must never coexist with the roving-focus highlight — when ANY item is
    [data-highlighted] (keyboard arrows / pointerenter via DropdownItem),
    only that row reads as selected. */
-.ui-item.ui-item-highlighted::before {
-  background: var(--ui-item-highlight-bg);
-}
 .ui-item.ui-item-highlighted {
+  background: var(--ui-item-highlight-bg);
   color: var(--ui-item-highlight-text);
 }
 
@@ -382,49 +353,43 @@
    roving-focus [data-highlighted]: Radix leaves that attr on the last
    pointer-hovered item when the keyboard moves the highlight away, so it
    would suppress the wrong row. */
-.ui-menu:has(.ui-item.ui-item-highlighted) .ui-item:hover:not(.ui-item-highlighted)::before {
+.ui-menu:has(.ui-item.ui-item-highlighted) .ui-item:hover:not(.ui-item-highlighted) {
   background: transparent;
 }
 
 /* The CURRENT VALUE (selected) row — the panel's checked-row look: its own
-   subtle pill + the trailing Check glyph, distinct from the cursor highlight.
-   The fill is the shared ::before pill (inset 3px top/bottom), so stacked
-   selected rows keep the uniform 6px gap. When lit, the wash is blended into
-   the pill — the selection stays visible (rule below). */
-.ui-item-selected::before {
-  background: var(--ui-item-selected-bg);
-}
+   subtle background + the trailing Check glyph, distinct from the cursor
+   highlight. When lit, the wash keeps the selection visible (rule below). */
 .ui-item-selected {
+  background: var(--ui-item-selected-bg);
   color: var(--ui-item-selected-text);
 }
 
-.ui-item-selected.ui-item-highlighted::before {
-  /* A lit SELECTED row keeps its selected tint AND its selected text — the
-     cursor is a gentle wash over the selected pill, never an opaque gray that
-     flattens the selection. The wash color is per-theme (white everywhere
-     today): on DARK themes it brightens the muted blue, on LIGHT themes it
-     LIGHTENS the strong blue — so the selected state reads clearly at rest
-     and the cursor is a soft lift over it. */
-  background: color-mix(in srgb, var(--ui-item-highlight-wash) var(--ui-item-highlight-wash-opacity), var(--ui-item-selected-bg));
-}
 .ui-item-selected.ui-item-highlighted {
+  /* A lit SELECTED row keeps its selected tint AND its selected text — the
+     cursor is a gentle wash over the selected background, never an opaque
+     gray that flattens the selection. The wash color is per-theme (white
+     everywhere today): on DARK themes it brightens the muted blue, on LIGHT
+     themes it LIGHTENS the strong blue — so the selected state reads clearly
+     at rest and the cursor is a soft lift over it. */
+  background-color: var(--ui-item-selected-bg);
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--ui-item-highlight-wash) var(--ui-item-highlight-wash-opacity), transparent),
+    color-mix(in srgb, var(--ui-item-highlight-wash) var(--ui-item-highlight-wash-opacity), transparent)
+  );
   color: var(--ui-item-selected-text);
 }
 
 /* Submenu trigger open state (set by Radix) */
-.ui-item[data-state="open"]::before {
-  background: var(--ui-item-hover-bg);
-}
 .ui-item[data-state="open"] {
+  background: var(--ui-item-hover-bg);
   color: var(--ui-item-hover-text);
 }
 
 /* ...but the single-highlight row wins: a submenu trigger hovered with the
    mouse (or arrowed) keeps the MOUSE highlight, not the open-state tint. */
-.ui-item[data-state="open"].ui-item-highlighted::before {
-  background: var(--ui-item-highlight-bg);
-}
 .ui-item[data-state="open"].ui-item-highlighted {
+  background: var(--ui-item-highlight-bg);
   color: var(--ui-item-highlight-text);
 }
 
@@ -432,10 +397,8 @@
    "open" while the sub content is persisted for the reverse morph — unlight
    it so the trigger doesn't read as "selected" alongside the item being
    clicked while both fade out. */
-.ui-item[data-state="open"].ui-sub-closing::before {
-  background: transparent;
-}
 .ui-item[data-state="open"].ui-sub-closing {
+  background: transparent;
   color: var(--ui-text);
 }
 
@@ -655,43 +618,28 @@
 
 .ui-row {
   touch-action: manipulation;
-  /* Same pill-fill treatment as .ui-item: the fill is a ::before PILL behind
-     the row content (name + action buttons stay clickable above it), inset
-     2px top/bottom — stacked rows keep the uniform 4px gap. */
-  position: relative;
-  z-index: 0;
 }
 
-.ui-row::before {
-  content: '';
-  position: absolute;
-  inset: 2px 0;
-  border-radius: 4px;
-  background: transparent;
-  z-index: -1;
-  pointer-events: none;
-}
-
-.ui-row:hover::before {
+.ui-row:hover {
   background: var(--ui-row-hover-bg);
 }
 
 /* ItemManager rows keep Radix's native keyboard (no registered highlight
    items) — the keyboard-lit row must show the SAME fill as the pointer
    hover. */
-.ui-row:has([data-highlighted])::before {
+.ui-row:has([data-highlighted]) {
   background: var(--ui-row-hover-bg);
 }
 
-.ui-row-active::before {
+.ui-row-active {
   background: var(--ui-row-active-bg);
 }
 
 /* An ACTIVE row that is hovered / keyboard-lit keeps its selected tint — the
    cursor is the same gentle wash used for a selected DropdownItem, never an
    opaque gray that flattens the selection. */
-.ui-row-active:hover::before,
-.ui-row-active:has([data-highlighted])::before {
+.ui-row-active:hover,
+.ui-row-active:has([data-highlighted]) {
   background: color-mix(in srgb, var(--ui-item-highlight-wash) var(--ui-item-highlight-wash-opacity), var(--ui-row-active-bg));
 }
 
