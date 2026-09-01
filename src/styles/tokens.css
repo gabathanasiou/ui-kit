@@ -320,9 +320,8 @@
 
 .ui-item:active::before {
   background: var(--ui-item-active-bg);
-  /* Grow 2px beyond the resting pills (inset 2px 0 → 0): the fill spans the
-     whole row on press. */
-  inset: 0;
+  /* Grow 1px beyond the resting pills (inset 2px 0 → 1px 0) on press. */
+  inset: 1px 0;
 }
 .ui-item:active {
   transition: none;
