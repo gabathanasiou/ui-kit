@@ -495,7 +495,7 @@
 
 .ui-input {
   touch-action: manipulation;
-  background: var(--ui-input-bg);
+  background: transparent;
   border: 1px solid var(--ui-input-border);
   color: var(--ui-input-text);
   border-radius: var(--ui-radius-input);
