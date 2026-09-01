@@ -28,6 +28,7 @@
     "build:js": "vite build",
     "build:types": "tsc -p tsconfig.build.json",
     "build:css": "cp src/styles/tokens.css dist/ui-kit.css",
+    "dev": "vite playground --host",
     "playground": "vite playground",
     "test:playground": "playwright test -c playground/playwright.config.ts"
   },

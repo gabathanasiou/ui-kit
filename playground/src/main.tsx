@@ -223,6 +223,78 @@ function BasicModalDemo() {
   );
 }
 
+function KeyboardModalDemo() {
+  /* iPad virtual-keyboard repro: open this on the iPad and focus the input.
+     The readout shows the layout viewport (never resized by the keyboard) vs
+     the visual viewport (shrinks when the keyboard opens + pans via offsetTop).
+     The kit Modal re-centers into the visual viewport on vv resize/scroll. */
+  const [open, setOpen] = useState(false);
+  const [vp, setVp] = useState(() => ({
+    vh: typeof window !== 'undefined' ? window.visualViewport?.height ?? window.innerHeight : 0,
+    top: typeof window !== 'undefined' ? window.visualViewport?.offsetTop ?? 0 : 0,
+    ih: typeof window !== 'undefined' ? window.innerHeight : 0,
+    focused: false,
+  }));
+  const [input, setInput] = useState('');
+  React.useEffect(() => {
+    const vv = window.visualViewport;
+    const update = () => setVp({
+      vh: vv?.height ?? window.innerHeight,
+      top: vv?.offsetTop ?? 0,
+      ih: window.innerHeight,
+      focused: document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA',
+    });
+    if (!vv) return;
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    window.addEventListener('resize', update);
+    return () => { vv.removeEventListener('resize', update); vv.removeEventListener('scroll', update); window.removeEventListener('resize', update); };
+  }, []);
+  return (
+    <div className="row" data-testid="keyboard-modal-demo">
+      <Button data-testid="kb-modal-open" onClick={() => setOpen(true)}>Modal with text input (keyboard test)</Button>
+      {open && (
+        <Modal open onClose={() => setOpen(false)} title="Keyboard test" width="max-w-md"
+          footer={
+            <ModalFooter>
+              <ModalFooterButton variant="ghost" onClick={() => setOpen(false)}>Cancel</ModalFooterButton>
+              <ModalFooterButton onClick={() => setOpen(false)}>Save</ModalFooterButton>
+            </ModalFooter>
+          }
+        >
+          <div className="p-6 space-y-4">
+            <p>Focus the input — watch whether the modal (or the whole page) moves when the keyboard opens.</p>
+            <div data-testid="kb-vp-readout" style={{ fontSize: 12, fontFamily: 'monospace', color: '#a1a1aa', lineHeight: 1.6 }}>
+              innerHeight (layout): {vp.ih}
+              <br />
+              visualViewport.height: {vp.vh}
+              <br />
+              visualViewport.offsetTop: {vp.top}
+              <br />
+              focused: {String(vp.focused)}
+            </div>
+            <input
+              data-testid="kb-input"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onFocus={() => setVp(s => ({ ...s, focused: true }))}
+              onBlur={() => setVp(s => ({ ...s, focused: false }))}
+              placeholder="Tap me — watch the readout + modal position"
+              className="w-full px-3 py-2 text-sm ui-input"
+            />
+            <textarea
+              data-testid="kb-textarea"
+              placeholder="And this textarea…"
+              rows={4}
+              className="w-full px-3 py-2 text-sm ui-input"
+            />
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
 function StackedModalDemo() {
   const [open1, setOpen1] = useState(false);
   const [open2, setOpen2] = useState(false);
@@ -458,6 +530,7 @@ function DialogsSection() {
   const dialog = useDialog();
   const [last, setLast] = useState<string>('—');
   const [hostOpen, setHostOpen] = useState(false);
+  const DNWA_KEY = 'playground_dnwa_empty_trash';
   return (
     <section data-section="dialogs">
       <h2>Dialogs — confirm / prompt / alert render through the Modal (morph + dim)</h2>
@@ -465,8 +538,15 @@ function DialogsSection() {
         <Button data-testid="dlg-confirm" onClick={async () => { const ok = await dialog.confirm({ title: 'Delete Scene?', message: 'This can be restored from Trash.' }); setLast(`confirm → ${ok}`); }}>
           Confirm
         </Button>
-        <Button data-testid="dlg-danger" onClick={async () => { const ok = await dialog.confirm({ title: 'Empty Trash?', message: 'Permanently delete all trash items?', danger: true, suppressKey: 'playground_dnwa_empty_trash' }); setLast(`danger → ${ok}`); }}>
+        <Button data-testid="dlg-danger" onClick={async () => {
+          const suppressed = !!localStorage.getItem(DNWA_KEY) && Date.now() < parseInt(localStorage.getItem(DNWA_KEY)!, 10);
+          const ok = await dialog.confirm({ title: 'Empty Trash?', message: 'Permanently delete all trash items?', danger: true, suppressKey: DNWA_KEY });
+          setLast(suppressed && ok ? 'danger → true (suppressed)' : `danger → ${ok}`);
+        }}>
           Danger confirm + DNWA
+        </Button>
+        <Button variant="subtle" data-testid="dnwa-reset" onClick={() => { localStorage.removeItem(DNWA_KEY); setLast('dnwa reset'); }}>
+          Reset DNWA
         </Button>
         <Button data-testid="dlg-prompt" onClick={async () => { const v = await dialog.prompt({ title: 'Project Name', defaultValue: 'Untitled Project', placeholder: 'Project name' }); setLast(`prompt → ${v}`); }}>
           Prompt
@@ -525,8 +605,9 @@ function App() {
         <ItemManagerDemo />
       </section>
       <section data-section="modals">
-        <h2>Modals — basic / stacked / menu-inside</h2>
+        <h2>Modals — basic / stacked / menu-inside / keyboard-test</h2>
         <BasicModalDemo />
+        <KeyboardModalDemo />
         <StackedModalDemo />
         <MenuInsideModal />
       </section>

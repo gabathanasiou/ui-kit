@@ -51,6 +51,30 @@ test('danger confirm: red solid confirm + DNWA checkbox', async ({ page }) => {
   await expect(page.getByTestId('dlg-danger').locator('..')).toContainText('danger → true');
 });
 
+test('danger confirm DNWA: reset button re-opens; suppressed state is labelled', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => localStorage.removeItem('playground_dnwa_empty_trash'));
+
+  /* Reset while suppressed: the dialog opens again. */
+  await page.getByTestId('dnwa-reset').click();
+  await page.getByTestId('dlg-danger').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel' }).click();
+
+  /* Re-suppress (checkbox + confirm), then the auto-resolve is VISIBLE. */
+  await page.getByTestId('dlg-danger').click();
+  await page.getByRole('dialog').locator('.ui-checkbox').click();
+  await page.keyboard.press('Enter');
+  await page.getByTestId('dlg-danger').click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByTestId('dlg-danger').locator('..')).toContainText('danger → true (suppressed)');
+
+  /* Reset clears the suppression entirely. */
+  await page.getByTestId('dnwa-reset').click();
+  await page.getByTestId('dlg-danger').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+});
+
 test('prompt: default value, Enter resolves, Escape cancels', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('dlg-prompt').click();

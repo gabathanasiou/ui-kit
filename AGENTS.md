@@ -6,12 +6,64 @@ a committed `dist/`; consumers pin a github tag (`github:gabathanasiou/ui-kit#v0
 
 ## Commands
 
-- `npm run playground` — the component zoo dev server (`playground/`, port 5183).
-  Imports the kit SOURCE (`src/`) directly — **no build needed**, HMR live.
+- `npm run dev` — playground dev server on ALL interfaces (port 5183; reachable
+  from the iPad at `http://<mac-ip>:5183`). `npm run playground` = localhost only.
 - `npm run test:playground` — Playwright specs against the playground
-  (`playground/specs/`, chromium, dev server auto-started via webServer).
+  (`playground/specs/`; config `playground/playwright.config.ts`, desktop-chromium
+  + webkit-iPad projects, dev server auto-started via webServer). Run one project:
+  `npx playwright test -c playground/playwright.config.ts --project=desktop`.
+- `npx tsc -p tsconfig.build.json --noEmit` — typecheck before done.
 - `npm run build` — lib build (vite es/cjs + tsc types + css copy). Run before
   committing a version bump.
+
+## Core Rules (read first — these override convenience)
+
+1. **Think shared primitives first.** This IS the shared-primitives repo. When a
+   surface needs behavior the kit already ships, reuse the kit component. When
+   you find yourself writing the second copy of anything (helper, class string,
+   morph, dismissal dance), extract it into `src/` and import it in both places.
+2. **No monoliths.** Split files when they grow (~700+ lines): extract focused
+   modules, keep a barrel so existing imports keep working.
+3. **Narrow scope, no speculative abstractions.** Smallest change that satisfies
+   the ask. Every new abstraction must map to a stated requirement — remove it if
+   it doesn't. Prefer adapting an existing pipeline over creating a parallel one.
+4. **One source of truth per concern.** The morph/menu/modal logic in `src/` is
+   canonical — the playground, specs and lemon_schedule consume it, never re-derive it.
+5. **Complexity reset.** When a second special case would extend the same
+   abstraction, stop, re-read the requirement, redesign narrower instead of patching.
+6. **Small focused commits**, imperative mood, one revertible unit each.
+7. **Verify before done.** Every change runs the typecheck above. Behavior /
+   regression changes run `npm run test:playground` (full suite before done/commit;
+   never claim done on a failing suite). Visual-only changes (class strings,
+   colors, padding) skip the suite: typecheck + a manual playground check is enough.
+
+## Explaining to the User (plain language)
+
+- Talk about surfaces in real terms: "the Danger confirm + DNWA dialog", "the
+  keyboard-test modal", "the stuck-menu reopen" — not file names or option types.
+- Ground it in behavior: "first tap on the backdrop dismisses the keyboard, the
+  second tap closes the modal."
+
+## Stack & peer deps
+
+- React 19 + Vite + Tailwind v4. Consumers provide Tailwind; the kit ships
+  utility classes (playground.css needs `@source '../../src'` to generate them).
+- **Radix lockstep**: `@radix-ui/react-dialog` and `@radix-ui/react-dropdown-menu`
+  must move together — a partial bump forks the shared `react-dismissable-layer`
+  and breaks menus inside modals (iPad: touch outside-dismissal defers to the
+  click and can leave a dialog locked at `pointer-events:none`). Never bump one
+  without the other.
+
+## Hover & Tap feedback
+
+- **Hover styles are UNGATED by design** (tokens.css `@custom-variant hover`) —
+  iOS Safari's tap-to-hover needs a real `:hover` rule on the tapped element;
+  `(hover: hover)` is false on iPadOS, so gating kills the native behavior.
+- Pen = finger = touch: `isTouchLike()` in `src/device.ts`. Safari doesn't
+  synthesize clicks for pen taps on overlays (`device.ts` shim) and never fires
+  `:active` for pen.
+- iOS sticky hover (tap → `:hover` sticks until the next tap) IS the tap
+  feedback — no JS flash/pulse workarounds; they double with it and read as delays.
 
 ## The Playground (debug everything here, not in the app)
 
@@ -23,7 +75,11 @@ Surfaces (section → testids):
 - DropdownMenus: controlled (`ctrl-menu-trigger`, the app's exact
   DayEventsModal pattern), uncontrolled, light theme, submenu, ItemManager.
 - Modals: basic (`modal-open`), stacked (`stacked-open` → "Open Modal 2"),
-  menu-inside-modal (`menu-modal-open` → `inmodal-menu-trigger`).
+  menu-inside-modal (`menu-modal-open` → `inmodal-menu-trigger`),
+  keyboard-test (`kb-modal-open` — modal with input/textarea + a live
+  `visualViewport` readout, for iPad keyboard behavior).
+- Dialogs: confirm (`dlg-confirm`), danger+DNWA (`dlg-danger` → `dnwa-reset`
+  clears the 24h suppression), prompt, alert, over-host (`dlg-over-host`).
 - `useOverlayMorph` clone panels (`panel-trigger` / `panel` — the app's
   DropdownPanel pattern with `cloneOnUnmount`).
 - Inputs, tooltips, context menu.
@@ -93,6 +149,17 @@ stays mounted while the close morph plays; `onClosed` drops persisted):
   unmount closes clone the content box (stripped of `data-modal-stack`/role).
 - Lower stacked dialogs get `aria-hidden` (Radix) + CSS-faded — only the top
   dialog is in the a11y tree.
+- **Dialogs close by `open` flip, not unmount**: DialogProvider keeps `<Modal
+  open>` mounted, so the open→closed transition clones + morphs (the same clone
+  as unmount closes) — alerts fade like standalone modals. Never remove that
+  open-flip clone.
+- **iPad keyboard**: detection is dual — the keyboard either shrinks the VISUAL
+  viewport (`visualViewport.height << innerHeight`) or the LAYOUT viewport
+  (innerHeight drops while innerWidth stays). A settle timer keeps the flag
+  latched through the dismissal so the ResizeObserver never re-centres (that was
+  the "pushed down after the keyboard closes" bug). Touch devices (`IS_COARSE`)
+  skip the JS positioning entirely and stay CSS-centred; a backdrop tap with the
+  keyboard up blurs the input first, the next tap closes.
 
 ## Release flow (bring kit fixes to the app)
 
@@ -100,3 +167,8 @@ stays mounted while the close morph plays; `onClosed` drops persisted):
 2. `npm run build`, bump `package.json` version, commit, tag `v0.1.x`, push.
 3. In lemon_schedule: bump `"@gabriel/ui-kit": "github:gabathanasiou/ui-kit#v0.1.x"`,
    `npm install`, clear `node_modules/.vite-*` if Vite errors, run the app e2e.
+
+## Doc budget
+
+`AGENTS.md` stays ≤ ~200 lines — it is loaded every session. When a section is
+added, compact it or move detail to `docs/*.md`.

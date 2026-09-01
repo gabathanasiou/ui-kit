@@ -4,7 +4,7 @@ import { X, RotateCcw } from 'lucide-react';
 import { IS_COARSE } from './device';
 import { usePortalTarget, useCurrentWindow } from './popout';
 
-const MAX_EDGE = 32;
+const MAX_EDGE = 16;
 
 /* Modal stack + transitions:
    - STACKED (a modal spawns another, e.g. Day Events → Rule Editor): the
@@ -226,8 +226,21 @@ export default function Modal({
   /* True once the user drags the modal — content-driven size changes then
      keep the top edge fixed instead of re-centering. Reset on close. */
   const draggedRef = useRef(false);
+  /* Keyboard presence. Two signals, both handled: the software keyboard either
+     shrinks the VISUAL viewport (visualViewport.height << innerHeight) or —
+     iPad's classic behaviour — resizes the LAYOUT viewport itself (innerHeight
+     drops while innerWidth stays put). Either counts as a keyboard transition.
+     `kbActiveRef` latches true and only clears after a settle window, so the
+     ResizeObserver's per-frame deliveries during the dismissal never re-centre
+     the modal ("pushed down after the keyboard closes"). */
+  const kbActiveRef = useRef(false);
+  const kbClearTimerRef = useRef<number>(0);
+  const lastLayoutRef = useRef({ w: 0, h: 0 });
   const initRef = useRef(false);
   const [morphing, setMorphing] = useState(false);
+  /* Mirrored keyboard state (render needs it for the maxHeight clamp below;
+     kbActiveRef is the imperative copy read outside renders). */
+  const [kbOpen, setKbOpen] = useState(false);
   const animToken = useRef(0);
   const closingRef = useRef(false);
   /* Mirrored state for the overlay: the dim fades out the moment the close
@@ -246,11 +259,17 @@ export default function Modal({
   const endAnim = () => { anyAnimRef.current = false; setMorphing(false); };
 
   useEffect(() => {
-    if (!open) { setDragPos(null); initRef.current = false; draggedRef.current = false; }
+    if (!open) { setDragPos(null); initRef.current = false; draggedRef.current = false; setKbOpen(false); }
   }, [open]);
 
   useLayoutEffect(() => {
     if (!open || initRef.current || !contentReady || !contentRef.current) return;
+    /* TEMPORARY (iPad keyboard): on coarse-pointer devices keep the modal
+       CSS-centred (left-1/2 top-1/2 -translate-*) instead of pinning an
+       explicit centred dragPos — the browser then keeps it dead-centre through
+       any viewport/keyboard resize and nothing can snap it. Drag still works:
+       the first drag pins the position. */
+    if (IS_COARSE) return;
     initRef.current = true;
     /* Pin the CENTERED position as an explicit left/top (the drag/RO math
        works on plain pixels, so the centering translate classes are dropped
@@ -308,32 +327,46 @@ export default function Modal({
     });
   }, [morph, onClose, closable]);
 
-  /* Unmount-driven closes (action buttons — Save/Confirm/select call the
-     caller's onClose directly, which unmounts this component before any
-     animation could run): CLONE the content box, swap in the clone (an exact
-     visual copy of the last rendered state) and zoom it out. The clone is
-     a11y-hidden + pointer-transparent so it never intercepts anything; it is
-     stripped of the stack/radix attributes so it can't participate in the
+  /* Unmount-driven / open-flip closes (action buttons — Save/Confirm/select
+     call the caller's onClose directly, or an ALWAYS-MOUNTED Modal (the
+     DialogProvider pattern) just flips `open`). In both cases the component
+     doesn't play doClose, so CLONE the content box, swap in the clone (an
+     exact visual copy of the last rendered state) and zoom it out. The clone
+     is a11y-hidden + pointer-transparent so it never intercepts anything; it
+     is stripped of the stack/radix attributes so it can't participate in the
      stack CSS. Stacked children skip (the survivor's morph-back is the close
      effect); doClose-animated paths skip (exitedRef). */
-  useLayoutEffect(() => {
-    return () => {
-      const el = contentRef.current;
-      if (!el || exitedRef.current) return;
-      if (!morphRef.current || reduceMotion() || stackParents(el).length > 0) return;
-      const doc = el.ownerDocument;
-      const clone = el.cloneNode(true) as HTMLElement;
-      clone.removeAttribute('data-modal-stack');
-      clone.removeAttribute('data-state');
-      clone.removeAttribute('role');
-      clone.removeAttribute('data-aria-hidden');
-      clone.removeAttribute('tabindex');
-      clone.setAttribute('aria-hidden', 'true');
-      clone.style.pointerEvents = 'none';
-      doc.body.appendChild(clone);
-      zoomOut({ current: 0 }, clone, () => { if (clone.isConnected) clone.remove(); });
-    };
+  const cloneClose = useCallback(() => {
+    const el = contentRef.current;
+    if (!el || exitedRef.current) return;
+    if (!morphRef.current || reduceMotion() || stackParents(el).length > 0) return;
+    const doc = el.ownerDocument;
+    const clone = el.cloneNode(true) as HTMLElement;
+    clone.removeAttribute('data-modal-stack');
+    clone.removeAttribute('data-state');
+    clone.removeAttribute('role');
+    clone.removeAttribute('data-aria-hidden');
+    clone.removeAttribute('tabindex');
+    clone.setAttribute('aria-hidden', 'true');
+    clone.style.pointerEvents = 'none';
+    doc.body.appendChild(clone);
+    zoomOut({ current: 0 }, clone, () => { if (clone.isConnected) clone.remove(); });
   }, []);
+
+  useLayoutEffect(() => {
+    return () => cloneClose();
+  }, [cloneClose]);
+
+  /* Always-mounted Modals (DialogProvider renders <Modal open={...}>) close by
+     flipping `open` — the component never unmounts, so the unmount-clone above
+     never fires and dialogs/alerts would snap away with no fade. Clone + morph
+     on the open→closed transition too. */
+  const prevOpenRef = useRef(open);
+  useLayoutEffect(() => {
+    const wasOpen = prevOpenRef.current;
+    prevOpenRef.current = open;
+    if (wasOpen && !open) cloneClose();
+  }, [open, contentReady, cloneClose]);
 
   /* Exit morph: while an open stack-child exists, track its box each frame;
      when it disappears, shrink back from its last box (the CSS fade restores
@@ -398,6 +431,10 @@ export default function Modal({
      linearly together → the center is constant); dragged ones keep their top
      edge. Fires during an animation are skipped (re-anchored after). */
   useEffect(() => {
+    /* TEMPORARY (iPad keyboard): skip the height-FLIP on coarse-pointer
+       devices too — CSS centering keeps the modal centred through any size
+       change without the JS re-centring (which is what snapped it). */
+    if (IS_COARSE) return;
     if (!contentReady || !morph || reduceMotion() || !contentRef.current) return;
     const el = contentRef.current;
     let lastH = Math.round(el.getBoundingClientRect().height);
@@ -413,13 +450,17 @@ export default function Modal({
       lastH = h;
       beginAnim();
       const r = el.getBoundingClientRect();
+      const vb = viewportBox(currentWindowRef.current ?? null);
       /* Keep un-dragged modals centered on the VISIBLE viewport (center =
          offsetTop + vh/2 is the invariant — not the previous state, so chained
          animations over transient sizes never drift). Pin the box at the old
          height with the top already at its centered position, then animate
-         height + top together (both interpolate linearly → center is constant). */
-      const centerLock = !draggedRef.current;
-      const vb = viewportBox(currentWindowRef.current ?? null);
+         height + top together (both interpolate linearly → center is constant).
+         EXCEPT during a keyboard transition (open or dismissal): the height
+         change is the keyboard resizing the viewport, so keep the top edge
+         fixed and grow/shrink from it — re-centring there is the "pushed down
+         after the keyboard closes" jump. */
+      const centerLock = !draggedRef.current && !kbActiveRef.current;
       const topPin = centerLock ? vb.top + (vb.height - from) / 2 : r.top;
       const topEnd = centerLock ? vb.top + (vb.height - h) / 2 : r.top;
       el.style.transition = 'none';
@@ -485,24 +526,93 @@ export default function Modal({
      grows back it must follow. Un-dragged modals re-centre, dragged ones
      keep their top edge and just re-clamp. */
   useEffect(() => {
+    /* TEMPORARY (iPad keyboard): skip all the JS keyboard/reposition logic on
+       coarse-pointer devices — CSS centering already keeps the modal pinned to
+       the screen centre. */
+    if (IS_COARSE) return;
     if (!open) return;
     const win = currentWindowRef.current ?? null;
     const vv = win?.visualViewport ?? null;
     if (!win || !vv) return;
+    /* The Safari toolbar eats ~60px of the visible height; the keyboard
+       ~300px+. Above that gap it's a keyboard transition, below it's just
+       the toolbar / a plain window resize. */
+    const KEYBOARD_GAP = 120;
+    kbActiveRef.current = false;
+    lastLayoutRef.current = { w: win.innerWidth, h: win.innerHeight };
+    /* rAF-coalesce the vv resize/scroll burst (keyboard animation, Safari's
+       pan-to-reveal-input): handle at most once per frame. */
+    let raf = 0;
     const onVvChange = () => {
       if (closingRef.current || dragRef.current) return;
-      const el = contentRef.current;
-      if (!el) return;
-      const vb = viewportBox(currentWindowRef.current ?? null);
-      const r = el.getBoundingClientRect();
-      if (draggedRef.current) {
-        setDragPos(clampPos(r.left, r.top));
-        return;
+      /* Keyboard detection — run SYNCHRONOUSLY so the ResizeObserver
+         (delivered after the layout change) already sees the latched flag:
+         either the visual viewport shrank below the layout height, or the
+         layout viewport itself shrunk height-only (iPad's classic keyboard
+         resize). Latched + settle timer → stays "active" through the
+         dismissal so nothing re-centres mid-transition. */
+      const ih = win?.innerHeight ?? 0;
+      const iw = win?.innerWidth ?? 0;
+      const vbNow = viewportBox(win);
+      const visualShrank = vbNow.height < ih - KEYBOARD_GAP;
+      const layoutShrank = ih < lastLayoutRef.current.h - KEYBOARD_GAP && iw === lastLayoutRef.current.w;
+      if (visualShrank || layoutShrank) {
+        kbActiveRef.current = true;
+        if (kbClearTimerRef.current) { clearTimeout(kbClearTimerRef.current); kbClearTimerRef.current = 0; }
+      } else if (!kbClearTimerRef.current) {
+        kbClearTimerRef.current = win?.setTimeout(() => {
+          kbActiveRef.current = false;
+          kbClearTimerRef.current = 0;
+          setKbOpen(false);
+        }, 600) ?? 0;
       }
-      const vw = currentWindowRef.current?.innerWidth ?? 0;
-      setDragPos({
-        left: Math.max(MAX_EDGE, Math.min((vw - r.width) / 2, vw - r.width - MAX_EDGE)),
-        top: Math.max(vb.top + MAX_EDGE, Math.min(vb.top + (vb.height - r.height) / 2, vb.bottom - r.height - MAX_EDGE)),
+      setKbOpen(kbActiveRef.current);
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const el = contentRef.current;
+        if (!el) return;
+        const vb = viewportBox(currentWindowRef.current ?? null);
+        const r = el.getBoundingClientRect();
+        const vw = currentWindowRef.current?.innerWidth ?? 0;
+        /* Raw "keyboard actually present right now", against the PREVIOUS
+           layout (so it turns false the moment the keyboard starts dismissing
+           instead of chasing intermediate values). */
+        const ihNow = win?.innerHeight ?? 0;
+        const kbNow = vb.height < ihNow - KEYBOARD_GAP
+          || (ihNow < lastLayoutRef.current.h - KEYBOARD_GAP && win?.innerWidth === lastLayoutRef.current.w);
+        lastLayoutRef.current = { w: win?.innerWidth ?? 0, h: ihNow };
+        const fits = r.top >= vb.top + MAX_EDGE && r.bottom <= vb.bottom - MAX_EDGE;
+        const reposition = () => {
+          /* Header stays reachable (top clamped to the visible viewport); a
+             taller-than-visible modal keeps its natural size and overflows
+             under the keyboard — the body scrolls. */
+          setDragPos({
+            left: Math.max(MAX_EDGE, Math.min((vw - r.width) / 2, vw - r.width - MAX_EDGE)),
+            top: Math.max(vb.top + MAX_EDGE, Math.min(vb.top + (vb.height - r.height) / 2, vb.bottom - r.height - MAX_EDGE)),
+          });
+        };
+        if (kbNow) {
+          /* Keyboard genuinely up — move only when it actually covers the
+             modal (bottom past the visible viewport) or a Safari pan pushed
+             the top off-screen. Never push an uncovered modal around. */
+          if (draggedRef.current) { if (!fits) setDragPos(clampPos(r.left, r.top)); return; }
+          if (fits) return;
+          reposition();
+          return;
+        }
+        if (kbActiveRef.current) {
+          /* Keyboard dismissing but not yet settled — freeze. Safari's closing
+             animation fires intermediate values (offsetTop mid-pan) and
+             re-centring against them is what made the modal visibly drop
+             after the keyboard closed. It stays where the keyboard left it. */
+          return;
+        }
+        /* Keyboard gone AND settled — plain viewport change (window resize,
+           orientation change): keep un-dragged modals centred / on-screen. */
+        if (draggedRef.current) { if (!fits) setDragPos(clampPos(r.left, r.top)); return; }
+        if (fits) return;
+        reposition();
       });
     };
     vv.addEventListener('resize', onVvChange);
@@ -512,6 +622,8 @@ export default function Modal({
       vv.removeEventListener('resize', onVvChange);
       vv.removeEventListener('scroll', onVvChange);
       win.removeEventListener('orientationchange', onVvChange);
+      if (raf) cancelAnimationFrame(raf);
+      if (kbClearTimerRef.current) clearTimeout(kbClearTimerRef.current);
     };
   }, [open, clampPos]);
 
@@ -540,10 +652,17 @@ export default function Modal({
   const posClasses = hasExplicit ? '' : 'left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2';
   const sizeClasses = `${width ? `${width} w-full` : 'max-w-xl w-full'}`;
 
+  /* Height stays clamped to the LAYOUT viewport only (100vh — never shrunk by
+     the on-screen keyboard, which resizes the visual viewport). With the
+     keyboard up the modal keeps its natural size; the covered bottom simply
+     sits under it and the body scrolls — squishing the box to the visual
+     viewport makes tall modals unusably short. */
   const combinedStyle: React.CSSProperties = {
     ...(hasExplicit ? { left: dragPos!.left, top: dragPos!.top } : {}),
     width: `min(100%, calc(100vw - ${MAX_EDGE * 2}px))`,
-    maxHeight: `calc(100vh - ${MAX_EDGE * 2}px)`,
+    /* Keyboard up: drop the max-height clamp entirely so the modal can exit
+       the visible viewport at its natural size instead of being compressed. */
+    ...(kbOpen ? {} : { maxHeight: `calc(100vh - ${MAX_EDGE * 2}px)` }),
   };
 
   /* Enter confirms: when nothing interactive is focused (no input/textarea/
