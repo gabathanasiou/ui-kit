@@ -20,6 +20,7 @@
   --ui-panel-bg: #18181b;
   --ui-panel-border: #27272a;
   --ui-input-bg: #27272a;
+  --ui-input-hover-bg: rgba(255, 255, 255, 0.04);
   --ui-input-border: #3f3f46;
   --ui-input-text: #e4e4e7;
   /* Section cards (CardSection) — a RAISED surface, deliberately distinct
@@ -99,6 +100,7 @@
   --ui-panel-bg: #ffffff;
   --ui-panel-border: #e4e4e7;
   --ui-input-bg: #f4f4f5;
+  --ui-input-hover-bg: rgba(0, 0, 0, 0.04);
   --ui-input-border: #e4e4e7;
   --ui-input-text: #18181b;
   --ui-card-bg: #fafafa;
@@ -171,6 +173,7 @@
   --ui-panel-bg: #1e293b;
   --ui-panel-border: rgba(255, 255, 255, 0.1);
   --ui-input-bg: rgba(255, 255, 255, 0.1);
+  --ui-input-hover-bg: rgba(255, 255, 255, 0.06);
   --ui-input-border: rgba(255, 255, 255, 0.1);
   --ui-input-text: #ffffff;
   --ui-card-bg: rgba(255, 255, 255, 0.06);
@@ -500,6 +503,12 @@
   color: var(--ui-input-text);
   border-radius: var(--ui-radius-input);
   outline: none;
+}
+
+/* Subtle hover fill (the checkbox-pill hover feel) — the field stays
+   border-only until the pointer is over it. */
+.ui-input:hover {
+  background: var(--ui-input-hover-bg);
 }
 
 .ui-input::placeholder {
