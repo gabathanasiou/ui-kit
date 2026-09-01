@@ -505,9 +505,11 @@
   outline: none;
 }
 
-/* Subtle hover fill (the checkbox-pill hover feel) — the field stays
-   border-only until the pointer is over it. */
-.ui-input:hover {
+/* Subtle fill while the pointer is over the field OR it's being edited
+   (focused) — the checkbox-pill hover feel; the field stays border-only
+   otherwise. */
+.ui-input:hover,
+.ui-input:focus {
   background: var(--ui-input-hover-bg);
 }
 
