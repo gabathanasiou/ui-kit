@@ -25,7 +25,7 @@ export interface ModalFooterButtonProps
   tone?: 'zinc' | 'accent' | 'danger';
 }
 
-const BASE = `inline-flex items-center gap-2 rounded-lg text-xs transition-colors cursor-pointer select-none whitespace-nowrap`;
+const BASE = `inline-flex items-center gap-2 rounded text-xs transition-colors cursor-pointer select-none whitespace-nowrap`;
 
 /* The hero primary-action fill, colorable by tone. The border is kept lighter
    than the fill on hover so the button never loses its edge (bg-zinc-700 on
@@ -37,10 +37,12 @@ const HERO_TONES: Record<NonNullable<ModalFooterButtonProps['tone']>, string> = 
 };
 
 const VARIANTS: Record<Exclude<NonNullable<ModalFooterButtonProps['variant']>, 'hero'>, string> = {
-  ghost: 'text-zinc-400 font-medium hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-50',
-  danger: 'text-red-400 font-medium hover:bg-red-900/30 hover:text-red-300 disabled:opacity-50',
+  /* Transparent border on every variant — auto-height buttons add the border
+     to their height, so the bordered hero would otherwise be 2px taller. */
+  ghost: 'border border-transparent text-zinc-400 font-medium hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-50',
+  danger: 'border border-transparent text-red-400 font-medium hover:bg-red-900/30 hover:text-red-300 disabled:opacity-50',
   'danger-solid':
-    'bg-red-600 text-white font-semibold hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed',
+    'border border-transparent bg-red-600 text-white font-semibold hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed',
 };
 
 export default function ModalFooterButton({
