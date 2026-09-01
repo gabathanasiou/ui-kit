@@ -5,13 +5,13 @@ const IS_BROWSER = typeof window !== 'undefined';
 export const IS_COARSE = IS_BROWSER && window.matchMedia('(pointer: coarse)').matches;
 export const IS_TOUCH_CAPABLE = IS_BROWSER && (window.matchMedia('(any-pointer: coarse)').matches || navigator.maxTouchPoints > 0);
 
-/* Global coarse-scaling knob (0…1, default 1). The kit's components pick
-   touch-sized classes when the device is coarse; setting the scale to 0
-   disables that bump everywhere (everything renders desktop-sized). Set it at
-   app boot via setCoarseScale() BEFORE mounting kit components — the coarse
-   sizing is read at render, so it applies live. Intermediate values are
-   treated as "coarse on" (boolean) for now. */
-let _coarseScale = 1;
+/* Global coarse-scaling knob (0…1, default 0.5). The kit's components pick
+   touch-sized classes when the device is coarse; 0.5 (50%) is the DEFAULT —
+   halfway to the full coarse bump, big enough for touch without blowing up.
+   Set it at app boot via setCoarseScale() BEFORE mounting kit components —
+   the coarse sizing is read at render, so it applies live. 0 = desktop sizes
+   everywhere. */
+let _coarseScale = 0.5;
 const _coarseScaleListeners = new Set<() => void>();
 export function setCoarseScale(n: number) {
   _coarseScale = Math.max(0, Math.min(1, n));

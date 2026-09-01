@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useCoarse } from './device';
+import { useCoarseScale, coarsePx } from './device';
 import { useCurrentWindow } from './popout';
 import { useOverlayMorph } from './overlayMorph';
 import { registerOverlayClose } from './overlayRegistry';
@@ -38,8 +38,8 @@ export interface ContextMenuProps {
  * morph shrinks back to where the menu was opened.
  */
 export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, children, containerRef, morph = true }) => {
-  const coarse = useCoarse();
-  const CTX_TEXT = coarse ? 'text-sm' : 'text-xs';
+  const scale = useCoarseScale();
+  const CTX_TEXT_FS = coarsePx(12, 14, scale);
   const contentElRef = useRef<HTMLDivElement | null>(null);
   const currentWindow = useCurrentWindow();
   /* The Radix portal content mounts in a LATER commit than the open flip —
@@ -147,8 +147,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
               ref={setComposedRef}
               data-theme="light"
               data-ui-fixed
-              className={`fixed ui-menu rounded-lg shadow-xl p-1 z-[9999] ${CTX_TEXT} min-w-[180px] max-h-[85vh] overflow-y-auto scrollbar-custom`}
-              style={{ left: pos?.left ?? pressRef.current.left, top: pos?.top ?? pressRef.current.top, touchAction: 'manipulation' }}
+              className="fixed ui-menu rounded-lg shadow-xl p-1 z-[9999] min-w-[180px] max-h-[85vh] overflow-y-auto scrollbar-custom"
+              style={{ fontSize: CTX_TEXT_FS, left: pos?.left ?? pressRef.current.left, top: pos?.top ?? pressRef.current.top, touchAction: 'manipulation' }}
               onPointerLeave={highlight.pointerLeave}
             >
               {children}
@@ -172,8 +172,8 @@ export const ContextMenuItem: React.FC<{
   trailing?: React.ReactNode;
   children: React.ReactNode;
 }> = ({ onClick, variant = 'default', icon, disabled = false, selected = false, trailing, children }) => {
-  const coarse = useCoarse();
-  const CTX_ITEM = coarse ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
+  const scale = useCoarseScale();
+  const CTX_ITEM_STYLE = { padding: `${coarsePx(12, 16, scale)}px ${coarsePx(8, 12, scale)}px`, fontSize: coarsePx(12, 14, scale) };
   const api = useMenuHighlight();
   const apiRef = useRef(api);
   apiRef.current = api;
@@ -196,7 +196,7 @@ export const ContextMenuItem: React.FC<{
       onPointerEnter={() => { if (!disabled && api && myIndex >= 0) api.setHighlighted(myIndex, 'pointer'); }}
       onTouchStart={() => {}}
       disabled={disabled}
-      className={`w-full text-left ${CTX_ITEM} flex items-center gap-2 rounded cursor-pointer ${
+      style={CTX_ITEM_STYLE} className={`w-full text-left flex items-center gap-2 rounded cursor-pointer ${
         disabled ? 'opacity-40 cursor-default' :
         variant === 'danger' ? 'ui-item ui-item-danger' : 'ui-item'
       } ${selected ? 'ui-item-selected' : ''} ${highlighted ? 'ui-item-highlighted' : ''}`}

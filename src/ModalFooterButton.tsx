@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { useCoarse, useCoarseSize } from './device';
+import { useCoarseSize } from './device';
 
 /**
  * Modal footer button — the canonical "one hero, rest ghost" recipe so
@@ -38,14 +38,12 @@ export default function ModalFooterButton({
   type = 'button',
   ...rest
 }: ModalFooterButtonProps) {
-  const coarse = useCoarse();
   const size = useCoarseSize({ px: 24, py: 8, fs: 12 }, { px: 28, py: 10, fs: 14 });
-  const PAD = coarse ? '' : 'px-6 py-2';
   return (
     <button
       type={type}
       style={size}
-      className={`${BASE} ${PAD} ${VARIANTS[variant]} ${className}`}
+      className={`${BASE} ${VARIANTS[variant]} ${className}`}
       {...rest}
     />
   );

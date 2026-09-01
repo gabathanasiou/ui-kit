@@ -25,5 +25,8 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     theme?: 'light' | 'dark';
     /** Cloud-project coloring (light primary: blue-950 instead of zinc-900). */
     cloud?: boolean;
+    /** Toggled/pressed state (e.g. a lit formatting-toolbar toggle) — applies an
+     *  accent tint so the button reads as ON. */
+    active?: boolean;
 }
-export default function Button({ variant, theme, cloud, className, type, ...rest }: ButtonProps): React.JSX.Element;
+export default function Button({ variant, theme, cloud, active, className, type, ...rest }: ButtonProps): React.JSX.Element;

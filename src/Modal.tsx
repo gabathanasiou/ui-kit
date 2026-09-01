@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback, useEffect, useLayoutEffect } from 'react';
 import * as RadixDialog from '@radix-ui/react-dialog';
 import { X, RotateCcw } from 'lucide-react';
-import { IS_COARSE, useCoarse } from './device';
+import { IS_COARSE, useCoarseScale, coarsePx } from './device';
 import { usePortalTarget, useCurrentWindow } from './popout';
 
 const MAX_EDGE = 8;
@@ -196,25 +196,26 @@ export default function Modal({
   closable = true,
   dismissOnBackdrop = true,
 }: ModalProps) {
-  const coarse = useCoarse();
   const contentRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
-  /* Touch-sized chrome (coarse devices; the global coarseScale knob gates it). */
-  const HEADER_PX = coarse ? 'px-6' : 'px-5';
-  const HEADER_PY = coarse ? 'py-3' : 'py-2.5';
-  const TITLE_SIZE = coarse ? 'text-sm' : 'text-xs';
-  const CLOSE_ICON = coarse ? 'w-4 h-4' : 'w-3.5 h-3.5';
-  const FLAT_TITLE = coarse ? 'text-base' : 'text-sm';
-  const FLAT_CLOSE = coarse ? 'w-5 h-5' : 'w-4 h-4';
-  const FLAT_PAD = coarse ? 'px-6' : 'px-5';
-  const FLAT_TOP = coarse ? 'pt-6' : 'pt-5';
-  const FLAT_BOTTOM = coarse ? 'pb-6' : 'pb-5';
-  const RESET_TEXT = coarse ? 'text-xs' : 'text-[10px]';
-  const RESET_ICON = coarse ? 'w-3.5 h-3.5' : 'w-3 h-3';
-  const RESET_PAD = coarse ? 'px-2.5 py-1.5' : 'px-2 py-1';
-  const FOOTER_PX = coarse ? 'px-6' : 'px-5';
-  const FOOTER_PY = coarse ? 'py-3' : 'py-2';
+  /* Proportional touch chrome (coarse devices; interpolates by the global
+     coarseScale — inline styles, Tailwind can't JIT runtime classes). */
+  const scale = useCoarseScale();
+  const headPadX = coarsePx(20, 24, scale), headPadY = coarsePx(10, 12, scale), headFs = coarsePx(12, 14, scale);
+  const flatFs = coarsePx(14, 16, scale);
+  const flatPadX = coarsePx(20, 24, scale), flatTopY = coarsePx(20, 24, scale), flatBottomY = coarsePx(20, 24, scale);
+  const closeDim = coarsePx(14, 16, scale), flatCloseDim = coarsePx(16, 20, scale);
+  const resetFs = coarsePx(10, 12, scale), resetDim = coarsePx(12, 14, scale);
+  const resetPx = coarsePx(8, 10, scale), resetPy = coarsePx(4, 6, scale);
+  const footerPadX = coarsePx(20, 24, scale), footerPadY = coarsePx(8, 12, scale);
+  const HEADER_STYLE = { padding: `${headPadY}px ${headPadX}px` };
+  const HEADER_TITLE_STYLE = { fontSize: headFs };
+  const FLAT_HEADER_STYLE = { padding: `${flatTopY}px ${flatPadX}px 16px ${flatPadX}px` };
+  const FLAT_TITLE_STYLE = { fontSize: flatFs };
+  const FLAT_BODY_STYLE = { padding: `0 ${flatPadX}px 16px` };
+  const FLAT_FOOTER_STYLE = { padding: `${flatBottomY}px ${flatPadX}px` };
+  const RESET_STYLE = { fontSize: resetFs, padding: `${resetPy}px ${resetPx}px` };
   const [contentReady, setContentReady] = useState(false);
   /* Radix mounts the Portal content in a LATER commit than the Modal's own
      layout effects (ref is null + content absent when [open] effects run, and
@@ -760,24 +761,24 @@ export default function Modal({
         >
           {flat ? (
             <div
-              className={`flex items-center justify-between ${FLAT_PAD} ${FLAT_TOP} pb-4 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              style={FLAT_HEADER_STYLE} className={`flex items-center justify-between ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onPointerDown={(e) => { if (!morphing) onPointerDown(e); }}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onClick={onHeaderClick}
             >
-              <RadixDialog.Title className={`${FLAT_TITLE} font-bold text-white truncate`}>
+              <RadixDialog.Title style={FLAT_TITLE_STYLE} className="font-bold text-white truncate">
                 {title}
               </RadixDialog.Title>
               {closable && (
                 <RadixDialog.Close data-modal-close className="text-zinc-500 hover:text-white transition-colors shrink-0">
-                  <X className={FLAT_CLOSE} />
+                  <X style={{ width: flatCloseDim, height: flatCloseDim }} />
                 </RadixDialog.Close>
               )}
             </div>
           ) : (
           <div
-            className={`flex items-center justify-between ${HEADER_PX} ${HEADER_PY} border-b border-zinc-800 shrink-0 bg-zinc-950 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            style={HEADER_STYLE} className={`flex items-center justify-between border-b border-zinc-800 shrink-0 bg-zinc-950 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
             onPointerDown={(e) => { if (!morphing) onPointerDown(e); }}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -785,32 +786,32 @@ export default function Modal({
           >
             <div className="flex items-center gap-2 min-w-0">
               {icon && <span className="text-zinc-400 shrink-0">{icon}</span>}
-              <RadixDialog.Title className={`${TITLE_SIZE} font-bold text-white truncate`}>
+              <RadixDialog.Title style={HEADER_TITLE_STYLE} className="font-bold text-white truncate">
                 {title}
               </RadixDialog.Title>
             </div>
             <div className="flex items-center gap-2">
               {onReset && (
-                <button onClick={onReset} className={`flex items-center gap-1 ${RESET_TEXT} text-zinc-500 hover:text-zinc-300 transition-colors bg-zinc-800 hover:bg-zinc-700 rounded ${RESET_PAD} shrink-0`}>
-                  <RotateCcw className={RESET_ICON} />
+                <button onClick={onReset} style={RESET_STYLE} className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors bg-zinc-800 hover:bg-zinc-700 rounded shrink-0">
+                  <RotateCcw style={{ width: resetDim, height: resetDim }} />
                   Reset
                 </button>
               )}
               {closable && (
                 <RadixDialog.Close data-modal-close className="text-zinc-500 hover:text-white transition-colors shrink-0">
-                  <X className={CLOSE_ICON} />
+                  <X style={{ width: closeDim, height: closeDim }} />
                 </RadixDialog.Close>
               )}
             </div>
           </div>
           )}
 
-          <div ref={bodyRef} className={`overflow-y-auto flex-1 bg-zinc-900 text-zinc-100${flat ? ` ${FLAT_PAD} pb-4` : ''}`}>
+          <div ref={bodyRef} style={flat ? FLAT_BODY_STYLE : undefined} className="overflow-y-auto flex-1 bg-zinc-900 text-zinc-100">
             {children}
           </div>
 
           {footer && (
-            <div ref={footerRef} className={flat ? `${FLAT_PAD} ${FLAT_BOTTOM}` : 'shrink-0'}>
+            <div ref={footerRef} style={flat ? FLAT_FOOTER_STYLE : undefined} className={flat ? '' : 'shrink-0'}>
               {flat ? (
                 <div className="flex items-center justify-end gap-2">{footer}</div>
               ) : footer}
@@ -823,9 +824,10 @@ export default function Modal({
 }
 
 export function ModalFooter({ children }: { children: React.ReactNode }) {
-  const coarse = useCoarse();
+  const scale = useCoarseScale();
+  const footerPadX = coarsePx(20, 24, scale), footerPadY = coarsePx(8, 12, scale);
   return (
-    <div className={`flex items-center justify-end gap-3 ${coarse ? 'px-6 py-3' : 'px-5 py-2'} border-t border-zinc-800 bg-zinc-950`}>
+    <div className="flex items-center justify-end gap-3 border-t border-zinc-800 bg-zinc-950" style={{ padding: `${footerPadY}px ${footerPadX}px` }}>
       {children}
     </div>
   );

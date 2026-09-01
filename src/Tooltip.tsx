@@ -2,10 +2,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { usePortalTarget, useCurrentWindow } from './popout';
-import { useCoarse } from './device';
+import { useCoarseScale, coarsePx } from './device';
 
 export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> = ({ content, children }) => {
-  const coarse = useCoarse();
+  const scale = useCoarseScale();
+  const padX = coarsePx(10, 12, scale), padY = coarsePx(6, 6, scale), fs = coarsePx(10, 12, scale);
+  const tipStyle = { padding: `${padY}px ${padX}px`, fontSize: fs };
   const portalTarget = usePortalTarget();
   const currentWindow = useCurrentWindow();
   const [show, setShow] = useState(false);
@@ -33,8 +35,8 @@ export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> =
       {children}
       {show && createPortal(
         <div
-          className={`fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-white/20 ${coarse ? 'px-3 py-1.5 bg-zinc-900 text-white text-xs' : 'px-2.5 py-1.5 bg-zinc-900 text-white text-[10px]'}`}
-          style={{ left: pos.x, top: pos.y - (coarse ? 24 : 20), transform: 'translate(-50%, -100%)', zIndex: 99999 }}
+          className="fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-white/20 bg-zinc-900 text-white"
+          style={{ ...tipStyle, left: pos.x, top: pos.y - 20, transform: 'translate(-50%, -100%)', zIndex: 99999 }}
         >
           {content.split('\n• ').map((line, i) => (
             <div key={i} className={i > 0 ? 'mt-0.5 pt-0.5 border-t border-zinc-700' : ''}>{line}</div>

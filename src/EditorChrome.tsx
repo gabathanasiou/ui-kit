@@ -8,22 +8,22 @@ import { Tooltip } from './Tooltip';
 
 /** Proportional coarse sizes for the editor-chrome toolbar (TB_* constants
  *  are load-time; this returns INLINE sizes interpolated by the global
- *  coarseScale — Tailwind can't JIT runtime classes). Consumers spread it on
+ *  coarseScale — Tailwind can't JIT runtime classes). ALWAYS returns the
+ *  sizes (fine devices get the desktop values) so consumers spread them on
  *  their toggle/btn/input elements. */
 export function useToolbarChrome() {
   const scale = useCoarseScale();
-  const dim = coarsePx(28, 40, scale);   // toggle square
-  const h = coarsePx(28, 40, scale);     // btn/picker height
-  const px = coarsePx(10, 14, scale);    // btn/picker horizontal pad
-  const fs = coarsePx(10, 14, scale);    // btn/picker font
-  const ipx = coarsePx(8, 10, scale);    // input horizontal pad
-  return IS_COARSE
-    ? {
-        toggle: { width: dim, height: dim },
-        control: { height: h, padding: `0 ${px}px`, fontSize: fs },
-        input: { height: h, padding: `0 ${ipx}px`, fontSize: fs },
-      }
-    : {};
+  const c = IS_COARSE;
+  const dim = c ? coarsePx(28, 40, scale) : 28;   // toggle square
+  const h = c ? coarsePx(28, 40, scale) : 28;     // btn/picker height
+  const px = c ? coarsePx(10, 14, scale) : 10;    // btn/picker horizontal pad
+  const fs = c ? coarsePx(10, 14, scale) : 10;    // btn/picker font
+  const ipx = c ? coarsePx(8, 10, scale) : 8;     // input horizontal pad
+  return {
+    toggle: { width: dim, height: dim },
+    control: { height: h, padding: `0 ${px}px`, fontSize: fs },
+    input: { height: h, padding: `0 ${ipx}px`, fontSize: fs },
+  };
 }
 
 export const TB_ROW_LABEL = IS_COARSE ? 'text-xs font-semibold text-zinc-600 uppercase tracking-wider shrink-0 w-24' : 'text-[9px] font-semibold text-zinc-600 uppercase tracking-wider shrink-0 w-16';
@@ -43,31 +43,38 @@ export const TB_PICKER = IS_COARSE
   ? 'h-10 px-3 text-sm rounded bg-zinc-800 border border-zinc-700 text-zinc-200 hover:border-zinc-500 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-between gap-1'
   : 'h-7 px-2.5 text-[10px] rounded bg-zinc-800 border border-zinc-700 text-zinc-200 hover:border-zinc-500 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-between gap-1';
 
-export const ToolButton: React.FC<{ onClick: () => void; disabled?: boolean; title: string; className?: string; children: React.ReactNode }> = ({ onClick, disabled, title, className = TB_BTN, children }) => (
-  <Tooltip content={title}>
-    <button onClick={onClick} disabled={disabled} aria-label={title} className={`${className} ${disabled ? 'disabled:opacity-30 disabled:pointer-events-none' : ''}`}>
-      {children}
-    </button>
-  </Tooltip>
-);
+export const ToolButton: React.FC<{ onClick: () => void; disabled?: boolean; title: string; className?: string; children: React.ReactNode }> = ({ onClick, disabled, title, className = TB_BTN, children }) => {
+  const chrome = useToolbarChrome();
+  return (
+    <Tooltip content={title}>
+      <button onClick={onClick} disabled={disabled} aria-label={title} style={chrome.control} className={`${className} ${disabled ? 'disabled:opacity-30 disabled:pointer-events-none' : ''}`}>
+        {children}
+      </button>
+    </Tooltip>
+  );
+};
 
-export const Seg: React.FC<{ value: string; options: { v: string; l: string }[]; onChange: (v: string) => void; disabled?: boolean; active?: (v: string) => boolean }> = ({ value, options, onChange, disabled, active }) => (
-  <div className={TB_SEG}>
-    {options.map(o => {
-      const on = active ? active(o.v) : value === o.v;
-      return (
-        <button
-          key={o.v}
-          disabled={disabled}
-          onClick={() => onChange(o.v)}
-          className={`${IS_COARSE ? 'h-10 px-3.5 text-sm' : 'h-7 px-2 text-[10px]'} font-medium transition-colors disabled:opacity-30 ${on ? 'bg-blue-900/50 text-blue-300' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'} ${o.v !== options[options.length - 1].v ? 'border-r border-zinc-700' : ''}`}
-        >
-          {o.l}
-        </button>
-      );
-    })}
-  </div>
-);
+export const Seg: React.FC<{ value: string; options: { v: string; l: string }[]; onChange: (v: string) => void; disabled?: boolean; active?: (v: string) => boolean }> = ({ value, options, onChange, disabled, active }) => {
+  const chrome = useToolbarChrome();
+  return (
+    <div className={TB_SEG}>
+      {options.map(o => {
+        const on = active ? active(o.v) : value === o.v;
+        return (
+          <button
+            key={o.v}
+            disabled={disabled}
+            onClick={() => onChange(o.v)}
+            style={chrome.control}
+            className={`font-medium transition-colors disabled:opacity-30 ${on ? 'bg-blue-900/50 text-blue-300' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'} ${o.v !== options[options.length - 1].v ? 'border-r border-zinc-700' : ''}`}
+          >
+            {o.l}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
 
 /** Section eyebrow: uppercase label with a hairline rule. */
 export const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (

@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { useCoarse, useCoarseSize } from './device';
+import { useCoarseScale, useCoarseSize, coarsePx } from './device';
 
 /**
  * Toolbar/action button — the shared button recipe so consumer toolbars stop
@@ -28,24 +28,27 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   theme?: 'light' | 'dark';
   /** Cloud-project coloring (light primary: blue-950 instead of zinc-900). */
   cloud?: boolean;
+  /** Toggled/pressed state (e.g. a lit formatting-toolbar toggle) — applies an
+   *  accent tint so the button reads as ON. */
+  active?: boolean;
 }
 
 export default function Button({
   variant = 'subtle',
   theme = 'light',
   cloud = false,
+  active = false,
   className = '',
   type = 'button',
   ...rest
 }: ButtonProps) {
-  const coarse = useCoarse();
   /* Proportional coarse scaling: base sizes interpolate by the global scale
      (inline style — Tailwind can't JIT runtime classes). */
   const subtleSize = useCoarseSize({ px: 10, py: 4, fs: 12 }, { px: 14, py: 8, fs: 14 });
   const primarySize = useCoarseSize({ px: 12, py: 4, fs: 12 }, { px: 16, py: 8, fs: 14 });
-  const PAD = coarse ? '' : 'px-2.5 py-1 text-xs';
-  const PAD_PRIMARY = coarse ? '' : 'px-3 py-1 text-xs';
-  const BASE = `inline-flex items-center rounded font-semibold transition-colors cursor-pointer select-none whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed ${coarse ? 'gap-2' : 'gap-1.5'}`;
+  const PAD = '';
+  const PAD_PRIMARY = '';
+  const BASE = 'inline-flex items-center rounded font-semibold transition-colors cursor-pointer select-none whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed';
 
   const VARIANTS: Record<'light' | 'dark', Record<NonNullable<ButtonProps['variant']>, { base: string; open: string }>> = {
     light: {
@@ -66,9 +69,16 @@ export default function Button({
   const isOpen = (rest as { 'data-state'?: string })['data-state'] === 'open';
   const spec = VARIANTS[theme][variant];
   const size = variant === 'primary' ? primarySize : subtleSize;
+  const gap = coarsePx(6, 8, useCoarseScale());
+  /* Toggled state: accent fill + white text (dark) / blue text (light). The
+     `!` overrides beat the variant's base/`open` colors; no outline. */
+  const ACTIVE = theme === 'dark'
+    ? 'bg-blue-900/50! text-white!'
+    : 'bg-blue-50! text-blue-700!';
   let cls = `${spec.base} ${isOpen ? spec.open : ''}`;
+  if (active) cls = `${cls} ${ACTIVE}`;
   if (variant === 'primary' && theme === 'light' && cloud) {
     cls = isOpen ? `${CLOUD_PRIMARY_BASE} ${CLOUD_PRIMARY_OPEN}` : CLOUD_PRIMARY_BASE;
   }
-  return <button type={type} className={`${BASE} ${cls} ${className}`} style={size} {...rest} />;
+  return <button type={type} className={`${BASE} ${cls} ${className}`} style={{ ...size, gap }} {...rest} />;
 }

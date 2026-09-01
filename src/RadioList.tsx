@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { useCoarse } from './device';
+import { useCoarseScale, coarsePx } from './device';
 
 /**
  * RadioList — single-select sibling of Checklist: the same bordered word-list
@@ -44,9 +44,9 @@ export default function RadioList({
   theme,
   className = '',
 }: RadioListProps) {
-  const coarse = useCoarse();
-  const itemPad = compact ? 'px-2.5 py-1.5 text-xs' : coarse ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
-  const circleCls = compact ? 'w-3.5 h-3.5' : coarse ? 'w-5 h-5' : 'w-4 h-4';
+  const scale = useCoarseScale();
+  const itemPadX = compact ? 10 : coarsePx(12, 16, scale), itemPadY = compact ? 6 : coarsePx(8, 12, scale), itemFs = compact ? 12 : coarsePx(12, 14, scale);
+  const circleDim = compact ? 14 : coarsePx(16, 20, scale);
   return (
     <div className={className} {...(theme ? { 'data-theme': theme } : {})}>
       {title != null && (
@@ -66,9 +66,10 @@ export default function RadioList({
               type="button"
               disabled={disabled}
               onClick={() => onChange(item.id)}
-              className={`ui-checklist-item ${itemPad} ${selected ? 'ui-checklist-item-checked' : ''}`}
+              className={`ui-checklist-item ${selected ? 'ui-checklist-item-checked' : ''}`}
+              style={{ padding: `${itemPadY}px ${itemPadX}px`, fontSize: itemFs }}
             >
-              <span className={`ui-radio-circle ${circleCls}`} aria-hidden>
+              <span className="ui-radio-circle" style={{ width: circleDim, height: circleDim }} aria-hidden>
                 {selected && <span className="ui-radio-dot" />}
               </span>
               {item.leading != null && <span className="ui-checklist-leading">{item.leading}</span>}

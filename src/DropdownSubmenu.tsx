@@ -4,7 +4,7 @@ import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronRight } from 'lucide-react';
 import { useDropdownTheme, SubmenuContext, MenuHighlightContext, useMenuHighlight, useMenuHighlightState, useMenuKeys, useMenuKeyLock, useMenuWheel } from './DropdownMenu';
 import type { MenuHighlightItem } from './DropdownMenu';
-import { useCoarse } from './device';
+import { useCoarseScale, coarsePx } from './device';
 import { usePortalTarget } from './popout';
 import { useOverlayMorph } from './overlayMorph';
 
@@ -150,9 +150,9 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
     setContentRef(node);
   }, [setContentRef]);
 
-  const coarse = useCoarse();
-  const SUB_ITEM = coarse ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs';
-  const triggerClasses = `w-full text-left ${SUB_ITEM} rounded flex items-center gap-2 outline-none cursor-pointer select-none justify-between ui-item${rootHighlighted ? ' ui-item-highlighted' : ''}${closing ? ' ui-sub-closing' : ''}`;
+  const scale = useCoarseScale();
+  const SUB_ITEM_STYLE = { padding: `${coarsePx(12, 16, scale)}px ${coarsePx(8, 12, scale)}px`, fontSize: coarsePx(12, 14, scale) };
+  const triggerClasses = `w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none justify-between ui-item${rootHighlighted ? ' ui-item-highlighted' : ''}${closing ? ' ui-sub-closing' : ''}`;
 
   const contentClasses = `ui-menu rounded-lg shadow-xl z-[210] p-1 flex flex-col select-none max-h-[min(60vh,24rem)] overflow-y-auto min-w-0 scrollbar-custom ${width || 'w-48'} ${contentClassName || ''}`;
 
@@ -170,7 +170,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
         <RadixDropdownMenu.SubTrigger
           ref={subTriggerRef}
           data-ei={myIndex >= 0 ? myIndex : undefined}
-          className={triggerClasses}
+          style={SUB_ITEM_STYLE} className={triggerClasses}
           onTouchStart={() => {}}
           onPointerEnter={() => {
             if (rootApi && myIndex >= 0) rootApi.setHighlighted(myIndex, 'pointer');

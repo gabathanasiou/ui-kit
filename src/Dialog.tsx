@@ -1,10 +1,9 @@
 "use client";
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
-import { IS_COARSE, useCoarse } from './device';
+import { IS_COARSE, useCoarse, useCoarseScale, useCoarseSize, coarsePx } from './device';
 import Modal from './Modal';
 import ModalFooterButton from './ModalFooterButton';
 import Checkbox from './Checkbox';
-import { inputCls } from './input';
 
 /* Confirm/prompt/alert dialogs render THROUGH the kit Modal (this file used
    to be its own Radix Dialog with bespoke chrome) — they inherit the whole
@@ -58,10 +57,10 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
   const [dialog, setDialog] = useState<DialogState>(null);
   const [suppressCheck, setSuppressCheck] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const coarse = useCoarse();
-  const DIALOG_BODY = coarse ? 'space-y-5' : 'space-y-4';
-  const DIALOG_DESC = coarse ? 'text-sm' : 'text-xs';
-  const DIALOG_INPUT = inputCls();
+  const scale = useCoarseScale();
+  const bodyGap = coarsePx(16, 20, scale);
+  const descFs = coarsePx(12, 14, scale);
+  const inputSize = useCoarseSize({ px: 12, py: 8, fs: 12 }, { px: 16, py: 12, fs: 14 });
   /* Mirror of `dialog` for the request helpers (they're stable useCallbacks
      and can't read the state). */
   const dialogRef = useRef(dialog);
@@ -204,9 +203,9 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
           )
         }
       >
-        <div className={DIALOG_BODY}>
+        <div className="flex flex-col" style={{ gap: bodyGap }}>
           {dialog?.options.message && (
-            <p className={`${DIALOG_DESC} text-zinc-400 leading-relaxed`}>
+            <p style={{ fontSize: descFs }} className="text-zinc-400 leading-relaxed">
               {dialog.options.message}
             </p>
           )}
@@ -227,7 +226,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
               type="text"
               defaultValue={dialog.options.defaultValue || ''}
               placeholder={dialog.options.placeholder}
-              className={`w-full ${DIALOG_INPUT}`}
+              style={inputSize} className="w-full ui-input"
             />
           )}
         </div>

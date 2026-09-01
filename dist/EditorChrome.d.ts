@@ -1,7 +1,8 @@
 import React from 'react';
 /** Proportional coarse sizes for the editor-chrome toolbar (TB_* constants
  *  are load-time; this returns INLINE sizes interpolated by the global
- *  coarseScale — Tailwind can't JIT runtime classes). Consumers spread it on
+ *  coarseScale — Tailwind can't JIT runtime classes). ALWAYS returns the
+ *  sizes (fine devices get the desktop values) so consumers spread them on
  *  their toggle/btn/input elements. */
 export declare function useToolbarChrome(): {
     toggle: {
@@ -18,10 +19,6 @@ export declare function useToolbarChrome(): {
         padding: string;
         fontSize: number;
     };
-} | {
-    toggle?: undefined;
-    control?: undefined;
-    input?: undefined;
 };
 export declare const TB_ROW_LABEL: string;
 export declare const TB_BTN: string;

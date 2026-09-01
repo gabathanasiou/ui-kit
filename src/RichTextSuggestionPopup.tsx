@@ -4,6 +4,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { SuggestionOptions, SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
 import type { TokenItem } from './TokenExtension';
 import { MenuHighlightContext, useMenuHighlightState, useHighlightRow, getDropdownClasses } from './DropdownMenu';
+import { useCoarseScale, coarsePx } from './device';
 import type { MenuHighlightApi } from './DropdownMenu';
 
 // Caret-anchored token autocomplete for the rich text editor, adapted to the
@@ -80,10 +81,13 @@ const AutocompleteRow: React.FC<{ item: TokenItem; d: ReturnType<typeof getDropd
     label: () => f.label,
     activate: command,
   });
+  const scale = useCoarseScale();
+  const rowStyle = { padding: `${coarsePx(8, 12, scale)}px ${coarsePx(12, 16, scale)}px`, fontSize: coarsePx(12, 14, scale) };
   return (
     <div
       role="option"
-      className={`w-full text-left ${d.itemPad} rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${highlighted ? 'ui-item-highlighted' : ''}`}
+      style={rowStyle}
+      className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${highlighted ? 'ui-item-highlighted' : ''}`}
       onPointerEnter={() => setPointer(myIndex)}
       onClick={command}
     >

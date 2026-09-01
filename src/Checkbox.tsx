@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { useCoarse } from './device';
+import { useCoarseScale, coarsePx } from './device';
 
 /**
  * Themeable checkbox: a visually-hidden native input (a11y, focus, form
@@ -34,16 +34,18 @@ export interface CheckboxProps {
 
 export default function Checkbox({ checked, onChange, disabled = false, label, id, className = '', labelClassName = '', theme, variant = 'pill', tone = 'accent', block = false }: CheckboxProps) {
   const pill = variant !== 'plain';
-  const coarse = useCoarse();
-  const indicatorCls = coarse ? 'w-5 h-5' : 'w-4 h-4';
-  const boxCls = coarse ? 'w-5 h-5 rounded-md' : 'w-4 h-4 rounded';
-  const markCls = coarse ? 'w-3.5 h-3.5' : 'w-3 h-3';
-  const labelCls = coarse ? 'text-sm' : 'text-xs';
-  const pillPad = coarse ? 'px-4 py-3' : 'px-3 py-2.5';
+  /* Proportional coarse scaling (inline — Tailwind can't JIT runtime classes). */
+  const scale = useCoarseScale();
+  const boxDim = coarsePx(16, 20, scale);
+  const markDim = coarsePx(12, 14, scale);
+  const labelFs = coarsePx(12, 14, scale);
+  const pillPadX = coarsePx(12, 16, scale), pillPadY = coarsePx(10, 12, scale);
+  const gap = coarsePx(8, 10, scale);
+  const pillPad = pill ? `ui-checkbox-pill rounded-lg` : '';
   return (
     <label
-      className={`ui-checkbox ${pill ? `ui-checkbox-pill ${pillPad} rounded-lg` : ''} ${tone === 'danger' ? 'ui-checkbox-tone-danger' : ''} ${disabled ? 'ui-disabled' : ''} ${className}`}
-      style={{ display: block ? 'flex' : 'inline-flex', alignItems: 'center', gap: coarse ? 10 : 8 }}
+      className={`ui-checkbox ${pillPad} ${tone === 'danger' ? 'ui-checkbox-tone-danger' : ''} ${disabled ? 'ui-disabled' : ''} ${className}`}
+      style={{ display: block ? 'flex' : 'inline-flex', alignItems: 'center', gap, padding: pill ? `${pillPadY}px ${pillPadX}px` : undefined }}
       onClick={(e) => e.stopPropagation()}
       {...(theme ? { 'data-theme': theme } : {})}
     >
@@ -58,26 +60,26 @@ export default function Checkbox({ checked, onChange, disabled = false, label, i
       {pill ? (
         <span className="ui-check-indicator" aria-hidden>
           {checked ? (
-            <svg viewBox="0 0 16 16" className={indicatorCls} aria-hidden>
+            <svg viewBox="0 0 16 16" style={{ width: boxDim, height: boxDim }} aria-hidden>
               <rect x="1" y="1" width="14" height="14" rx="3.5" fill="currentColor" />
               <path d="M4.5 8.2 L7 10.7 L11.5 5.8" stroke="#ffffff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           ) : (
-            <svg viewBox="0 0 16 16" className={indicatorCls} aria-hidden>
+            <svg viewBox="0 0 16 16" style={{ width: boxDim, height: boxDim }} aria-hidden>
               <rect x="1" y="1" width="14" height="14" rx="3.5" fill="none" stroke="currentColor" strokeWidth={1.5} />
             </svg>
           )}
         </span>
       ) : (
-        <span className={`ui-checkbox-box ${boxCls}`} aria-hidden>
+        <span className="ui-checkbox-box" style={{ width: boxDim, height: boxDim }} aria-hidden>
           {checked && (
-            <svg viewBox="0 0 12 12" fill="none" className={markCls} aria-hidden>
+            <svg viewBox="0 0 12 12" fill="none" style={{ width: markDim, height: markDim }} aria-hidden>
               <path d="M2 6.5 L5 9.5 L10 3" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           )}
         </span>
       )}
-      {label != null && <span className={`ui-checkbox-label ${labelCls} ${labelClassName}`}>{label}</span>}
+      {label != null && <span className={`ui-checkbox-label ${labelClassName}`} style={{ fontSize: labelFs }}>{label}</span>}
     </label>
   );
 }

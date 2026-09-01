@@ -65,6 +65,23 @@ a committed `dist/`; consumers pin a github tag (`github:gabathanasiou/ui-kit#v0
 - iOS sticky hover (tap → `:hover` sticks until the next tap) IS the tap
   feedback — no JS flash/pulse workarounds; they double with it and read as delays.
 
+## Coarse scaling (touch sizing)
+
+- **The kit scales sizes for coarse devices (iPad) via a GLOBAL `coarseScale`
+  knob** (`src/device.ts`): `setCoarseScale(n)` (0…1), `useCoarseScale()`,
+  `useCoarse()` (boolean), `useCoarseSize()`/`coarsePx()` (proportional inline
+  sizes). Default is **0.5 (50%)** — halfway to the full touch bump, big enough
+  without blowing up. 0 = desktop sizes everywhere.
+- **RULE — every new component/surface with baked sizes must gate them on the
+  coarse scale** (never hardcode `IS_COARSE ? big : small` for sizing): paddings
+  interpolate via `useCoarseSize()`/inline styles (Tailwind can't JIT runtime
+  classes), sizes via `coarsePx()`. Don't leave boolean scalers — the slider
+  must work on everything. `IS_COARSE` stays for BEHAVIOR only (long-press,
+  keyboard repositioning), never sizing.
+- The playground has a sticky **coarse-scale controller** (Off/50%/Full +
+  slider + number + Reset) to verify every surface at any %.
+
+
 ## The Playground (debug everything here, not in the app)
 
 `playground/src/main.tsx` is the component zoo — every surface, with testids.
