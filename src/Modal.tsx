@@ -493,6 +493,34 @@ export default function Modal({
     return () => ro.disconnect();
   }, [contentReady]);
 
+  /* Reduced motion / morph off: content growth still has to re-clamp the box.
+     Without this, a modal positioned while small (top ≈ 86 for a 548px box)
+     grows past the viewport bottom with no animation to re-anchor it, pushing
+     its footer off-screen — the FLIP effect above returns early on
+     `reduceMotion()`. Re-clamp top/left to the visible viewport on resize
+     (no FLIP, no height pin). Position-only writes never resize the box, so
+     the ResizeObserver can't loop. */
+  useEffect(() => {
+    if (!contentReady || !contentRef.current) return;
+    if (morph && !reduceMotion()) return; // the FLIP effect re-centres
+    const el = contentRef.current;
+    const ro = new ResizeObserver(() => {
+      if (!el.isConnected || dragRef.current || closingRef.current || kbActiveRef.current) return;
+      if (stackChildren(el).length > 0) return;
+      const win = currentWindowRef.current ?? null;
+      const vb = viewportBox(win);
+      const vw = win?.innerWidth ?? 0;
+      const r = el.getBoundingClientRect();
+      const top = Math.max(vb.top + MAX_EDGE, Math.min(r.top, vb.bottom - r.height - MAX_EDGE));
+      const left = Math.max(MAX_EDGE, Math.min(r.left, vw - r.width - MAX_EDGE));
+      if (Math.abs(top - r.top) > 0.5 || Math.abs(left - r.left) > 0.5) {
+        setDragPos({ left, top });
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [contentReady, morph]);
+
   // NOTE: the Radix dialog stays modal (default) — portaled overlays shown
   // above it (e.g. DurationKeypad) set their own pointer-events: auto.
 
