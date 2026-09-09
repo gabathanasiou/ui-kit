@@ -33,7 +33,7 @@ export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> =
       ref={ref}
       className="inline-flex"
       onMouseEnter={() => { if (closeTimer.current) clearTimeout(closeTimer.current); updatePos(); setShow(true); }}
-      onMouseLeave={() => { closeTimer.current = setTimeout(() => setShow(false), 150); }}
+      onMouseLeave={() => { closeTimer.current = setTimeout(() => setShow(false), 60); }}
     >
       {children}
       {show && createPortal(

@@ -2345,7 +2345,7 @@ const Gi = ({
         p.current && clearTimeout(p.current), g(), s(!0);
       },
       onMouseLeave: () => {
-        p.current = setTimeout(() => s(!1), 150);
+        p.current = setTimeout(() => s(!1), 60);
       },
       children: [
         t,
