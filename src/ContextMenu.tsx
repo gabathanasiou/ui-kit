@@ -10,7 +10,7 @@ import {
   DropdownThemeContext, SubmenuContext, MenuHighlightContext, useMenuHighlight,
   useMenuHighlightState, useMenuKeys, useMenuKeyLock, useMenuWheel, menuItemLabel,
 } from './DropdownMenu';
-import type { MenuHighlightItem } from './DropdownMenu';
+import type { DropdownTheme, MenuHighlightItem } from './DropdownMenu';
 
 const MARGIN = 8;
 
@@ -21,6 +21,9 @@ export interface ContextMenuProps {
   onClose: () => void;
   children: React.ReactNode;
   containerRef?: React.RefObject<HTMLElement>;
+  /** Tokens theme (default `'light'` — context menus anchor on light surfaces).
+   *  Pass `'dark'` when the menu opens over dark chrome (the ribbon designer). */
+  theme?: DropdownTheme;
   /** Morph from the press point (the modal FLIP language; default true).
    *  prefers-reduced-motion and morph={false} skip it entirely. */
   morph?: boolean;
@@ -37,7 +40,7 @@ export interface ContextMenuProps {
  * Press-point anchored and STATIC (it does not follow scrolling); the close
  * morph shrinks back to where the menu was opened.
  */
-export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, children, containerRef, morph = true }) => {
+export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, children, containerRef, theme = 'light', morph = true }) => {
   const scale = useCoarseScale();
   const CTX_TEXT_FS = coarsePx(12, 14, scale);
   const contentElRef = useRef<HTMLDivElement | null>(null);
@@ -140,12 +143,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
         <span style={{ position: 'fixed', inset: 0 }} aria-hidden="true" />
       </RadixDropdownMenu.Trigger>
       <RadixDropdownMenu.Portal>
-        <DropdownThemeContext.Provider value="light">
+        <DropdownThemeContext.Provider value={theme}>
         <SubmenuContext.Provider value={{ chain: subChain, setChain: setSubChain, morph, keyboardOpened: keyboardOpenedSub, setKeyboardOpened: setKeyboardOpenedSub }}>
           <MenuHighlightContext.Provider value={highlight}>
             <RadixDropdownMenu.Content
               ref={setComposedRef}
-              data-theme="light"
+              data-theme={theme}
               data-ui-fixed
               className="fixed ui-menu rounded-lg shadow-xl p-1 z-[9999] min-w-[180px] max-h-[85vh] overflow-y-auto scrollbar-custom"
               style={{ fontSize: CTX_TEXT_FS, left: pos?.left ?? pressRef.current.left, top: pos?.top ?? pressRef.current.top, touchAction: 'manipulation' }}

@@ -1,4 +1,5 @@
 import React from 'react';
+import type { DropdownTheme } from './DropdownMenu';
 export interface ContextMenuProps {
     open: boolean;
     x: number;
@@ -6,6 +7,9 @@ export interface ContextMenuProps {
     onClose: () => void;
     children: React.ReactNode;
     containerRef?: React.RefObject<HTMLElement>;
+    /** Tokens theme (default `'light'` — context menus anchor on light surfaces).
+     *  Pass `'dark'` when the menu opens over dark chrome (the ribbon designer). */
+    theme?: DropdownTheme;
     /** Morph from the press point (the modal FLIP language; default true).
      *  prefers-reduced-motion and morph={false} skip it entirely. */
     morph?: boolean;
