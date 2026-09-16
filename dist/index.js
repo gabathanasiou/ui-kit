@@ -842,7 +842,7 @@ function Pi({
     /* @__PURE__ */ i("div", { className: `shrink-0 ${x.headerText}`, children: z }),
     /* @__PURE__ */ i("div", { ref: de, className: "flex-1 min-h-0 overflow-y-auto scrollbar-custom flex flex-col", children: n.map((M) => {
       const j = M.id === r, _ = R === M.id;
-      return /* @__PURE__ */ i("div", { "data-active": j ? "1" : void 0, className: `flex items-center gap-1 rounded ${j || _ ? x.rowActiveBg : x.rowHoverBg} ${R && !_ ? "opacity-40 pointer-events-none" : ""}`, children: _ ? /* @__PURE__ */ S(Oe, { children: [
+      return /* @__PURE__ */ i("div", { "data-active": j ? "1" : void 0, className: `scroll-my-4 flex items-center gap-1 rounded ${j || _ ? x.rowActiveBg : x.rowHoverBg} ${R && !_ ? "opacity-40 pointer-events-none" : ""}`, children: _ ? /* @__PURE__ */ S(Oe, { children: [
         /* @__PURE__ */ i("div", { className: "flex-1 min-w-0 flex items-center", children: /* @__PURE__ */ i(
           "input",
           {

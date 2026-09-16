@@ -304,6 +304,10 @@
   transition: background-color 150ms ease, color 150ms ease;
   user-select: none;
   -webkit-user-select: none;
+  /* Open-scroll breathing room: `scrollIntoView({block:'nearest'})` (highlight /
+     selected / active row) keeps a gap at the panel edge, so the row is never
+     flush — you can see the items around it. */
+  scroll-margin-block: 16px;
 }
 
 /* Press feedback: SQUEEZE the current background into a smaller pill — an
