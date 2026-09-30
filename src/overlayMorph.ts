@@ -238,7 +238,7 @@ export function useOverlayMorph<T extends HTMLElement>(opts: {
   /* The clone cache must track the panel's CURRENT rect, never a stale or
      mid-motion frame. Three traps: (a) fixed panels mount at their INITIAL
      position state (0,0) and only reach their real spot after a positioning
-     rAF (the app's useFixedPosition, the kit menu's own) — the rect read at
+     rAF (the shared useDropdownPosition engine) — the rect read at
      ref-attach is the stale one, and an unmount-driven close then pins its
      clone at (0,0); (b) a gBCR read while the open zoom is ANIMATING returns
      the scaled box (an origin/rect a few px off); (c) panels follow the

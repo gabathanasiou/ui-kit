@@ -11,7 +11,8 @@ export { useOverlayMorph, overlayMorphEnabled, nearestOverlayOrigin, playOverlay
 export type { OverlayRect } from './overlayMorph';
 export type { ModalProps } from './Modal';
 export { LongPressMenuProvider, useLongPressOptOut, isInteractiveElement } from './useLongPressMenu';
-export { useSmartPosition, useFixedPosition } from './useSmartPosition';
+export { useDropdownPosition, DROPDOWN_MAX_HEIGHT } from './useDropdownPosition';
+export type { DropdownPanelPos, UseDropdownPositionOptions } from './useDropdownPosition';
 export { useTouchMode } from './useTouchMode';
 export { default as Button } from './Button';
 export type { ButtonProps } from './Button';

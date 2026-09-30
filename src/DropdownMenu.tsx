@@ -5,7 +5,7 @@ import { Pencil, Copy, Trash2, Plus, Check, X, RotateCcw, Search } from 'lucide-
 import { usePortalTarget, useCurrentDocument } from './popout';
 import { IS_COARSE, getCoarseScale, useCoarseScale, coarsePx } from './device';
 import { useOverlayMorph } from './overlayMorph';
-import { useFixedPosition } from './useSmartPosition';
+import { useDropdownPosition, DROPDOWN_MAX_HEIGHT } from './useDropdownPosition';
 import { registerOverlayClose } from './overlayRegistry';
 
 export type DropdownTheme = 'light' | 'dark' | 'blue';
@@ -425,6 +425,9 @@ export interface DropdownMenuProps {
    *  stacked app modal — the kit menu default z-[200] sits under a modal's
    *  z-[10000]). */
   contentClassName?: string;
+  /** Per-menu height cap in px (the positioner clamps to the room available
+   *  on the chosen side; this is the ceiling). Default 384. */
+  maxMenuHeight?: number;
   /** Trigger-anchored scale+fade morph (the modal FLIP language; default
    *  true). prefers-reduced-motion and morph={false} skip it entirely. */
   morph?: boolean;
@@ -463,6 +466,7 @@ export default function DropdownMenu({
   children,
   morph = true,
   contentClassName,
+  maxMenuHeight,
   initialHighlightIndex,
   searchable = false,
   searchPlaceholder,
@@ -631,9 +635,6 @@ export default function DropdownMenu({
       const doc = node.ownerDocument;
       lockDocRef.current = doc;
       doc.addEventListener('keydown', lockHandlerRef.current, { capture: true });
-      /* offsetWidth works while the content is still visibility-hidden —
-         the real panel width for the viewport clamp (see fixedOpts above). */
-      setContentWidth(node.offsetWidth);
       setContentReady(true);
     } else {
       lockDocRef.current?.removeEventListener('keydown', lockHandlerRef.current, { capture: true });
@@ -644,29 +645,28 @@ export default function DropdownMenu({
     setContentRef(node);
   }, [setContentRef]);
 
-  /* Panel positioning (the EntityDropdown-panel model): the ROOT content is
-     fixed below the trigger, width-matched to it (or the `width` class for
-     explicitly-sized menus), viewport-clamped, hidden until the positioning
-     rAF flips `ready`. Submenus keep the Radix popper side-placement. */
-  const [pos, setPos] = useState({ top: 0, left: 0, width: 0, maxH: 320, ready: false } as { top: number; left: number; width: number; maxH: number; bottom?: number; ready?: boolean });
+  /* Panel positioning (the ONE engine — visual-viewport-aware flip/shift/size;
+     see useDropdownPosition.ts): the ROOT content opens below the trigger,
+     width-matched to it (or the `width` class for explicitly-sized menus),
+     flips above when there is no room and is height-clamped to the chosen
+     side; hidden until the engine reports `ready`. Submenus keep the Radix
+     popper side-placement. */
+  const [pos, setPos] = useState({ top: 0, left: 0, maxH: DROPDOWN_MAX_HEIGHT, side: 'bottom' as 'top' | 'bottom', ready: false });
   const [triggerWidth, setTriggerWidth] = useState(0);
-  /* The portal content mounts in a LATER commit than the `open` flip — and
-     the viewport clamp must measure the CONTENT's width, not the trigger's
-     (a `width` class like w-80 makes the panel much wider than its trigger;
-     clamping against the trigger width left fixed-width menus cropped at the
-     viewport edge). The composed ref captures both facts on that later mount. */
+  /* The portal content mounts in a LATER commit than the `open` flip. Gated on
+     contentReady: the panel stays visibility-hidden until the engine has
+     measured it, so there is no flash — one position, the right one. */
   const [contentReady, setContentReady] = useState(false);
-  const [contentWidth, setContentWidth] = useState(0);
   useEffect(() => {
     if (open && triggerRef.current) setTriggerWidth(triggerRef.current.getBoundingClientRect().width);
   }, [open]);
-  const fixedOpts = useMemo(() => ({ panelWidth: (contentWidth || triggerWidth) || undefined }), [contentWidth, triggerWidth]);
-  /* The menu max-height is HARD-CAPPED at 24rem (the content class is
-     overridden by the positioning's inline maxHeight, so the cap lives here).
-     Gated on contentReady: the first measure must already know the real panel
-     width (the panel stays visibility-hidden until ready, so there is no
-     flash — one position, the right one). */
-  useFixedPosition(triggerRef, open && contentReady, (p) => setPos({ ...p, maxH: Math.min(p.maxH, 384), ready: true }), fixedOpts);
+  useDropdownPosition({
+    anchorRef: triggerRef,
+    panelRef: contentElRef,
+    open: open && contentReady,
+    maxHeight: maxMenuHeight,
+    onPosition: setPos,
+  });
   /* The panel is `visibility: hidden` until the positioning rAF flips ready —
      and focusing a hidden element is a no-op, so Radix's open autofocus was
      silently dropped (the keyboard stayed on the trigger/BODY and menu keys
@@ -801,8 +801,7 @@ export default function DropdownMenu({
                     touchAction: 'manipulation',
                     position: 'fixed',
                     left: pos.left,
-                    top: pos.bottom != null ? undefined : pos.top,
-                    bottom: pos.bottom,
+                    top: pos.top,
                     /* No width class: the menu sizes to its CONTENT (text must
                        never clip) but never narrower than the trigger — the
                        min-width floor keeps the trigger-matched look. */

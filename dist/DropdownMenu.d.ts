@@ -139,6 +139,9 @@ export interface DropdownMenuProps {
      *  stacked app modal — the kit menu default z-[200] sits under a modal's
      *  z-[10000]). */
     contentClassName?: string;
+    /** Per-menu height cap in px (the positioner clamps to the room available
+     *  on the chosen side; this is the ceiling). Default 384. */
+    maxMenuHeight?: number;
     /** Trigger-anchored scale+fade morph (the modal FLIP language; default
      *  true). prefers-reduced-motion and morph={false} skip it entirely. */
     morph?: boolean;
@@ -165,7 +168,7 @@ export interface DropdownMenuProps {
     searchValue?: string;
     onSearchValueChange?: (q: string) => void;
 }
-export default function DropdownMenu({ open, onClose, onOpenChange, trigger, align, width, theme, children, morph, contentClassName, initialHighlightIndex, searchable, searchPlaceholder, searchFilter, searchValue, onSearchValueChange, }: DropdownMenuProps): React.JSX.Element;
+export default function DropdownMenu({ open, onClose, onOpenChange, trigger, align, width, theme, children, morph, contentClassName, maxMenuHeight, initialHighlightIndex, searchable, searchPlaceholder, searchFilter, searchValue, onSearchValueChange, }: DropdownMenuProps): React.JSX.Element;
 export interface ItemManagerDropdownProps {
     open: boolean;
     onClose: (open: boolean) => void;

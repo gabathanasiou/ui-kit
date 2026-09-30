@@ -107,8 +107,10 @@ function InitialHighlightMenu() {
 
 function LongMenuDemo() {
   /* A 30-item menu — overflows the viewport, exercises the manual wheel
-     scroll + the max-height clamp. */
+     scroll + the max-height clamp. The capped variant proves maxMenuHeight
+     feeds the engine (the cap holds AND the menu still flips). */
   const [open, setOpen] = useState(false);
+  const [cappedOpen, setCappedOpen] = useState(false);
   return (
     <div className="row" data-testid="long-menu">
       <DropdownMenu open={open} onOpenChange={setOpen}
@@ -116,6 +118,13 @@ function LongMenuDemo() {
       >
         {Array.from({ length: 30 }, (_, i) => (
           <DropdownItem key={i} onClick={() => setOpen(false)}>Item {i + 1}</DropdownItem>
+        ))}
+      </DropdownMenu>
+      <DropdownMenu open={cappedOpen} onOpenChange={setCappedOpen} maxMenuHeight={160}
+        trigger={<Button data-testid="capped-trigger">Capped menu</Button>}
+      >
+        {Array.from({ length: 30 }, (_, i) => (
+          <DropdownItem key={i} onClick={() => setCappedOpen(false)}>Item {i + 1}</DropdownItem>
         ))}
       </DropdownMenu>
     </div>
