@@ -44,8 +44,11 @@ const TokenPopup: React.FC<{
   useEffect(() => { onApiRef.current(api); }, [api]);
   const listRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    // Keyboard-driven highlights scroll into view; pointer hover must not
+    // move the row under the cursor (roadmap 187).
+    if (api.pointerDriven) return;
     listRef.current?.querySelector<HTMLElement>('.ui-item-highlighted')?.scrollIntoView({ block: 'nearest' });
-  }, [api.highlightedIndex]);
+  }, [api.highlightedIndex, api.pointerDriven]);
   /* Seed the FIRST row highlighted on open (and when a filter empties the
      highlight), so typing `@` shows a lit default like the old popup. */
   useEffect(() => {

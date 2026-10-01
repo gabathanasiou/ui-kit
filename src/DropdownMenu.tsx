@@ -700,12 +700,13 @@ export default function DropdownMenu({
   }, [open, query, searchable, highlight.items.length]);
 
   /* Arrows/typeahead can light a row that is scrolled out of view — keep the
-     highlighted row visible (the panel's scroll-into-view behavior). */
+     highlighted row visible. POINTER-driven highlights never scroll: the row
+     under the cursor would move while the user aims at it. */
   useLayoutEffect(() => {
-    if (!open || highlight.highlightedIndex < 0) return;
+    if (!open || highlight.highlightedIndex < 0 || highlight.pointerDriven) return;
     const row = contentElRef.current?.querySelector<HTMLElement>(`[data-ei="${highlight.highlightedIndex}"]`);
     row?.scrollIntoView({ block: 'nearest' });
-  }, [open, highlight.highlightedIndex]);
+  }, [open, highlight.highlightedIndex, highlight.pointerDriven]);
 
   const handleOpenChange = useCallback((o: boolean) => {
     // While the close morph plays (open already false, Radix still mounted)

@@ -128,12 +128,13 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
   useMenuWheel(subOpen, wheelHandlerRef);
   useMenuKeyLock(subOpen, highlight, keysHandlerRef, subContentRef, !isTopmost, lockHandlerRef);
 
-  /* Keep the highlighted row visible when arrows/typeahead scroll it out. */
+  /* Keep the highlighted row visible when arrows/typeahead scroll it out —
+     never for a pointer-driven highlight (the hovered row must not move). */
   React.useLayoutEffect(() => {
-    if (!subOpen || highlight.highlightedIndex < 0) return;
+    if (!subOpen || highlight.highlightedIndex < 0 || highlight.pointerDriven) return;
     const row = subContentRef.current?.querySelector<HTMLElement>(`[data-ei="${highlight.highlightedIndex}"]`);
     row?.scrollIntoView({ block: 'nearest' });
-  }, [subOpen, highlight.highlightedIndex]);
+  }, [subOpen, highlight.highlightedIndex, highlight.pointerDriven]);
   const lockDocRef = useRef<Document | null>(null);
   const setComposedRef = useCallback((node: HTMLDivElement | null) => {
     if (node) {

@@ -99,6 +99,40 @@ test('a long menu scrolls with the wheel and clamps to the viewport', async ({ p
   expect(after).toBeGreaterThan(before);
 });
 
+test('hovering a clipped edge row does not scroll the list; keyboard still does', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('long-trigger').click();
+  const content = menu(page);
+  await expect(content).toBeVisible();
+
+  // Park the scroller mid-list, then find the row clipped at the top.
+  await content.evaluate(el => { el.scrollTop = 120; });
+  const clipped = await page.evaluate(() => {
+    const list = document.querySelector('[role="menu"]') as HTMLElement;
+    const rows = [...list.querySelectorAll<HTMLElement>('[data-ei]')];
+    const top = list.getBoundingClientRect().top;
+    const row = rows.find(r => {
+      const b = r.getBoundingClientRect();
+      return b.top < top - 1 && b.bottom > top + 1;
+    });
+    if (!row) return null;
+    const b = row.getBoundingClientRect();
+    return { x: b.x + b.width / 2, y: Math.max(b.top, top) + 4, scrollTop: list.scrollTop };
+  });
+  expect(clipped).not.toBeNull();
+
+  // A raw mouse move (NOT locator.hover — it scrolls the element into view
+  // first) over the clipped row must not move the list.
+  await page.mouse.move(clipped!.x, clipped!.y);
+  await page.waitForTimeout(100);
+  expect(await content.evaluate(el => el.scrollTop)).toBe(clipped!.scrollTop);
+
+  // Keyboard still keeps the active row visible: the row above the hovered one
+  // is off-screen, so ArrowUp scrolls the list.
+  await page.keyboard.press('ArrowUp');
+  await expect.poll(async () => content.evaluate(el => el.scrollTop)).toBeLessThan(clipped!.scrollTop);
+});
+
 test('a fixed-width menu at the right viewport edge stays fully inside it', async ({ page }) => {
   /* The Schedule version-manager pattern: w-80 (320px) menu under a trigger
      at the right edge. The viewport clamp must use the CONTENT's width —
