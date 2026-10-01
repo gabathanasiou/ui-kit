@@ -54,10 +54,19 @@ export const ToolButton: React.FC<{ onClick: () => void; disabled?: boolean; tit
   );
 };
 
-export const Seg: React.FC<{ value: string; options: { v: string; l: string }[]; onChange: (v: string) => void; disabled?: boolean; active?: (v: string) => boolean }> = ({ value, options, onChange, disabled, active }) => {
+export const Seg: React.FC<{
+  value: string;
+  options: { v: string; l: string }[];
+  onChange: (v: string) => void;
+  disabled?: boolean;
+  active?: (v: string) => boolean;
+  /** Fill the container with equal-width segments (labels centered) — the
+   *  docked inspector column wants the control to span the full row. */
+  stretch?: boolean;
+}> = ({ value, options, onChange, disabled, active, stretch }) => {
   const chrome = useToolbarChrome();
   return (
-    <div className={TB_SEG}>
+    <div className={`${TB_SEG}${stretch ? ' w-full' : ''}`}>
       {options.map(o => {
         const on = active ? active(o.v) : value === o.v;
         return (
@@ -66,7 +75,7 @@ export const Seg: React.FC<{ value: string; options: { v: string; l: string }[];
             disabled={disabled}
             onClick={() => onChange(o.v)}
             style={chrome.control}
-            className={`font-medium transition-colors disabled:opacity-30 ${on ? 'bg-blue-900/50 text-blue-300' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'} ${o.v !== options[options.length - 1].v ? 'border-r border-zinc-700' : ''}`}
+            className={`font-medium transition-colors disabled:opacity-30 ${stretch ? 'flex-1' : ''} ${on ? 'bg-blue-900/50 text-blue-300' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'} ${o.v !== options[options.length - 1].v ? 'border-r border-zinc-700' : ''}`}
           >
             {o.l}
           </button>

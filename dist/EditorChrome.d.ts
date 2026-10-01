@@ -50,6 +50,9 @@ export declare const Seg: React.FC<{
     onChange: (v: string) => void;
     disabled?: boolean;
     active?: (v: string) => boolean;
+    /** Fill the container with equal-width segments (labels centered) — the
+     *  docked inspector column wants the control to span the full row. */
+    stretch?: boolean;
 }>;
 /** Section eyebrow: uppercase label with a hairline rule. */
 export declare const SectionHeader: React.FC<{
