@@ -8,11 +8,15 @@ a committed `dist/`; consumers pin a github tag (`github:gabathanasiou/ui-kit#v0
 
 - `npm run dev` — playground dev server on ALL interfaces (port 5183; reachable
   from the iPad at `http://<mac-ip>:5183`). `npm run playground` = localhost only.
-- `npm run test:playground` — Playwright specs against the playground
-  (`playground/specs/`; config `playground/playwright.config.ts`, desktop-chromium
-  + webkit-iPad projects, dev server auto-started via webServer). Run one project:
+- `npm run test:unit` — Vitest pure-logic tests (`src/__tests__/`; ms-fast).
+- `npm run test:playground` — full Playwright suite (test-only port 5184; desktop
+  Chrome + WebKit-iPad projects; fully parallel, ~30s). One project:
   `npx playwright test -c playground/playwright.config.ts --project=desktop`.
-- `npx tsc -p tsconfig.build.json --noEmit` — typecheck before done.
+- `npm run test:smart` — only the specs your diff can touch (+ canaries and last
+  failures); `--list` previews. `npm run test:baseline -- <spec>` answers "was it
+  me?" on a clean HEAD worktree.
+- `npm run lint` — typecheck + test/doc hygiene ratchets (waitForTimeout count,
+  orphan specs, suite caps, AGENTS.md budget).
 - `npm run build` — lib build (vite es/cjs + tsc types + css copy). Run before
   committing a version bump.
 
@@ -81,7 +85,6 @@ a committed `dist/`; consumers pin a github tag (`github:gabathanasiou/ui-kit#v0
 - The playground has a sticky **coarse-scale controller** (Off/50%/Full +
   slider + number + Reset) to verify every surface at any %.
 
-
 ## The Playground (debug everything here, not in the app)
 
 `playground/src/main.tsx` is the component zoo — every surface, with testids.
@@ -109,18 +112,24 @@ Tailwind classes the consumer provides):
 - `.ui-menu { z-index: 10001 !important }` — kit menus portal to body at
   z-[200], UNDER a modal (z-10000); the app's index.css does the same.
 
-## Specs (what they guard)
+## Testing (read `docs/TESTING.md` before writing/changing specs)
 
-- `specs/dropdown-menu.spec.ts` — trigger-click dismiss closes cleanly +
-  reopens (the stuck-menu regression); click-away; reopen during the close
-  morph; the trigger keeps its hover look while open.
-- `specs/overlay-morph.spec.ts` — reopening a clone panel never spawns a
-  phantom `[data-morph-clone]` (StrictMode regression); the close clone pins
-  the panel's rect (never 0,0); open/close morphs animate.
-- `specs/modal-portal.spec.ts` — menu inside a modal: visible above it,
-  Escape dismisses ONLY the menu; stacked modals close top-first; the LOWER
-  stacked modal is `aria-hidden` (Radix) so `getByRole('dialog')` counts 1 —
-  use `locator('[role="dialog"]')` for DOM counts.
+- **Two layers**: Vitest for pure logic (`src/__tests__/`), Playwright for browser
+  behaviour (`playground/specs/`). Push logic down (extract to `src/*.ts`), keep ONE
+  e2e case for the wiring, never assert the same thing at both layers.
+- The suite runs the **DEV server under StrictMode** (dev-only bugs reproduce) with
+  `reducedMotion: 'reduce'`; specs ABOUT motion opt back in per-file
+  (`test.use({ contextOptions: { reducedMotion: 'no-preference' } })`).
+- **Web-first assertions only**; `waitForTimeout` is ratcheted (currently 9). Both
+  projects run every spec — engine-incompatible cases skip on the iPad project with
+  a reason (wheel, coarse geometry).
+- New spec or source file → add it to `scripts/smart-test.mjs` RULES; an orphan spec
+  fails `npm run lint`. The suite is capped (12 specs / 70 tests) — extend, push down,
+  or consciously raise the cap in `scripts/check-test-hygiene.mjs`.
+- **Visual-only changes get NO test** — end with a numbered manual check for the user.
+- Spec-map landmarks: dismissal/hidden-content in `dropdown-menu.spec.ts`; StrictMode
+  phantom clone + clone rect/origin in `overlay-morph.spec.ts`; Escape scoping +
+  stacked aria-hidden in `modal-portal.spec.ts` (DOM counts via `locator('[role="dialog"]')`).
 
 ## The overlay morph (motion language — read before touching)
 
@@ -188,5 +197,4 @@ stays mounted while the close morph plays; `onClosed` drops persisted):
 
 ## Doc budget
 
-`AGENTS.md` stays ≤ ~200 lines — it is loaded every session. When a section is
-added, compact it or move detail to `docs/*.md`.
+`AGENTS.md` stays ≤ 200 lines (enforced by `npm run lint`) — move detail to `docs/*.md`.

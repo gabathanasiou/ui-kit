@@ -32,7 +32,11 @@
     "playground": "vite playground",
     "test:playground": "playwright test -c playground/playwright.config.ts",
     "test:unit": "vitest run",
-    "test:unit:watch": "vitest"
+    "test:unit:watch": "vitest",
+    "test:smart": "node scripts/smart-test.mjs",
+    "test:baseline": "node scripts/test-baseline.mjs",
+    "lint": "tsc -p tsconfig.build.json --noEmit && tsc --noEmit && node scripts/check-test-hygiene.mjs",
+    "lint:tests": "node scripts/check-test-hygiene.mjs"
   },
   "peerDependencies": {
     "@floating-ui/react-dom": "^2.1.8",
