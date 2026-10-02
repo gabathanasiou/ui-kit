@@ -1,8 +1,9 @@
 "use client";
 import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
-import { Extension, type Editor } from '@tiptap/core';
-import { NodeSelection, PluginKey } from '@tiptap/pm/state';
+import { Extension, Mark, type Editor } from '@tiptap/core';
+import { NodeSelection, Plugin, PluginKey } from '@tiptap/pm/state';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { TextStyle, FontFamily, FontSize } from '@tiptap/extension-text-style';
@@ -32,6 +33,71 @@ import { TokenSuggestion } from './RichTextSuggestionPopup';
 // stored key to display meta (label + color); `suggestionItems` feeds the `@`
 // autocomplete; `attributeItems` feeds the `.` stage.
 
+// ---- named paragraph-style runs (app-driven mark) ------------------------------
+// A linked style marker: `styleId` names an entry in the CONSUMER's style
+// registry; the kit only carries the link (`data-text-style`) through storage,
+// never the resolved typography (so editing the style updates every run). The
+// priority keeps the marker OUTSIDE the font/size `textStyle` span, so direct
+// formatting nests inside it and wins conflicts (Word semantics).
+const ReportTextStyle = Mark.create({
+  name: 'reportTextStyle',
+  priority: 102,
+  addAttributes() {
+    return {
+      styleId: {
+        default: null,
+        parseHTML: el => (el as HTMLElement).getAttribute('data-text-style'),
+        renderHTML: attrs => (attrs.styleId ? { 'data-text-style': attrs.styleId } : {}),
+      },
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'span[data-text-style]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['span', HTMLAttributes, 0];
+  },
+});
+
+const RETAINED_SELECTION_KEY = new PluginKey<{ held: boolean; decorations: DecorationSet }>('retainedSelectionHighlight');
+
+/** Consumer controls (font-size number box, style pickers) take focus away
+ *  from the editor — the browser only paints a contentEditable selection while
+ *  it is focused. `holdSelectionHighlight(true)` paints a ghost highlight over
+ *  the current range (cleared by the same call with `false`, or by any
+ *  selection change once released), so the user can see what the control will
+ *  style. */
+const RetainedSelection = Extension.create({
+  name: 'retainedSelectionHighlight',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin<{ held: boolean; decorations: DecorationSet }>({
+        key: RETAINED_SELECTION_KEY,
+        state: {
+          init: () => ({ held: false, decorations: DecorationSet.empty }),
+          apply(tr, prev) {
+            const meta = tr.getMeta(RETAINED_SELECTION_KEY) as { held: boolean } | undefined;
+            const held = meta ? meta.held : prev.held;
+            if (!held) return { held: false, decorations: DecorationSet.empty };
+            const { from, to, empty } = tr.selection;
+            return {
+              held,
+              decorations: empty
+                ? DecorationSet.empty
+                : DecorationSet.create(tr.doc, [Decoration.inline(from, to, { class: 'rt-retained-selection' })]),
+            };
+          },
+        },
+        props: {
+          decorations(state) {
+            return RETAINED_SELECTION_KEY.getState(state)?.decorations;
+          },
+        },
+      }),
+    ];
+  },
+});
+
 export interface RichTextEditorHandle {
   /** Runs a formatting command on the current selection. `opts.focus === false`
    *  applies WITHOUT stealing focus (toolbar inputs that must stay focused
@@ -46,6 +112,9 @@ export interface RichTextEditorHandle {
    *  remapped through transactions, and no focus steal (panel inputs keep
    *  their focus while the chip updates live). */
   replaceToken: (newKey: string) => void;
+  /** Paints/clears a ghost highlight over the current non-empty text selection
+   *  while a consumer control (e.g. the font-size box) holds focus. */
+  holdSelectionHighlight: (held: boolean) => void;
 }
 
 /** Formatting state at the caret/selection — drives the toolbar's toggle lighting. */
@@ -59,17 +128,20 @@ export interface RichTextState {
   /** `textStyle` mark attrs at the caret ('' = no run override). */
   fontFamily: string;
   fontSize: string;
+  /** `reportTextStyle` mark attr at the caret ('' = no linked style). */
+  textStyle: string;
   /** True when the selection is a non-empty range (the toolbar then styles
    *  the RUN; a collapsed caret styles the consumer's whole-object default). */
   hasSelection: boolean;
   /** The ranged selection spans different values (Word-style "Mixed"). */
   fontFamilyMixed: boolean;
   fontSizeMixed: boolean;
+  textStyleMixed: boolean;
 }
 
 export const RICH_TEXT_STATE_IDLE: RichTextState = {
   bold: false, italic: false, underline: false, strike: false, link: false, color: '',
-  fontFamily: '', fontSize: '', hasSelection: false, fontFamilyMixed: false, fontSizeMixed: false,
+  fontFamily: '', fontSize: '', textStyle: '', hasSelection: false, fontFamilyMixed: false, fontSizeMixed: false, textStyleMixed: false,
 };
 
 /** Key of the token chip immediately before the doc position `pos`, or null.
@@ -148,22 +220,28 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
 
   const reportState = (ed: NonNullable<ReturnType<typeof useEditor>>) => {
     const textStyle = ed.getAttributes('textStyle');
-    // A ranged selection: collect every text node's textStyle values so the
-    // toolbar can show "Mixed" (getAttributes only reads the FIRST mark).
+    const linked = ed.getAttributes('reportTextStyle');
+    // A ranged selection: collect every text node's textStyle/reportTextStyle
+    // values so the toolbar can show "Mixed" (getAttributes only reads the FIRST mark).
     const { from, to, empty } = ed.state.selection;
     let fontFamilyMixed = false;
     let fontSizeMixed = false;
+    let textStyleMixed = false;
     if (!empty) {
       const families = new Set<string>();
       const sizes = new Set<string>();
+      const styleIds = new Set<string>();
       ed.state.doc.nodesBetween(from, to, node => {
         if (!node.isText) return;
         const mark = node.marks.find(m => m.type.name === 'textStyle');
         families.add((mark?.attrs.fontFamily as string | undefined) || '');
         sizes.add((mark?.attrs.fontSize as string | undefined) || '');
+        const named = node.marks.find(m => m.type.name === 'reportTextStyle');
+        styleIds.add((named?.attrs.styleId as string | undefined) || '');
       });
       fontFamilyMixed = families.size > 1;
       fontSizeMixed = sizes.size > 1;
+      textStyleMixed = styleIds.size > 1;
     }
     const next: RichTextState = {
       bold: ed.isActive('bold'),
@@ -174,14 +252,16 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
       color: (textStyle.color as string | undefined) || '',
       fontFamily: (textStyle.fontFamily as string | undefined) || '',
       fontSize: (textStyle.fontSize as string | undefined) || '',
+      textStyle: (linked.styleId as string | undefined) || '',
       hasSelection: !empty,
       fontFamilyMixed,
       fontSizeMixed,
+      textStyleMixed,
     };
     // Skip unchanged reports — onTransaction fires on every transaction
     // (keystrokes, caret moves), and we don't want a setState per event.
     const prev = lastStateRef.current;
-    if (prev && prev.bold === next.bold && prev.italic === next.italic && prev.underline === next.underline && prev.strike === next.strike && prev.link === next.link && prev.color === next.color && prev.fontFamily === next.fontFamily && prev.fontSize === next.fontSize && prev.hasSelection === next.hasSelection && prev.fontFamilyMixed === next.fontFamilyMixed && prev.fontSizeMixed === next.fontSizeMixed) return;
+    if (prev && prev.bold === next.bold && prev.italic === next.italic && prev.underline === next.underline && prev.strike === next.strike && prev.link === next.link && prev.color === next.color && prev.fontFamily === next.fontFamily && prev.fontSize === next.fontSize && prev.textStyle === next.textStyle && prev.hasSelection === next.hasSelection && prev.fontFamilyMixed === next.fontFamilyMixed && prev.fontSizeMixed === next.fontSizeMixed && prev.textStyleMixed === next.textStyleMixed) return;
     lastStateRef.current = next;
     onStateChangeRef.current?.(next);
   };
@@ -283,6 +363,8 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
       TextStyle,
       FontFamily,
       FontSize,
+      ReportTextStyle,
+      RetainedSelection,
       Color,
       Underline,
       // Links: typed/pasted URLs auto-link; anchors open in a new tab and are
@@ -352,6 +434,12 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
         case 'unsetFontFamily': c.unsetFontFamily().run(); break;
         case 'fontSize': if (execValue) c.setFontSize(execValue).run(); break;
         case 'unsetFontSize': c.unsetFontSize().run(); break;
+        // Linked named style: mark the run with the consumer's style id. Direct
+        // font family/size on the range is cleared so the linked style's
+        // typography takes effect (the object-level precedent); bold/italic
+        // marks stay — direct character formatting still wins (Word).
+        case 'textStyle': if (execValue) c.setMark('reportTextStyle', { styleId: execValue }).unsetFontFamily().unsetFontSize().run(); break;
+        case 'unsetTextStyle': c.unsetMark('reportTextStyle').run(); break;
         // Clear every inline mark (bold/italic/underline/strike/color/font/
         // link) and normalize the block — the cell-chrome Reset path.
         case 'clearFormatting': c.unsetAllMarks().clearNodes().run(); break;
@@ -385,6 +473,10 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
         }
         return true;
       });
+    },
+    holdSelectionHighlight: (held: boolean) => {
+      if (!editor || editor.isDestroyed) return;
+      editor.view.dispatch(editor.state.tr.setMeta(RETAINED_SELECTION_KEY, { held }));
     },
   }), [editor]);
 

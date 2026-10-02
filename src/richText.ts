@@ -52,6 +52,12 @@ function sanitizeNode(node: Node): Node {
   const style = el.getAttribute('style');
   const cleaned = sanitizeStyle(style || '');
   if (cleaned) out.setAttribute('style', cleaned);
+  // Linked named-style marker (reportTextStyle mark) — the id survives storage;
+  // the consumer resolves it against its style registry at render time.
+  if (tag === 'span') {
+    const named = el.getAttribute('data-text-style');
+    if (named) out.setAttribute('data-text-style', named);
+  }
   if (tag === 'a') {
     out.setAttribute('href', el.getAttribute('href')!);
     const target = el.getAttribute('target');

@@ -733,7 +733,13 @@ function RichTextDemo() {
           disabled={false}
           active={active}
           font={{ value: active.fontFamily, mixed: active.fontFamilyMixed, onChange: f => editorRef.current?.exec(f === 'Helvetica' ? 'unsetFontFamily' : 'fontFamily', f === 'Helvetica' ? undefined : f) }}
-          fontSizeSlot={<RTSizeInput active={active} onCommit={size => editorRef.current?.exec(size ? 'fontSize' : 'unsetFontSize', size || undefined, { focus: false })} />}
+          fontSizeSlot={
+            // Hold the ghost selection while the box has focus — the native
+            // highlight is only painted while the editor itself is focused.
+            <span onFocusCapture={() => editorRef.current?.holdSelectionHighlight(true)} onBlurCapture={() => editorRef.current?.holdSelectionHighlight(false)}>
+              <RTSizeInput active={active} onCommit={size => editorRef.current?.exec(size ? 'fontSize' : 'unsetFontSize', size || undefined, { focus: false })} />
+            </span>
+          }
           showClearFormatting
         />
         <Button data-testid="rt-insert" variant="subtle" onClick={() => editorRef.current?.insertToken('cast.lead')}>
@@ -742,6 +748,17 @@ function RichTextDemo() {
         <Button variant="subtle" onClick={() => editorRef.current?.insertToken('scene.loc')}>
           Insert scene.loc
         </Button>
+      </div>
+      <div className="row">
+        <Button data-testid="rt-style-heading" variant="subtle" onClick={() => editorRef.current?.exec('textStyle', 'heading')}>
+          Apply Heading style
+        </Button>
+        <Button data-testid="rt-style-clear" variant="subtle" onClick={() => editorRef.current?.exec('unsetTextStyle')}>
+          Clear style
+        </Button>
+        <span className="label" data-testid="rt-style-state">
+          linked style: {active.textStyleMixed ? 'Mixed' : active.textStyle || '—'}
+        </span>
       </div>
       <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-4" data-testid="rt-editor">
         <RichTextEditor

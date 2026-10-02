@@ -35,6 +35,12 @@ describe('sanitizeRichText', () => {
     expect(sanitizeRichText('<span style="position: fixed">x</span>')).toBe('<span>x</span>');
   });
 
+  it('keeps the linked named-style marker on spans only', () => {
+    expect(sanitizeRichText('<span data-text-style="heading" onclick="x()">H</span>'))
+      .toBe('<span data-text-style="heading">H</span>');
+    expect(sanitizeRichText('<b data-text-style="heading">H</b>')).toBe('<b>H</b>');
+  });
+
   it('drops javascript: hrefs (unwraps the anchor, keeps the text)', () => {
     expect(sanitizeRichText('<a href="javascript:alert(1)">click</a>')).toBe('click');
   });

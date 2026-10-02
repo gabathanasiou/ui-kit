@@ -16,6 +16,9 @@ export interface RichTextEditorHandle {
      *  remapped through transactions, and no focus steal (panel inputs keep
      *  their focus while the chip updates live). */
     replaceToken: (newKey: string) => void;
+    /** Paints/clears a ghost highlight over the current non-empty text selection
+     *  while a consumer control (e.g. the font-size box) holds focus. */
+    holdSelectionHighlight: (held: boolean) => void;
 }
 /** Formatting state at the caret/selection — drives the toolbar's toggle lighting. */
 export interface RichTextState {
@@ -28,12 +31,15 @@ export interface RichTextState {
     /** `textStyle` mark attrs at the caret ('' = no run override). */
     fontFamily: string;
     fontSize: string;
+    /** `reportTextStyle` mark attr at the caret ('' = no linked style). */
+    textStyle: string;
     /** True when the selection is a non-empty range (the toolbar then styles
      *  the RUN; a collapsed caret styles the consumer's whole-object default). */
     hasSelection: boolean;
     /** The ranged selection spans different values (Word-style "Mixed"). */
     fontFamilyMixed: boolean;
     fontSizeMixed: boolean;
+    textStyleMixed: boolean;
 }
 export declare const RICH_TEXT_STATE_IDLE: RichTextState;
 export interface RichTextEditorProps {

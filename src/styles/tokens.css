@@ -1067,6 +1067,14 @@
   filter: brightness(0.72);
 }
 
+/* Ghost selection while a consumer control (font-size box, style picker)
+   holds focus — the browser only paints a contentEditable selection while it
+   is focused. `Highlight`/`HighlightText` track the OS selection colors. */
+.richtext-editor .rt-retained-selection {
+  background: Highlight;
+  color: HighlightText;
+}
+
 /* Menu popper wrappers are pointer-transparent (the .ui-menu content
    re-enables itself): a closing menu's wrapper must never intercept the
    click/hover meant for a control or trigger beneath it (a second menu

@@ -59,3 +59,34 @@ test('clear formatting unsets the run marks but keeps the text', async ({ page }
   await expect(output(page)).not.toContainText('<b>');
   await expect(editor(page)).toHaveText('Bold move');
 });
+
+test('a linked named style marks the run and survives storage', async ({ page }) => {
+  await page.goto('/');
+  await editor(page).click();
+  await page.keyboard.type('Hello world');
+  // caret is at the end — select the last word
+  for (let i = 0; i < 5; i++) await page.keyboard.press('Shift+ArrowLeft');
+
+  await page.getByTestId('rt-style-heading').click();
+  // the link id survives sanitize; the run text stays plain
+  await expect(output(page)).toContainText('data-text-style="heading"');
+  await expect(output(page)).toContainText('>world</span>');
+  await expect(output(page)).not.toContainText('>Hello</span>');
+  await expect(editor(page)).toHaveText('Hello world');
+  await expect(page.getByTestId('rt-style-state')).toContainText('heading');
+
+  await page.getByTestId('rt-style-clear').click();
+  await expect(output(page)).not.toContainText('data-text-style');
+});
+
+test('a selection spanning styled and unstyled runs reports Mixed', async ({ page }) => {
+  await page.goto('/');
+  await editor(page).click();
+  await page.keyboard.type('Hello world');
+  for (let i = 0; i < 5; i++) await page.keyboard.press('Shift+ArrowLeft');
+  await page.getByTestId('rt-style-heading').click();
+
+  // triple-click selects the whole line → one styled run + one unstyled run
+  await editor(page).click({ clickCount: 3 });
+  await expect(page.getByTestId('rt-style-state')).toContainText('Mixed');
+});
