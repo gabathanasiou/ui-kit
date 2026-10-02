@@ -29,8 +29,25 @@ test('font family and size apply to the selection only', async ({ page }) => {
   await expect(editor(page)).toHaveText('Hello world');
 });
 
-test('clear formatting unsets the run marks but keeps the text', async ({ page }) => {
+test('a selection spanning different runs shows Mixed', async ({ page }) => {
   await page.goto('/');
+  await editor(page).click();
+  await page.keyboard.type('Hello world');
+  // format only the last word
+  for (let i = 0; i < 5; i++) await page.keyboard.press('Shift+ArrowLeft');
+  await page.getByTestId('rt-demo').getByRole('button', { name: /Helvetica/ }).click();
+  await page.getByRole('menuitem', { name: 'Georgia' }).click();
+  const size = page.getByLabel('Font size');
+  await size.fill('14pt');
+  await size.press('Enter');
+
+  // extend the selection over the whole line → mixed family + size
+  await page.keyboard.press('Shift+Home');
+  await expect(page.getByTestId('rt-demo').getByRole('button', { name: 'Mixed' })).toBeVisible();
+  await expect(size).toHaveAttribute('placeholder', 'Mixed');
+});
+
+test('clear formatting unsets the run marks but keeps the text', async ({ page }) => {  await page.goto('/');
   await editor(page).click();
   await page.keyboard.type('Bold move');
   // caret is at the end — select the last word

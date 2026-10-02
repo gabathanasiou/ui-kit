@@ -23,6 +23,12 @@ export interface RichTextState {
     /** `textStyle` mark attrs at the caret ('' = no run override). */
     fontFamily: string;
     fontSize: string;
+    /** True when the selection is a non-empty range (the toolbar then styles
+     *  the RUN; a collapsed caret styles the consumer's whole-object default). */
+    hasSelection: boolean;
+    /** The ranged selection spans different values (Word-style "Mixed"). */
+    fontFamilyMixed: boolean;
+    fontSizeMixed: boolean;
 }
 export declare const RICH_TEXT_STATE_IDLE: RichTextState;
 export interface RichTextEditorProps {

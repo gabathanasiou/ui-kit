@@ -56,9 +56,18 @@ export interface RichTextState {
   /** `textStyle` mark attrs at the caret ('' = no run override). */
   fontFamily: string;
   fontSize: string;
+  /** True when the selection is a non-empty range (the toolbar then styles
+   *  the RUN; a collapsed caret styles the consumer's whole-object default). */
+  hasSelection: boolean;
+  /** The ranged selection spans different values (Word-style "Mixed"). */
+  fontFamilyMixed: boolean;
+  fontSizeMixed: boolean;
 }
 
-export const RICH_TEXT_STATE_IDLE: RichTextState = { bold: false, italic: false, underline: false, strike: false, link: false, color: '', fontFamily: '', fontSize: '' };
+export const RICH_TEXT_STATE_IDLE: RichTextState = {
+  bold: false, italic: false, underline: false, strike: false, link: false, color: '',
+  fontFamily: '', fontSize: '', hasSelection: false, fontFamilyMixed: false, fontSizeMixed: false,
+};
 
 /** Key of the token chip immediately before the doc position `pos`, or null.
  *  The `.` attribute suggestion is gated on this: the dot must sit directly
@@ -136,6 +145,23 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
 
   const reportState = (ed: NonNullable<ReturnType<typeof useEditor>>) => {
     const textStyle = ed.getAttributes('textStyle');
+    // A ranged selection: collect every text node's textStyle values so the
+    // toolbar can show "Mixed" (getAttributes only reads the FIRST mark).
+    const { from, to, empty } = ed.state.selection;
+    let fontFamilyMixed = false;
+    let fontSizeMixed = false;
+    if (!empty) {
+      const families = new Set<string>();
+      const sizes = new Set<string>();
+      ed.state.doc.nodesBetween(from, to, node => {
+        if (!node.isText) return;
+        const mark = node.marks.find(m => m.type.name === 'textStyle');
+        families.add((mark?.attrs.fontFamily as string | undefined) || '');
+        sizes.add((mark?.attrs.fontSize as string | undefined) || '');
+      });
+      fontFamilyMixed = families.size > 1;
+      fontSizeMixed = sizes.size > 1;
+    }
     const next: RichTextState = {
       bold: ed.isActive('bold'),
       italic: ed.isActive('italic'),
@@ -145,11 +171,14 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
       color: (textStyle.color as string | undefined) || '',
       fontFamily: (textStyle.fontFamily as string | undefined) || '',
       fontSize: (textStyle.fontSize as string | undefined) || '',
+      hasSelection: !empty,
+      fontFamilyMixed,
+      fontSizeMixed,
     };
     // Skip unchanged reports — onTransaction fires on every transaction
     // (keystrokes, caret moves), and we don't want a setState per event.
     const prev = lastStateRef.current;
-    if (prev && prev.bold === next.bold && prev.italic === next.italic && prev.underline === next.underline && prev.strike === next.strike && prev.link === next.link && prev.color === next.color && prev.fontFamily === next.fontFamily && prev.fontSize === next.fontSize) return;
+    if (prev && prev.bold === next.bold && prev.italic === next.italic && prev.underline === next.underline && prev.strike === next.strike && prev.link === next.link && prev.color === next.color && prev.fontFamily === next.fontFamily && prev.fontSize === next.fontSize && prev.hasSelection === next.hasSelection && prev.fontFamilyMixed === next.fontFamilyMixed && prev.fontSizeMixed === next.fontSizeMixed) return;
     lastStateRef.current = next;
     onStateChangeRef.current?.(next);
   };

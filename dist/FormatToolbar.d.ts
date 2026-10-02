@@ -5,6 +5,7 @@ export declare const FontMenu: React.FC<{
     value: string;
     disabled: boolean;
     onChange: (f: string) => void;
+    mixed?: boolean;
 }>;
 export interface FormatToolbarProps {
     editorRef: React.RefObject<RichTextEditorHandle | null>;
@@ -25,11 +26,13 @@ export interface FormatToolbarProps {
     font?: {
         value: string;
         onChange: (family: string) => void;
+        mixed?: boolean;
     };
     /** Optional contextual font size input (e.g. '12pt'); empty clears it. */
     fontSize?: {
         value: string;
         onChange: (size: string) => void;
+        mixed?: boolean;
     };
     /** Show the clear-formatting action (unsets every inline mark). */
     showClearFormatting?: boolean;

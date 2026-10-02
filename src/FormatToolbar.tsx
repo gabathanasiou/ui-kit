@@ -26,7 +26,7 @@ const NoColorDot: React.FC<{ className?: string }> = ({ className = 'w-3 h-3' })
 
 // ---- font picker (custom dropdown, options styled in their own typeface) ------
 
-export const FontMenu: React.FC<{ value: string; disabled: boolean; onChange: (f: string) => void }> = ({ value, disabled, onChange }) => {
+export const FontMenu: React.FC<{ value: string; disabled: boolean; onChange: (f: string) => void; mixed?: boolean }> = ({ value, disabled, onChange, mixed }) => {
   const [open, setOpen] = useState(false);
   const chrome = useToolbarChrome();
   return (
@@ -37,13 +37,15 @@ export const FontMenu: React.FC<{ value: string; disabled: boolean; onChange: (f
       width="w-44"
       trigger={
         <Button theme="dark" disabled={disabled} style={chrome.control} className="justify-between min-w-0">
-          <span className="truncate" style={{ fontFamily: value || 'Helvetica' }}>{value || 'Helvetica'}</span>
+          {mixed
+            ? <span className="truncate italic text-zinc-400">Mixed</span>
+            : <span className="truncate" style={{ fontFamily: value || 'Helvetica' }}>{value || 'Helvetica'}</span>}
           <ChevronDown className="w-3 h-3 text-zinc-500 shrink-0" />
         </Button>
       }
     >
       {FONTS.map(f => (
-        <DropdownItem key={f} onClick={() => { onChange(f); setOpen(false); }} icon={f === value ? <Check className="w-3.5 h-3.5" /> : undefined}>
+        <DropdownItem key={f} onClick={() => { onChange(f); setOpen(false); }} icon={!mixed && f === value ? <Check className="w-3.5 h-3.5" /> : undefined}>
           <span style={{ fontFamily: f }}>{f}</span>
         </DropdownItem>
       ))}
@@ -53,7 +55,7 @@ export const FontMenu: React.FC<{ value: string; disabled: boolean; onChange: (f
 
 // ---- size input (pt/px string, committed on blur/Enter) ------------------------
 
-const SizeInput: React.FC<{ value: string; disabled: boolean; onChange: (size: string) => void }> = ({ value, disabled, onChange }) => {
+const SizeInput: React.FC<{ value: string; disabled: boolean; mixed?: boolean; onChange: (size: string) => void }> = ({ value, disabled, mixed, onChange }) => {
   const chrome = useToolbarChrome();
   const [draft, setDraft] = useState(value);
   const [focused, setFocused] = useState(false);
@@ -68,7 +70,8 @@ const SizeInput: React.FC<{ value: string; disabled: boolean; onChange: (size: s
       title="Font size (e.g. 12pt)"
       aria-label="Font size"
       disabled={disabled}
-      value={focused ? draft : value}
+      value={focused ? draft : (mixed ? '' : value)}
+      placeholder={mixed ? 'Mixed' : ''}
       onFocus={() => { setDraft(value); setFocused(true); }}
       onBlur={() => { setFocused(false); commit(); }}
       onChange={e => setDraft(e.target.value)}
@@ -154,9 +157,9 @@ export interface FormatToolbarProps {
   /** Optional contextual font family picker (selection-level run override).
    *  The consumer owns the value (falling back to its object default); the
    *  toolbar only renders the control and reports the picked family. */
-  font?: { value: string; onChange: (family: string) => void };
+  font?: { value: string; onChange: (family: string) => void; mixed?: boolean };
   /** Optional contextual font size input (e.g. '12pt'); empty clears it. */
-  fontSize?: { value: string; onChange: (size: string) => void };
+  fontSize?: { value: string; onChange: (size: string) => void; mixed?: boolean };
   /** Show the clear-formatting action (unsets every inline mark). */
   showClearFormatting?: boolean;
 }
@@ -219,8 +222,8 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disable
       {(font || fontSize || showClearFormatting) && (
         <>
           <div className={TB_DIVIDER} />
-          {font && <FontMenu value={font.value || 'Helvetica'} disabled={disabled} onChange={font.onChange} />}
-          {fontSize && <SizeInput value={fontSize.value} disabled={disabled} onChange={fontSize.onChange} />}
+          {font && <FontMenu value={font.value || 'Helvetica'} mixed={font.mixed} disabled={disabled} onChange={font.onChange} />}
+          {fontSize && <SizeInput value={fontSize.value} mixed={fontSize.mixed} disabled={disabled} onChange={fontSize.onChange} />}
           {showClearFormatting && (
             <Tooltip content="Clear formatting">
               <Button

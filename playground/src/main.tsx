@@ -702,8 +702,8 @@ function RichTextDemo() {
           editorRef={editorRef}
           disabled={false}
           active={active}
-          font={{ value: active.fontFamily, onChange: f => editorRef.current?.exec(f === 'Helvetica' ? 'unsetFontFamily' : 'fontFamily', f === 'Helvetica' ? undefined : f) }}
-          fontSize={{ value: active.fontSize, onChange: s => editorRef.current?.exec(s ? 'fontSize' : 'unsetFontSize', s || undefined) }}
+          font={{ value: active.fontFamily, mixed: active.fontFamilyMixed, onChange: f => editorRef.current?.exec(f === 'Helvetica' ? 'unsetFontFamily' : 'fontFamily', f === 'Helvetica' ? undefined : f) }}
+          fontSize={{ value: active.fontSize, mixed: active.fontSizeMixed, onChange: s => editorRef.current?.exec(s ? 'fontSize' : 'unsetFontSize', s || undefined) }}
           showClearFormatting
         />
         <Button data-testid="rt-insert" variant="subtle" onClick={() => editorRef.current?.insertToken('cast.lead')}>
