@@ -19,5 +19,19 @@ export interface FormatToolbarProps {
     };
     /** Extra controls appended after the divider (e.g. an attribute picker). */
     trailing?: React.ReactNode;
+    /** Optional contextual font family picker (selection-level run override).
+     *  The consumer owns the value (falling back to its object default); the
+     *  toolbar only renders the control and reports the picked family. */
+    font?: {
+        value: string;
+        onChange: (family: string) => void;
+    };
+    /** Optional contextual font size input (e.g. '12pt'); empty clears it. */
+    fontSize?: {
+        value: string;
+        onChange: (size: string) => void;
+    };
+    /** Show the clear-formatting action (unsets every inline mark). */
+    showClearFormatting?: boolean;
 }
 export declare const FormatToolbar: React.FC<FormatToolbarProps>;

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { ChevronDown, Check, Underline as UnderlineIcon, Strikethrough, Link as LinkIcon } from 'lucide-react';
+import { ChevronDown, Check, Underline as UnderlineIcon, Strikethrough, Link as LinkIcon, RemoveFormatting } from 'lucide-react';
 import DropdownMenu from './DropdownMenu';
 import DropdownItem from './DropdownItem';
 import Button from './Button';
@@ -51,8 +51,38 @@ export const FontMenu: React.FC<{ value: string; disabled: boolean; onChange: (f
   );
 };
 
-// ---- link menu: apply/remove a hyperlink to the selection ----------------------
+// ---- size input (pt/px string, committed on blur/Enter) ------------------------
 
+const SizeInput: React.FC<{ value: string; disabled: boolean; onChange: (size: string) => void }> = ({ value, disabled, onChange }) => {
+  const chrome = useToolbarChrome();
+  const [draft, setDraft] = useState(value);
+  const [focused, setFocused] = useState(false);
+  const commit = () => {
+    const next = draft.trim();
+    if (next !== value) onChange(next);
+  };
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      title="Font size (e.g. 12pt)"
+      aria-label="Font size"
+      disabled={disabled}
+      value={focused ? draft : value}
+      onFocus={() => { setDraft(value); setFocused(true); }}
+      onBlur={() => { setFocused(false); commit(); }}
+      onChange={e => setDraft(e.target.value)}
+      onKeyDown={e => {
+        if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+        if (e.key === 'Escape') { setDraft(value); (e.target as HTMLInputElement).blur(); }
+      }}
+      style={chrome.input}
+      className={TB_INPUT + ' w-12 text-center'}
+    />
+  );
+};
+
+// ---- link menu: apply/remove a hyperlink to the selection ----------------------
 const LinkMenu: React.FC<{ editorRef: React.RefObject<RichTextEditorHandle | null>; disabled: boolean; active: boolean }> = ({ editorRef, disabled, active }) => {
   const [open, setOpen] = useState(false);
   const chrome = useToolbarChrome();
@@ -121,9 +151,17 @@ export interface FormatToolbarProps {
   lockedFormatting?: { bold?: string; italic?: string };
   /** Extra controls appended after the divider (e.g. an attribute picker). */
   trailing?: React.ReactNode;
+  /** Optional contextual font family picker (selection-level run override).
+   *  The consumer owns the value (falling back to its object default); the
+   *  toolbar only renders the control and reports the picked family. */
+  font?: { value: string; onChange: (family: string) => void };
+  /** Optional contextual font size input (e.g. '12pt'); empty clears it. */
+  fontSize?: { value: string; onChange: (size: string) => void };
+  /** Show the clear-formatting action (unsets every inline mark). */
+  showClearFormatting?: boolean;
 }
 
-export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disabled, active, lockedFormatting, trailing }) => {
+export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disabled, active, lockedFormatting, trailing, font, fontSize, showClearFormatting }) => {
   const [colorOpen, setColorOpen] = useState(false);
   const run = (cmd: string, value?: string) => editorRef.current?.exec(cmd, value);
   const chrome = useToolbarChrome();
@@ -178,6 +216,28 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disable
           ))}
         </div>
       </DropdownMenu>
+      {(font || fontSize || showClearFormatting) && (
+        <>
+          <div className={TB_DIVIDER} />
+          {font && <FontMenu value={font.value || 'Helvetica'} disabled={disabled} onChange={font.onChange} />}
+          {fontSize && <SizeInput value={fontSize.value} disabled={disabled} onChange={fontSize.onChange} />}
+          {showClearFormatting && (
+            <Tooltip content="Clear formatting">
+              <Button
+                theme="dark"
+                aria-label="Clear formatting"
+                disabled={disabled}
+                onMouseDown={e => e.preventDefault()}
+                onClick={() => run('clearFormatting')}
+                style={{ ...chrome.toggle, padding: 0 }}
+                className="justify-center"
+              >
+                <RemoveFormatting className="w-3 h-3" />
+              </Button>
+            </Tooltip>
+          )}
+        </>
+      )}
       {trailing && (
         <>
           <div className={TB_DIVIDER} />

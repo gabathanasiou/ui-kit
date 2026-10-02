@@ -5,7 +5,7 @@ import { Extension, type Editor } from '@tiptap/core';
 import { NodeSelection, PluginKey } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { TextStyle } from '@tiptap/extension-text-style';
+import { TextStyle, FontFamily, FontSize } from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
@@ -53,9 +53,12 @@ export interface RichTextState {
   strike: boolean;
   link: boolean;
   color: string;
+  /** `textStyle` mark attrs at the caret ('' = no run override). */
+  fontFamily: string;
+  fontSize: string;
 }
 
-export const RICH_TEXT_STATE_IDLE: RichTextState = { bold: false, italic: false, underline: false, strike: false, link: false, color: '' };
+export const RICH_TEXT_STATE_IDLE: RichTextState = { bold: false, italic: false, underline: false, strike: false, link: false, color: '', fontFamily: '', fontSize: '' };
 
 /** Key of the token chip immediately before the doc position `pos`, or null.
  *  The `.` attribute suggestion is gated on this: the dot must sit directly
@@ -132,18 +135,21 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
   const lastStateRef = useRef<RichTextState | null>(null);
 
   const reportState = (ed: NonNullable<ReturnType<typeof useEditor>>) => {
+    const textStyle = ed.getAttributes('textStyle');
     const next: RichTextState = {
       bold: ed.isActive('bold'),
       italic: ed.isActive('italic'),
       underline: ed.isActive('underline'),
       strike: ed.isActive('strike'),
       link: ed.isActive('link'),
-      color: (ed.getAttributes('textStyle').color as string | undefined) || '',
+      color: (textStyle.color as string | undefined) || '',
+      fontFamily: (textStyle.fontFamily as string | undefined) || '',
+      fontSize: (textStyle.fontSize as string | undefined) || '',
     };
     // Skip unchanged reports — onTransaction fires on every transaction
     // (keystrokes, caret moves), and we don't want a setState per event.
     const prev = lastStateRef.current;
-    if (prev && prev.bold === next.bold && prev.italic === next.italic && prev.underline === next.underline && prev.strike === next.strike && prev.link === next.link && prev.color === next.color) return;
+    if (prev && prev.bold === next.bold && prev.italic === next.italic && prev.underline === next.underline && prev.strike === next.strike && prev.link === next.link && prev.color === next.color && prev.fontFamily === next.fontFamily && prev.fontSize === next.fontSize) return;
     lastStateRef.current = next;
     onStateChangeRef.current?.(next);
   };
@@ -243,6 +249,8 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
       StarterKit,
       Placeholder.configure({ placeholder }),
       TextStyle,
+      FontFamily,
+      FontSize,
       Color,
       Underline,
       // Links: typed/pasted URLs auto-link; anchors open in a new tab and are
@@ -306,6 +314,13 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
         case 'strikeThrough': editor.chain().focus().toggleStrike().run(); break;
         case 'foreColor': if (execValue) editor.chain().focus().setColor(execValue).run(); break;
         case 'unsetColor': editor.chain().focus().unsetColor().run(); break;
+        case 'fontFamily': if (execValue) editor.chain().focus().setFontFamily(execValue).run(); break;
+        case 'unsetFontFamily': editor.chain().focus().unsetFontFamily().run(); break;
+        case 'fontSize': if (execValue) editor.chain().focus().setFontSize(execValue).run(); break;
+        case 'unsetFontSize': editor.chain().focus().unsetFontSize().run(); break;
+        // Clear every inline mark (bold/italic/underline/strike/color/font/
+        // link) and normalize the block — the cell-chrome Reset path.
+        case 'clearFormatting': editor.chain().focus().unsetAllMarks().clearNodes().run(); break;
         case 'link': if (execValue) editor.chain().focus().extendMarkRange('link').setLink({ href: execValue }).run(); break;
         case 'unlink': editor.chain().focus().extendMarkRange('link').unsetLink().run(); break;
         default: break;

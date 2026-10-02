@@ -20,6 +20,9 @@ export interface RichTextState {
     strike: boolean;
     link: boolean;
     color: string;
+    /** `textStyle` mark attrs at the caret ('' = no run override). */
+    fontFamily: string;
+    fontSize: string;
 }
 export declare const RICH_TEXT_STATE_IDLE: RichTextState;
 export interface RichTextEditorProps {

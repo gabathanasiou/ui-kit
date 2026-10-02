@@ -687,7 +687,10 @@ function RichTextDemo() {
       <p className="label">
         TipTap editor: type <b>@</b> for the token autocomplete, select text and hit the
         toolbar, click a chip to select it (the stored value below stays byte-compatible
-        plain <code>{'{{key}}'}</code> text). <b>Staged tokens</b>: pick a reference
+        plain <code>{'{{key}}'}</code> text). <b>Contextual formatting</b>: the font
+        family / size controls and the clear-formatting button act on the SELECTION
+        (a run), not the whole editor — select text, change Georgia/14pt, then check
+        the stored HTML below. <b>Staged tokens</b>: pick a reference
         (“Bob”) then type <b>.</b> right after its chip for that item's attributes —
         the attribute lands as its OWN bubble next to the reference, so either
         side can be deleted on its own (delete “Phone”, type <b>.</b> again, pick
@@ -695,7 +698,14 @@ function RichTextDemo() {
         (the reference is its anchor).
       </p>
       <div className="row">
-        <FormatToolbar editorRef={editorRef} disabled={false} active={active} />
+        <FormatToolbar
+          editorRef={editorRef}
+          disabled={false}
+          active={active}
+          font={{ value: active.fontFamily, onChange: f => editorRef.current?.exec(f === 'Helvetica' ? 'unsetFontFamily' : 'fontFamily', f === 'Helvetica' ? undefined : f) }}
+          fontSize={{ value: active.fontSize, onChange: s => editorRef.current?.exec(s ? 'fontSize' : 'unsetFontSize', s || undefined) }}
+          showClearFormatting
+        />
         <Button data-testid="rt-insert" variant="subtle" onClick={() => editorRef.current?.insertToken('cast.lead')}>
           Insert cast.lead
         </Button>
