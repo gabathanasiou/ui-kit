@@ -26,6 +26,7 @@ export default defineConfig({
         '@tiptap/react',
         '@tiptap/pm',
         '@tiptap/pm/state',
+        '@tiptap/pm/view',
         '@tiptap/suggestion',
         '@tiptap/starter-kit',
         '@tiptap/extension-color',
