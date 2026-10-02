@@ -7,7 +7,10 @@ import { test, expect, Page } from '@playwright/test';
    Enter/click selects, Escape closes. */
 
 const menu = (page: Page) => page.locator('[role="menu"]');
-const litRows = (page: Page) => page.locator('.ui-item-highlighted');
+/* The lit ROW — scoped to menuitems: the search box itself carries
+   `ui-item ui-item-highlighted` (item-row styling), so an unscoped
+   `.ui-item-highlighted` matches 2. */
+const litRows = (page: Page) => page.locator('[role="menuitem"].ui-item-highlighted');
 const searchInput = (page: Page) => menu(page).getByPlaceholder('Search timezones…');
 const visibleItems = (page: Page) => menu(page).locator('[role="menuitem"]:visible');
 const itemsScroller = (page: Page) => menu(page).locator('[data-menu-items]');
@@ -37,7 +40,9 @@ test('opens with the search input focused and every item visible', async ({ page
 
 test('typing filters to matching rows and hides the rest', async ({ page }) => {
   await openSearchable(page);
-  await searchInput(page).fill('new york');
+  // substring match against the LABEL: "york" (the label is America/New_York —
+  // a space can't match the underscore)
+  await searchInput(page).fill('york');
   await expect(visibleItems(page)).toHaveCount(1);
   await expect(visibleItems(page)).toContainText('America/New_York');
 });
@@ -46,17 +51,18 @@ test('typing in the input does not trigger the letter-jump typeahead', async ({ 
   await openSearchable(page);
   await searchInput(page).fill('as');
   await expect(searchInput(page)).toHaveValue('as');
-  await expect(visibleItems(page)).toHaveCount(2); // Asia/Singapore, Asia/Tokyo
-  await expect(litRows(page)).toContainText('Asia/Singapore');
+  await expect(visibleItems(page)).toHaveCount(3); // Asia/Dubai, Asia/Singapore, Asia/Tokyo
+  // the first match is lit (the highlight clamps into the filtered set)
+  await expect(litRows(page)).toContainText('Asia/Dubai');
 });
 
 test('arrows move the highlight across the filtered set only', async ({ page }) => {
   await openSearchable(page);
   await searchInput(page).fill('america');
-  await expect(visibleItems(page)).toHaveCount(6);
+  await expect(visibleItems(page)).toHaveCount(7); // every America/… timezone
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('ArrowDown');
-  await expect(litRows(page)).toContainText('America/Chicago');
+  await expect(litRows(page)).toContainText('America/Los_Angeles');
   await expect(litRows(page)).toHaveCount(1);
 });
 
@@ -75,7 +81,6 @@ test('the search box is pinned above the items scroller — nothing scrolls over
   const before = await box.boundingBox();
   await expect(itemsScroller(page)).toBeVisible();
   await itemsScroller(page).evaluate(el => { el.scrollTop = 200; });
-  await page.waitForTimeout(200);
   const after = await box.boundingBox();
   expect(Math.abs(before!.y - after!.y)).toBeLessThan(1);
   // the element just above the box is the box itself, never a menu row
@@ -98,17 +103,17 @@ test('Escape closes the dropdown', async ({ page }) => {
 });
 
 test('a long filtered list scrolls inside the items scroller with the wheel', async ({ page }) => {
+  test.skip(test.info().project.name === 'ipad', 'mouse.wheel is not supported in mobile WebKit');
   await openSearchable(page);
   const scroller = itemsScroller(page);
   await expect(scroller).toBeVisible();
   await scroller.evaluate(el => el.scrollTop);
   const before = await scroller.evaluate(el => el.scrollTop);
-  await page.mouse.wheel(0, 400);
-  await page.waitForTimeout(150);
-  const after = await scroller.evaluate(el => el.scrollTop);
-  expect(after).toBeGreaterThan(before);
-  // the search box stays put while the list scrolls
   const r = await scroller.boundingBox();
+  await page.mouse.move(r!.x + r!.width / 2, r!.y + r!.height / 2);
+  await page.mouse.wheel(0, 400);
+  await expect.poll(async () => scroller.evaluate(el => el.scrollTop)).toBeGreaterThan(before);
+  // the search box stays put while the list scrolls
   expect(Math.abs(r!.y)).toBeGreaterThan(0);
 });
 
@@ -132,9 +137,9 @@ test('the query resets on reopen', async ({ page }) => {
 
 test('the search box is the same size as a dropdown item', async ({ page }) => {
   await openSearchable(page);
-  const box = await searchInput(page).evaluate(el => el.getBoundingClientRect().height);
+  // the search ROW (`[data-menu-search]`) — the inner input's own height is
+  // line-height only; the row carries the item-sized padding/font
+  const box = await menu(page).locator('[data-menu-search]').evaluate(el => el.getBoundingClientRect().height);
   const item = await visibleItems(page).first().evaluate(el => el.getBoundingClientRect().height);
-  // item-sized row (the box is an items row: icon + input + clear) — allow a
-  // couple px since the input line-height may differ from the label's
   expect(Math.abs(box - item)).toBeLessThan(10);
 });

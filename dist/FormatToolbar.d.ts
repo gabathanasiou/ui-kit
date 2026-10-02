@@ -28,12 +28,9 @@ export interface FormatToolbarProps {
         onChange: (family: string) => void;
         mixed?: boolean;
     };
-    /** Optional contextual font size input (e.g. '12pt'); empty clears it. */
-    fontSize?: {
-        value: string;
-        onChange: (size: string) => void;
-        mixed?: boolean;
-    };
+    /** Size control slot (the consumer's own number input — the app uses its
+     *  LiveNumberInput recipe). Rendered after the font picker. */
+    fontSizeSlot?: React.ReactNode;
     /** Show the clear-formatting action (unsets every inline mark). */
     showClearFormatting?: boolean;
 }

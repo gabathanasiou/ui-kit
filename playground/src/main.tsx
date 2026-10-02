@@ -502,12 +502,14 @@ function PanelDemo() {
     <div className="row" data-testid="panel-demo">
       {/* fixed so the trigger's viewport position is deterministic regardless
           of page scroll (Playwright scrolls elements into view before
-          clicking — the panel's anchor math depends on the trigger's spot) */}
+          clicking — the panel's anchor math depends on the trigger's spot).
+          top:60 clears the sticky coarse-scale controller (which otherwise
+          intercepts clicks on the trigger). */}
       <button
         ref={triggerRef}
         data-testid="panel-trigger"
         onClick={() => setOpen(o => !o)}
-        style={{ position: 'fixed', left: 80, top: 20, zIndex: 50, padding: '8px 14px', borderRadius: 8, border: '1px solid #71717a', background: '#18181b', color: '#fafafa', cursor: 'pointer' }}
+        style={{ position: 'fixed', left: 80, top: 60, zIndex: 50, padding: '8px 14px', borderRadius: 8, border: '1px solid #71717a', background: '#18181b', color: '#fafafa', cursor: 'pointer' }}
       >
         Panel trigger (clone close)
       </button>
@@ -677,6 +679,34 @@ const rtPrint = (html: string): string => {
   return out.trim() || '(empty)';
 };
 
+/** Minimal size box for the demo (the app ships LiveNumberInput; the kit
+ *  renders a consumer slot). Commits live with `focus: false` so typing in
+ *  the box never steals the editor's run selection. */
+function RTSizeInput({ active, onCommit }: { active: RichTextState; onCommit: (size: string) => void }) {
+  const [draft, setDraft] = React.useState<string | null>(null);
+  const focused = React.useRef(false);
+  React.useEffect(() => { if (!focused.current) setDraft(null); }, [active.fontSize, active.fontSizeMixed]);
+  const parsed = active.fontSize ? String(parseInt(active.fontSize, 10) || '') : '';
+  const display = draft !== null ? draft : (active.fontSizeMixed ? '' : parsed);
+  return (
+    <input
+      type="number"
+      aria-label="Font size"
+      title="Font size (pt)"
+      placeholder={active.fontSizeMixed ? 'Mixed' : ''}
+      value={display}
+      onFocus={() => { focused.current = true; setDraft(parsed); }}
+      onChange={e => {
+        setDraft(e.target.value);
+        const n = parseInt(e.target.value, 10);
+        onCommit(Number.isNaN(n) ? '' : `${n}pt`);
+      }}
+      onBlur={() => { focused.current = false; setDraft(null); }}
+      className="h-7 w-14 rounded border border-zinc-700 bg-zinc-800 px-2 text-center text-[10px] text-zinc-300 outline-none focus:border-zinc-500"
+    />
+  );
+}
+
 function RichTextDemo() {
   const editorRef = React.useRef<RichTextEditorHandle>(null);
   const [value, setValue] = useState('');
@@ -703,7 +733,7 @@ function RichTextDemo() {
           disabled={false}
           active={active}
           font={{ value: active.fontFamily, mixed: active.fontFamilyMixed, onChange: f => editorRef.current?.exec(f === 'Helvetica' ? 'unsetFontFamily' : 'fontFamily', f === 'Helvetica' ? undefined : f) }}
-          fontSize={{ value: active.fontSize, mixed: active.fontSizeMixed, onChange: s => editorRef.current?.exec(s ? 'fontSize' : 'unsetFontSize', s || undefined) }}
+          fontSizeSlot={<RTSizeInput active={active} onCommit={size => editorRef.current?.exec(size ? 'fontSize' : 'unsetFontSize', size || undefined, { focus: false })} />}
           showClearFormatting
         />
         <Button data-testid="rt-insert" variant="subtle" onClick={() => editorRef.current?.insertToken('cast.lead')}>

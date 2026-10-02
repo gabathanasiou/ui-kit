@@ -4,7 +4,7 @@ import { ChevronDown, Check, Underline as UnderlineIcon, Strikethrough, Link as 
 import DropdownMenu from './DropdownMenu';
 import DropdownItem from './DropdownItem';
 import Button from './Button';
-import { TB_DIVIDER, TB_INPUT, useToolbarChrome } from './EditorChrome';
+import { TB_DIVIDER, TB_INPUT, TB_PICKER, useToolbarChrome } from './EditorChrome';
 import { Tooltip } from './Tooltip';
 import type { RichTextEditorHandle, RichTextState } from './RichTextEditor';
 
@@ -28,7 +28,6 @@ const NoColorDot: React.FC<{ className?: string }> = ({ className = 'w-3 h-3' })
 
 export const FontMenu: React.FC<{ value: string; disabled: boolean; onChange: (f: string) => void; mixed?: boolean }> = ({ value, disabled, onChange, mixed }) => {
   const [open, setOpen] = useState(false);
-  const chrome = useToolbarChrome();
   return (
     <DropdownMenu
       open={open}
@@ -36,12 +35,12 @@ export const FontMenu: React.FC<{ value: string; disabled: boolean; onChange: (f
       theme="dark"
       width="w-44"
       trigger={
-        <Button theme="dark" disabled={disabled} style={chrome.control} className="justify-between min-w-0">
+        <button type="button" disabled={disabled} className={`${TB_PICKER} w-28 justify-between`}>
           {mixed
-            ? <span className="truncate italic text-zinc-400">Mixed</span>
+            ? <span className="truncate italic text-zinc-500">Mixed</span>
             : <span className="truncate" style={{ fontFamily: value || 'Helvetica' }}>{value || 'Helvetica'}</span>}
           <ChevronDown className="w-3 h-3 text-zinc-500 shrink-0" />
-        </Button>
+        </button>
       }
     >
       {FONTS.map(f => (
@@ -50,38 +49,6 @@ export const FontMenu: React.FC<{ value: string; disabled: boolean; onChange: (f
         </DropdownItem>
       ))}
     </DropdownMenu>
-  );
-};
-
-// ---- size input (pt/px string, committed on blur/Enter) ------------------------
-
-const SizeInput: React.FC<{ value: string; disabled: boolean; mixed?: boolean; onChange: (size: string) => void }> = ({ value, disabled, mixed, onChange }) => {
-  const chrome = useToolbarChrome();
-  const [draft, setDraft] = useState(value);
-  const [focused, setFocused] = useState(false);
-  const commit = () => {
-    const next = draft.trim();
-    if (next !== value) onChange(next);
-  };
-  return (
-    <input
-      type="text"
-      inputMode="decimal"
-      title="Font size (e.g. 12pt)"
-      aria-label="Font size"
-      disabled={disabled}
-      value={focused ? draft : (mixed ? '' : value)}
-      placeholder={mixed ? 'Mixed' : ''}
-      onFocus={() => { setDraft(value); setFocused(true); }}
-      onBlur={() => { setFocused(false); commit(); }}
-      onChange={e => setDraft(e.target.value)}
-      onKeyDown={e => {
-        if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
-        if (e.key === 'Escape') { setDraft(value); (e.target as HTMLInputElement).blur(); }
-      }}
-      style={chrome.input}
-      className={TB_INPUT + ' w-12 text-center'}
-    />
   );
 };
 
@@ -158,13 +125,14 @@ export interface FormatToolbarProps {
    *  The consumer owns the value (falling back to its object default); the
    *  toolbar only renders the control and reports the picked family. */
   font?: { value: string; onChange: (family: string) => void; mixed?: boolean };
-  /** Optional contextual font size input (e.g. '12pt'); empty clears it. */
-  fontSize?: { value: string; onChange: (size: string) => void; mixed?: boolean };
+  /** Size control slot (the consumer's own number input — the app uses its
+   *  LiveNumberInput recipe). Rendered after the font picker. */
+  fontSizeSlot?: React.ReactNode;
   /** Show the clear-formatting action (unsets every inline mark). */
   showClearFormatting?: boolean;
 }
 
-export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disabled, active, lockedFormatting, trailing, font, fontSize, showClearFormatting }) => {
+export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disabled, active, lockedFormatting, trailing, font, fontSizeSlot, showClearFormatting }) => {
   const [colorOpen, setColorOpen] = useState(false);
   const run = (cmd: string, value?: string) => editorRef.current?.exec(cmd, value);
   const chrome = useToolbarChrome();
@@ -219,11 +187,11 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disable
           ))}
         </div>
       </DropdownMenu>
-      {(font || fontSize || showClearFormatting) && (
+      {(font || fontSizeSlot || showClearFormatting) && (
         <>
           <div className={TB_DIVIDER} />
           {font && <FontMenu value={font.value || 'Helvetica'} mixed={font.mixed} disabled={disabled} onChange={font.onChange} />}
-          {fontSize && <SizeInput value={fontSize.value} mixed={fontSize.mixed} disabled={disabled} onChange={fontSize.onChange} />}
+          {fontSizeSlot}
           {showClearFormatting && (
             <Tooltip content="Clear formatting">
               <Button

@@ -11,6 +11,11 @@ import { test, expect } from '@playwright/test';
    Bug B (regression risk): the close clone must be pinned at the PANEL'S
    rect — never at the view origin (0,0). */
 
+/* This is the spec ABOUT the morph: it needs real motion. The default suite
+   runs with `reducedMotion: 'reduce'` (the kit skips all morphs) — opt back
+   in here. The waits below are true ANIMATION pacing, not sync sleeps. */
+test.use({ contextOptions: { reducedMotion: 'no-preference' } });
+
 /** Samples computed transform of `selector` for `ms` — polls so it picks the
  *  element up whenever it mounts (the panel is conditional). */
 async function sampleTransforms(page: import('@playwright/test').Page, selector: string, ms: number) {

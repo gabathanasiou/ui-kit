@@ -814,7 +814,7 @@ export default function DropdownMenu({
                 >
                   {internalSearch && (
                     <div className="shrink-0 px-0 pt-1 pb-1" style={{ paddingRight: searchGutter }}>
-                      <div className="ui-item ui-item-highlighted flex items-center gap-2 rounded" style={searchBoxStyle}>
+                      <div data-menu-search className="ui-item ui-item-highlighted flex items-center gap-2 rounded" style={searchBoxStyle}>
                         <Search className="w-3.5 h-3.5 shrink-0 ui-icon" />
                         <input
                           ref={searchInputRef}

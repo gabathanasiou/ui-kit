@@ -5,12 +5,13 @@ import { test, expect, Page } from '@playwright/test';
    one-open-overlay-at-a-time, and STATIC positioning (no scroll-follow). */
 
 const ctxMenu = (page: Page) => page.locator('[role="menu"], .ui-menu.fixed').filter({ hasText: /Plain item|More…/ });
-const litRows = (page: Page) => page.locator('.ui-item-highlighted');
+/* The lit ROW — `[role="menuitem"]` scoping excludes the searchable menus'
+   search box, which carries `ui-item-highlighted` for its row styling. */
+const litRows = (page: Page) => page.locator('[role="menuitem"].ui-item-highlighted');
 
 async function openCtx(page: Page) {
   await page.goto('/');
   await page.getByTestId('ctx-target').click();
-  await page.waitForTimeout(300);
   await expect(page.getByRole('menuitem', { name: /Plain item/ })).toBeVisible();
 }
 
@@ -40,16 +41,18 @@ test('context menu: nested subs coexist and the parent survives', async ({ page 
   await openCtx(page);
   // open More… → Deeper… — the chain holds both
   await page.getByRole('menuitem', { name: /More…/ }).hover();
-  await page.waitForTimeout(400);
+  await expect(page.getByRole('menuitem', { name: /Nested A/ })).toBeVisible();
   await page.getByRole('menuitem', { name: /Deeper…/ }).hover();
-  await page.waitForTimeout(500);
   await expect(page.getByRole('menuitem', { name: 'Level 3 A' })).toBeVisible();
 
-  // move back to a parent item — the nested sub closes (Radix grace + the
-  // close morph), the parent stays. Poll (web-first): the close morph keeps
-  // the sub content mounted for ~280ms, and under dev-server load the Radix
-  // grace + morph + unmount can exceed any fixed sleep.
-  await page.getByRole('menuitem', { name: /Nested B/ }).hover();
+  /* Move back to a parent item — the nested sub closes. The pointer path
+     matters: Radix's submenu grace keeps the deeper flyout open while the
+     pointer travels TOWARD it (`pointerDirRef` is horizontal-only, and a
+     single-jump move updates it after the item handler runs). Move LEFT with
+     intermediate steps — the human-like path — and the deeper sub closes.
+     Poll (web-first): the close morph holds the sub content mounted briefly. */
+  const sibling = (await page.getByRole('menuitem', { name: /Nested B/ }).boundingBox())!;
+  await page.mouse.move(sibling.x + 8, sibling.y + sibling.height / 2, { steps: 4 });
   await expect(page.getByRole('menuitem', { name: 'Level 3 A' })).toHaveCount(0, { timeout: 3000 });
   await expect(page.getByRole('menuitem', { name: /Nested B/ })).toBeVisible();
   await expect(page.getByRole('menuitem', { name: /Plain item/ })).toBeVisible();
@@ -70,13 +73,11 @@ test('mutual exclusion: a dropdown and a context menu never coexist', async ({ p
   await expect(dropdownMenu).toBeVisible();
   // open the context menu — the dropdown must close
   await page.getByTestId('ctx-target').click();
-  await page.waitForTimeout(400);
   await expect(dropdownMenu).toHaveCount(0);
   await expect(page.getByRole('menuitem', { name: /Plain item/ })).toBeVisible();
 
   // and the reverse: dismiss the context menu, then open the dropdown
   await page.keyboard.press('Escape');
-  await page.waitForTimeout(400);
   await expect(page.getByRole('menuitem', { name: /Plain item/ })).toHaveCount(0);
   await page.getByTestId('ctrl-menu-trigger').click();
   await expect(dropdownMenu).toBeVisible();
@@ -86,7 +87,6 @@ test('context menu stays static when the page scrolls', async ({ page }) => {
   await openCtx(page);
   const before = await page.getByRole('menuitem', { name: /Plain item/ }).boundingBox();
   await page.evaluate(() => window.scrollTo(0, 150));
-  await page.waitForTimeout(250);
   const after = await page.getByRole('menuitem', { name: /Plain item/ }).boundingBox();
   expect(after!.y).toBeCloseTo(before!.y, 0);
   expect(after!.x).toBeCloseTo(before!.x, 0);
@@ -103,7 +103,7 @@ test('context menu: reopening without moving the cursor does not keep the previo
   const edge = page.getByTestId('ctx-right-edge');
 
   await edge.click();
-  await page.waitForTimeout(300);
+  await expect(page.getByRole('menuitem', { name: /Plain item/ })).toBeVisible();
   await page.getByRole('menuitem', { name: 'Delete', exact: true }).hover();
   await expect(litRows(page)).toContainText('Delete');
 
@@ -113,7 +113,6 @@ test('context menu: reopening without moving the cursor does not keep the previo
 
   // reopen at the SAME spot without moving the mouse
   await edge.click();
-  await page.waitForTimeout(300);
   await expect(page.getByRole('menuitem', { name: /Plain item/ })).toBeVisible();
   await expect(litRows(page)).toHaveCount(0);
 });

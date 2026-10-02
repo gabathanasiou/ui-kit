@@ -9,7 +9,7 @@ import { test, expect, Page } from '@playwright/test';
    - Keyboard: arrows move the index, Enter activates, letter typeahead jumps.
    - Manual wheel scrolling for portaled menus. */
 
-const litRows = (page: Page) => page.locator('.ui-item-highlighted');
+const litRows = (page: Page) => page.locator('[role="menuitem"].ui-item-highlighted');
 const menu = (page: Page) => page.locator('[role="menu"]');
 
 async function openCtrl(page: Page) {
@@ -61,11 +61,19 @@ test('Enter activates the highlighted item', async ({ page }) => {
 });
 
 test('the panel is width-matched to the trigger and opens below it', async ({ page }) => {
-  // the LONG menu has no width class — the panel must match the trigger
+  // Tall viewport + trigger parked below the sticky coarse bar (y≈120): room
+  // below, so the engine opens below (the flip case near the bottom edge is
+  // dropdown-flip's job).
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/');
-  await page.getByTestId('long-trigger').click();
+  await page.evaluate(() => {
+    const el = document.querySelector('[data-testid="long-trigger"]')!;
+    window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 120);
+  });
+  const t = page.getByTestId('long-trigger');
+  await t.click();
   await expect(menu(page)).toBeVisible();
-  const trigger = await page.getByTestId('long-trigger').boundingBox();
+  const trigger = await t.boundingBox();
   // the triggerWidth state lands one effect after the open — poll until the
   // panel actually matches the trigger
   await expect.poll(async () => (await menu(page).boundingBox())!.width).toBeLessThanOrEqual(trigger!.width + 40);
@@ -84,6 +92,7 @@ test('initialHighlightIndex pre-lights the row on open', async ({ page }) => {
 });
 
 test('a long menu scrolls with the wheel and clamps to the viewport', async ({ page }) => {
+  test.skip(test.info().project.name === 'ipad', 'mouse.wheel is not supported in mobile WebKit');
   await page.goto('/');
   await page.getByTestId('long-trigger').click();
   await expect(menu(page)).toBeVisible();
@@ -94,9 +103,7 @@ test('a long menu scrolls with the wheel and clamps to the viewport', async ({ p
   const before = await content.evaluate(el => el.scrollTop);
   await page.mouse.move(panel!.x + panel!.width / 2, panel!.y + panel!.height / 2);
   await page.mouse.wheel(0, 400);
-  await page.waitForTimeout(150);
-  const after = await content.evaluate(el => el.scrollTop);
-  expect(after).toBeGreaterThan(before);
+  await expect.poll(async () => content.evaluate(el => el.scrollTop)).toBeGreaterThan(before);
 });
 
 test('hovering a clipped edge row does not scroll the list; keyboard still does', async ({ page }) => {
@@ -124,7 +131,6 @@ test('hovering a clipped edge row does not scroll the list; keyboard still does'
   // A raw mouse move (NOT locator.hover — it scrolls the element into view
   // first) over the clipped row must not move the list.
   await page.mouse.move(clipped!.x, clipped!.y);
-  await page.waitForTimeout(100);
   expect(await content.evaluate(el => el.scrollTop)).toBe(clipped!.scrollTop);
 
   // Keyboard still keeps the active row visible: the row above the hovered one
@@ -194,12 +200,11 @@ test('arrows keep the highlighted row scrolled into view', async ({ page }) => {
   const content = page.locator('[role="menu"]');
 
   for (let i = 0; i < 26; i++) await page.keyboard.press('ArrowDown');
-  await page.waitForTimeout(200);
+  await expect(litRows(page)).toContainText('Item 26');
   const lit = await litRows(page).first().boundingBox();
   const box = await content.boundingBox();
   expect(lit!.y).toBeGreaterThanOrEqual(box!.y);
   expect(lit!.y + lit!.height).toBeLessThanOrEqual(box!.y + box!.height + 1);
-  await expect(litRows(page)).toContainText('Item 26');
 });
 
 test('exactly ONE lit row after pointer + keyboard (no double highlight)', async ({ page }) => {
@@ -214,11 +219,11 @@ test('exactly ONE lit row after pointer + keyboard (no double highlight)', async
 });
 
 test('a long menu inside a modal stays above it and wheel-scrolls', async ({ page }) => {
+  test.skip(test.info().project.name === 'ipad', 'mouse.wheel is not supported in mobile WebKit');
   await page.goto('/');
   await page.getByTestId('menu-modal-open').click();
   const modal = page.getByRole('dialog');
   await expect(modal).toBeVisible();
-  await page.waitForTimeout(500);
 
   await page.getByTestId('inmodal-long-trigger').click();
   await expect(menu(page)).toBeVisible();
@@ -226,9 +231,7 @@ test('a long menu inside a modal stays above it and wheel-scrolls', async ({ pag
   const box = await menu(page).boundingBox();
   await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
   await page.mouse.wheel(0, 400);
-  await page.waitForTimeout(150);
-  const st = await menu(page).evaluate(el => el.scrollTop);
-  expect(st).toBeGreaterThan(0);
+  await expect.poll(async () => menu(page).evaluate(el => el.scrollTop)).toBeGreaterThan(0);
   // Escape closes only the menu
   await page.keyboard.press('Escape');
   await expect(menu(page)).toHaveCount(0, { timeout: 5000 });

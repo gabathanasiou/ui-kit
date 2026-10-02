@@ -42,8 +42,12 @@ test('danger confirm: red solid confirm + DNWA checkbox', async ({ page }) => {
   const dialog = page.getByRole('dialog');
   await expect(dialog).toContainText('Permanently delete all trash items?');
   await expect(dialog.getByRole('checkbox')).toBeVisible();
-  /* Tailwind v4 red-600 resolves to oklch (not rgb). */
-  await expect(dialog.getByRole('button', { name: 'Confirm' })).toHaveCSS('background-color', 'oklch(0.577 0.245 27.325)');
+  /* Tailwind v4 red-600 resolves to oklch (not rgb). Poll the computed value
+     with a prefix match: WebKit serializes the lightness/chroma with extra
+     precision (…27.325001), Chromium trims it. */
+  await expect.poll(() =>
+    dialog.getByRole('button', { name: 'Confirm' }).evaluate(el => getComputedStyle(el).backgroundColor),
+  ).toMatch(/^oklch\(0\.577 0\.245 27\.325/);
 
   /* The kit Checkbox's native input is sr-only (1×1, overlapped by the pill)
      — click the pill LABEL, which activates the input. */

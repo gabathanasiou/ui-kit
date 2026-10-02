@@ -33,7 +33,10 @@ import { TokenSuggestion } from './RichTextSuggestionPopup';
 // autocomplete; `attributeItems` feeds the `.` stage.
 
 export interface RichTextEditorHandle {
-  exec: (command: string, value?: string) => void;
+  /** Runs a formatting command on the current selection. `opts.focus === false`
+   *  applies WITHOUT stealing focus (toolbar inputs that must stay focused
+   *  while typing commit live, e.g. the app's font-size number box). */
+  exec: (command: string, value?: string, opts?: { focus?: boolean }) => void;
   focus: () => void;
   /** Inserts a `{{key}}` token node at the caret. */
   insertToken: (key: string) => void;
@@ -334,24 +337,26 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
   }, [editor]);
 
   useImperativeHandle(ref, () => ({
-    exec: (command: string, execValue?: string) => {
+    exec: (command: string, execValue?: string, opts?: { focus?: boolean }) => {
       if (!editor || disabledRef.current) return;
+      const chain = editor.chain();
+      const c = opts?.focus === false ? chain : chain.focus();
       switch (command) {
-        case 'bold': editor.chain().focus().toggleBold().run(); break;
-        case 'italic': editor.chain().focus().toggleItalic().run(); break;
-        case 'underline': editor.chain().focus().toggleUnderline().run(); break;
-        case 'strikeThrough': editor.chain().focus().toggleStrike().run(); break;
-        case 'foreColor': if (execValue) editor.chain().focus().setColor(execValue).run(); break;
-        case 'unsetColor': editor.chain().focus().unsetColor().run(); break;
-        case 'fontFamily': if (execValue) editor.chain().focus().setFontFamily(execValue).run(); break;
-        case 'unsetFontFamily': editor.chain().focus().unsetFontFamily().run(); break;
-        case 'fontSize': if (execValue) editor.chain().focus().setFontSize(execValue).run(); break;
-        case 'unsetFontSize': editor.chain().focus().unsetFontSize().run(); break;
+        case 'bold': c.toggleBold().run(); break;
+        case 'italic': c.toggleItalic().run(); break;
+        case 'underline': c.toggleUnderline().run(); break;
+        case 'strikeThrough': c.toggleStrike().run(); break;
+        case 'foreColor': if (execValue) c.setColor(execValue).run(); break;
+        case 'unsetColor': c.unsetColor().run(); break;
+        case 'fontFamily': if (execValue) c.setFontFamily(execValue).run(); break;
+        case 'unsetFontFamily': c.unsetFontFamily().run(); break;
+        case 'fontSize': if (execValue) c.setFontSize(execValue).run(); break;
+        case 'unsetFontSize': c.unsetFontSize().run(); break;
         // Clear every inline mark (bold/italic/underline/strike/color/font/
         // link) and normalize the block — the cell-chrome Reset path.
-        case 'clearFormatting': editor.chain().focus().unsetAllMarks().clearNodes().run(); break;
-        case 'link': if (execValue) editor.chain().focus().extendMarkRange('link').setLink({ href: execValue }).run(); break;
-        case 'unlink': editor.chain().focus().extendMarkRange('link').unsetLink().run(); break;
+        case 'clearFormatting': c.unsetAllMarks().clearNodes().run(); break;
+        case 'link': if (execValue) c.extendMarkRange('link').setLink({ href: execValue }).run(); break;
+        case 'unlink': c.extendMarkRange('link').unsetLink().run(); break;
         default: break;
       }
     },

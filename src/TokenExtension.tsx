@@ -3,6 +3,9 @@ import { Mention } from '@tiptap/extension-mention';
 import { NodeViewProps, NodeViewWrapper, ReactNodeViewRenderer, mergeAttributes } from '@tiptap/react';
 import { NodeSelection } from '@tiptap/pm/state';
 import React from 'react';
+import { stripTokenWrappers, preprocessTokenHtml } from './tokenText';
+
+export { stripTokenWrappers, preprocessTokenHtml } from './tokenText';
 
 // TipTap Token atom: `{{key}}` in stored HTML becomes an engine-native
 // inline atom (chip) in the editor. The atom serializes back to the PLAIN text
@@ -85,23 +88,6 @@ export const TokenChipView: React.FC<NodeViewProps> = ({ node, selected, extensi
     </NodeViewWrapper>
   );
 };
-
-/** Strip the (defensive) `<span data-type="token">…</span>` wrappers back to
- *  plain `{{key}}` text before the sanitizer runs. A no-op when renderHTML
- *  already emits bare text — kept so BOTH serialization paths verify against
- *  the same storage contract. */
-export function stripTokenWrappers(html: string): string {
-  return html.replace(/<span data-type="token"[^>]*>\{\{([^{}]+)\}\}<\/span>/g, '{{$1}}');
-}
-
-/** Pre-process stored HTML before `useEditor` init: plain `{{key}}` text →
- *  `<span data-type="token">` so the Token extension's parseHTML matches.
- *  Caveat: the regex can match inside attribute values of exotic pasted HTML —
- *  the sanitizer normalizes on save, so this is acceptable. */
-export function preprocessTokenHtml(html: string): string {
-  return html.replace(/\{\{([^{}]+)\}\}/g, (_m, field: string) =>
-    `<span data-type="token" data-field="${field}">{{${field}}}</span>`);
-}
 
 export interface TokenExtensionOptions {
   /** Resolves a token key to its display meta (label + color). */

@@ -61,27 +61,32 @@ test('dismiss via click-away then immediate trigger reopen works', async ({ page
   await expect(page.locator('[role="menu"]')).toBeVisible();
 });
 
-test('trigger click lands during an in-flight close morph and reopens', async ({ page }) => {
-  await page.goto('/');
-  const t = page.getByTestId('ctrl-menu-trigger');
+test.describe('the close-morph interleave (needs real motion)', () => {
+  test.use({ contextOptions: { reducedMotion: 'no-preference' } });
 
-  await t.click();
-  await expect(page.locator('[role="menu"]')).toBeVisible();
+  test('trigger click lands during an in-flight close morph and reopens', async ({ page }) => {
+    await page.goto('/');
+    const t = page.getByTestId('ctrl-menu-trigger');
 
-  // start a close via click-away, then click the trigger DURING the 280ms
-  // close morph — the menu must reopen (not stay stuck shut)
-  await page.getByText('ui-kit playground — component zoo').first().click();
-  await page.waitForTimeout(60);
-  await t.click();
-  await page.waitForTimeout(400);
-  // either it reopened (visible) or the click was a dead close and the menu
-  // is gone — both are acceptable; it must NOT be stuck invisible-but-open
-  const menuCount = await page.locator('[role="menu"]').count();
-  if (menuCount > 0) {
-    const box = await page.locator('[role="menu"]').boundingBox();
-    expect(box, 'a stuck menu has no usable box').not.toBeNull();
+    await t.click();
     await expect(page.locator('[role="menu"]')).toBeVisible();
-  }
+
+    // start a close via click-away, then click the trigger DURING the 280ms
+    // close morph — the menu must reopen (not stay stuck shut). The 60ms is
+    // deliberate interaction pacing (the click must land mid-morph).
+    await page.getByText('ui-kit playground — component zoo').first().click();
+    await page.waitForTimeout(60);
+    await t.click();
+    await page.waitForTimeout(400);
+    // either it reopened (visible) or the click was a dead close and the menu
+    // is gone — both are acceptable; it must NOT be stuck invisible-but-open
+    const menuCount = await page.locator('[role="menu"]').count();
+    if (menuCount > 0) {
+      const box = await page.locator('[role="menu"]').boundingBox();
+      expect(box, 'a stuck menu has no usable box').not.toBeNull();
+      await expect(page.locator('[role="menu"]')).toBeVisible();
+    }
+  });
 });
 
 test('the trigger keeps its hover look while the menu is open', async ({ page }) => {
@@ -96,9 +101,8 @@ test('the trigger keeps its hover look while the menu is open', async ({ page })
 
   await t.click();
   await expect(page.locator('[role="menu"]')).toHaveCount(0, { timeout: 5000 });
-  // move the cursor away + let the color transition settle (transition-colors)
+  // move the cursor away + poll for the color transition (transition-colors)
+  // to settle back to the base background
   await page.mouse.move(10, 10);
-  await page.waitForTimeout(250);
-  const afterBg = await t.evaluate(el => getComputedStyle(el).backgroundColor);
-  expect(afterBg, 'closed trigger reverts to its base background').toBe(closedBg);
+  await expect.poll(() => t.evaluate(el => getComputedStyle(el).backgroundColor)).toBe(closedBg);
 });

@@ -10,7 +10,6 @@ test('dropdown inside a modal: Escape dismisses only the dropdown', async ({ pag
   await page.getByTestId('menu-modal-open').click();
   const modal = page.getByRole('dialog');
   await expect(modal).toBeVisible();
-  await page.waitForTimeout(500); // let the modal's open morph settle
 
   await page.getByTestId('inmodal-menu-trigger').click();
   const menu = page.locator('[role="menu"]');
@@ -33,7 +32,6 @@ test('stacked modals: closing the top one reveals the lower one', async ({ page 
   await page.getByTestId('stacked-open').click();
   const dialogs = page.locator('[role="dialog"]');
   await expect(dialogs).toHaveCount(1);
-  await page.waitForTimeout(500); // let the open morph settle before clicking in the footer
 
   await page.getByRole('button', { name: 'Open Modal 2' }).click();
   await expect(dialogs).toHaveCount(2);
@@ -52,7 +50,6 @@ test('dropdown inside a modal dismisses with a trigger click and reopens', async
   await page.getByTestId('menu-modal-open').click();
   const modal = page.getByRole('dialog');
   await expect(modal).toBeVisible();
-  await page.waitForTimeout(500); // let the modal's open morph settle
 
   const t = page.getByTestId('inmodal-menu-trigger');
   const menu = page.locator('[role="menu"]');

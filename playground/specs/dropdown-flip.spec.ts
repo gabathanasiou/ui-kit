@@ -19,7 +19,6 @@ test('long menu flips above a trigger near the viewport bottom', async ({ page }
 
   const menu = page.locator('[role="menu"]').last();
   await expect(menu).toBeVisible();
-  await page.waitForTimeout(450); // let the open morph settle before measuring
 
   const vh = 500;
   const tb = await trigger.boundingBox();
@@ -47,7 +46,6 @@ test('short menu opens above when only a sliver of room is below', async ({ page
 
   const menu = page.locator('[role="menu"]').first();
   await expect(menu).toBeVisible();
-  await page.waitForTimeout(450);
 
   const tb = await trigger.boundingBox();
   const mb = await menu.boundingBox();
@@ -71,7 +69,6 @@ test('maxMenuHeight caps a long menu and lets it flip without overhang', async (
   await trigger.click();
   const menu = page.locator('[role="menu"]').last();
   await expect(menu).toBeVisible();
-  await page.waitForTimeout(450);
   const tb = await trigger.boundingBox();
   const mb = await menu.boundingBox();
   expect(mb!.height).toBeLessThanOrEqual(160);

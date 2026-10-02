@@ -1,7 +1,12 @@
 import React from 'react';
 import { type TokenItem, type TokenMeta } from './TokenExtension';
 export interface RichTextEditorHandle {
-    exec: (command: string, value?: string) => void;
+    /** Runs a formatting command on the current selection. `opts.focus === false`
+     *  applies WITHOUT stealing focus (toolbar inputs that must stay focused
+     *  while typing commit live, e.g. the app's font-size number box). */
+    exec: (command: string, value?: string, opts?: {
+        focus?: boolean;
+    }) => void;
     focus: () => void;
     /** Inserts a `{{key}}` token node at the caret. */
     insertToken: (key: string) => void;
