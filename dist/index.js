@@ -9656,55 +9656,56 @@ const qu = { text: "#52525b" }, Ku = ({ node: n, selected: e, extension: t, edit
   );
 }, vi = () => {
   let n = null;
-  const e = (t) => {
-    n && (n.props = t, n.holder.style.display = t.items.length > 0 ? "" : "none", n.root.render(
-      /* @__PURE__ */ g(Xu, { props: t, onApi: (r) => {
-        n.api = r;
+  const e = (r) => {
+    n && (n.props = r, n.holder.style.display = r.items.length > 0 ? "" : "none", n.root.render(
+      /* @__PURE__ */ g(Xu, { props: r, onApi: (i) => {
+        n.api = i;
       } })
     ));
+  }, t = () => {
+    var r;
+    n != null && n.props && ((r = n.unmount) == null || r.call(n), n.unmount = n.props.mount(n.holder, {
+      // The plugin anchors to the `@`-decoration's start; the caret sits at
+      // its END, so shift the popup right by the anchor width — matches the
+      // pre-TipTap popup, which anchored exactly at the caret.
+      onPosition: ({ x: i, y: o, placement: s, strategy: l }) => {
+        var u, h;
+        if (!n) return;
+        const c = (h = (u = n.props) == null ? void 0 : u.clientRect) == null ? void 0 : h.call(u), a = c && !s.endsWith("-end") ? c.width : 0;
+        n.holder.style.position = l, n.holder.style.left = `${i + a}px`, n.holder.style.top = `${o}px`;
+      }
+    }));
   };
   return {
-    onStart(t) {
-      const r = document.createElement("div");
-      r.style.zIndex = "10002";
-      const i = js(r);
-      n = { holder: r, root: i, unmount: null, props: t, api: null };
-      const o = t.mount(r, {
-        // The plugin anchors to the `@`-decoration's start; the caret sits at
-        // its END, so shift the popup right by the anchor width — matches the
-        // pre-TipTap popup, which anchored exactly at the caret.
-        onPosition: ({ x: s, y: l, placement: c, strategy: a }) => {
-          var f, d;
-          if (!n) return;
-          const u = (d = (f = n.props) == null ? void 0 : f.clientRect) == null ? void 0 : d.call(f), h = u && !c.endsWith("-end") ? u.width : 0;
-          r.style.position = a, r.style.left = `${s + h}px`, r.style.top = `${l}px`;
-        }
-      });
-      n.unmount = o, e(t);
+    onStart(r) {
+      const i = document.createElement("div");
+      i.style.zIndex = "10002";
+      const o = js(i);
+      n = { holder: i, root: o, unmount: null, props: r, api: null }, t(), e(r);
     },
-    onUpdate(t) {
-      n && e(t);
+    onUpdate(r) {
+      n && (e(r), t());
     },
-    onKeyDown({ event: t }) {
+    onKeyDown({ event: r }) {
       if (!(n != null && n.props) || !n.api) return !1;
-      const { items: r, command: i } = n.props;
-      if (r.length === 0) return !1;
-      const o = n.api, s = t.key;
-      if (s === "ArrowDown" || s === "ArrowUp") {
-        t.preventDefault();
-        const l = o.highlightedIndex, c = s === "ArrowDown" ? 1 : -1;
-        return o.setHighlighted((l + c + r.length) % r.length, "keyboard"), !0;
+      const { items: i, command: o } = n.props;
+      if (i.length === 0) return !1;
+      const s = n.api, l = r.key;
+      if (l === "ArrowDown" || l === "ArrowUp") {
+        r.preventDefault();
+        const c = s.highlightedIndex, a = l === "ArrowDown" ? 1 : -1;
+        return s.setHighlighted((c + a + i.length) % i.length, "keyboard"), !0;
       }
-      if (s === "Enter" || s === "Tab") {
-        t.preventDefault();
-        const l = o.highlightedIndex, c = l >= 0 ? l : 0, a = o.items[c];
-        return a ? a.activate() : r[c] && i({ field: r[c].key }), !0;
+      if (l === "Enter" || l === "Tab") {
+        r.preventDefault();
+        const c = s.highlightedIndex, a = c >= 0 ? c : 0, u = s.items[a];
+        return u ? u.activate() : i[a] && o({ field: i[a].key }), !0;
       }
       return !1;
     },
     onExit() {
-      var t;
-      n && ((t = n.unmount) == null || t.call(n), n.root.unmount(), n.holder.remove(), n = null);
+      var r;
+      n && ((r = n.unmount) == null || r.call(n), n.root.unmount(), n.holder.remove(), n = null);
     }
   };
 }, Qu = Mu.create({

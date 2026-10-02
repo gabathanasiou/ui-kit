@@ -120,6 +120,31 @@ export const TokenSuggestion: SuggestionOptions<TokenItem, { field: string }>['r
     );
   };
 
+  /** (Re)creates the plugin's mount — it anchors once on creation, so an
+   *  update re-mounts to re-run computePosition against the current
+   *  decoration. The previous mount's autoUpdate/dismiss listeners are
+   *  cleaned before recreating (no accumulation). */
+  const position = () => {
+    if (!popup?.props) return;
+    popup.unmount?.();
+    popup.unmount = popup.props.mount(popup.holder, {
+      // The plugin anchors to the `@`-decoration's start; the caret sits at
+      // its END, so shift the popup right by the anchor width — matches the
+      // pre-TipTap popup, which anchored exactly at the caret.
+      onPosition: ({ x, y, placement, strategy }) => {
+        if (!popup) return;
+        const rect = popup.props?.clientRect?.();
+        const dx = rect && !placement.endsWith('-end') ? rect.width : 0;
+        // Use the plugin's strategy (absolute by default — document coords)
+        // instead of hard-coding fixed: fixed + absolute coords lands the
+        // popup scrollY below the caret (off-screen on a scrolled page).
+        popup.holder.style.position = strategy;
+        popup.holder.style.left = `${x + dx}px`;
+        popup.holder.style.top = `${y}px`;
+      },
+    });
+  };
+
   return {
     onStart(props) {
       const holder = document.createElement('div');
@@ -128,28 +153,18 @@ export const TokenSuggestion: SuggestionOptions<TokenItem, { field: string }>['r
       holder.style.zIndex = '10002';
       const root = createRoot(holder);
       popup = { holder, root, unmount: null, props, api: null };
-      const unmount = props.mount(holder, {
-        // The plugin anchors to the `@`-decoration's start; the caret sits at
-        // its END, so shift the popup right by the anchor width — matches the
-        // pre-TipTap popup, which anchored exactly at the caret.
-        onPosition: ({ x, y, placement, strategy }) => {
-          if (!popup) return;
-          const rect = popup.props?.clientRect?.();
-          const dx = rect && !placement.endsWith('-end') ? rect.width : 0;
-          // Use the plugin's strategy (absolute by default — document coords)
-          // instead of hard-coding fixed: fixed + absolute coords lands the
-          // popup scrollY below the caret (off-screen on a scrolled page).
-          holder.style.position = strategy;
-          holder.style.left = `${x + dx}px`;
-          holder.style.top = `${y}px`;
-        },
-      });
-      popup.unmount = unmount;
+      position();
       render(props);
     },
     onUpdate(props) {
       if (!popup) return;
       render(props);
+      // The mount anchors ONCE when it is created; the caret moves as the
+      // query grows (the reference is a virtual decoration rect, so
+      // autoUpdate can't observe it). Re-mount per update runs a fresh
+      // computePosition against the CURRENT decoration, so the popup stays
+      // glued to the caret instead of trailing it by the last keystrokes.
+      position();
     },
     onKeyDown({ event }: SuggestionKeyDownProps) {
       if (!popup?.props || !popup.api) return false;
