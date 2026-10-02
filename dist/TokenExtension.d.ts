@@ -7,6 +7,9 @@ export interface TokenMeta {
         text: string;
         bg: string;
     };
+    /** Render the label as a nested lighter bubble INSIDE the chip's pill (an
+     *  attached attribute reads as `Bob (Phone)`), instead of plain text. */
+    nested?: boolean;
 }
 /** Suggestion item contract for the `@` autocomplete. */
 export interface TokenItem {

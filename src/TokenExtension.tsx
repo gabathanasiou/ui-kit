@@ -18,6 +18,9 @@ import React from 'react';
 export interface TokenMeta {
   label: string;
   color: { text: string; bg: string };
+  /** Render the label as a nested lighter bubble INSIDE the chip's pill (an
+   *  attached attribute reads as `Bob (Phone)`), instead of plain text. */
+  nested?: boolean;
 }
 
 /** Suggestion item contract for the `@` autocomplete. */
@@ -41,6 +44,7 @@ export const TokenChipView: React.FC<NodeViewProps> = ({ node, selected, extensi
   const meta = options.resolve?.(field) ?? null;
   const color = meta?.color ?? FALLBACK_COLOR;
   const label = meta?.label ?? `{{${field}}}`;
+  const nested = meta?.nested;
   return (
     <NodeViewWrapper
       as="span"
@@ -77,7 +81,7 @@ export const TokenChipView: React.FC<NodeViewProps> = ({ node, selected, extensi
         options.onTokenClick?.(field, (e.currentTarget as HTMLElement).getBoundingClientRect(), pos);
       }}
     >
-      {label}
+      {nested ? <span className="rt-token-nested">{label}</span> : label}
     </NodeViewWrapper>
   );
 };

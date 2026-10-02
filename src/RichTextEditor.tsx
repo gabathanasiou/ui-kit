@@ -1,14 +1,15 @@
 "use client";
 import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
-import { NodeSelection } from '@tiptap/pm/state';
+import { Extension, type Editor } from '@tiptap/core';
+import { NodeSelection, PluginKey } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { TextStyle } from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
-import type { SuggestionOptions } from '@tiptap/suggestion';
+import Suggestion, { type SuggestionOptions } from '@tiptap/suggestion';
 import { sanitizeRichText } from './richText';
 import { Token, preprocessTokenHtml, stripTokenWrappers, type TokenItem, type TokenMeta } from './TokenExtension';
 import { TokenSuggestion } from './RichTextSuggestionPopup';
@@ -21,11 +22,15 @@ import { TokenSuggestion } from './RichTextSuggestionPopup';
 // emits bare `{{key}}` text, so saved projects, print, preview and the canvas
 // keep working byte-compatibly.
 //
-// `{{` is NOT a trigger — only `@` (user decision).
+// `{{` is NOT a trigger: `@` opens the token autocomplete, and a `.` typed
+// IMMEDIATELY after a token chip opens the attribute autocomplete for that
+// chip (the consumer supplies the items via `attributeItems`; picking inserts
+// a SECOND chip directly after it — two independent atoms, so deleting either
+// bubble detaches just that part).
 //
 // The consumer supplies the token vocabulary via props: `resolveToken` maps a
 // stored key to display meta (label + color); `suggestionItems` feeds the `@`
-// autocomplete.
+// autocomplete; `attributeItems` feeds the `.` stage.
 
 export interface RichTextEditorHandle {
   exec: (command: string, value?: string) => void;
@@ -52,6 +57,29 @@ export interface RichTextState {
 
 export const RICH_TEXT_STATE_IDLE: RichTextState = { bold: false, italic: false, underline: false, strike: false, link: false, color: '' };
 
+/** Key of the token chip immediately before the doc position `pos`, or null.
+ *  The `.` attribute suggestion is gated on this: the dot must sit directly
+ *  after a chip, never after plain text. */
+function chipBeforePos(editor: Editor, pos: number): string | null {
+  const node = editor.state.doc.resolve(pos).nodeBefore;
+  return node && node.type.name === 'token' ? ((node.attrs.field as string) ?? '') : null;
+}
+
+/** The `.` trigger in the caret's current text node + the chip it attaches to.
+ *  The dot must live in text (chips are atoms); a second dot ends the query
+ *  (the suggestion plugin's regex), so the LAST dot is the trigger. */
+function dotTrigger(editor: Editor): { chipKey: string; dotPos: number } | null {
+  const $from = editor.state.selection.$from;
+  const textNode = $from.nodeBefore;
+  if (!textNode?.isText) return null;
+  const text = textNode.text || '';
+  const dotIndex = text.lastIndexOf('.');
+  if (dotIndex < 0) return null;
+  const dotPos = $from.pos - text.length + dotIndex;
+  const chipKey = chipBeforePos(editor, dotPos);
+  return chipKey == null ? null : { chipKey, dotPos };
+}
+
 export interface RichTextEditorProps {
   value: string;
   onChange: (html: string) => void;
@@ -64,6 +92,12 @@ export interface RichTextEditorProps {
   resolveToken?: (key: string) => TokenMeta | null;
   /** Items for the `@` token autocomplete, filtered by the current query. */
   suggestionItems?: (query: string) => TokenItem[];
+  /** Items for the `.` attribute autocomplete — fired when `.` is typed
+   *  IMMEDIATELY after a token chip. `chipKey` is the chip's stored key; each
+   *  returned item's `key` is the FULL key of a SECOND token atom inserted
+   *  directly after the chip (e.g. `crew.bob` → append `crew.bob.phone`).
+   *  The two chips stay independent — either can be selected and deleted. */
+  attributeItems?: (chipKey: string, query: string) => TokenItem[];
   /** Fired when a token chip is clicked: its key, viewport rect and document
    *  position. Pair with the handle's `replaceToken` for targeted edits. */
   onTokenClick?: (key: string, rect: DOMRect, pos: number) => void;
@@ -75,12 +109,14 @@ export interface RichTextEditorProps {
 }
 
 const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProps>(({
-  value, onChange, placeholder, disabled, className, onStateChange, resolveToken, suggestionItems, onTokenClick, onSelectionChange,
+  value, onChange, placeholder, disabled, className, onStateChange, resolveToken, suggestionItems, attributeItems, onTokenClick, onSelectionChange,
 }, ref) => {
   const resolveRef = useRef(resolveToken);
   resolveRef.current = resolveToken;
   const itemsRef = useRef(suggestionItems);
   itemsRef.current = suggestionItems;
+  const attributeItemsRef = useRef(attributeItems);
+  attributeItemsRef.current = attributeItems;
   const onTokenClickRef = useRef(onTokenClick);
   onTokenClickRef.current = onTokenClick;
   const onSelectionChangeRef = useRef(onSelectionChange);
@@ -139,9 +175,9 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
     return /^(<p[^>]*>(?:<br\s*\/?>)?<\/p>)+$/.test(clean) ? '' : clean;
   };
 
-  // Stable per-props instance: rebuilding the extension mid-session would
+  // Stable per-props instance: rebuilding the extensions mid-session would
   // recreate the editor and drop the caret.
-  const tokenExtension = React.useMemo(() => {
+  const tokenExtensions = React.useMemo(() => {
     const suggestion: Omit<SuggestionOptions<TokenItem, { field: string }>, 'editor'> = {
       char: '@',
       // Any prefix — `@` fires mid-word too (emails aren't a concern in the
@@ -154,7 +190,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
       },
       render: TokenSuggestion,
     };
-    return Token.configure({
+    const token = Token.configure({
       resolve: resolveRef.current ?? null,
       suggestion,
       onTokenClick: (key: string, rect: DOMRect, pos: number) => {
@@ -162,6 +198,43 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
         onTokenClickRef.current?.(key, rect, pos);
       },
     } as unknown as Parameters<typeof Token.configure>[0]);
+
+    // The `.` attribute stage: a suggestion that appends a SECOND token atom
+    // right after the chip it attaches to (never rewrites it — both bubbles
+    // stay deletable on their own). Distinct plugin key + decoration class so
+    // it can never collide with the `@` mention plugin.
+    const attributeSuggestion = Extension.create({
+      name: 'tokenAttributeSuggestion',
+      addProseMirrorPlugins() {
+        return [
+          Suggestion<TokenItem, { field: string }>({
+            pluginKey: new PluginKey('tokenAttributeSuggestion'),
+            editor: this.editor,
+            char: '.',
+            // The gate is `shouldShow` (a chip must sit immediately before the
+            // dot), not the prefix rule — the prefix here is an atom, not text.
+            allowedPrefixes: null,
+            decorationClass: 'suggestion-attr',
+            shouldShow: ({ editor: ed, range }) => chipBeforePos(ed, range.from) != null,
+            items: ({ editor: ed, query }) => {
+              const hit = dotTrigger(ed);
+              return hit ? attributeItemsRef.current?.(hit.chipKey, query) ?? [] : [];
+            },
+            command: ({ editor: ed, range, props }) => {
+              // The `.query` range starts right after the anchored chip, so
+              // inserting the atom at it removes the typed text and lands the
+              // new chip flush against the first — two independent atoms.
+              ed.chain().focus()
+                .insertContentAt(range, { type: 'token', attrs: { field: props.field } })
+                .run();
+            },
+            render: TokenSuggestion,
+          }),
+        ];
+      },
+    });
+
+    return [token, attributeSuggestion];
   }, []);
 
   const editor = useEditor({
@@ -181,7 +254,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
         linkOnPaste: true,
         HTMLAttributes: { target: '_blank', rel: 'noreferrer' },
       }),
-      tokenExtension,
+      ...tokenExtensions,
     ],
     content: preprocessTokenHtml(value || ''),
     editable: !disabled,

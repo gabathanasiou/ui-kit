@@ -34,6 +34,12 @@ export interface RichTextEditorProps {
     resolveToken?: (key: string) => TokenMeta | null;
     /** Items for the `@` token autocomplete, filtered by the current query. */
     suggestionItems?: (query: string) => TokenItem[];
+    /** Items for the `.` attribute autocomplete — fired when `.` is typed
+     *  IMMEDIATELY after a token chip. `chipKey` is the chip's stored key; each
+     *  returned item's `key` is the FULL key of a SECOND token atom inserted
+     *  directly after the chip (e.g. `crew.bob` → append `crew.bob.phone`).
+     *  The two chips stay independent — either can be selected and deleted. */
+    attributeItems?: (chipKey: string, query: string) => TokenItem[];
     /** Fired when a token chip is clicked: its key, viewport rect and document
      *  position. Pair with the handle's `replaceToken` for targeted edits. */
     onTokenClick?: (key: string, rect: DOMRect, pos: number) => void;

@@ -1034,6 +1034,35 @@
   height: 0;
 }
 
+/* The label of an attached chip can render as a nested lighter bubble inside
+   the linked pill (consumer meta `nested`) — `Bob (Phone)`. Plain inline on
+   purpose: its background hugs the text's font box, so the pill shows natural
+   breathing room around it (an inline-block would fill the line box). */
+.richtext-editor .rt-token-nested {
+  background: rgba(255, 255, 255, 0.24);
+  border-radius: 8px;
+  padding: 0 5px;
+  font-size: 0.95em;
+  font-weight: 500;
+}
+
+/* A reference + attribute pair LINKS into one bubble: exactly the nested
+   attribute chip tucks into the chip before it and the middle corners flatten,
+   so the pair reads as the previous combined chip while staying TWO atoms —
+   delete either on its own. A third token typed after the pair stays a normal,
+   separate chip. `!important` because the chip's pill styles are inline
+   (dynamic colors, original look). */
+.richtext-editor .react-renderer.node-token + .react-renderer.node-token .rt-token:has(.rt-token-nested) {
+  margin-left: -2px !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+.richtext-editor .react-renderer.node-token:has(+ .react-renderer.node-token .rt-token-nested) .rt-token {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
 .richtext-editor .rt-token.rt-token-selected {
   filter: brightness(0.72);
 }
