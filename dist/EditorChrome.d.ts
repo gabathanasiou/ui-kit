@@ -70,8 +70,9 @@ export declare const ContentRow: React.FC<{
 }>;
 /** Editor panel header bar: leading slot (icon + label) + right-aligned
  *  trailing actions. Wraps when its surface is narrower than the actions (the
- *  docked inspector column) instead of forcing the panel wider — the trailing
- *  cluster then drops to its own line, still right-aligned via `ml-auto`. */
+ *  docked inspector column) — the trailing cluster then drops to its own line,
+ *  still right-aligned via `ml-auto`, and wraps again internally if it is
+ *  still wider than the panel. */
 export declare const ChromeHeader: React.FC<{
     leading?: React.ReactNode;
     trailing?: React.ReactNode;

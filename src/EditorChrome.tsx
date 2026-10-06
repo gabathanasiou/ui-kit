@@ -111,12 +111,13 @@ export const ContentRow: React.FC<{ label?: string; children: React.ReactNode; t
 
 /** Editor panel header bar: leading slot (icon + label) + right-aligned
  *  trailing actions. Wraps when its surface is narrower than the actions (the
- *  docked inspector column) instead of forcing the panel wider — the trailing
- *  cluster then drops to its own line, still right-aligned via `ml-auto`. */
+ *  docked inspector column) — the trailing cluster then drops to its own line,
+ *  still right-aligned via `ml-auto`, and wraps again internally if it is
+ *  still wider than the panel. */
 export const ChromeHeader: React.FC<{ leading?: React.ReactNode; trailing?: React.ReactNode; className?: string }> = ({ leading, trailing, className = '' }) => (
   <div className={`flex flex-wrap items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-zinc-700/40 border border-zinc-700/60 min-w-0 ${className}`}>
     {leading}
-    {trailing && <div className="ml-auto flex items-center gap-1">{trailing}</div>}
+    {trailing && <div className="ml-auto flex flex-wrap items-center justify-end gap-1">{trailing}</div>}
   </div>
 );
 
@@ -130,11 +131,13 @@ export interface StructureControlsProps {
 }
 
 export const StructureControls: React.FC<StructureControlsProps> = ({ readOnly, onDuplicate, onRemove, onMove, compact }) => (
-  <>
+  // One unbreakable cluster: when a header's trailing wraps, the move pair and
+  // the duplicate/delete pair stay together (no orphaned icons on a line).
+  <div className="flex items-center gap-1 shrink-0">
     <ToolButton onClick={() => onMove(-1)} disabled={readOnly} title="Move up" className={TB_BTN_ICON}><ArrowUp className="w-2.5 h-2.5" /></ToolButton>
     <ToolButton onClick={() => onMove(1)} disabled={readOnly} title="Move down" className={TB_BTN_ICON}><ArrowDown className="w-2.5 h-2.5" /></ToolButton>
     <ToolButton onClick={onDuplicate} disabled={readOnly} title="Duplicate" className={TB_BTN_ICON}><Copy className="w-2.5 h-2.5" /></ToolButton>
     <div className={TB_DIVIDER} />
     <ToolButton onClick={onRemove} disabled={readOnly} title="Delete" className={`${TB_BTN_ICON} ${TB_DANGER}`}><Trash2 className="w-2.5 h-2.5" /></ToolButton>
-  </>
+  </div>
 );
