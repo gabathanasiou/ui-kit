@@ -54,6 +54,9 @@ export declare const Seg: React.FC<{
     /** Fill the container with equal-width segments (labels centered) — the
      *  docked inspector column wants the control to span the full row. */
     stretch?: boolean;
+    /** Ride a plain toolbar row (24px on fine pointers) instead of the editor
+     *  chrome's 28px control height. Ignored on coarse pointers. */
+    dense?: boolean;
 }>;
 /** Section eyebrow: uppercase label with a hairline rule. */
 export declare const SectionHeader: React.FC<{

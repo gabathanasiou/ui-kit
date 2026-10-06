@@ -63,8 +63,12 @@ export const Seg: React.FC<{
   /** Fill the container with equal-width segments (labels centered) — the
    *  docked inspector column wants the control to span the full row. */
   stretch?: boolean;
-}> = ({ value, options, onChange, disabled, active, stretch }) => {
+  /** Ride a plain toolbar row (24px on fine pointers) instead of the editor
+   *  chrome's 28px control height. Ignored on coarse pointers. */
+  dense?: boolean;
+}> = ({ value, options, onChange, disabled, active, stretch, dense }) => {
   const chrome = useToolbarChrome();
+  const height = dense && !IS_COARSE ? 24 : chrome.control.height;
   return (
     <div className={`${TB_SEG}${stretch ? ' w-full' : ''}`}>
       {options.map(o => {
@@ -75,7 +79,7 @@ export const Seg: React.FC<{
             disabled={disabled}
             onClick={() => onChange(o.v)}
             title={o.title}
-            style={chrome.control}
+            style={{ ...chrome.control, height }}
             className={`font-medium transition-colors disabled:opacity-30 ${stretch ? 'flex-1' : ''} ${on ? 'bg-blue-900/50 text-blue-300' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'} ${o.v !== options[options.length - 1].v ? 'border-r border-zinc-700' : ''}`}
           >
             {o.l}
