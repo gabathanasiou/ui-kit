@@ -130,9 +130,13 @@ export interface FormatToolbarProps {
   fontSizeSlot?: React.ReactNode;
   /** Show the clear-formatting action (unsets every inline mark). */
   showClearFormatting?: boolean;
+  /** Draw dividers between the clusters (default true). The docked inspector
+   *  column passes false: its bar WRAPS, and a divider left stranded at a
+   *  wrapped line end reads as junk — clusters are separated by gap there. */
+  dividers?: boolean;
 }
 
-export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disabled, active, lockedFormatting, trailing, font, fontSizeSlot, showClearFormatting }) => {
+export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disabled, active, lockedFormatting, trailing, font, fontSizeSlot, showClearFormatting, dividers = true }) => {
   const [colorOpen, setColorOpen] = useState(false);
   const run = (cmd: string, value?: string) => editorRef.current?.exec(cmd, value);
   const chrome = useToolbarChrome();
@@ -140,10 +144,12 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disable
   // The bar WRAPS when its surface is narrower than the controls (the docked
   // inspector column) — never clips. Related controls travel as one
   // unbreakable cluster (marks · link · color · font/size · trailing), so a
-  // line break only ever lands between clusters.
+  // line break only ever lands between clusters. `dividers=false` drops the
+  // separators for a wrapping surface (nothing can strand at a line end).
   const cluster = 'flex items-center gap-1 shrink-0';
+  const sep = dividers ? <div className={TB_DIVIDER} /> : null;
   return (
-    <div className="flex flex-wrap items-center gap-x-1 gap-y-1.5">
+    <div className={`flex flex-wrap items-center ${dividers ? 'gap-x-1' : 'gap-x-2'} gap-y-1.5`}>
       <div className={cluster}>
         <Tooltip content={lockedFormatting?.bold || 'Bold'}>
           <Button theme="dark" aria-label="Bold" active={(active?.bold ?? false) || locked('bold')} disabled={disabled || locked('bold')} onMouseDown={e => e.preventDefault()} onClick={() => run('bold')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center font-bold">B</Button>
@@ -158,11 +164,11 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disable
           <Button theme="dark" aria-label="Strikethrough" active={active?.strike ?? false} disabled={disabled} onMouseDown={e => e.preventDefault()} onClick={() => run('strikeThrough')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center"><Strikethrough className="w-3 h-3" /></Button>
         </Tooltip>
       </div>
-      <div className={TB_DIVIDER} />
+      {sep}
       <div className={cluster}>
         <LinkMenu editorRef={editorRef} disabled={disabled} active={active?.link ?? false} />
       </div>
-      <div className={TB_DIVIDER} />
+      {sep}
       <div className={cluster}>
         <DropdownMenu
           open={colorOpen}
@@ -200,7 +206,7 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disable
       </div>
       {(font || fontSizeSlot || showClearFormatting) && (
         <>
-          <div className={TB_DIVIDER} />
+          {sep}
           <div className={cluster}>
             {font && <FontMenu value={font.value || 'Helvetica'} mixed={font.mixed} disabled={disabled} onChange={font.onChange} />}
             {fontSizeSlot}
@@ -224,7 +230,7 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disable
       )}
       {trailing && (
         <>
-          <div className={TB_DIVIDER} />
+          {sep}
           <div className={cluster}>{trailing}</div>
         </>
       )}

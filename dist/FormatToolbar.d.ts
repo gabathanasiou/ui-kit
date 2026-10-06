@@ -33,5 +33,9 @@ export interface FormatToolbarProps {
     fontSizeSlot?: React.ReactNode;
     /** Show the clear-formatting action (unsets every inline mark). */
     showClearFormatting?: boolean;
+    /** Draw dividers between the clusters (default true). The docked inspector
+     *  column passes false: its bar WRAPS, and a divider left stranded at a
+     *  wrapped line end reads as junk — clusters are separated by gap there. */
+    dividers?: boolean;
 }
 export declare const FormatToolbar: React.FC<FormatToolbarProps>;
