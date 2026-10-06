@@ -137,82 +137,95 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disable
   const run = (cmd: string, value?: string) => editorRef.current?.exec(cmd, value);
   const chrome = useToolbarChrome();
   const locked = (axis: 'bold' | 'italic') => !!lockedFormatting?.[axis];
+  // The bar WRAPS when its surface is narrower than the controls (the docked
+  // inspector column) — never clips. Related controls travel as one
+  // unbreakable cluster (marks · link · color · font/size · trailing), so a
+  // line break only ever lands between clusters.
+  const cluster = 'flex items-center gap-1 shrink-0';
   return (
-    <div className="flex items-center gap-1">
-      <Tooltip content={lockedFormatting?.bold || 'Bold'}>
-        <Button theme="dark" aria-label="Bold" active={(active?.bold ?? false) || locked('bold')} disabled={disabled || locked('bold')} onMouseDown={e => e.preventDefault()} onClick={() => run('bold')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center font-bold">B</Button>
-      </Tooltip>
-      <Tooltip content={lockedFormatting?.italic || 'Italic'}>
-        <Button theme="dark" aria-label="Italic" active={(active?.italic ?? false) || locked('italic')} disabled={disabled || locked('italic')} onMouseDown={e => e.preventDefault()} onClick={() => run('italic')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center italic">I</Button>
-      </Tooltip>
-      <Tooltip content="Underline">
-        <Button theme="dark" aria-label="Underline" active={active?.underline ?? false} disabled={disabled} onMouseDown={e => e.preventDefault()} onClick={() => run('underline')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center"><UnderlineIcon className="w-3 h-3" /></Button>
-      </Tooltip>
-      <Tooltip content="Strikethrough">
-        <Button theme="dark" aria-label="Strikethrough" active={active?.strike ?? false} disabled={disabled} onMouseDown={e => e.preventDefault()} onClick={() => run('strikeThrough')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center"><Strikethrough className="w-3 h-3" /></Button>
-      </Tooltip>
+    <div className="flex flex-wrap items-center gap-x-1 gap-y-1.5">
+      <div className={cluster}>
+        <Tooltip content={lockedFormatting?.bold || 'Bold'}>
+          <Button theme="dark" aria-label="Bold" active={(active?.bold ?? false) || locked('bold')} disabled={disabled || locked('bold')} onMouseDown={e => e.preventDefault()} onClick={() => run('bold')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center font-bold">B</Button>
+        </Tooltip>
+        <Tooltip content={lockedFormatting?.italic || 'Italic'}>
+          <Button theme="dark" aria-label="Italic" active={(active?.italic ?? false) || locked('italic')} disabled={disabled || locked('italic')} onMouseDown={e => e.preventDefault()} onClick={() => run('italic')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center italic">I</Button>
+        </Tooltip>
+        <Tooltip content="Underline">
+          <Button theme="dark" aria-label="Underline" active={active?.underline ?? false} disabled={disabled} onMouseDown={e => e.preventDefault()} onClick={() => run('underline')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center"><UnderlineIcon className="w-3 h-3" /></Button>
+        </Tooltip>
+        <Tooltip content="Strikethrough">
+          <Button theme="dark" aria-label="Strikethrough" active={active?.strike ?? false} disabled={disabled} onMouseDown={e => e.preventDefault()} onClick={() => run('strikeThrough')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center"><Strikethrough className="w-3 h-3" /></Button>
+        </Tooltip>
+      </div>
       <div className={TB_DIVIDER} />
-      <LinkMenu editorRef={editorRef} disabled={disabled} active={active?.link ?? false} />
+      <div className={cluster}>
+        <LinkMenu editorRef={editorRef} disabled={disabled} active={active?.link ?? false} />
+      </div>
       <div className={TB_DIVIDER} />
-      <DropdownMenu
-        open={colorOpen}
-        onOpenChange={setColorOpen}
-        theme="dark"
-        width="w-36"
-        trigger={
-          <Button theme="dark" disabled={disabled} style={chrome.control} className="justify-between min-w-0" title="Text color">
-            {active?.color
-              ? <span className="w-3 h-3 rounded-full border border-zinc-600 shrink-0" style={{ background: active.color }} />
-              : <NoColorDot />}
-            <ChevronDown className="w-3 h-3 text-zinc-500" />
-          </Button>
-        }
-      >
-        <div className="grid grid-cols-4 gap-1 p-2">
-          <button
-            onClick={() => { run('unsetColor'); setColorOpen(false); }}
-            className={`w-7 h-7 rounded border border-zinc-700 hover:border-zinc-500 transition-colors flex items-center justify-center ${!active?.color ? 'ring-2 ring-zinc-300' : ''}`}
-            title="Default (black ink)"
-          >
-            <NoColorDot className="w-3.5 h-3.5" />
-          </button>
-          {RT_COLORS.map(c => (
+      <div className={cluster}>
+        <DropdownMenu
+          open={colorOpen}
+          onOpenChange={setColorOpen}
+          theme="dark"
+          width="w-36"
+          trigger={
+            <Button theme="dark" disabled={disabled} style={chrome.control} className="justify-between min-w-0" title="Text color">
+              {active?.color
+                ? <span className="w-3 h-3 rounded-full border border-zinc-600 shrink-0" style={{ background: active.color }} />
+                : <NoColorDot />}
+              <ChevronDown className="w-3 h-3 text-zinc-500" />
+            </Button>
+          }
+        >
+          <div className="grid grid-cols-4 gap-1 p-2">
             <button
-              key={c}
-              onClick={() => { run('foreColor', c); setColorOpen(false); }}
-              className={`w-7 h-7 rounded border border-zinc-700 hover:border-zinc-500 transition-colors ${c === active?.color ? 'ring-2 ring-zinc-300' : ''}`}
-              style={{ background: c }}
-              title={c}
-            />
-          ))}
-        </div>
-      </DropdownMenu>
+              onClick={() => { run('unsetColor'); setColorOpen(false); }}
+              className={`w-7 h-7 rounded border border-zinc-700 hover:border-zinc-500 transition-colors flex items-center justify-center ${!active?.color ? 'ring-2 ring-zinc-300' : ''}`}
+              title="Default (black ink)"
+            >
+              <NoColorDot className="w-3.5 h-3.5" />
+            </button>
+            {RT_COLORS.map(c => (
+              <button
+                key={c}
+                onClick={() => { run('foreColor', c); setColorOpen(false); }}
+                className={`w-7 h-7 rounded border border-zinc-700 hover:border-zinc-500 transition-colors ${c === active?.color ? 'ring-2 ring-zinc-300' : ''}`}
+                style={{ background: c }}
+                title={c}
+              />
+            ))}
+          </div>
+        </DropdownMenu>
+      </div>
       {(font || fontSizeSlot || showClearFormatting) && (
         <>
           <div className={TB_DIVIDER} />
-          {font && <FontMenu value={font.value || 'Helvetica'} mixed={font.mixed} disabled={disabled} onChange={font.onChange} />}
-          {fontSizeSlot}
-          {showClearFormatting && (
-            <Tooltip content="Clear formatting">
-              <Button
-                theme="dark"
-                aria-label="Clear formatting"
-                disabled={disabled}
-                onMouseDown={e => e.preventDefault()}
-                onClick={() => run('clearFormatting')}
-                style={{ ...chrome.toggle, padding: 0 }}
-                className="justify-center"
-              >
-                <RemoveFormatting className="w-3 h-3" />
-              </Button>
-            </Tooltip>
-          )}
+          <div className={cluster}>
+            {font && <FontMenu value={font.value || 'Helvetica'} mixed={font.mixed} disabled={disabled} onChange={font.onChange} />}
+            {fontSizeSlot}
+            {showClearFormatting && (
+              <Tooltip content="Clear formatting">
+                <Button
+                  theme="dark"
+                  aria-label="Clear formatting"
+                  disabled={disabled}
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => run('clearFormatting')}
+                  style={{ ...chrome.toggle, padding: 0 }}
+                  className="justify-center"
+                >
+                  <RemoveFormatting className="w-3 h-3" />
+                </Button>
+              </Tooltip>
+            )}
+          </div>
         </>
       )}
       {trailing && (
         <>
           <div className={TB_DIVIDER} />
-          {trailing}
+          <div className={cluster}>{trailing}</div>
         </>
       )}
     </div>

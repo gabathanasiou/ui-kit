@@ -110,9 +110,11 @@ export const ContentRow: React.FC<{ label?: string; children: React.ReactNode; t
 );
 
 /** Editor panel header bar: leading slot (icon + label) + right-aligned
- *  trailing actions. */
+ *  trailing actions. Wraps when its surface is narrower than the actions (the
+ *  docked inspector column) instead of forcing the panel wider — the trailing
+ *  cluster then drops to its own line, still right-aligned via `ml-auto`. */
 export const ChromeHeader: React.FC<{ leading?: React.ReactNode; trailing?: React.ReactNode; className?: string }> = ({ leading, trailing, className = '' }) => (
-  <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-zinc-700/40 border border-zinc-700/60 min-w-max ${className}`}>
+  <div className={`flex flex-wrap items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-zinc-700/40 border border-zinc-700/60 min-w-0 ${className}`}>
     {leading}
     {trailing && <div className="ml-auto flex items-center gap-1">{trailing}</div>}
   </div>
