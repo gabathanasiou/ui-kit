@@ -56,7 +56,7 @@ export const ToolButton: React.FC<{ onClick: () => void; disabled?: boolean; tit
 
 export const Seg: React.FC<{
   value: string;
-  options: { v: string; l: string }[];
+  options: { v: string; l: string; title?: string }[];
   onChange: (v: string) => void;
   disabled?: boolean;
   active?: (v: string) => boolean;
@@ -74,6 +74,7 @@ export const Seg: React.FC<{
             key={o.v}
             disabled={disabled}
             onClick={() => onChange(o.v)}
+            title={o.title}
             style={chrome.control}
             className={`font-medium transition-colors disabled:opacity-30 ${stretch ? 'flex-1' : ''} ${on ? 'bg-blue-900/50 text-blue-300' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'} ${o.v !== options[options.length - 1].v ? 'border-r border-zinc-700' : ''}`}
           >

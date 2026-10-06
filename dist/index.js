@@ -2398,6 +2398,7 @@ const qf = Te ? "text-xs font-semibold text-zinc-600 uppercase tracking-wider sh
       {
         disabled: r,
         onClick: () => t(l.v),
+        title: l.title,
         style: s.control,
         className: `font-medium transition-colors disabled:opacity-30 ${o ? "flex-1" : ""} ${c ? "bg-blue-900/50 text-blue-300" : "bg-zinc-800 text-zinc-500 hover:bg-zinc-700"} ${l.v !== e[e.length - 1].v ? "border-r border-zinc-700" : ""}`,
         children: l.l

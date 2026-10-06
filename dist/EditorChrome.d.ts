@@ -46,6 +46,7 @@ export declare const Seg: React.FC<{
     options: {
         v: string;
         l: string;
+        title?: string;
     }[];
     onChange: (v: string) => void;
     disabled?: boolean;
