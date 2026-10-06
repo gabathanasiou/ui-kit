@@ -9998,7 +9998,7 @@ const tf = mt.forwardRef(({
           break;
       }
     },
-    focus: () => O == null ? void 0 : O.commands.focus(),
+    focus: (j) => O == null ? void 0 : O.commands.focus(j),
     insertToken: (j) => {
       !O || E.current || O.chain().focus().insertContent({ type: "token", attrs: { field: j } }).run();
     },

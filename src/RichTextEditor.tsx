@@ -103,7 +103,10 @@ export interface RichTextEditorHandle {
    *  applies WITHOUT stealing focus (toolbar inputs that must stay focused
    *  while typing commit live, e.g. the app's font-size number box). */
   exec: (command: string, value?: string, opts?: { focus?: boolean }) => void;
-  focus: () => void;
+  /** Focuses the editor. `position` places the caret at the start/end of the
+   *  current textblock (TipTap's focus command) — consumers entering edit mode
+   *  use it to land the caret where typing continues. */
+  focus: (position?: 'start' | 'end') => void;
   /** Inserts a `{{key}}` token node at the caret. */
   insertToken: (key: string) => void;
   /** Rewrites the LAST-SELECTED token chip's key (e.g. adding `|`-item
@@ -448,7 +451,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
         default: break;
       }
     },
-    focus: () => editor?.commands.focus(),
+    focus: (position?: 'start' | 'end') => editor?.commands.focus(position),
     insertToken: (key: string) => {
       if (!editor || disabledRef.current) return;
       editor.chain().focus().insertContent({ type: 'token', attrs: { field: key } }).run();

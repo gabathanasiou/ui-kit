@@ -7,7 +7,10 @@ export interface RichTextEditorHandle {
     exec: (command: string, value?: string, opts?: {
         focus?: boolean;
     }) => void;
-    focus: () => void;
+    /** Focuses the editor. `position` places the caret at the start/end of the
+     *  current textblock (TipTap's focus command) — consumers entering edit mode
+     *  use it to land the caret where typing continues. */
+    focus: (position?: 'start' | 'end') => void;
     /** Inserts a `{{key}}` token node at the caret. */
     insertToken: (key: string) => void;
     /** Rewrites the LAST-SELECTED token chip's key (e.g. adding `|`-item
