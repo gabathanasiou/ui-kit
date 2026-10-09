@@ -119,14 +119,15 @@ export const Seg: React.FC<{
   const trackDenseSize = useCoarseSize({ px: 12, py: 2, fs: 12 }, { px: 16, py: 10, fs: 14 });
   const isOn = (v: string) => (active ? active(v) : value === v);
 
-  /* Sliding pill: measure the active segment (relative to the track), re-measure
-     on container resize. Layout-effect so the first paint already has the pill. */
+  /* Sliding pill: measure the active segment (relative to the container),
+     re-measure on container resize. Layout-effect so the first paint already
+     has the pill. Shared by both variants (chrome highlights blue, track
+     raises a neutral pill). */
   const wrapRef = React.useRef<HTMLDivElement | null>(null);
   const btnRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
   const activeIndex = Math.max(0, options.findIndex(o => isOn(o.v)));
   const [pill, setPill] = React.useState<{ left: number; width: number } | null>(null);
   React.useLayoutEffect(() => {
-    if (variant !== 'track') return;
     const measure = () => {
       const btn = btnRefs.current[activeIndex];
       if (btn) setPill({ left: btn.offsetLeft, width: btn.offsetWidth });
@@ -137,11 +138,13 @@ export const Seg: React.FC<{
     const ro = new ResizeObserver(measure);
     ro.observe(wrap);
     return () => ro.disconnect();
-  }, [variant, activeIndex, options.length]);
+  }, [activeIndex, options.length]);
+
+  const reduceMotion = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const pillMotion = reduceMotion ? '' : 'transition-[transform,width] duration-200 ease-out';
 
   if (variant === 'track') {
     const T = TRACK[theme];
-    const reduceMotion = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     return (
       <div
         ref={wrapRef}
@@ -152,7 +155,7 @@ export const Seg: React.FC<{
         {pill && (
           <span
             aria-hidden
-            className={`absolute rounded ${T.pill} ${reduceMotion ? '' : 'transition-[transform,width] duration-200 ease-out'}`}
+            className={`absolute rounded ${T.pill} ${pillMotion}`}
             style={{ left: 0, top: 2, bottom: 2, width: pill.width, transform: `translateX(${pill.left}px)` }}
           />
         )}
@@ -183,17 +186,25 @@ export const Seg: React.FC<{
   }
 
   return (
-    <div className={`${TB_SEG}${stretch ? ' w-full' : ''}`}>
-      {options.map(o => {
+    <div ref={wrapRef} className={`relative ${TB_SEG} bg-zinc-800${stretch ? ' w-full' : ''}`}>
+      {pill && (
+        <span
+          aria-hidden
+          className={`absolute bg-blue-900/50 ${pillMotion}`}
+          style={{ left: 0, top: 0, bottom: 0, width: pill.width, transform: `translateX(${pill.left}px)` }}
+        />
+      )}
+      {options.map((o, i) => {
         const on = isOn(o.v);
         return (
           <button
             key={o.v}
+            ref={el => { btnRefs.current[i] = el; }}
             disabled={disabled}
             onClick={() => onChange(o.v)}
             title={o.title}
             style={{ ...chrome.control, height }}
-            className={`font-medium transition-colors disabled:opacity-30 ${stretch ? 'flex-1' : ''} ${on ? 'bg-blue-900/50 text-blue-300' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'} ${o.v !== options[options.length - 1].v ? 'border-r border-zinc-700' : ''}`}
+            className={`relative z-10 font-medium transition-colors disabled:opacity-30 ${stretch ? 'flex-1' : ''} ${on ? 'text-blue-300' : 'text-zinc-500 hover:bg-zinc-700'} ${o.v !== options[options.length - 1].v ? 'border-r border-zinc-700' : ''}`}
           >
             {o.icon}
             {o.l}
