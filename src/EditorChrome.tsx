@@ -61,6 +61,9 @@ export interface SegOption {
   /** Segment icon (rendered before the label; label may be '' for an
    *  icon-only segment — `title` then carries the accessible name). */
   icon?: React.ReactNode;
+  /** Explicit accessible name (overrides the label/title fallback) — for
+   *  icon-only segments whose spoken name differs from their tooltip. */
+  ariaLabel?: string;
 }
 
 /** Track palettes: `light` toolbars/pages (dark active pill) and `dark`
@@ -164,7 +167,7 @@ export const Seg: React.FC<{
               role={tablist ? 'tab' : undefined}
               aria-selected={tablist ? on : undefined}
               aria-pressed={tablist ? undefined : on}
-              aria-label={o.l ? undefined : o.title}
+              aria-label={o.ariaLabel ?? (o.l ? undefined : o.title)}
               style={{ ...trackSize }}
               className={`relative z-10 inline-flex cursor-pointer select-none items-center justify-center gap-1.5 whitespace-nowrap rounded font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${stretch ? 'flex-1' : ''} ${on ? T.active : T.idle}`}
             >

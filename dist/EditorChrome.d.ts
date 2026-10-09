@@ -48,6 +48,9 @@ export interface SegOption {
     /** Segment icon (rendered before the label; label may be '' for an
      *  icon-only segment — `title` then carries the accessible name). */
     icon?: React.ReactNode;
+    /** Explicit accessible name (overrides the label/title fallback) — for
+     *  icon-only segments whose spoken name differs from their tooltip. */
+    ariaLabel?: string;
 }
 /** Segmented control.
  *
