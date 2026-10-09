@@ -70,7 +70,8 @@ export declare const Seg: React.FC<{
      *  docked inspector column wants the control to span the full row. */
     stretch?: boolean;
     /** Ride a plain toolbar row (24px on fine pointers) instead of the editor
-     *  chrome's 28px control height. Ignored on coarse pointers and by `track`. */
+     *  chrome's 28px control height. Ignored on coarse pointers. Applies to
+     *  `track` too (26px on fine pointers). */
     dense?: boolean;
     variant?: 'chrome' | 'track';
     /** Track palette. Ignored by `chrome`. */

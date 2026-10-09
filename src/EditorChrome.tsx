@@ -101,7 +101,8 @@ export const Seg: React.FC<{
    *  docked inspector column wants the control to span the full row. */
   stretch?: boolean;
   /** Ride a plain toolbar row (24px on fine pointers) instead of the editor
-   *  chrome's 28px control height. Ignored on coarse pointers and by `track`. */
+   *  chrome's 28px control height. Ignored on coarse pointers. Applies to
+   *  `track` too (26px on fine pointers). */
   dense?: boolean;
   variant?: 'chrome' | 'track';
   /** Track palette. Ignored by `chrome`. */
@@ -115,6 +116,7 @@ export const Seg: React.FC<{
   const chrome = useToolbarChrome();
   const height = dense && !IS_COARSE ? 24 : chrome.control.height;
   const trackSize = useCoarseSize({ px: 12, py: 6, fs: 12 }, { px: 16, py: 10, fs: 14 });
+  const trackDenseSize = useCoarseSize({ px: 12, py: 2, fs: 12 }, { px: 16, py: 10, fs: 14 });
   const isOn = (v: string) => (active ? active(v) : value === v);
 
   /* Sliding pill: measure the active segment (relative to the track), re-measure
@@ -168,7 +170,7 @@ export const Seg: React.FC<{
               aria-selected={tablist ? on : undefined}
               aria-pressed={tablist ? undefined : on}
               aria-label={o.ariaLabel ?? (o.l ? undefined : o.title)}
-              style={{ ...trackSize }}
+              style={dense && !IS_COARSE ? trackDenseSize : trackSize}
               className={`relative z-10 inline-flex cursor-pointer select-none items-center justify-center gap-1.5 whitespace-nowrap rounded font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${stretch ? 'flex-1' : ''} ${on ? T.active : T.idle}`}
             >
               {o.icon}
