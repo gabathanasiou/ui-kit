@@ -76,7 +76,7 @@ const TRACK: Record<'light' | 'dark', { wrap: string; pill: string; active: stri
     idle: 'text-zinc-500 hover:text-zinc-900',
   },
   dark: {
-    wrap: 'border-zinc-800 bg-zinc-950',
+    wrap: 'border-zinc-700 bg-zinc-950',
     pill: 'bg-zinc-800',
     active: 'text-white',
     idle: 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50',

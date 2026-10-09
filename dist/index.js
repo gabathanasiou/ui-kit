@@ -2447,7 +2447,7 @@ const nd = Ee ? "text-xs font-semibold text-zinc-600 uppercase tracking-wider sh
     idle: "text-zinc-500 hover:text-zinc-900"
   },
   dark: {
-    wrap: "border-zinc-800 bg-zinc-950",
+    wrap: "border-zinc-700 bg-zinc-950",
     pill: "bg-zinc-800",
     active: "text-white",
     idle: "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
