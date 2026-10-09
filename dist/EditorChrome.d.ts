@@ -41,13 +41,25 @@ export declare const ToolButton: React.FC<{
     className?: string;
     children: React.ReactNode;
 }>;
+export interface SegOption {
+    v: string;
+    l: string;
+    title?: string;
+    /** Segment icon (rendered before the label; label may be '' for an
+     *  icon-only segment — `title` then carries the accessible name). */
+    icon?: React.ReactNode;
+}
+/** Segmented control.
+ *
+ *  `chrome` (default) — the editor-chrome joined-cells look (Reports Designer).
+ *  `track` — the padded-track look with a **sliding pill** (modal tab bars,
+ *  toolbar view switches); `theme` picks the light-toolbar or dark-modal
+ *  palette, `stretch` fills the container, `tablist` gives real tab semantics.
+ *  The pill animates between segments (transform/width, ~200ms) and is skipped
+ *  under `prefers-reduced-motion`. */
 export declare const Seg: React.FC<{
     value: string;
-    options: {
-        v: string;
-        l: string;
-        title?: string;
-    }[];
+    options: SegOption[];
     onChange: (v: string) => void;
     disabled?: boolean;
     active?: (v: string) => boolean;
@@ -55,8 +67,16 @@ export declare const Seg: React.FC<{
      *  docked inspector column wants the control to span the full row. */
     stretch?: boolean;
     /** Ride a plain toolbar row (24px on fine pointers) instead of the editor
-     *  chrome's 28px control height. Ignored on coarse pointers. */
+     *  chrome's 28px control height. Ignored on coarse pointers and by `track`. */
     dense?: boolean;
+    variant?: 'chrome' | 'track';
+    /** Track palette. Ignored by `chrome`. */
+    theme?: 'light' | 'dark';
+    /** Tab semantics: role=tablist/tab + aria-selected (segments switch
+     *  panels). Default is a button group with aria-pressed. */
+    tablist?: boolean;
+    /** Accessible name for the container (group/tablist). */
+    ariaLabel?: string;
 }>;
 /** Section eyebrow: uppercase label with a hairline rule. */
 export declare const SectionHeader: React.FC<{

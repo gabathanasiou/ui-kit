@@ -63,8 +63,11 @@ const RULES = [
   { g: 'src/Modal.tsx', s: ['modal-portal', 'modal-drag-dismiss', 'dialog'] },
   { g: 'src/ModalFooterButton.tsx', s: ['dialog', 'modal-portal'] },
   { g: 'src/Dialog.tsx', s: ['dialog'] },
-  { g: 'src/Button.tsx', s: MENUS },
+  { g: 'src/Button.tsx', s: [...MENUS, 'seg'] },
   { g: 'src/Checkbox.tsx', s: ['dialog'] },
+  // switches / track chrome
+  { g: 'src/FloatingToggle.tsx', s: ['seg'] },
+  { g: 'src/Checklist.tsx', s: ['seg'] },
   // inputs
   { g: 'src/input.ts', s: ['searchable-dropdown', 'dialog'] },
   { g: 'src/numberInputMath.ts', s: ['number-input'] },
@@ -78,7 +81,7 @@ const RULES = [
   { g: 'src/RichTextEditor.tsx', s: RICH },
   { g: 'src/FormatToolbar.tsx', s: RICH },
   { g: 'src/RichTextSuggestionPopup.tsx', s: RICH },
-  { g: 'src/EditorChrome.tsx', s: RICH },
+  { g: 'src/EditorChrome.tsx', s: [...RICH, 'seg'] },
 ];
 
 // ---- tiny glob: supports `**` (any depth), `*` (within a segment) ----

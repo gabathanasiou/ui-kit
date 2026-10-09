@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { ArrowUp, ArrowDown, Copy, Trash2 } from 'lucide-react';
-import { IS_COARSE, useCoarseScale, coarsePx } from './device';
+import { IS_COARSE, useCoarseScale, useCoarseSize, coarsePx } from './device';
 import { Tooltip } from './Tooltip';
 
 // ---- dark editor-toolbox vocabulary (touch devices scale up — app pattern) ----
@@ -54,9 +54,43 @@ export const ToolButton: React.FC<{ onClick: () => void; disabled?: boolean; tit
   );
 };
 
+export interface SegOption {
+  v: string;
+  l: string;
+  title?: string;
+  /** Segment icon (rendered before the label; label may be '' for an
+   *  icon-only segment — `title` then carries the accessible name). */
+  icon?: React.ReactNode;
+}
+
+/** Track palettes: `light` toolbars/pages (dark active pill) and `dark`
+ *  modals (raised zinc pill on a sunken track). */
+const TRACK: Record<'light' | 'dark', { wrap: string; pill: string; active: string; idle: string }> = {
+  light: {
+    wrap: 'border-zinc-200',
+    pill: 'bg-zinc-950',
+    active: 'text-white',
+    idle: 'text-zinc-500 hover:text-zinc-900',
+  },
+  dark: {
+    wrap: 'border-zinc-800 bg-zinc-950',
+    pill: 'bg-zinc-800',
+    active: 'text-white',
+    idle: 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50',
+  },
+};
+
+/** Segmented control.
+ *
+ *  `chrome` (default) — the editor-chrome joined-cells look (Reports Designer).
+ *  `track` — the padded-track look with a **sliding pill** (modal tab bars,
+ *  toolbar view switches); `theme` picks the light-toolbar or dark-modal
+ *  palette, `stretch` fills the container, `tablist` gives real tab semantics.
+ *  The pill animates between segments (transform/width, ~200ms) and is skipped
+ *  under `prefers-reduced-motion`. */
 export const Seg: React.FC<{
   value: string;
-  options: { v: string; l: string; title?: string }[];
+  options: SegOption[];
   onChange: (v: string) => void;
   disabled?: boolean;
   active?: (v: string) => boolean;
@@ -64,15 +98,89 @@ export const Seg: React.FC<{
    *  docked inspector column wants the control to span the full row. */
   stretch?: boolean;
   /** Ride a plain toolbar row (24px on fine pointers) instead of the editor
-   *  chrome's 28px control height. Ignored on coarse pointers. */
+   *  chrome's 28px control height. Ignored on coarse pointers and by `track`. */
   dense?: boolean;
-}> = ({ value, options, onChange, disabled, active, stretch, dense }) => {
+  variant?: 'chrome' | 'track';
+  /** Track palette. Ignored by `chrome`. */
+  theme?: 'light' | 'dark';
+  /** Tab semantics: role=tablist/tab + aria-selected (segments switch
+   *  panels). Default is a button group with aria-pressed. */
+  tablist?: boolean;
+  /** Accessible name for the container (group/tablist). */
+  ariaLabel?: string;
+}> = ({ value, options, onChange, disabled, active, stretch, dense, variant = 'chrome', theme = 'light', tablist, ariaLabel }) => {
   const chrome = useToolbarChrome();
   const height = dense && !IS_COARSE ? 24 : chrome.control.height;
+  const trackSize = useCoarseSize({ px: 12, py: 6, fs: 12 }, { px: 16, py: 10, fs: 14 });
+  const isOn = (v: string) => (active ? active(v) : value === v);
+
+  /* Sliding pill: measure the active segment (relative to the track), re-measure
+     on container resize. Layout-effect so the first paint already has the pill. */
+  const wrapRef = React.useRef<HTMLDivElement | null>(null);
+  const btnRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const activeIndex = Math.max(0, options.findIndex(o => isOn(o.v)));
+  const [pill, setPill] = React.useState<{ left: number; width: number } | null>(null);
+  React.useLayoutEffect(() => {
+    if (variant !== 'track') return;
+    const measure = () => {
+      const btn = btnRefs.current[activeIndex];
+      if (btn) setPill({ left: btn.offsetLeft, width: btn.offsetWidth });
+    };
+    measure();
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, [variant, activeIndex, options.length]);
+
+  if (variant === 'track') {
+    const T = TRACK[theme];
+    const reduceMotion = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    return (
+      <div
+        ref={wrapRef}
+        role={tablist ? 'tablist' : 'group'}
+        aria-label={ariaLabel}
+        className={`relative inline-flex items-center rounded border p-0.5 ${stretch ? 'w-full' : ''} ${T.wrap}`}
+      >
+        {pill && (
+          <span
+            aria-hidden
+            className={`absolute rounded ${T.pill} ${reduceMotion ? '' : 'transition-[transform,width] duration-200 ease-out'}`}
+            style={{ left: 0, top: 2, bottom: 2, width: pill.width, transform: `translateX(${pill.left}px)` }}
+          />
+        )}
+        {options.map((o, i) => {
+          const on = isOn(o.v);
+          return (
+            <button
+              key={o.v}
+              ref={el => { btnRefs.current[i] = el; }}
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange(o.v)}
+              title={o.title}
+              role={tablist ? 'tab' : undefined}
+              aria-selected={tablist ? on : undefined}
+              aria-pressed={tablist ? undefined : on}
+              aria-label={o.l ? undefined : o.title}
+              style={{ ...trackSize }}
+              className={`relative z-10 inline-flex cursor-pointer select-none items-center justify-center gap-1.5 whitespace-nowrap rounded font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${stretch ? 'flex-1' : ''} ${on ? T.active : T.idle}`}
+            >
+              {o.icon}
+              {o.l}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className={`${TB_SEG}${stretch ? ' w-full' : ''}`}>
       {options.map(o => {
-        const on = active ? active(o.v) : value === o.v;
+        const on = isOn(o.v);
         return (
           <button
             key={o.v}
@@ -82,6 +190,7 @@ export const Seg: React.FC<{
             style={{ ...chrome.control, height }}
             className={`font-medium transition-colors disabled:opacity-30 ${stretch ? 'flex-1' : ''} ${on ? 'bg-blue-900/50 text-blue-300' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'} ${o.v !== options[options.length - 1].v ? 'border-r border-zinc-700' : ''}`}
           >
+            {o.icon}
             {o.l}
           </button>
         );

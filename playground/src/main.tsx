@@ -8,7 +8,7 @@ import {
   ContextMenuDivider, ContextMenuSub, useOverlayMorph, DialogProvider, useDialog,
   RichTextEditor, FormatToolbar, LongPressMenuProvider, RICH_TEXT_STATE_IDLE,
   CardSection, setCoarseScale, useCoarseScale, useInputSize, IS_COARSE,
-  NumberInput,
+  NumberInput, Seg, FloatingToggle,
 } from '../../src/index';
 import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem } from '../../src/index';
 
@@ -553,6 +553,17 @@ function InputsSection() {
           selected={list}
           onToggle={(id) => setList(prev => prev.includes(String(id)) ? prev.filter(x => x !== String(id)) : [...prev, String(id)])}
         />
+        <div data-testid="checklist-trailing">
+          <Checklist
+            checkPosition="trailing"
+            items={[
+              { id: 'p1', label: 'Ada', leading: <span style={{ display: 'inline-block', width: 56 }}>Driver</span>, dataProps: { 'data-demo-person': 'p1' } },
+              { id: 'p2', label: 'Grace', leading: <span style={{ display: 'inline-block', width: 56 }}>Chaperone</span>, dataProps: { 'data-demo-person': 'p2' } },
+            ]}
+            selected={list}
+            onToggle={(id) => setList(prev => prev.includes(String(id)) ? prev.filter(x => x !== String(id)) : [...prev, String(id)])}
+          />
+        </div>
         <RadioList
           items={[{ id: 'one', label: 'One' }, { id: 'two', label: 'Two' }]}
           value={radio}
@@ -564,7 +575,82 @@ function InputsSection() {
         <DatePicker selected={dates} onChange={setDates} />
       </div>
       <NumberInputDemo />
+      <SegDemo />
     </section>
+  );
+}
+
+function SegDemo() {
+  const [tab, setTab] = useState('stages');
+  const [view, setView] = useState('strips');
+  const [peopleTab, setPeopleTab] = useState('people');
+  const [floatOn, setFloatOn] = useState(false);
+  return (
+    <>
+      <div className="row" data-testid="seg-track-dark">
+        <div className="label">Seg variant=&quot;track&quot; — dark modal (sliding pill)</div>
+        <div className="rounded-lg p-3" style={{ background: '#18181b' }}>
+          <Seg
+            variant="track"
+            theme="dark"
+            stretch
+            value={tab}
+            ariaLabel="Call times sections"
+            options={[
+              { v: 'stages', l: 'Call stages' },
+              { v: 'categories', l: 'Category defaults' },
+              { v: 'precalls', l: 'Department precalls' },
+              { v: 'crew', l: 'Usual crew' },
+            ]}
+            onChange={setTab}
+          />
+        </div>
+      </div>
+      <div className="row" data-testid="seg-tablist">
+        <div className="label">Seg tablist semantics</div>
+        <div className="rounded-lg p-3" style={{ background: '#18181b' }}>
+          <Seg
+            variant="track"
+            theme="dark"
+            tablist
+            ariaLabel="Crew links view"
+            value={peopleTab}
+            options={[
+              { v: 'people', l: 'People' },
+              { v: 'positions', l: 'Positions' },
+            ]}
+            onChange={setPeopleTab}
+          />
+        </div>
+      </div>
+      <div className="row" data-testid="seg-track-light">
+        <div className="label">Seg variant=&quot;track&quot; — light toolbar</div>
+        <Seg
+          variant="track"
+          value={view}
+          ariaLabel="Calendar view"
+          options={[
+            { v: 'strips', l: 'Strips' },
+            { v: 'events', l: 'Events' },
+          ]}
+          onChange={setView}
+        />
+        <Button variant="subtle" active={view === 'events'} data-testid="seg-light-toggle">Toggle mirror</Button>
+      </div>
+      <div className="row" data-testid="floating-toggle-demo">
+        <div className="label">FloatingToggle (flows inline in the playground)</div>
+        <FloatingToggle
+          active={floatOn}
+          aria-pressed={floatOn}
+          aria-label="Demo floating toggle"
+          title="Demo floating toggle"
+          style={{ position: 'static', width: 40, height: 40, borderRadius: 20 }}
+          onClick={() => setFloatOn(v => !v)}
+        >
+          <span style={{ fontSize: 12 }}>{floatOn ? 'ON' : 'OFF'}</span>
+        </FloatingToggle>
+      </div>
+    </>
   );
 }
 

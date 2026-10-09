@@ -36,5 +36,8 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
      *  accent tint so the button reads as ON. On `tab`/`tab-header` it fills the
      *  selected-tab pill instead. */
     active?: boolean;
+    /** Square icon-only shape (no label): equal width/height at the toolbar
+     *  control size, contents centered. Pair with `aria-label`/`title`. */
+    iconOnly?: boolean;
 }
-export default function Button({ variant, theme, cloud, active, className, type, ...rest }: ButtonProps): React.JSX.Element;
+export default function Button({ variant, theme, cloud, active, iconOnly, className, type, ...rest }: ButtonProps): React.JSX.Element;

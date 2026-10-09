@@ -93,7 +93,7 @@ inline-style/utility-class/parent selectors.
    (throwaway HEAD worktree, isolated port).
 4. **Retire dead specs.** A spec for removed behaviour is deleted (git preserves it).
 5. **Quarantine, don't tolerate, chronic flake** (tag `@quarantine` + registry below).
-6. **Never grow the suite past its caps** (12 specs / 70 tests) without a conscious
+6. **Never grow the suite past its caps** (14 specs / 78 tests) without a conscious
    decision recorded in `scripts/check-test-hygiene.mjs`.
 
 ## Flake policy

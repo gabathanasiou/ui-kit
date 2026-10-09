@@ -25,10 +25,11 @@ const SPECS_DIR = join(ROOT, 'playground/specs');
 // Morph/animation pacing in overlay-morph.spec.ts and the close-morph
 // interleave is legitimate; everything else must be web-first.
 const WAIT_BASELINE = 9;
-// 13 = 12 + number-input.spec.ts (the NumberInput drag-scrub wiring — not
-// unit-testable); 72 = the current suite; +1 headroom.
-const SPEC_CAP = 13;
-const TEST_CAP = 73;
+// 14 = 13 + seg.spec.ts (Seg track sliding pill + FloatingToggle frames +
+// Checklist trailing/dataProps — layout wiring the unit layer can't reach);
+// 77 = the current suite; +1 headroom.
+const SPEC_CAP = 14;
+const TEST_CAP = 78;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

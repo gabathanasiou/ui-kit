@@ -16,6 +16,8 @@ export type { DropdownPanelPos, UseDropdownPositionOptions } from './useDropdown
 export { useTouchMode } from './useTouchMode';
 export { default as Button } from './Button';
 export type { ButtonProps } from './Button';
+export { default as FloatingToggle } from './FloatingToggle';
+export type { FloatingToggleProps } from './FloatingToggle';
 export { default as ModalFooterButton } from './ModalFooterButton';
 export type { ModalFooterButtonProps } from './ModalFooterButton';
 export { default as DatePicker } from './DatePicker';
@@ -32,7 +34,7 @@ export { default as FloatingChrome } from './FloatingChrome';
 export type { FloatingChromeProps, AnchorMode } from './FloatingChrome';
 export { default as Tooltip } from './Tooltip';
 export { ToolButton, Seg, SectionHeader, ContentRow, ChromeHeader, StructureControls, TB_ROW_LABEL, TB_BTN, TB_BTN_ICON, TB_DANGER, TB_TOGGLE, TB_TOGGLE_ON, TB_TOGGLE_OFF, TB_INPUT, TB_NUM, TB_DIVIDER, TB_SEG, TB_PICKER, } from './EditorChrome';
-export type { StructureControlsProps } from './EditorChrome';
+export type { StructureControlsProps, SegOption } from './EditorChrome';
 export { default as RichTextEditor, RICH_TEXT_STATE_IDLE } from './RichTextEditor';
 export type { RichTextEditorHandle, RichTextState, RichTextEditorProps } from './RichTextEditor';
 export { Token, TokenChipView, stripTokenWrappers, preprocessTokenHtml } from './TokenExtension';

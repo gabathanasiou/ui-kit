@@ -39,6 +39,9 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
    *  accent tint so the button reads as ON. On `tab`/`tab-header` it fills the
    *  selected-tab pill instead. */
   active?: boolean;
+  /** Square icon-only shape (no label): equal width/height at the toolbar
+   *  control size, contents centered. Pair with `aria-label`/`title`. */
+  iconOnly?: boolean;
 }
 
 export default function Button({
@@ -46,6 +49,7 @@ export default function Button({
   theme = 'light',
   cloud = false,
   active = false,
+  iconOnly = false,
   className = '',
   type = 'button',
   ...rest
@@ -109,6 +113,7 @@ export default function Button({
   const spec = VARIANTS[theme][variant as BaseVariant];
   const size = variant === 'primary' ? primarySize : variant.startsWith('tab') ? tabSize : subtleSize;
   const gap = coarsePx(6, 8, useCoarseScale());
+  const iconDim = coarsePx(28, 40, useCoarseScale());
   /* Toggled state: accent fill + white text (dark) / blue text (light). The
      `!` overrides beat the variant's base/`open` colors; no outline. */
   const ACTIVE = theme === 'dark'
@@ -128,5 +133,8 @@ export default function Button({
       cls = isOpen ? `${CLOUD_PRIMARY_BASE} ${CLOUD_PRIMARY_OPEN}` : CLOUD_PRIMARY_BASE;
     }
   }
-  return <button type={type} className={`${BASE} ${cls} ${className}`} style={{ ...size, gap }} {...rest} />;
+  const sizing = iconOnly
+    ? { width: iconDim, height: iconDim, padding: 0, gap: 0 }
+    : { ...size, gap };
+  return <button type={type} className={`${BASE} ${iconOnly ? 'justify-center' : ''} ${cls} ${className}`} style={sizing} {...rest} />;
 }

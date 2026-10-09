@@ -12,6 +12,8 @@ export interface ChecklistItem {
     leading?: React.ReactNode;
     /** Right-aligned trailing text (date, count…). */
     secondary?: React.ReactNode;
+    /** Extra attributes on the row button (e.g. `data-*` test hooks). */
+    dataProps?: Record<string, string>;
 }
 export interface ChecklistProps {
     items: ChecklistItem[];
@@ -29,7 +31,10 @@ export interface ChecklistProps {
     /** Container height cap (px) — scrolls past it. */
     maxHeight?: number;
     disabled?: boolean;
+    /** Check indicator side: `leading` (default, the picker lists) or
+     *  `trailing` (row lists that carry a right-side selection box). */
+    checkPosition?: 'leading' | 'trailing';
     theme?: 'dark' | 'light' | 'blue';
     className?: string;
 }
-export default function Checklist({ items, selected, onToggle, title, onToggleAll, allSelected, toggleAllLabel, emptyHint, maxHeight, disabled, theme, className, }: ChecklistProps): React.JSX.Element;
+export default function Checklist({ items, selected, onToggle, title, onToggleAll, allSelected, toggleAllLabel, emptyHint, maxHeight, disabled, checkPosition, theme, className, }: ChecklistProps): React.JSX.Element;

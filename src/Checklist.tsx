@@ -16,6 +16,8 @@ export interface ChecklistItem {
   leading?: React.ReactNode;
   /** Right-aligned trailing text (date, count…). */
   secondary?: React.ReactNode;
+  /** Extra attributes on the row button (e.g. `data-*` test hooks). */
+  dataProps?: Record<string, string>;
 }
 
 export interface ChecklistProps {
@@ -34,6 +36,9 @@ export interface ChecklistProps {
   /** Container height cap (px) — scrolls past it. */
   maxHeight?: number;
   disabled?: boolean;
+  /** Check indicator side: `leading` (default, the picker lists) or
+   *  `trailing` (row lists that carry a right-side selection box). */
+  checkPosition?: 'leading' | 'trailing';
   theme?: 'dark' | 'light' | 'blue';
   className?: string;
 }
@@ -49,6 +54,7 @@ export default function Checklist({
   emptyHint = 'Nothing here',
   maxHeight,
   disabled = false,
+  checkPosition = 'leading',
   theme,
   className = '',
 }: ChecklistProps) {
@@ -78,19 +84,23 @@ export default function Checklist({
       >
         {items.map(item => {
           const checked = has(item.id);
+          const mark = <CheckMark checked={checked} size={checkDim} />;
           return (
             <button
               key={item.id}
               type="button"
               disabled={disabled}
               onClick={() => onToggle(item.id)}
+              aria-pressed={checked}
               className={`ui-checklist-item ${checked ? 'ui-checklist-item-checked' : ''}`}
               style={{ padding: `${itemPadY}px ${itemPadX}px`, fontSize: itemFs }}
+              {...item.dataProps}
             >
-              <CheckMark checked={checked} size={checkDim} />
+              {checkPosition === 'leading' && mark}
               {item.leading != null && <span className="ui-checklist-leading">{item.leading}</span>}
               <span className="ui-checklist-label">{item.label}</span>
               {item.secondary != null && <span className="ui-checklist-secondary">{item.secondary}</span>}
+              {checkPosition === 'trailing' && <span className="ml-auto flex shrink-0">{mark}</span>}
             </button>
           );
         })}
