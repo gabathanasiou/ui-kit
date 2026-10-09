@@ -8,6 +8,7 @@ import {
   ContextMenuDivider, ContextMenuSub, useOverlayMorph, DialogProvider, useDialog,
   RichTextEditor, FormatToolbar, LongPressMenuProvider, RICH_TEXT_STATE_IDLE,
   CardSection, setCoarseScale, useCoarseScale, useInputSize, IS_COARSE,
+  NumberInput,
 } from '../../src/index';
 import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem } from '../../src/index';
 
@@ -562,7 +563,44 @@ function InputsSection() {
         <div className="label">DatePicker (multi)</div>
         <DatePicker selected={dates} onChange={setDates} />
       </div>
+      <NumberInputDemo />
     </section>
+  );
+}
+
+function NumberInputDemo() {
+  const [n, setN] = useState(12);
+  const [mixed, setMixed] = useState<number | undefined>(undefined);
+  return (
+    <>
+      <div className="row" data-testid="number-input-demo">
+        <div className="label">NumberInput — dark (default box)</div>
+        <div className="rounded-lg p-3" style={{ background: '#18181b' }}>
+          <NumberInput
+            value={n}
+            min={0}
+            max={24}
+            fallback={8}
+            onCommit={setN}
+            ariaLabel="Demo number"
+            theme="dark"
+          />
+        </div>
+        <span data-testid="number-input-value">{n}</span>
+      </div>
+      <div className="row" data-testid="number-input-light">
+        <div className="label">NumberInput — light</div>
+        <NumberInput value={n} min={0} max={24} fallback={8} onCommit={setN} ariaLabel="Light number" theme="light" />
+        <NumberInput value={mixed} min={6} max={96} fallback={10} onCommit={setMixed} ariaLabel="Mixed number" placeholder="Mixed" theme="light" />
+      </div>
+      <div className="row" data-testid="number-input-toolbar">
+        <div className="label">NumberInput — consumer classes (dark toolbar)</div>
+        <div className="flex items-center gap-1.5 rounded-lg px-3 py-2" style={{ background: '#18181b' }}>
+          <NumberInput value={n} min={0} max={24} fallback={8} onCommit={setN} ariaLabel="Toolbar number" className="ui-input w-14 h-7 text-center text-[11px] text-zinc-300" />
+          <NumberInput value={24} min={0} max={24} fallback={8} onCommit={() => {}} ariaLabel="Toolbar number at max" className="ui-input w-14 h-7 text-center text-[11px] text-zinc-300" />
+        </div>
+      </div>
+    </>
   );
 }
 

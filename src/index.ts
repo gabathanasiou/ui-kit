@@ -60,5 +60,8 @@ export { FormatToolbar, FontMenu, FONTS } from './FormatToolbar';
 export type { FormatToolbarProps } from './FormatToolbar';
 export { sanitizeRichText, stripRichText, escapeHtml, normalizeSpaces } from './richText';
 export { inputCls, useInputSize } from './input';
+export { default as NumberInput } from './NumberInput';
+export type { NumberInputProps } from './NumberInput';
+export { clampNumber, steppedValue, scrubbedValue, SCRUB_PX_PER_STEP } from './numberInputMath';
 export { default as CardSection } from './CardSection';
 export type { CardSectionProps } from './CardSection';

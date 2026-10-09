@@ -67,6 +67,9 @@ const RULES = [
   { g: 'src/Checkbox.tsx', s: ['dialog'] },
   // inputs
   { g: 'src/input.ts', s: ['searchable-dropdown', 'dialog'] },
+  { g: 'src/numberInputMath.ts', s: ['number-input'] },
+  { g: 'src/NumberInput.tsx', s: ['number-input'] },
+  { g: 'src/index.ts', s: 'ALL' },
   { g: 'src/DatePicker.tsx', s: ['datepicker'] },
   // rich text
   { g: 'src/richText.ts', s: RICH },

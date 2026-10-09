@@ -525,6 +525,84 @@
   border-color: var(--ui-text-muted);
 }
 
+/* ── Number input (compound numeric box) ──────────────────────────────── */
+
+/* Native spinners are replaced by the chevron stepper column. */
+.ui-number input::-webkit-outer-spin-button,
+.ui-number input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.ui-number input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.ui-number {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+/* The default box carries the .ui-input language itself (border-only at
+   rest, subtle fill on hover/edited, muted focus border) so the input inside
+   stays transparent. Consumers passing their own input className get the bare
+   wrapper — their input owns the look and only the steppers are added. */
+.ui-number-box {
+  border: 1px solid var(--ui-input-border);
+  border-radius: var(--ui-radius-input);
+  color: var(--ui-input-text);
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.ui-number-box:hover { background: var(--ui-input-hover-bg); }
+.ui-number-box:focus-within { border-color: var(--ui-text-muted); }
+.ui-number-box > input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: inherit;
+}
+.ui-number-box > input::placeholder { color: var(--ui-text-faint); }
+
+/* Stacked chevron buttons: visible at rest, chip-fill on hover (inset, so
+   they respect whatever radius the box uses). */
+.ui-number-steppers {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1px;
+  box-sizing: border-box;
+}
+.ui-number-step {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+  transition: background-color 120ms ease, opacity 120ms ease;
+}
+.ui-number-step:hover:not(:disabled) {
+  background: var(--ui-input-hover-bg);
+  opacity: 1;
+}
+.ui-number-step:disabled {
+  opacity: 0.18;
+  cursor: default;
+}
+
 /* ── Checkbox ─────────────────────────────────────────────────────────── */
 
 .ui-checkbox {
