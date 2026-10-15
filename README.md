@@ -43,7 +43,7 @@ Peer dependencies (install in your app): `react`, `react-dom`, `@radix-ui/react-
 
 ## Theming
 
-The kit's colors are CSS variables — **no colors are hardcoded** in components. Defaults (`:root`) reproduce the lemon_schedule zinc look; `[data-theme="light"]` and `[data-theme="blue"]` are built-in alternatives. `DropdownMenu` / `ContextMenu` / `Dialog` set `data-theme` for you (prop `theme="dark" | "light" | "blue"`, default dark).
+The kit's colors are CSS variables — **no colors are hardcoded** in components. Defaults (`:root`) reproduce the lemon_schedule zinc look; `[data-theme="light"]`, `[data-theme="blue"]` (Drive-style blue chrome) and `[data-theme="emerald"]` (shared/collaborative green chrome) are built-in alternatives. `DropdownMenu` / `ContextMenu` / `Dialog` set `data-theme` for you (prop `theme="dark" | "light" | "blue" | "emerald"`, default dark). The colored accents also reach `Button` (`cloud`: `true` = blue, `'emerald'`) and `Seg` (`track` theme `"blue" | "emerald"`).
 
 Override any variable in your own CSS to re-skin the whole kit:
 
