@@ -2,8 +2,8 @@
  * @gabriel/ui-kit — design tokens + semantic component classes.
  *
  * THEMING: override any --ui-* variable at :root (or on any scope) to
- * re-skin the kit. `[data-theme]` scoping provides the three built-in looks
- * (dark / light / blue) — the DropdownMenu & Dialog components set it for you.
+ * re-skin the kit. `[data-theme]` scoping provides the built-in looks
+ * (dark / light / blue / emerald) — the DropdownMenu & Dialog components set it for you.
  *
  * The defaults reproduce the lemon_schedule visuals pixel-for-pixel.
  *
@@ -226,6 +226,81 @@
   --ui-check-border: rgba(255, 255, 255, 0.35);
   --ui-check-hover-border: rgba(255, 255, 255, 0.5);
   --ui-check-accent: #3b82f6;
+  --ui-check-check: #ffffff;
+  --ui-check-pill-bg: rgba(255, 255, 255, 0.08);
+  --ui-check-pill-hover-bg: rgba(255, 255, 255, 0.14);
+  --ui-check-pill-border: rgba(255, 255, 255, 0.15);
+  --ui-check-pill-hover-border: rgba(255, 255, 255, 0.3);
+  --ui-check-list-bg: rgba(255, 255, 255, 0.05);
+  --ui-check-list-border: rgba(255, 255, 255, 0.15);
+  --ui-check-row-bg: rgba(255, 255, 255, 0.12);
+  --ui-check-row-hover-bg: rgba(255, 255, 255, 0.08);
+
+  --ui-shadow-menu: 0 10px 48px -8px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+/* Emerald — the second colored chrome (shared/collaborative projects; the app
+   maps Drive → blue, shared → emerald). Same white-alpha overlay set as blue,
+   only the tinted fills differ. */
+[data-theme="emerald"] {
+  --ui-menu-bg: rgba(2, 44, 34, 0.95);
+  --ui-menu-border: rgba(255, 255, 255, 0.1);
+  --ui-panel-bg: #064e3b;
+  --ui-panel-border: rgba(255, 255, 255, 0.1);
+  --ui-input-bg: rgba(255, 255, 255, 0.1);
+  --ui-input-hover-bg: rgba(255, 255, 255, 0.06);
+  --ui-input-border: rgba(255, 255, 255, 0.1);
+  --ui-input-text: #ffffff;
+  --ui-card-bg: rgba(255, 255, 255, 0.06);
+  --ui-card-border: rgba(255, 255, 255, 0.12);
+  --ui-card-band: rgba(0, 0, 0, 0.2);
+  --ui-overlay-bg: rgba(0, 0, 0, 0.3);
+
+  --ui-text: #ffffff;
+  --ui-text-strong: #ffffff;
+  --ui-text-muted: rgba(255, 255, 255, 0.6);
+  --ui-text-faint: rgba(255, 255, 255, 0.45);
+  --ui-text-disabled: rgba(255, 255, 255, 0.2);
+  --ui-scroll-thumb: rgba(255, 255, 255, 0.3);
+
+  --ui-item-hover-bg: rgba(255, 255, 255, 0.1);
+  --ui-item-hover-text: #ffffff;
+  --ui-item-active-bg: rgba(255, 255, 255, 0.15);
+  --ui-item-highlight-bg: rgba(255, 255, 255, 0.15);
+  --ui-item-highlight-text: #ffffff;
+  --ui-item-selected-bg: rgba(255, 255, 255, 0.18);
+  --ui-item-selected-text: #ffffff;
+  --ui-item-highlight-wash: #ffffff;
+  --ui-item-highlight-wash-opacity: 18%;
+  --ui-sep: rgba(255, 255, 255, 0.1);
+
+  --ui-row-hover-bg: rgba(255, 255, 255, 0.15);
+  --ui-row-active-bg: rgba(255, 255, 255, 0.18);
+  --ui-icon-btn-active-hover-bg: rgba(255, 255, 255, 0.2);
+  --ui-row-active-text: #ffffff;
+
+  --ui-danger-text: #fca5a5;
+  --ui-danger-hover-bg: rgba(248, 113, 113, 0.15);
+  --ui-danger-hover-text: #fecaca;
+  --ui-danger-active-bg: rgba(248, 113, 113, 0.25);
+  --ui-danger-active-text: #fecaca;
+  --ui-danger-solid: #dc2626;
+  --ui-danger-solid-hover: #ef4444;
+
+  --ui-accent-soft-text: #ffffff;
+  --ui-accent-soft-bg: rgba(255, 255, 255, 0.1);
+  --ui-confirm-hover: #4ade80;
+  --ui-cancel-hover: #fca5a5;
+
+  --ui-btn-bg: rgba(255, 255, 255, 0.12);
+  --ui-btn-hover-bg: rgba(255, 255, 255, 0.2);
+
+  --ui-label: rgba(255, 255, 255, 0.6);
+
+  --ui-check-bg: transparent;
+  --ui-check-border: rgba(255, 255, 255, 0.35);
+  --ui-check-hover-border: rgba(255, 255, 255, 0.5);
+  --ui-check-accent: #10b981;
   --ui-check-check: #ffffff;
   --ui-check-pill-bg: rgba(255, 255, 255, 0.08);
   --ui-check-pill-hover-bg: rgba(255, 255, 255, 0.14);

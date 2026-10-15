@@ -57,12 +57,15 @@ export interface SegOption {
      *  behavior/styling always wins. */
     dataProps?: Record<string, string>;
 }
+/** Track palettes: the light/dark surfaces plus the project-chrome accents. */
+export type SegTheme = 'light' | 'dark' | 'blue' | 'emerald';
 /** Segmented control.
  *
  *  `chrome` (default) — the editor-chrome joined-cells look (Reports Designer).
  *  `track` — the padded-track look with a **sliding pill** (modal tab bars,
- *  toolbar view switches); `theme` picks the light-toolbar or dark-modal
- *  palette, `stretch` fills the container, `tablist` gives real tab semantics.
+ *  toolbar view switches); `theme` picks the light-toolbar, dark-modal or
+ *  colored project-chrome (`blue`/`emerald`) palette, `stretch` fills the
+ *  container, `tablist` gives real tab semantics.
  *  The pill animates between segments (transform/width, ~200ms) and is skipped
  *  under `prefers-reduced-motion`. */
 export declare const Seg: React.FC<{
@@ -79,8 +82,9 @@ export declare const Seg: React.FC<{
      *  `track` too (26px on fine pointers). */
     dense?: boolean;
     variant?: 'chrome' | 'track';
-    /** Track palette. Ignored by `chrome`. */
-    theme?: 'light' | 'dark';
+    /** Track palette. Ignored by `chrome`: `blue`/`emerald` are the colored
+     *  project-chrome accents for light toolbars (Drive / shared projects). */
+    theme?: SegTheme;
     /** Tab semantics: role=tablist/tab + aria-selected (segments switch
      *  panels). Default is a button group with aria-pressed. */
     tablist?: boolean;

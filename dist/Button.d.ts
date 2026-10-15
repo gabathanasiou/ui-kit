@@ -30,8 +30,11 @@ import React from 'react';
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'subtle' | 'primary' | 'danger-ghost' | 'tab' | 'tab-header';
     theme?: 'light' | 'dark';
-    /** Cloud-project coloring (light primary: blue-950 instead of zinc-900). */
-    cloud?: boolean;
+    /** Colored project-chrome accent: `true` = blue (Drive/cloud projects),
+     *  `'emerald'` = the shared/collaborative green. Affects the light
+     *  `primary` fill and the `tab` / `tab-header` palettes; other
+     *  variants are unaffected. */
+    cloud?: boolean | 'emerald';
     /** Toggled/pressed state (e.g. a lit formatting-toolbar toggle) — applies an
      *  accent tint so the button reads as ON. On `tab`/`tab-header` it fills the
      *  selected-tab pill instead. */

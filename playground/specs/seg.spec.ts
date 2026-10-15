@@ -35,6 +35,16 @@ test('track variant: light toolbar palette + pressed state', async ({ page }) =>
   await expect(page.getByTestId('seg-light-toggle')).toHaveClass(/bg-blue-50/);
 });
 
+test('track variant: blue + emerald project-chrome palettes', async ({ page }) => {
+  await page.goto('/');
+  const blue = page.getByTestId('seg-track-blue').locator('[role="group"]');
+  const emerald = page.getByTestId('seg-track-emerald').locator('[role="group"]');
+  await expect(blue.locator('span[aria-hidden]')).toHaveClass(/bg-blue-950/);
+  await expect(blue.getByRole('button', { name: 'Strips' })).toHaveClass(/text-blue-50/);
+  await expect(emerald.locator('span[aria-hidden]')).toHaveClass(/bg-emerald-950/);
+  await expect(emerald.getByRole('button', { name: 'Strips' })).toHaveClass(/text-emerald-50/);
+});
+
 test('track variant: tablist semantics (role=tab + aria-selected)', async ({ page }) => {
   await page.goto('/');
   const seg = page.getByTestId('seg-tablist').getByRole('tablist', { name: 'Crew links view' });

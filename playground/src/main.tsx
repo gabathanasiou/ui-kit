@@ -637,6 +637,36 @@ function SegDemo() {
         />
         <Button variant="subtle" active={view === 'events'} data-testid="seg-light-toggle">Toggle mirror</Button>
       </div>
+      <div className="row" data-testid="seg-track-blue">
+        <div className="label">Seg variant=&quot;track&quot; — blue project chrome (Drive)</div>
+        <Seg
+          variant="track"
+          theme="blue"
+          value={view}
+          ariaLabel="Blue project view"
+          options={[
+            { v: 'strips', l: 'Strips' },
+            { v: 'events', l: 'Events' },
+          ]}
+          onChange={setView}
+        />
+        <Button variant="primary" cloud data-testid="seg-blue-primary">Blue primary</Button>
+      </div>
+      <div className="row" data-testid="seg-track-emerald">
+        <div className="label">Seg variant=&quot;track&quot; — emerald project chrome (shared)</div>
+        <Seg
+          variant="track"
+          theme="emerald"
+          value={view}
+          ariaLabel="Shared project view"
+          options={[
+            { v: 'strips', l: 'Strips' },
+            { v: 'events', l: 'Events' },
+          ]}
+          onChange={setView}
+        />
+        <Button variant="primary" cloud="emerald" data-testid="seg-emerald-primary">Emerald primary</Button>
+      </div>
       <div className="row" data-testid="floating-toggle-demo">
         <div className="label">FloatingToggle (flows inline in the playground)</div>
         <FloatingToggle

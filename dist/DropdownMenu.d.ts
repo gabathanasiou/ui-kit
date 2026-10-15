@@ -1,5 +1,5 @@
 import React from 'react';
-export type DropdownTheme = 'light' | 'dark' | 'blue';
+export type DropdownTheme = 'light' | 'dark' | 'blue' | 'emerald';
 export declare const DropdownThemeContext: React.Context<DropdownTheme>;
 export declare const useDropdownTheme: () => DropdownTheme;
 /** Shared row sizing for menu items AND item-manager rows (padding + font +

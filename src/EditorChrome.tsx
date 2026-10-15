@@ -71,9 +71,14 @@ export interface SegOption {
   dataProps?: Record<string, string>;
 }
 
-/** Track palettes: `light` toolbars/pages (dark active pill) and `dark`
- *  modals (raised zinc pill on a sunken track). */
-const TRACK: Record<'light' | 'dark', { wrap: string; pill: string; active: string; idle: string }> = {
+/** Track palettes: the light/dark surfaces plus the project-chrome accents. */
+export type SegTheme = 'light' | 'dark' | 'blue' | 'emerald';
+
+/** Track palettes: `light` toolbars/pages (dark active pill), `dark` modals
+ *  (raised zinc pill on a sunken track), and the colored project-chrome
+ *  accents — `blue` (Drive/cloud projects) and `emerald` (shared projects) —
+ *  which tint the pill + labels to match the toolbar's pill pair. */
+const TRACK: Record<SegTheme, { wrap: string; pill: string; active: string; idle: string }> = {
   light: {
     wrap: 'border-zinc-200',
     pill: 'bg-zinc-950',
@@ -86,14 +91,27 @@ const TRACK: Record<'light' | 'dark', { wrap: string; pill: string; active: stri
     active: 'text-white',
     idle: 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50',
   },
+  blue: {
+    wrap: 'border-blue-200',
+    pill: 'bg-blue-950',
+    active: 'text-blue-50',
+    idle: 'text-blue-950/60 hover:text-blue-950 hover:bg-blue-950/10',
+  },
+  emerald: {
+    wrap: 'border-emerald-200',
+    pill: 'bg-emerald-950',
+    active: 'text-emerald-50',
+    idle: 'text-emerald-950/60 hover:text-emerald-950 hover:bg-emerald-950/10',
+  },
 };
 
 /** Segmented control.
  *
  *  `chrome` (default) — the editor-chrome joined-cells look (Reports Designer).
  *  `track` — the padded-track look with a **sliding pill** (modal tab bars,
- *  toolbar view switches); `theme` picks the light-toolbar or dark-modal
- *  palette, `stretch` fills the container, `tablist` gives real tab semantics.
+ *  toolbar view switches); `theme` picks the light-toolbar, dark-modal or
+ *  colored project-chrome (`blue`/`emerald`) palette, `stretch` fills the
+ *  container, `tablist` gives real tab semantics.
  *  The pill animates between segments (transform/width, ~200ms) and is skipped
  *  under `prefers-reduced-motion`. */
 export const Seg: React.FC<{
@@ -110,8 +128,9 @@ export const Seg: React.FC<{
    *  `track` too (26px on fine pointers). */
   dense?: boolean;
   variant?: 'chrome' | 'track';
-  /** Track palette. Ignored by `chrome`. */
-  theme?: 'light' | 'dark';
+  /** Track palette. Ignored by `chrome`: `blue`/`emerald` are the colored
+   *  project-chrome accents for light toolbars (Drive / shared projects). */
+  theme?: SegTheme;
   /** Tab semantics: role=tablist/tab + aria-selected (segments switch
    *  panels). Default is a button group with aria-pressed. */
   tablist?: boolean;

@@ -8,7 +8,7 @@ import { useOverlayMorph } from './overlayMorph';
 import { useDropdownPosition, DROPDOWN_MAX_HEIGHT } from './useDropdownPosition';
 import { registerOverlayClose } from './overlayRegistry';
 
-export type DropdownTheme = 'light' | 'dark' | 'blue';
+export type DropdownTheme = 'light' | 'dark' | 'blue' | 'emerald';
 
 export const DropdownThemeContext = createContext<DropdownTheme>('dark');
 export const useDropdownTheme = () => useContext(DropdownThemeContext);
