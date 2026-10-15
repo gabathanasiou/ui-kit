@@ -15,7 +15,7 @@ export { LongPressMenuProvider, useLongPressOptOut, isInteractiveElement } from 
 export { useDropdownPosition, DROPDOWN_MAX_HEIGHT } from './useDropdownPosition';
 export type { DropdownPanelPos, UseDropdownPositionOptions } from './useDropdownPosition';
 export { useTouchMode } from './useTouchMode';
-export { default as Button } from './Button';
+export { default as Button, TAB_PILL } from './Button';
 export type { ButtonProps } from './Button';
 export { default as FloatingToggle } from './FloatingToggle';
 export type { FloatingToggleProps } from './FloatingToggle';

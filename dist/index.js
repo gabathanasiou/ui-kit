@@ -1989,6 +1989,10 @@ function Sl({ icon: n, collapse: e = !1, iconWithLabel: t = !0, active: r = !1, 
     o
   ] });
 }
+const od = {
+  light: { plain: "bg-zinc-950", blue: "bg-blue-950", emerald: "bg-emerald-950" },
+  dark: { plain: "bg-white", blue: "bg-blue-950", emerald: "bg-emerald-950" }
+};
 function Xe({
   variant: n = "subtle",
   theme: e = "light",
@@ -2005,21 +2009,21 @@ function Xe({
 }) {
   const f = lt({ px: 10, py: 4, fs: 12 }, { px: 14, py: 8, fs: 14 }), h = lt({ px: 12, py: 4, fs: 12 }, { px: 16, py: 8, fs: 14 }), p = lt({ px: 12, py: 6, fs: 12 }, { px: 16, py: 10, fs: 14 }), m = "", y = "", x = "inline-flex items-center rounded font-semibold transition-colors cursor-pointer select-none whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed", b = {
     light: {
-      active: "bg-zinc-950 text-white",
+      active: "text-white",
       inactive: "text-zinc-500 hover:text-zinc-900"
     },
     dark: {
-      active: "bg-zinc-950 text-white",
+      active: "text-zinc-900",
       inactive: "text-zinc-500 hover:text-zinc-300"
     }
   }, v = {
     blue: {
-      active: "bg-blue-950 text-blue-50",
+      active: "text-blue-50",
       inactiveLight: "text-blue-950 hover:bg-blue-950/10 hover:text-blue-950",
       inactiveDark: "text-zinc-500 hover:text-zinc-300"
     },
     emerald: {
-      active: "bg-emerald-950 text-emerald-50",
+      active: "text-emerald-50",
       inactiveLight: "text-emerald-950 hover:bg-emerald-950/10 hover:text-emerald-950",
       inactiveDark: "text-zinc-500 hover:text-zinc-300"
     }
@@ -2091,7 +2095,7 @@ const El = {
   color: "#b45309",
   boxShadow: "0 2px 8px rgba(0,0,0,0.14)"
 };
-function od({
+function sd({
   active: n = !1,
   warn: e = !1,
   style: t,
@@ -2126,7 +2130,7 @@ function Al(n, e) {
 function zl(n, e, t) {
   return `${n}-${String(e + 1).padStart(2, "0")}-${String(t).padStart(2, "0")}`;
 }
-function sd({ selected: n, onChange: e, theme: t = "light", showChips: r = !0, className: i = "", initialView: o }) {
+function ld({ selected: n, onChange: e, theme: t = "light", showChips: r = !0, className: i = "", initialView: o }) {
   const s = /* @__PURE__ */ new Date(), l = (() => {
     if (!o) return s;
     const _ = /* @__PURE__ */ new Date(o + "T00:00:00");
@@ -2267,7 +2271,7 @@ function sd({ selected: n, onChange: e, theme: t = "light", showChips: r = !0, c
     ] })
   ] });
 }
-function ld({
+function cd({
   items: n,
   selected: e,
   onToggle: t,
@@ -2323,7 +2327,7 @@ function ld({
     )
   ] });
 }
-function cd({
+function ad({
   items: n,
   value: e,
   onChange: t,
@@ -2370,7 +2374,7 @@ function cd({
     )
   ] });
 }
-const ad = ({
+const ud = ({
   className: n,
   children: e,
   reference: t,
@@ -2509,7 +2513,9 @@ function $l(n, e, t) {
     const d = new ResizeObserver(() => {
       s(!0), l.current && clearTimeout(l.current), l.current = setTimeout(() => s(!1), Il), a();
     });
-    return d.observe(u), () => {
+    d.observe(u);
+    for (const f of e.current ?? []) f && d.observe(f);
+    return () => {
       d.disconnect(), l.current && (clearTimeout(l.current), l.current = null);
     };
   }, [n, e, t]);
@@ -2533,7 +2539,7 @@ function Ln() {
     input: { height: r, padding: `0 ${s}px`, fontSize: o }
   };
 }
-const ud = Se ? "text-xs font-semibold text-zinc-600 uppercase tracking-wider shrink-0 w-24" : "text-[9px] font-semibold text-zinc-600 uppercase tracking-wider shrink-0 w-16", Ol = Se ? "h-10 px-3.5 text-sm font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 disabled:opacity-30 flex items-center gap-2 transition-colors" : "h-7 px-2.5 text-[10px] font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 disabled:opacity-30 flex items-center gap-1.5 transition-colors", un = Se ? "h-10 px-3 text-sm font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-400 hover:bg-zinc-700 disabled:opacity-25 flex items-center gap-1 transition-colors" : "h-7 px-2 text-[10px] font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-400 hover:bg-zinc-700 disabled:opacity-25 flex items-center gap-0.5 transition-colors", Dl = "hover:bg-red-950/50", fd = Se ? "h-10 w-10 rounded border flex items-center justify-center disabled:opacity-25 transition-colors" : "h-7 w-7 rounded border flex items-center justify-center disabled:opacity-25 transition-colors", dd = "bg-blue-900/50 border-blue-700 text-blue-300", hd = "bg-zinc-800 border-zinc-700 text-zinc-500 hover:bg-zinc-700", Pl = Se ? "h-10 px-2.5 text-sm bg-zinc-800 border border-zinc-700 rounded text-zinc-300 placeholder:text-zinc-600 outline-none focus:border-zinc-500 disabled:opacity-30" : "h-7 px-2 text-[10px] bg-zinc-800 border border-zinc-700 rounded text-zinc-300 placeholder:text-zinc-600 outline-none focus:border-zinc-500 disabled:opacity-30", pd = Se ? "w-14 h-9 bg-zinc-800 border border-zinc-700 rounded text-sm text-center text-zinc-300 outline-none focus:border-blue-500 shrink-0 read-only:opacity-50" : "w-10 h-6 bg-zinc-800 border border-zinc-700 rounded text-[11px] text-center text-zinc-300 outline-none focus:border-blue-500 shrink-0 read-only:opacity-50", Ui = Se ? "w-px h-7 bg-zinc-700 mx-1" : "w-px h-5 bg-zinc-700 mx-0.5", Ll = "inline-flex rounded overflow-hidden border border-zinc-700", Bl = Se ? "h-10 px-3 text-sm rounded bg-zinc-800 border border-zinc-700 text-zinc-200 hover:border-zinc-500 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-between gap-1" : "h-7 px-2.5 text-[10px] rounded bg-zinc-800 border border-zinc-700 text-zinc-200 hover:border-zinc-500 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-between gap-1", fn = ({ onClick: n, disabled: e, title: t, className: r = Ol, children: i }) => {
+const fd = Se ? "text-xs font-semibold text-zinc-600 uppercase tracking-wider shrink-0 w-24" : "text-[9px] font-semibold text-zinc-600 uppercase tracking-wider shrink-0 w-16", Ol = Se ? "h-10 px-3.5 text-sm font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 disabled:opacity-30 flex items-center gap-2 transition-colors" : "h-7 px-2.5 text-[10px] font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 disabled:opacity-30 flex items-center gap-1.5 transition-colors", un = Se ? "h-10 px-3 text-sm font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-400 hover:bg-zinc-700 disabled:opacity-25 flex items-center gap-1 transition-colors" : "h-7 px-2 text-[10px] font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-400 hover:bg-zinc-700 disabled:opacity-25 flex items-center gap-0.5 transition-colors", Dl = "hover:bg-red-950/50", dd = Se ? "h-10 w-10 rounded border flex items-center justify-center disabled:opacity-25 transition-colors" : "h-7 w-7 rounded border flex items-center justify-center disabled:opacity-25 transition-colors", hd = "bg-blue-900/50 border-blue-700 text-blue-300", pd = "bg-zinc-800 border-zinc-700 text-zinc-500 hover:bg-zinc-700", Pl = Se ? "h-10 px-2.5 text-sm bg-zinc-800 border border-zinc-700 rounded text-zinc-300 placeholder:text-zinc-600 outline-none focus:border-zinc-500 disabled:opacity-30" : "h-7 px-2 text-[10px] bg-zinc-800 border border-zinc-700 rounded text-zinc-300 placeholder:text-zinc-600 outline-none focus:border-zinc-500 disabled:opacity-30", md = Se ? "w-14 h-9 bg-zinc-800 border border-zinc-700 rounded text-sm text-center text-zinc-300 outline-none focus:border-blue-500 shrink-0 read-only:opacity-50" : "w-10 h-6 bg-zinc-800 border border-zinc-700 rounded text-[11px] text-center text-zinc-300 outline-none focus:border-blue-500 shrink-0 read-only:opacity-50", Ui = Se ? "w-px h-7 bg-zinc-700 mx-1" : "w-px h-5 bg-zinc-700 mx-0.5", Ll = "inline-flex rounded overflow-hidden border border-zinc-700", Bl = Se ? "h-10 px-3 text-sm rounded bg-zinc-800 border border-zinc-700 text-zinc-200 hover:border-zinc-500 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-between gap-1" : "h-7 px-2.5 text-[10px] rounded bg-zinc-800 border border-zinc-700 text-zinc-200 hover:border-zinc-500 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-between gap-1", fn = ({ onClick: n, disabled: e, title: t, className: r = Ol, children: i }) => {
   const o = Ln();
   return /* @__PURE__ */ g(St, { content: t, children: /* @__PURE__ */ g("button", { onClick: n, disabled: e, "aria-label": t, style: o.control, className: `${r} ${e ? "disabled:opacity-30 disabled:pointer-events-none" : ""}`, children: i }) });
 }, Fl = {
@@ -2561,7 +2567,7 @@ const ud = Se ? "text-xs font-semibold text-zinc-600 uppercase tracking-wider sh
     active: "text-emerald-50",
     idle: "text-emerald-950/60 hover:text-emerald-950 hover:bg-emerald-950/10"
   }
-}, md = ({ value: n, options: e, onChange: t, disabled: r, active: i, stretch: o, dense: s, variant: l = "chrome", theme: c = "light", tablist: a, ariaLabel: u }) => {
+}, gd = ({ value: n, options: e, onChange: t, disabled: r, active: i, stretch: o, dense: s, variant: l = "chrome", theme: c = "light", tablist: a, ariaLabel: u }) => {
   const d = Ln(), f = s && !Se ? 24 : d.control.height, h = lt({ px: 12, py: 6, fs: 12 }, { px: 16, py: 10, fs: 14 }), p = Se ? h : { padding: "0 12px", fontSize: 12, height: s ? 20 : 30 }, m = (k) => i ? i(k) : n === k, y = Ae.useRef(null), x = Ae.useRef([]), b = Math.max(0, e.findIndex((k) => m(k.v))), v = $l(y, x, b);
   if (l === "track") {
     const k = Fl[c];
@@ -2644,16 +2650,16 @@ const ud = Se ? "text-xs font-semibold text-zinc-600 uppercase tracking-wider sh
       );
     })
   ] });
-}, gd = ({ children: n }) => /* @__PURE__ */ $("div", { className: "flex items-center gap-2 min-w-max", children: [
+}, yd = ({ children: n }) => /* @__PURE__ */ $("div", { className: "flex items-center gap-2 min-w-max", children: [
   /* @__PURE__ */ g("span", { className: Se ? "text-xs font-semibold text-zinc-500 uppercase tracking-wider" : "text-[9px] font-semibold text-zinc-500 uppercase tracking-wider", children: n }),
   /* @__PURE__ */ g("div", { className: "h-px bg-zinc-700/50", style: { minWidth: 24, flex: 1 } })
-] }), _l = "text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1", Hl = "text-[10px] font-medium text-zinc-500 uppercase tracking-wider w-28 shrink-0", yd = ({ label: n, children: e, tall: t }) => /* @__PURE__ */ $("div", { className: t ? "flex flex-col gap-1 py-0.5" : "flex items-center gap-2 py-0.5", children: [
+] }), _l = "text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1", Hl = "text-[10px] font-medium text-zinc-500 uppercase tracking-wider w-28 shrink-0", xd = ({ label: n, children: e, tall: t }) => /* @__PURE__ */ $("div", { className: t ? "flex flex-col gap-1 py-0.5" : "flex items-center gap-2 py-0.5", children: [
   n && /* @__PURE__ */ g("span", { className: t ? _l : Hl, children: n }),
   e
-] }), xd = ({ leading: n, trailing: e, className: t = "" }) => /* @__PURE__ */ $("div", { className: `flex flex-wrap items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-zinc-700/40 border border-zinc-700/60 min-w-0 ${t}`, children: [
+] }), bd = ({ leading: n, trailing: e, className: t = "" }) => /* @__PURE__ */ $("div", { className: `flex flex-wrap items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-zinc-700/40 border border-zinc-700/60 min-w-0 ${t}`, children: [
   n,
   e && /* @__PURE__ */ g("div", { className: "ml-auto flex flex-wrap items-center justify-end gap-1", children: e })
-] }), bd = ({ readOnly: n, onDuplicate: e, onRemove: t, onMove: r, compact: i }) => (
+] }), wd = ({ readOnly: n, onDuplicate: e, onRemove: t, onMove: r, compact: i }) => (
   // One unbreakable cluster: when a header's trailing wraps, the move pair and
   // the duplicate/delete pair stay together (no orphaned icons on a line).
   /* @__PURE__ */ $("div", { className: "flex items-center gap-1 shrink-0", children: [
@@ -9756,7 +9762,7 @@ function rf(n) {
   const i = document.createElement("div");
   return i.appendChild(r), i.innerHTML.replace(/<strong(\s|>)/gi, "<b$1").replace(/<\/strong>/gi, "</b>").replace(/<em(\s|>)/gi, "<i$1").replace(/<\/em>/gi, "</i>").replace(/<p([^>]*)><\/p>/gi, "<p$1><br></p>");
 }
-function wd(n) {
+function vd(n) {
   const e = cs(n);
   if (!e || !e.includes("<")) return e;
   const t = document.createElement("template");
@@ -9765,7 +9771,7 @@ function wd(n) {
 
 `).trim();
 }
-function vd(n) {
+function kd(n) {
   return n.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 function of(n) {
@@ -9996,7 +10002,7 @@ const sf = { text: "#52525b" }, lf = ({ node: n, selected: e, extension: t, edit
       })
     ];
   }
-}), kd = {
+}), Sd = {
   bold: !1,
   italic: !1,
   underline: !1,
@@ -10340,7 +10346,7 @@ const yf = ["Helvetica", "Arial", "Times New Roman", "Georgia", "Courier New"], 
       ] })
     }
   );
-}, Sd = ({ editorRef: n, disabled: e, active: t, lockedFormatting: r, trailing: i, font: o, fontSizeSlot: s, showClearFormatting: l, dividers: c = !0 }) => {
+}, Ed = ({ editorRef: n, disabled: e, active: t, lockedFormatting: r, trailing: i, font: o, fontSizeSlot: s, showClearFormatting: l, dividers: c = !0 }) => {
   const [a, u] = G(!1), d = (y, x) => {
     var b;
     return (b = n.current) == null ? void 0 : b.exec(y, x);
@@ -10430,7 +10436,7 @@ function Sf(n, e, t, r, i) {
   return Fr(n + Math.trunc(e / kf) * i, t, r);
 }
 const Ef = 3;
-function Ed({
+function Td({
   value: n,
   min: e,
   max: t,
@@ -10534,7 +10540,7 @@ function Ed({
     }
   );
 }
-function Td({ title: n, icon: e, count: t, tone: r = "default", collapsed: i, onToggle: o, trailing: s, bodyClass: l, className: c = "", dataProps: a, children: u }) {
+function Cd({ title: n, icon: e, count: t, tone: r = "default", collapsed: i, onToggle: o, trailing: s, bodyClass: l, className: c = "", dataProps: a, children: u }) {
   const d = ke(), f = lt({ px: 12, py: 8, fs: 12 }, { px: 14, py: 12, fs: 14 }), h = I(14, 16, d), p = { width: h, height: h }, m = I(10, 12, d);
   return /* @__PURE__ */ $("div", { ...a, className: `ui-card ${r === "danger" ? "ui-card-danger" : ""} ${c}`, children: [
     /* @__PURE__ */ $("div", { className: "flex flex-wrap items-center gap-x-2 gap-y-1 hover:bg-white/5 transition-colors", style: f, children: [
@@ -10559,28 +10565,28 @@ function Td({ title: n, icon: e, count: t, tone: r = "default", collapsed: i, on
 }
 export {
   Xe as Button,
-  Td as CardSection,
+  Cd as CardSection,
   Ki as CheckMark,
   hl as Checkbox,
-  ld as Checklist,
-  xd as ChromeHeader,
-  yd as ContentRow,
+  cd as Checklist,
+  bd as ChromeHeader,
+  xd as ContentRow,
   Yf as ContextMenu,
   Xf as ContextMenuDivider,
   Uf as ContextMenuItem,
   Gf as ContextMenuSub,
   Li as DROPDOWN_MAX_HEIGHT,
-  sd as DatePicker,
+  ld as DatePicker,
   td as DialogProvider,
   sl as DropdownItem,
   Pn as DropdownMenu,
   ll as DropdownSubmenu,
   wr as DropdownThemeContext,
   yf as FONTS,
-  ad as FloatingChrome,
-  od as FloatingToggle,
+  ud as FloatingChrome,
+  sd as FloatingToggle,
   bf as FontMenu,
-  Sd as FormatToolbar,
+  Ed as FormatToolbar,
   Se as IS_COARSE,
   Us as IS_TOUCH_CAPABLE,
   Vf as ItemManagerDropdown,
@@ -10593,28 +10599,29 @@ export {
   al as Modal,
   Qf as ModalFooter,
   an as ModalFooterButton,
-  Ed as NumberInput,
+  Td as NumberInput,
   Ys as PopoutWindowContext,
-  kd as RICH_TEXT_STATE_IDLE,
-  cd as RadioList,
+  Sd as RICH_TEXT_STATE_IDLE,
+  ad as RadioList,
   gf as RichTextEditor,
   kf as SCRUB_PX_PER_STEP,
-  gd as SectionHeader,
-  md as Seg,
-  bd as StructureControls,
+  yd as SectionHeader,
+  gd as Seg,
+  wd as StructureControls,
   kr as SubmenuContext,
+  od as TAB_PILL,
   Ol as TB_BTN,
   un as TB_BTN_ICON,
   Dl as TB_DANGER,
   Ui as TB_DIVIDER,
   Pl as TB_INPUT,
-  pd as TB_NUM,
+  md as TB_NUM,
   Bl as TB_PICKER,
-  ud as TB_ROW_LABEL,
+  fd as TB_ROW_LABEL,
   Ll as TB_SEG,
-  fd as TB_TOGGLE,
-  hd as TB_TOGGLE_OFF,
-  dd as TB_TOGGLE_ON,
+  dd as TB_TOGGLE,
+  pd as TB_TOGGLE_OFF,
+  hd as TB_TOGGLE_ON,
   Sl as TabFace,
   cf as Token,
   lf as TokenChipView,
@@ -10624,7 +10631,7 @@ export {
   Fr as clampNumber,
   Zs as cloneOverlayClose,
   I as coarsePx,
-  vd as escapeHtml,
+  kd as escapeHtml,
   Ii as getCoarseScale,
   vr as getDropdownClasses,
   qf as getHardwareKeyboard,
@@ -10642,7 +10649,7 @@ export {
   Sf as scrubbedValue,
   Wf as setCoarseScale,
   vf as steppedValue,
-  wd as stripRichText,
+  vd as stripRichText,
   of as stripTokenWrappers,
   jf as useCoarse,
   ke as useCoarseScale,

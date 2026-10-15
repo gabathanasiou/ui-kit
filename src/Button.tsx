@@ -67,6 +67,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   iconWithLabel?: boolean;
 }
 
+/** The sliding fill behind a `tab` row (roadmap 258) — the fills the active
+ *  classes used to paint. Render it with `useSlidingPill` (a `relative` row
+ *  + the tabs' refs) so the selection box glides. On a `dark` toolbar
+ *  `plain` is white — a zinc-950 pill vanished into the bar. */
+export const TAB_PILL: Record<'light' | 'dark', Record<'plain' | 'blue' | 'emerald', string>> = {
+  light: { plain: 'bg-zinc-950', blue: 'bg-blue-950', emerald: 'bg-emerald-950' },
+  dark: { plain: 'bg-white', blue: 'bg-blue-950', emerald: 'bg-emerald-950' },
+};
+
 export default function Button({
   variant = 'subtle',
   theme = 'light',
@@ -90,17 +99,17 @@ export default function Button({
   const PAD_PRIMARY = '';
   const BASE = 'inline-flex items-center rounded font-semibold transition-colors cursor-pointer select-none whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed';
 
-  /* The mini-tab recipe (PageToolbar sub-tabs): a solid dark pill when active,
-     quiet hover when not. `dark` theme only affects the inactive hover (the
-     bar already supplies the contrast). The colored project accents (cloud)
-     swap the pill + labels to the chrome's tint. */
+  /* The mini-tab recipe (PageToolbar sub-tabs): the row renders the measured
+     fill pill (useSlidingPill + TAB_PILL below) — the button carries only the
+     text color, so the selection box can glide between tabs (roadmap 258).
+     `dark` theme only affects the inactive hover (the bar supplies contrast). */
   const TAB: Record<'light' | 'dark', { active: string; inactive: string }> = {
     light: {
-      active: 'bg-zinc-950 text-white',
+      active: 'text-white',
       inactive: 'text-zinc-500 hover:text-zinc-900',
     },
     dark: {
-      active: 'bg-zinc-950 text-white',
+      active: 'text-zinc-900',
       inactive: 'text-zinc-500 hover:text-zinc-300',
     },
   };
@@ -109,12 +118,12 @@ export default function Button({
   type CloudTone = 'blue' | 'emerald';
   const CLOUD_TAB: Record<CloudTone, { active: string; inactiveLight: string; inactiveDark: string }> = {
     blue: {
-      active: 'bg-blue-950 text-blue-50',
+      active: 'text-blue-50',
       inactiveLight: 'text-blue-950 hover:bg-blue-950/10 hover:text-blue-950',
       inactiveDark: 'text-zinc-500 hover:text-zinc-300',
     },
     emerald: {
-      active: 'bg-emerald-950 text-emerald-50',
+      active: 'text-emerald-50',
       inactiveLight: 'text-emerald-950 hover:bg-emerald-950/10 hover:text-emerald-950',
       inactiveDark: 'text-zinc-500 hover:text-zinc-300',
     },

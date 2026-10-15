@@ -56,6 +56,11 @@ export function useSlidingPill(
       measure();
     });
     ro.observe(wrap);
+    /* Items too: a row that clamps to its scroller (`w-fit` inside
+       `overflow-x-auto`) keeps its container box while a label animates —
+       the item boxes are the real signal (their resize moves everything
+       after them, so the pill must re-measure). */
+    for (const item of itemRefs.current ?? []) if (item) ro.observe(item);
     return () => {
       ro.disconnect();
       if (chaseTimer.current) { clearTimeout(chaseTimer.current); chaseTimer.current = null; }

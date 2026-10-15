@@ -62,4 +62,9 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
      *  open). On a labeled non-collapsing tab `false` drops the icon entirely. */
     iconWithLabel?: boolean;
 }
+/** The sliding fill behind a `tab` row (roadmap 258) — the fills the active
+ *  classes used to paint. Render it with `useSlidingPill` (a `relative` row
+ *  + the tabs' refs) so the selection box glides. On a `dark` toolbar
+ *  `plain` is white — a zinc-950 pill vanished into the bar. */
+export declare const TAB_PILL: Record<'light' | 'dark', Record<'plain' | 'blue' | 'emerald', string>>;
 export default function Button({ variant, theme, cloud, active, iconOnly, icon, collapse, iconWithLabel, className, type, children, ...rest }: ButtonProps): React.JSX.Element;
