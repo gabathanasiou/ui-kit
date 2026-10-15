@@ -39,22 +39,33 @@ export function useSlidingPill(
   const [box, setBox] = React.useState<{ left: number; width: number } | null>(null);
   const [chasing, setChasing] = React.useState(false);
   const chaseTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeIndexRef = React.useRef(activeIndex);
+  activeIndexRef.current = activeIndex;
 
+  const measure = React.useCallback(() => {
+    const el = itemRefs.current?.[activeIndexRef.current];
+    if (!el) return;
+    setBox({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [itemRefs]);
+
+  /* Active item change: re-measure WITHOUT chasing — the pill must GLIDE
+     (transition on). */
+  React.useLayoutEffect(() => { measure(); }, [activeIndex, measure]);
+
+  /* Size changes: chase the live geometry (transitions off) so the pill never
+     lags a reflow. The observer is created ONCE — a fresh ResizeObserver
+     fires an initial callback per observed element, so re-creating it per
+     activeIndex would flip chasing on for every click and kill the glide. */
   React.useLayoutEffect(() => {
-    const measure = () => {
-      const el = itemRefs.current?.[activeIndex];
-      if (!el) return;
-      setBox({ left: el.offsetLeft, width: el.offsetWidth });
-    };
-    measure();
     const wrap = containerRef.current;
     if (!wrap) return;
-    const ro = new ResizeObserver(() => {
+    const chase = () => {
       setChasing(true);
       if (chaseTimer.current) clearTimeout(chaseTimer.current);
       chaseTimer.current = setTimeout(() => setChasing(false), CHASE_SETTLE_MS);
       measure();
-    });
+    };
+    const ro = new ResizeObserver(chase);
     ro.observe(wrap);
     /* Items too: a row that clamps to its scroller (`w-fit` inside
        `overflow-x-auto`) keeps its container box while a label animates —
@@ -65,7 +76,7 @@ export function useSlidingPill(
       ro.disconnect();
       if (chaseTimer.current) { clearTimeout(chaseTimer.current); chaseTimer.current = null; }
     };
-  }, [containerRef, itemRefs, activeIndex]);
+  }, [containerRef, itemRefs, measure]);
 
   const reduceMotion = React.useMemo(
     () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
