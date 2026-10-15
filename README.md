@@ -97,10 +97,17 @@ const pill = useSlidingPill(rowRef, tabRefs, activeIndex);
   (0fr ↔ 1fr grid column, ~150-200ms; skipped under `prefers-reduced-motion`).
   **The label stays in the DOM while collapsed** — accessible name, role/name
   queries and screen readers keep working.
+- `iconWithLabel={false}` swaps the pair: the icon shows only while the label
+  is hidden (resting), the label replaces it whenever it shows (active /
+  hover / focus / open). `true` (default) keeps them together.
+- `TabFace` (`src/TabFace.tsx`) is the exported face — the collapsing icon ↔
+  label mechanics behind `Button`'s tab variants, ready for `Seg` options or
+  any custom tab shell: render it inside the hover owner (which carries the
+  `group` class and `gap: 0` while collapsing).
 - `useSlidingPill` measures the active item (`offsetLeft`/`offsetWidth`) and
   glides the pill (~200ms). While the container reflows (a label expanding,
   a hover shift) the pill *chases* the live geometry instead of lagging.
-- `Seg` uses the same hook — one mechanism, two surfaces.
+- `Seg` uses the same hook — one pill mechanism, two surfaces.
 
 ## Release flow
 

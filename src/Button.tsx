@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { useCoarseScale, useCoarseSize, coarsePx } from './device';
+import { TabFace } from './TabFace';
 
 /**
  * Toolbar/action button — the shared button recipe so consumer toolbars stop
@@ -188,40 +189,14 @@ export default function Button({
       cls = isOpen ? `${cp.base} ${cp.open}` : cp.base;
     }
   }
-  /* Icon-first collapse (roadmap 258): the label rides a grid column that
-     animates 0fr ↔ 1fr (auto width, no measurement); the button gap moves
-     INTO the clipped label so the resting pill stays symmetric. Expand is
-     slightly slower than collapse (duration classes swap with the state).
-     `iconWithLabel={false}` swaps icon ↔ label: the icon is itself a
-     collapsing column, hidden while the label shows (hover included), and the
-     label's leading gap — the CSS var set below, so the runtime coarse scale
-     still lands — animates to 0. Labeled-but-not-collapsible tabs then render
-     without their icon entirely. */
+  /* Icon-first collapse (roadmap 258) — the mechanics live in the shared
+     TabFace (Seg options can adopt them); the button supplies the shell: the
+     `group` for the hover/focus/open reveal, and gap 0 while collapsing (the
+     face owns the icon↔label spacing then). */
   const collapsible = !!collapse && !!icon && !iconOnly;
-  const swap = collapsible && !iconWithLabel;
-  const showIcon = !!icon && (iconWithLabel || collapsible);
-  const MOTION = 'transition-[grid-template-columns] ease-out duration-150 group-hover:duration-200 motion-reduce:transition-none';
-  const iconWrapClass = swap
-    ? `grid min-w-0 ${MOTION} ${active
-        ? 'grid-cols-[0fr]'
-        : 'grid-cols-[1fr] group-hover:grid-cols-[0fr] group-focus-visible:grid-cols-[0fr] group-data-[state=open]:grid-cols-[0fr]'}`
-    : '';
-  const labelWrapClass = collapsible
-    ? `grid min-w-0 ${MOTION} ${active
-        ? 'grid-cols-[1fr]'
-        : 'grid-cols-[0fr] group-hover:grid-cols-[1fr] group-focus-visible:grid-cols-[1fr] group-data-[state=open]:grid-cols-[1fr]'}`
-    : '';
-  const labelClass = collapsible
-    ? `flex min-w-0 items-center whitespace-nowrap transition-[opacity,padding-left] duration-100 group-hover:duration-150 motion-reduce:transition-none ${active
-        ? 'opacity-100'
-        : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-data-[state=open]:opacity-100'} ${swap
-        ? `pl-[var(--kit-collapse-gap)] group-hover:pl-0! group-focus-visible:pl-0! group-data-[state=open]:pl-0! ${active ? 'pl-0!' : ''}`
-        : ''}`
-    : '';
   const sizing: React.CSSProperties = iconOnly
     ? { width: iconDim, height: iconDim, padding: 0, gap: 0 }
     : { ...size, gap: collapsible ? 0 : gap };
-  if (collapsible) (sizing as Record<string, string>)['--kit-collapse-gap'] = `${gap}px`;
   return (
     <button
       type={type}
@@ -229,20 +204,13 @@ export default function Button({
       style={sizing}
       {...rest}
     >
-      {showIcon && (swap ? (
-        <span data-kit-icon className={iconWrapClass}>
-          <span className="inline-flex min-w-0 items-center overflow-hidden">{icon}</span>
-        </span>
-      ) : (
-        <span data-kit-icon className="shrink-0 inline-flex items-center justify-center">{icon}</span>
-      ))}
-      {collapsible ? (
-        <span className={labelWrapClass} data-kit-label>
-          <span className="min-w-0 overflow-hidden">
-            <span className={labelClass} style={swap ? undefined : { paddingLeft: gap }}>{children}</span>
-          </span>
-        </span>
-      ) : children}
+      {iconOnly
+        ? children
+        : (
+          <TabFace icon={icon} collapse={collapse} iconWithLabel={iconWithLabel} active={active} gap={gap}>
+            {children}
+          </TabFace>
+        )}
     </button>
   );
 }

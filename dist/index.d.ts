@@ -37,6 +37,8 @@ export { ToolButton, Seg, SectionHeader, ContentRow, ChromeHeader, StructureCont
 export type { StructureControlsProps, SegOption, SegTheme } from './EditorChrome';
 export { useSlidingPill } from './slidingPill';
 export type { SlidingPill } from './slidingPill';
+export { TabFace } from './TabFace';
+export type { TabFaceProps } from './TabFace';
 export { default as RichTextEditor, RICH_TEXT_STATE_IDLE } from './RichTextEditor';
 export type { RichTextEditorHandle, RichTextState, RichTextEditorProps } from './RichTextEditor';
 export { Token, TokenChipView, stripTokenWrappers, preprocessTokenHtml } from './TokenExtension';
