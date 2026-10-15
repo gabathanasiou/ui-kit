@@ -32,6 +32,9 @@ import { TabFace } from './TabFace';
  * variant) so an open dropdown's trigger stays visibly pressed/active.
  */
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  /** React 19 ref-as-prop: the ref lands on the underlying `<button>` (tab
+   *  rows measure their buttons for the sliding pill). */
+  ref?: React.Ref<HTMLButtonElement>;
   variant?: 'subtle' | 'primary' | 'danger-ghost' | 'tab' | 'tab-header';
   theme?: 'light' | 'dark';
   /** Colored project-chrome accent: `true` = blue (Drive/cloud projects),
