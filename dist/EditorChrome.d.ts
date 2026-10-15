@@ -51,6 +51,11 @@ export interface SegOption {
     /** Explicit accessible name (overrides the label/title fallback) — for
      *  icon-only segments whose spoken name differs from their tooltip. */
     ariaLabel?: string;
+    /** data-* attributes for tests/agents (e.g.
+     *  `{ 'data-presence-anchor': 'toolbar:calendar:strips' }`). Spread on the
+     *  segment button BEFORE the kit's own attributes, so the control's
+     *  behavior/styling always wins. */
+    dataProps?: Record<string, string>;
 }
 /** Segmented control.
  *

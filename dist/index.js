@@ -2493,6 +2493,7 @@ const nd = Se ? "text-xs font-semibold text-zinc-600 uppercase tracking-wider sh
                 ref: (H) => {
                   x.current[J] = H;
                 },
+                ...k.dataProps,
                 type: "button",
                 disabled: r,
                 onClick: () => t(k.v),
@@ -2532,6 +2533,7 @@ const nd = Se ? "text-xs font-semibold text-zinc-600 uppercase tracking-wider sh
           ref: (z) => {
             x.current[k] = z;
           },
+          ...N.dataProps,
           disabled: r,
           onClick: () => t(N.v),
           title: N.title,

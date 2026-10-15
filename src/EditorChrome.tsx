@@ -64,6 +64,11 @@ export interface SegOption {
   /** Explicit accessible name (overrides the label/title fallback) — for
    *  icon-only segments whose spoken name differs from their tooltip. */
   ariaLabel?: string;
+  /** data-* attributes for tests/agents (e.g.
+   *  `{ 'data-presence-anchor': 'toolbar:calendar:strips' }`). Spread on the
+   *  segment button BEFORE the kit's own attributes, so the control's
+   *  behavior/styling always wins. */
+  dataProps?: Record<string, string>;
 }
 
 /** Track palettes: `light` toolbars/pages (dark active pill) and `dark`
@@ -171,6 +176,7 @@ export const Seg: React.FC<{
             <button
               key={o.v}
               ref={el => { btnRefs.current[i] = el; }}
+              {...o.dataProps}
               type="button"
               disabled={disabled}
               onClick={() => onChange(o.v)}
@@ -206,6 +212,7 @@ export const Seg: React.FC<{
           <button
             key={o.v}
             ref={el => { btnRefs.current[i] = el; }}
+            {...o.dataProps}
             disabled={disabled}
             onClick={() => onChange(o.v)}
             title={o.title}
