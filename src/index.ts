@@ -54,6 +54,8 @@ export {
   TB_INPUT, TB_NUM, TB_DIVIDER, TB_SEG, TB_PICKER,
 } from './EditorChrome';
 export type { StructureControlsProps, SegOption, SegTheme } from './EditorChrome';
+export { useSlidingPill } from './slidingPill';
+export type { SlidingPill } from './slidingPill';
 export { default as RichTextEditor, RICH_TEXT_STATE_IDLE } from './RichTextEditor';
 export type { RichTextEditorHandle, RichTextState, RichTextEditorProps } from './RichTextEditor';
 export { Token, TokenChipView, stripTokenWrappers, preprocessTokenHtml } from './TokenExtension';

@@ -45,6 +45,22 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   /** Square icon-only shape (no label): equal width/height at the toolbar
    *  control size, contents centered. Pair with `aria-label`/`title`. */
   iconOnly?: boolean;
+  /** Leading icon — tab variants sit icon-first (before the label), inherits
+   *  `currentColor`. */
+  icon?: React.ReactNode;
+  /** Icon-first tabs (roadmap 258): the label collapses to zero width and
+   *  animates back over hover / keyboard focus / `active` / an open dropdown —
+   *  the dock-style space saver. The label stays in the DOM (the accessible
+   *  name never disappears — role/name queries keep working while collapsed).
+   *  The resting pill is the icon + padding (symmetric); the button gap moves
+   *  inside the clipped label. Requires `icon`; ignored by `iconOnly`. */
+  collapse?: boolean;
+  /** Icon ↔ label pairing for `collapse` tabs (roadmap 258). `true` (default)
+   *  keeps the icon alongside the revealed label ("together"); `false` swaps
+   *  them — the icon shows only while the label is hidden (the resting pill),
+   *  and the label replaces it whenever it shows (active / hover / focus /
+   *  open). On a labeled non-collapsing tab `false` drops the icon entirely. */
+  iconWithLabel?: boolean;
 }
 
 export default function Button({
@@ -53,8 +69,12 @@ export default function Button({
   cloud = false,
   active = false,
   iconOnly = false,
+  icon,
+  collapse = false,
+  iconWithLabel = true,
   className = '',
   type = 'button',
+  children,
   ...rest
 }: ButtonProps) {
   /* Proportional coarse scaling: base sizes interpolate by the global scale
@@ -96,22 +116,24 @@ export default function Button({
     },
   };
 
-  /* The top-tab recipe (AppHeader header tabs): an inverted white pill when
-     active on the dark header, quiet hover otherwise. */
+  /* The top-tab recipe (AppHeader header tabs): quiet hover on the dark
+     header; the ACTIVE fill is the sliding white pill the row renders around
+     the tab (useSlidingPill, roadmap 258) — the button only carries the dark
+     text, so the pill can glide between tabs. Pair `tab-header` with a pill. */
   const TAB_HEADER = {
-    active: 'bg-white text-zinc-900',
+    active: 'text-zinc-900',
     inactive: 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800',
     open: 'bg-zinc-800! text-white',
   } as const;
 
   const CLOUD_HEADER: Record<CloudTone, { active: string; inactive: string; open: string }> = {
     blue: {
-      active: 'bg-white text-blue-950',
+      active: 'text-blue-950',
       inactive: 'text-white/70 hover:text-white hover:bg-blue-900/60',
       open: 'bg-blue-900/60! text-white',
     },
     emerald: {
-      active: 'bg-white text-emerald-950',
+      active: 'text-emerald-950',
       inactive: 'text-white/70 hover:text-white hover:bg-emerald-900/60',
       open: 'bg-emerald-900/60! text-white',
     },
@@ -166,8 +188,61 @@ export default function Button({
       cls = isOpen ? `${cp.base} ${cp.open}` : cp.base;
     }
   }
-  const sizing = iconOnly
+  /* Icon-first collapse (roadmap 258): the label rides a grid column that
+     animates 0fr ↔ 1fr (auto width, no measurement); the button gap moves
+     INTO the clipped label so the resting pill stays symmetric. Expand is
+     slightly slower than collapse (duration classes swap with the state).
+     `iconWithLabel={false}` swaps icon ↔ label: the icon is itself a
+     collapsing column, hidden while the label shows (hover included), and the
+     label's leading gap — the CSS var set below, so the runtime coarse scale
+     still lands — animates to 0. Labeled-but-not-collapsible tabs then render
+     without their icon entirely. */
+  const collapsible = !!collapse && !!icon && !iconOnly;
+  const swap = collapsible && !iconWithLabel;
+  const showIcon = !!icon && (iconWithLabel || collapsible);
+  const MOTION = 'transition-[grid-template-columns] ease-out duration-150 group-hover:duration-200 motion-reduce:transition-none';
+  const iconWrapClass = swap
+    ? `grid min-w-0 ${MOTION} ${active
+        ? 'grid-cols-[0fr]'
+        : 'grid-cols-[1fr] group-hover:grid-cols-[0fr] group-focus-visible:grid-cols-[0fr] group-data-[state=open]:grid-cols-[0fr]'}`
+    : '';
+  const labelWrapClass = collapsible
+    ? `grid min-w-0 ${MOTION} ${active
+        ? 'grid-cols-[1fr]'
+        : 'grid-cols-[0fr] group-hover:grid-cols-[1fr] group-focus-visible:grid-cols-[1fr] group-data-[state=open]:grid-cols-[1fr]'}`
+    : '';
+  const labelClass = collapsible
+    ? `flex min-w-0 items-center whitespace-nowrap transition-[opacity,padding-left] duration-100 group-hover:duration-150 motion-reduce:transition-none ${active
+        ? 'opacity-100'
+        : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-data-[state=open]:opacity-100'} ${swap
+        ? `pl-[var(--kit-collapse-gap)] group-hover:pl-0! group-focus-visible:pl-0! group-data-[state=open]:pl-0! ${active ? 'pl-0!' : ''}`
+        : ''}`
+    : '';
+  const sizing: React.CSSProperties = iconOnly
     ? { width: iconDim, height: iconDim, padding: 0, gap: 0 }
-    : { ...size, gap };
-  return <button type={type} className={`${BASE} ${iconOnly ? 'justify-center' : ''} ${cls} ${className}`} style={sizing} {...rest} />;
+    : { ...size, gap: collapsible ? 0 : gap };
+  if (collapsible) (sizing as Record<string, string>)['--kit-collapse-gap'] = `${gap}px`;
+  return (
+    <button
+      type={type}
+      className={`${BASE} ${iconOnly ? 'justify-center' : ''} ${collapsible ? 'group' : ''} ${cls} ${className}`}
+      style={sizing}
+      {...rest}
+    >
+      {showIcon && (swap ? (
+        <span data-kit-icon className={iconWrapClass}>
+          <span className="inline-flex min-w-0 items-center overflow-hidden">{icon}</span>
+        </span>
+      ) : (
+        <span data-kit-icon className="shrink-0 inline-flex items-center justify-center">{icon}</span>
+      ))}
+      {collapsible ? (
+        <span className={labelWrapClass} data-kit-label>
+          <span className="min-w-0 overflow-hidden">
+            <span className={labelClass} style={swap ? undefined : { paddingLeft: gap }}>{children}</span>
+          </span>
+        </span>
+      ) : children}
+    </button>
+  );
 }

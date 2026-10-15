@@ -63,7 +63,8 @@ const RULES = [
   { g: 'src/Modal.tsx', s: ['modal-portal', 'modal-drag-dismiss', 'dialog'] },
   { g: 'src/ModalFooterButton.tsx', s: ['dialog', 'modal-portal'] },
   { g: 'src/Dialog.tsx', s: ['dialog'] },
-  { g: 'src/Button.tsx', s: [...MENUS, 'seg'] },
+  { g: 'src/Button.tsx', s: [...MENUS, 'seg', 'header-tabs'] },
+  { g: 'src/slidingPill.ts', s: ['seg', 'header-tabs'] },
   { g: 'src/Checkbox.tsx', s: ['dialog'] },
   // switches / track chrome
   { g: 'src/FloatingToggle.tsx', s: ['seg'] },

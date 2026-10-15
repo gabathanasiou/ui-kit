@@ -42,5 +42,21 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     /** Square icon-only shape (no label): equal width/height at the toolbar
      *  control size, contents centered. Pair with `aria-label`/`title`. */
     iconOnly?: boolean;
+    /** Leading icon — tab variants sit icon-first (before the label), inherits
+     *  `currentColor`. */
+    icon?: React.ReactNode;
+    /** Icon-first tabs (roadmap 258): the label collapses to zero width and
+     *  animates back over hover / keyboard focus / `active` / an open dropdown —
+     *  the dock-style space saver. The label stays in the DOM (the accessible
+     *  name never disappears — role/name queries keep working while collapsed).
+     *  The resting pill is the icon + padding (symmetric); the button gap moves
+     *  inside the clipped label. Requires `icon`; ignored by `iconOnly`. */
+    collapse?: boolean;
+    /** Icon ↔ label pairing for `collapse` tabs (roadmap 258). `true` (default)
+     *  keeps the icon alongside the revealed label ("together"); `false` swaps
+     *  them — the icon shows only while the label is hidden (the resting pill),
+     *  and the label replaces it whenever it shows (active / hover / focus /
+     *  open). On a labeled non-collapsing tab `false` drops the icon entirely. */
+    iconWithLabel?: boolean;
 }
-export default function Button({ variant, theme, cloud, active, iconOnly, className, type, ...rest }: ButtonProps): React.JSX.Element;
+export default function Button({ variant, theme, cloud, active, iconOnly, icon, collapse, iconWithLabel, className, type, children, ...rest }: ButtonProps): React.JSX.Element;

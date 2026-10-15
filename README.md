@@ -72,6 +72,36 @@ Override any variable in your own CSS to re-skin the whole kit:
 
 Desktop right-click and touch long-press both fire `onContextMenu` — one handler, both inputs.
 
+## Icon-first tabs (collapse + sliding selection)
+
+Top tabs can rest as icons and reveal their label on hover / keyboard focus
+(roadmap 258) — the app header's space saver. Pair the kit `Button` with
+`useSlidingPill`:
+
+```tsx
+/* Row: relative container; buttons sit above (`relative z-10`). */
+const pill = useSlidingPill(rowRef, tabRefs, activeIndex);
+
+<div ref={rowRef} className="relative inline-flex items-center gap-1">
+  {pill.style && (
+    <span aria-hidden style={pill.style}
+      className={`absolute top-0 bottom-0 rounded bg-white pointer-events-none ${pill.motionClass}`} />
+  )}
+  {/* Variant carries only the active TEXT color — the pill is the fill. */}
+  <Button variant="tab-header" active={active === id} collapse icon={<CalendarDays size={14} />}
+    ref={el => { tabRefs.current[i] = el; }} onClick={() => setActive(id)}>Calendar</Button>
+</div>
+```
+
+- `collapse` (needs `icon`): the label clips to zero width and animates back
+  (0fr ↔ 1fr grid column, ~150-200ms; skipped under `prefers-reduced-motion`).
+  **The label stays in the DOM while collapsed** — accessible name, role/name
+  queries and screen readers keep working.
+- `useSlidingPill` measures the active item (`offsetLeft`/`offsetWidth`) and
+  glides the pill (~200ms). While the container reflows (a label expanding,
+  a hover shift) the pill *chases* the live geometry instead of lagging.
+- `Seg` uses the same hook — one mechanism, two surfaces.
+
 ## Release flow
 
 1. `npm run build` (vite + tsc + css copy)

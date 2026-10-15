@@ -8,8 +8,9 @@ import {
   ContextMenuDivider, ContextMenuSub, useOverlayMorph, DialogProvider, useDialog,
   RichTextEditor, FormatToolbar, LongPressMenuProvider, RICH_TEXT_STATE_IDLE,
   CardSection, setCoarseScale, useCoarseScale, useInputSize, IS_COARSE,
-  NumberInput, Seg, FloatingToggle,
+  NumberInput, Seg, FloatingToggle, useSlidingPill,
 } from '../../src/index';
+import { Table2, CalendarRange, CalendarDays, Palette, Scale, Clapperboard, BarChart3 } from 'lucide-react';
 import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem } from '../../src/index';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -41,6 +42,72 @@ function ButtonSection() {
           ))}
         </div>
       ))}
+    </section>
+  );
+}
+
+// ── 1b. Header tabs: icon-first collapse + sliding selection (roadmap 258) ───
+
+const HEADER_TAB_IDS = ['breakdown', 'schedule', 'calendar', 'design', 'rules', 'production', 'reports'] as const;
+type HeaderTabId = (typeof HEADER_TAB_IDS)[number];
+const HEADER_TAB_LABELS: Record<HeaderTabId, string> = {
+  breakdown: 'Breakdown', schedule: 'Schedule', calendar: 'Calendar', design: 'Design',
+  rules: 'Rules', production: 'Production', reports: 'Reports',
+};
+const HEADER_TAB_ICONS: Record<HeaderTabId, React.ReactNode> = {
+  breakdown: <Table2 size={14} />,
+  schedule: <CalendarRange size={14} />,
+  calendar: <CalendarDays size={14} />,
+  design: <Palette size={14} />,
+  rules: <Scale size={14} />,
+  production: <Clapperboard size={14} />,
+  reports: <BarChart3 size={14} />,
+};
+
+function HeaderTabsDemo() {
+  const [active, setActive] = useState<HeaderTabId>('schedule');
+  const [collapse, setCollapse] = useState(true);
+  const [iconWithLabel, setIconWithLabel] = useState(false);
+  const rowRef = React.useRef<HTMLDivElement | null>(null);
+  const tabRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const pill = useSlidingPill(rowRef, tabRefs, HEADER_TAB_IDS.indexOf(active));
+  return (
+    <section data-section="header-tabs">
+      <h2>Header tabs — icon-first collapse + sliding selection (roadmap 258)</h2>
+      <div className="row">
+        <div className="label">collapse={String(collapse)} · iconWithLabel={String(iconWithLabel)}</div>
+        <div ref={rowRef} data-testid="header-tabs-row" className="relative inline-flex items-center gap-1 rounded bg-zinc-950 px-1 py-0.5">
+          {pill.style && (
+            <span
+              aria-hidden
+              className={`absolute top-0 bottom-0 rounded bg-white pointer-events-none ${pill.motionClass}`}
+              style={pill.style}
+            />
+          )}
+          {HEADER_TAB_IDS.map((id, i) => (
+            <Button
+              key={id}
+              ref={el => { tabRefs.current[i] = el; }}
+              variant="tab-header"
+              active={active === id}
+              collapse={collapse}
+              iconWithLabel={iconWithLabel}
+              icon={HEADER_TAB_ICONS[id]}
+              data-testid={`header-tab-${id}`}
+              className="relative z-10"
+              onClick={() => setActive(id)}
+            >
+              {HEADER_TAB_LABELS[id]}
+            </Button>
+          ))}
+        </div>
+        <Button data-testid="header-tabs-collapse-toggle" onClick={() => setCollapse(c => !c)}>
+          collapse: {String(collapse)}
+        </Button>
+        <Button data-testid="header-tabs-iconmode-toggle" onClick={() => setIconWithLabel(v => !v)}>
+          iconWithLabel: {String(iconWithLabel)}
+        </Button>
+      </div>
     </section>
   );
 }
@@ -1305,6 +1372,9 @@ function App() {
       </section>
       <InputsSection />
       <MiscSection />
+      {/* Appended LAST on purpose: the specs assume the demo surfaces above it
+          keep their positions (scroll/flip-sensitive layout assertions). */}
+      <HeaderTabsDemo />
     </>
   );
 }

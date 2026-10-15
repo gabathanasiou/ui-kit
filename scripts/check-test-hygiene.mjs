@@ -27,9 +27,11 @@ const SPECS_DIR = join(ROOT, 'playground/specs');
 const WAIT_BASELINE = 9;
 // 14 = 13 + seg.spec.ts (Seg track sliding pill + FloatingToggle frames +
 // Checklist trailing/dataProps — layout wiring the unit layer can't reach);
-// 77 = the current suite; +1 headroom.
-const SPEC_CAP = 14;
-const TEST_CAP = 78;
+// 15 = 14 + header-tabs.spec.ts (roadmap 258: Button icon-first collapse +
+// iconWithLabel swap + the shared sliding-pill hook — collapsed accessible
+// names + glide geometry are DOM measurements the unit layer can't reach).
+const SPEC_CAP = 15;
+const TEST_CAP = 82;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

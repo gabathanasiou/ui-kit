@@ -3,6 +3,7 @@ import React from 'react';
 import { ArrowUp, ArrowDown, Copy, Trash2 } from 'lucide-react';
 import { IS_COARSE, useCoarseScale, useCoarseSize, coarsePx } from './device';
 import { Tooltip } from './Tooltip';
+import { useSlidingPill } from './slidingPill';
 
 // ---- dark editor-toolbox vocabulary (touch devices scale up — app pattern) ----
 
@@ -149,29 +150,13 @@ export const Seg: React.FC<{
     : { padding: '0 12px', fontSize: 12, height: dense ? 20 : 30 };
   const isOn = (v: string) => (active ? active(v) : value === v);
 
-  /* Sliding pill: measure the active segment (relative to the container),
-     re-measure on container resize. Layout-effect so the first paint already
-     has the pill. Shared by both variants (chrome highlights blue, track
-     raises a neutral pill). */
+  /* Sliding pill: the shared measured-highlight mechanism (useSlidingPill —
+     the app header's selected tab rides it too, roadmap 258). Layout-effect
+     measure so the first paint already has the pill. */
   const wrapRef = React.useRef<HTMLDivElement | null>(null);
   const btnRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
   const activeIndex = Math.max(0, options.findIndex(o => isOn(o.v)));
-  const [pill, setPill] = React.useState<{ left: number; width: number } | null>(null);
-  React.useLayoutEffect(() => {
-    const measure = () => {
-      const btn = btnRefs.current[activeIndex];
-      if (btn) setPill({ left: btn.offsetLeft, width: btn.offsetWidth });
-    };
-    measure();
-    const wrap = wrapRef.current;
-    if (!wrap) return;
-    const ro = new ResizeObserver(measure);
-    ro.observe(wrap);
-    return () => ro.disconnect();
-  }, [activeIndex, options.length]);
-
-  const reduceMotion = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const pillMotion = reduceMotion ? '' : 'transition-[transform,width] duration-200 ease-out';
+  const pill = useSlidingPill(wrapRef, btnRefs, activeIndex);
 
   if (variant === 'track') {
     const T = TRACK[theme];
@@ -182,11 +167,11 @@ export const Seg: React.FC<{
         aria-label={ariaLabel}
         className={`relative inline-flex items-center rounded border p-0.5 ${stretch ? 'w-full' : ''} ${T.wrap}`}
       >
-        {pill && (
+        {pill.style && (
           <span
             aria-hidden
-            className={`absolute rounded ${T.pill} ${pillMotion}`}
-            style={{ left: 0, top: 2, bottom: 2, width: pill.width, transform: `translateX(${pill.left}px)` }}
+            className={`absolute rounded ${T.pill} ${pill.motionClass}`}
+            style={{ ...pill.style, top: 2, bottom: 2 }}
           />
         )}
         {options.map((o, i) => {
@@ -218,11 +203,11 @@ export const Seg: React.FC<{
 
   return (
     <div ref={wrapRef} className={`relative ${TB_SEG} bg-zinc-800${stretch ? ' w-full' : ''}`}>
-      {pill && (
+      {pill.style && (
         <span
           aria-hidden
-          className={`absolute bg-blue-900/50 ${pillMotion}`}
-          style={{ left: 0, top: 0, bottom: 0, width: pill.width, transform: `translateX(${pill.left}px)` }}
+          className={`absolute bg-blue-900/50 ${pill.motionClass}`}
+          style={{ ...pill.style, top: 0, bottom: 0 }}
         />
       )}
       {options.map((o, i) => {
