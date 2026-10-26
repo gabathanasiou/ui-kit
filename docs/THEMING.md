@@ -63,8 +63,9 @@ This distinction is deliberate:
 | Body | neutral `#fff` | neutral `#18181b` |
 | Card / input wells | card shell **neutral raised**; inputs **transparent** (inherit) | card shell **neutral raised**; inputs **transparent** (inherit) |
 | Footer | `accent-50` | `accent-950` mix |
-| Card + calendar headers | `accent-900` + white | `accent-950` + white |
-| Header hover | `accent-800` (deeper, never grey) | `accent-900` (lighter, never grey) |
+| Card headers | `accent-900` + white | `accent-950` + white |
+| Calendar shell | **neutral** header/footer/body — only selection/chips accent | **neutral** |
+| Card-header hover | `accent-800` (deeper, never grey) | `accent-900` (lighter, never grey) |
 | Calendar body | **neutral** (only header/footer accent) | **neutral** |
 | Checklist / radio list | **neutral** panel; only checked rows + boxes accent | **neutral** |
 | Selection | `accent-200` + `accent-900` text | `accent-400` @ 26% + white |
@@ -90,18 +91,22 @@ Rules:
   One token set drives both.
 - **Card shells stay neutral; only their headers wear the accent.** A neutral
   raised fill + `--ui-border-strong` keeps the card readable on the neutral body.
-- **Header hovers stay in the accent family** (a deeper/lighter accent step),
-  never a white/grey wash.
+- **Card-header hovers stay in the accent family** (a deeper/lighter step), never
+  a white/grey wash. The calendar shell stays neutral in accent surfaces.
+- **Menus behave like buttons:** the cursor uses the soft button fill; a selected
+  row keeps the selected fill and only lifts on hover. Manager rows use the
+  lighter row hover.
 - **Danger/success/warning never follow the accent.**
 
 ## Canonical roles — consume these, never a raw step
 
 | Role | Light | Dark | Used by |
 | --- | --- | --- | --- |
-| `--ui-accent-action` / `-hover` | A700 / A800, white text | A700 / A800 | Button primary, footer hero, `tone="accent"` |
+| `--ui-accent-action` / `-hover` | A800 / A700, white text | A800 / A700 | Button primary, footer hero, `tone="accent"` |
 | `--ui-accent-selected-bg` / `-text` | A200 / A900 | A400 @ 26% / white | menu selected, row active, checklist/radio checked, date chips, selected date |
 | `--ui-accent-hover-bg` / `-text` | A600 @ 6% / strong text | A400 @ 8% / white | menu/row/cell/seg hover |
-| `--ui-accent-highlight-bg` / `-text` | A300 / A900 | A400 @ 32% / white | keyboard highlight (distinct from selected) |
+| `--ui-accent-highlight-bg` / `-text` | soft (cursor) / strong text | A400 @ 12% / white | pointer + keyboard cursor on an UNSELECTED row |
+| `--ui-accent-selected-hover-bg` | A300 | A400 @ 32% | hovering an already-selected row/chip (keeps the selection) |
 | `--ui-accent-soft-bg` / `-text` | A600 @ 10% / A700 | A400 @ 12% / A300 | active icon buttons, soft badges, ghost hover |
 | `--ui-accent-header-bg` / `-hover` | A900 / A800 | A950 / A900 | card + calendar headers (modal header is A950 in both modes) |
 | `--ui-accent-pill-bg` / `-text` | A950 / A50 | A800 / white | Seg pill, chrome variant, toggles |
@@ -152,7 +157,7 @@ Rules:
 | `Tooltip` (portal-safe) | yes |
 | `Button` | yes — mode, project accent, accent hovers, accent active state |
 | `Seg` (track) | yes — neutral border/labels, accent pill |
-| `DatePicker` | yes — accent header/footer, neutral body, accent selection |
+| `DatePicker` | yes — neutral shell (header/footer/body), accent selected days + chips |
 | `Modal`, `ModalFooter`, `ModalFooterButton` | yes — full shell |
 | `RichTextEditor` / `FormatToolbar` / editor `TB_*` | not yet (dark-only follow-up) |
 
