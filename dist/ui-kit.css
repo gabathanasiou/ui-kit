@@ -1253,7 +1253,7 @@
 
 .ui-row {
   touch-action: manipulation;
-  transition: background-color 150ms ease;
+  transition: background-color 150ms ease, color 150ms ease;
 }
 
 /* Same press squeeze as .ui-item: the current row fill recedes to a smaller
@@ -1464,7 +1464,7 @@
   user-select: none;
   -webkit-user-select: none;
   color: var(--ui-text);
-  transition: background-color 120ms ease;
+  transition: background-color 120ms ease, color 120ms ease;
 }
 
 .ui-checklist-item:active {
@@ -1539,6 +1539,7 @@
   height: 4px;
   border-radius: 9999px;
   background: var(--ui-check-check);
+  animation: ui-pop-in 120ms ease-out;
 }
 
 /* ── Scrollbars ───────────────────────────────────────────────────────── */
@@ -1610,7 +1611,7 @@
   padding: 6px 8px;
   height: 100%;
   min-height: 100%;
-  transition: background-color 120ms ease;
+  transition: background-color 120ms ease, border-color 120ms ease;
 }
 
 /* Same subtle fill as .ui-input — border-only until hovered/being edited. */
@@ -1721,4 +1722,29 @@
 
 .ui-modal-overlay:has(~ .ui-modal-overlay[data-state="open"]) {
   background: transparent;
+}
+
+
+/* ── Fast state feedback ────────────────────────────────────────────────
+   Hover/selection changes fade instead of snapping. Kept under 150ms so
+   functional feedback never feels animated. */
+@keyframes ui-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ui-pop-in {
+  from { transform: scale(0.55); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.ui-tooltip {
+  animation: ui-fade-in 90ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-tooltip,
+  .ui-radio-dot {
+    animation: none;
+  }
 }

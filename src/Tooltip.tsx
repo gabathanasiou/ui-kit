@@ -68,7 +68,7 @@ export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> =
         <div
           data-mode={kit?.mode}
           data-accent={kit?.accent}
-          className="fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-[color:var(--ui-tooltip-border)] bg-[var(--ui-tooltip-bg)] text-[color:var(--ui-tooltip-text)] pointer-events-none"
+          className="ui-tooltip fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-[color:var(--ui-tooltip-border)] bg-[var(--ui-tooltip-bg)] text-[color:var(--ui-tooltip-text)] pointer-events-none"
           style={{ ...tipStyle, left: pos.x, top: pos.y - 4, transform: 'translate(-50%, -100%)', zIndex: 99999 }}
         >
           {content.split('\n• ').map((line, i) => (

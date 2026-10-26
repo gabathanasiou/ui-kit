@@ -96,6 +96,10 @@ Rules:
 - **Menus behave like buttons:** the cursor uses the soft button fill; a selected
   row keeps the selected fill and only lifts on hover. Manager rows use the
   lighter row hover.
+- **Motion is functional, fast, and consistent:** hover/selection fills and
+  borders transition over 120–150ms; tooltips fade in over 90ms; the radio dot
+  pops in over 120ms. Mount animations are skipped under
+  `prefers-reduced-motion`; never add springs or slides to state feedback.
 - **Danger/success/warning never follow the accent.**
 
 ## Canonical roles — consume these, never a raw step
