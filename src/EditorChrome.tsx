@@ -33,12 +33,12 @@ export const TB_BTN = IS_COARSE ? 'h-10 px-3.5 text-sm font-medium rounded bg-zi
 export const TB_BTN_ICON = IS_COARSE ? 'h-10 px-3 text-sm font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-400 hover:bg-zinc-700 disabled:opacity-25 flex items-center gap-1 transition-colors' : 'h-7 px-2 text-[10px] font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-400 hover:bg-zinc-700 disabled:opacity-25 flex items-center gap-0.5 transition-colors';
 export const TB_DANGER = 'hover:bg-red-950/50';
 export const TB_TOGGLE = IS_COARSE ? 'h-10 w-10 rounded border flex items-center justify-center disabled:opacity-25 transition-colors' : 'h-7 w-7 rounded border flex items-center justify-center disabled:opacity-25 transition-colors';
-export const TB_TOGGLE_ON = 'bg-blue-900/50 border-blue-700 text-blue-300';
+export const TB_TOGGLE_ON = 'bg-[var(--ui-accent-selected-bg)] border-[var(--ui-border-strong)] text-[color:var(--ui-accent-selected-text)]';
 export const TB_TOGGLE_OFF = 'bg-zinc-800 border-zinc-700 text-zinc-500 hover:bg-zinc-700';
 export const TB_INPUT = IS_COARSE ? 'h-10 px-2.5 text-sm bg-zinc-800 border border-zinc-700 rounded text-zinc-300 placeholder:text-zinc-600 outline-none focus:border-zinc-500 disabled:opacity-30' : 'h-7 px-2 text-[10px] bg-zinc-800 border border-zinc-700 rounded text-zinc-300 placeholder:text-zinc-600 outline-none focus:border-zinc-500 disabled:opacity-30';
-export const TB_NUM = IS_COARSE ? 'w-14 h-9 bg-zinc-800 border border-zinc-700 rounded text-sm text-center text-zinc-300 outline-none focus:border-blue-500 shrink-0 read-only:opacity-50' : 'w-10 h-6 bg-zinc-800 border border-zinc-700 rounded text-[11px] text-center text-zinc-300 outline-none focus:border-blue-500 shrink-0 read-only:opacity-50';
+export const TB_NUM = IS_COARSE ? 'w-14 h-9 bg-zinc-800 border border-zinc-700 rounded text-sm text-center text-zinc-300 outline-none focus:border-[var(--ui-input-focus-border)] shrink-0 read-only:opacity-50' : 'w-10 h-6 bg-zinc-800 border border-zinc-700 rounded text-[11px] text-center text-zinc-300 outline-none focus:border-[var(--ui-input-focus-border)] shrink-0 read-only:opacity-50';
 export const TB_DIVIDER = IS_COARSE ? 'w-px h-7 bg-zinc-700 mx-1' : 'w-px h-5 bg-zinc-700 mx-0.5';
-export const TB_SEG = 'inline-flex rounded overflow-hidden border border-zinc-700';
+export const TB_SEG = 'inline-flex rounded overflow-hidden border border-[var(--ui-border-strong)]';
 /** Dropdown trigger look shared by every picker — matches the ribbon designer's
  *  dropdown buttons (h-7, coarse h-10) instead of the old thin strip. */
 export const TB_PICKER = IS_COARSE
@@ -82,7 +82,7 @@ export type SegTheme = 'light' | 'dark' | 'blue' | 'emerald';
 const TRACK = {
   wrap: 'border-[color:var(--ui-border-strong)] bg-[var(--ui-seg-track-bg)]',
   pill: 'bg-[var(--ui-seg-pill)]',
-  active: 'text-white',
+  active: 'text-[color:var(--ui-accent-pill-text)]',
   idle: 'text-[color:var(--ui-text-muted)] hover:text-[color:var(--ui-text-strong)] hover:bg-[var(--ui-seg-hover)]',
 };
 
@@ -189,11 +189,11 @@ export const Seg: React.FC<{
   }
 
   return (
-    <div ref={wrapRef} className={`relative ${TB_SEG} bg-zinc-800${stretch ? ' w-full' : ''}`}>
+    <div ref={wrapRef} className={`relative ${TB_SEG} bg-[var(--ui-seg-track-bg)]${stretch ? ' w-full' : ''}`}>
       {pill.style && (
         <span
           aria-hidden
-          className={`absolute bg-blue-900/50 ${pill.motionClass}`}
+          className={`absolute bg-[var(--ui-accent-pill-bg)] ${pill.motionClass}`}
           style={{ ...pill.style, top: 0, bottom: 0 }}
         />
       )}
@@ -208,7 +208,7 @@ export const Seg: React.FC<{
             onClick={() => onChange(o.v)}
             title={o.title}
             style={{ ...chrome.control, height }}
-            className={`relative z-10 font-medium transition-colors disabled:opacity-30 ${stretch ? 'flex-1' : ''} ${on ? 'text-blue-300' : 'text-zinc-500 hover:bg-zinc-700'} ${o.v !== options[options.length - 1].v ? 'border-r border-zinc-700' : ''}`}
+            className={`relative z-10 font-medium transition-colors disabled:opacity-30 ${stretch ? 'flex-1' : ''} ${on ? 'text-[color:var(--ui-accent-pill-text)]' : 'text-[color:var(--ui-text-muted)] hover:bg-[var(--ui-accent-hover-bg)]'} ${o.v !== options[options.length - 1].v ? 'border-r border-[var(--ui-border)]' : ''}`}
           >
             {o.icon}
             {o.l}

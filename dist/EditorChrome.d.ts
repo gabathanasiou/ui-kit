@@ -25,12 +25,12 @@ export declare const TB_BTN: string;
 export declare const TB_BTN_ICON: string;
 export declare const TB_DANGER = "hover:bg-red-950/50";
 export declare const TB_TOGGLE: string;
-export declare const TB_TOGGLE_ON = "bg-blue-900/50 border-blue-700 text-blue-300";
+export declare const TB_TOGGLE_ON = "bg-[var(--ui-accent-selected-bg)] border-[var(--ui-border-strong)] text-[color:var(--ui-accent-selected-text)]";
 export declare const TB_TOGGLE_OFF = "bg-zinc-800 border-zinc-700 text-zinc-500 hover:bg-zinc-700";
 export declare const TB_INPUT: string;
 export declare const TB_NUM: string;
 export declare const TB_DIVIDER: string;
-export declare const TB_SEG = "inline-flex rounded overflow-hidden border border-zinc-700";
+export declare const TB_SEG = "inline-flex rounded overflow-hidden border border-[var(--ui-border-strong)]";
 /** Dropdown trigger look shared by every picker — matches the ribbon designer's
  *  dropdown buttons (h-7, coarse h-10) instead of the old thin strip. */
 export declare const TB_PICKER: string;

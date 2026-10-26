@@ -73,8 +73,8 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
  *  + the tabs' refs) so the selection box glides. On a `dark` toolbar
  *  `plain` is white — a zinc-950 pill vanished into the bar. */
 export const TAB_PILL: Record<'light' | 'dark', Record<'plain' | 'blue' | 'emerald', string>> = {
-  light: { plain: 'bg-zinc-950', blue: 'bg-blue-950', emerald: 'bg-emerald-950' },
-  dark: { plain: 'bg-white', blue: 'bg-blue-950', emerald: 'bg-emerald-950' },
+  light: { plain: 'bg-zinc-950', blue: 'bg-[var(--ui-tab-pill-accent)]', emerald: 'bg-[var(--ui-tab-pill-accent)]' },
+  dark: { plain: 'bg-white', blue: 'bg-[var(--ui-tab-pill-accent)]', emerald: 'bg-[var(--ui-tab-pill-accent)]' },
 };
 
 export default function Button({
@@ -125,14 +125,14 @@ export default function Button({
   type CloudTone = 'blue' | 'emerald';
   const CLOUD_TAB: Record<CloudTone, { active: string; inactiveLight: string; inactiveDark: string }> = {
     blue: {
-      active: 'text-blue-50',
-      inactiveLight: 'text-blue-950 hover:bg-blue-950/10 hover:text-blue-950',
-      inactiveDark: 'text-zinc-500 hover:text-zinc-300',
+      active: 'text-[color:var(--ui-tab-pill-accent-text)]',
+      inactiveLight: 'text-[color:var(--ui-tab-inactive-light)] hover:bg-[var(--ui-tab-hover-light)] hover:text-[color:var(--ui-tab-inactive-light)]',
+      inactiveDark: 'text-[color:var(--ui-tab-inactive-dark)] hover:text-white hover:bg-[var(--ui-tab-hover-dark)]',
     },
     emerald: {
-      active: 'text-emerald-50',
-      inactiveLight: 'text-emerald-950 hover:bg-emerald-950/10 hover:text-emerald-950',
-      inactiveDark: 'text-zinc-500 hover:text-zinc-300',
+      active: 'text-[color:var(--ui-tab-pill-accent-text)]',
+      inactiveLight: 'text-[color:var(--ui-tab-inactive-light)] hover:bg-[var(--ui-tab-hover-light)] hover:text-[color:var(--ui-tab-inactive-light)]',
+      inactiveDark: 'text-[color:var(--ui-tab-inactive-dark)] hover:text-white hover:bg-[var(--ui-tab-hover-dark)]',
     },
   };
 
@@ -148,14 +148,14 @@ export default function Button({
 
   const CLOUD_HEADER: Record<CloudTone, { active: string; inactive: string; open: string }> = {
     blue: {
-      active: 'text-blue-950',
-      inactive: 'text-white/70 hover:text-white hover:bg-blue-900/60',
-      open: 'bg-blue-900/60! text-white',
+      active: 'text-[color:var(--ui-tab-pill-accent-text)]',
+      inactive: 'text-[color:var(--ui-tab-inactive-dark)] hover:text-white hover:bg-[var(--ui-tab-hover-dark)]',
+      open: 'bg-[var(--ui-tab-open-bg)]! text-white',
     },
     emerald: {
-      active: 'text-emerald-950',
-      inactive: 'text-white/70 hover:text-white hover:bg-emerald-900/60',
-      open: 'bg-emerald-900/60! text-white',
+      active: 'text-[color:var(--ui-tab-pill-accent-text)]',
+      inactive: 'text-[color:var(--ui-tab-inactive-dark)] hover:text-white hover:bg-[var(--ui-tab-hover-dark)]',
+      open: 'bg-[var(--ui-tab-open-bg)]! text-white',
     },
   };
 
@@ -174,8 +174,8 @@ export default function Button({
   };
 
   const CLOUD_PRIMARY: Record<CloudTone, { base: string; open: string }> = {
-    blue: { base: `${PAD_PRIMARY} bg-[var(--ui-accent-solid)] hover:bg-[var(--ui-accent-solid-hover)] text-white`, open: 'bg-[var(--ui-accent-solid-hover)]!' },
-    emerald: { base: `${PAD_PRIMARY} bg-[var(--ui-accent-solid)] hover:bg-[var(--ui-accent-solid-hover)] text-white`, open: 'bg-[var(--ui-accent-solid-hover)]!' },
+    blue: { base: `${PAD_PRIMARY} bg-[var(--ui-accent-solid)] hover:bg-[var(--ui-accent-solid-hover)] text-[color:var(--ui-accent-action-text)]`, open: 'bg-[var(--ui-accent-solid-hover)]!' },
+    emerald: { base: `${PAD_PRIMARY} bg-[var(--ui-accent-solid)] hover:bg-[var(--ui-accent-solid-hover)] text-[color:var(--ui-accent-action-text)]`, open: 'bg-[var(--ui-accent-solid-hover)]!' },
   };
 
   const isOpen = (rest as { 'data-state'?: string })['data-state'] === 'open';

@@ -91,9 +91,10 @@ re-skin a scope:
 ```
 
 Full model, token roles, coverage and the migration checklist:
-[`docs/THEMING.md`](docs/THEMING.md). Try it live in the playground's **Theme
-lab** section (mode / accent / surface + a fully themed dummy modal and both
-menu contexts).
+[`docs/THEMING.md`](docs/THEMING.md). Adopting it in an app (modals, menus,
+portals, the normal-vs-coloured distinction): [`docs/ADOPTING-THEMING.md`](docs/ADOPTING-THEMING.md).
+Try it live in the playground's **Theme lab** section (mode / accent / surface +
+a fully themed dummy modal and both menu contexts).
 
 ## Long-press example
 

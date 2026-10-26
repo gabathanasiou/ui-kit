@@ -28,6 +28,7 @@
   --ui-input-focus-bg: var(--ui-input-hover-bg);
   --ui-input-border: #3f3f46;
   --ui-input-text: #e4e4e7;
+  /* Section cards (CardSection) — a RAISED surface, deliberately distinct
      from text-field fills (--ui-input-bg) so sections read as panels, not
      inputs. */
   --ui-card-bg: rgba(255, 255, 255, 0.05);
@@ -48,9 +49,9 @@
   --ui-date-header-hover: var(--ui-card-hover);
   --ui-date-body-bg: var(--ui-card-bg);
   --ui-date-footer-bg: var(--ui-card-band);
-  --ui-date-chip-bg: #27272a;
-  --ui-date-chip-text: #e4e4e7;
-  --ui-date-chip-hover-bg: #3f3f46;
+  --ui-date-chip-bg: var(--ui-accent-selected-bg, #27272a);
+  --ui-date-chip-text: var(--ui-accent-selected-text, #e4e4e7);
+  --ui-date-chip-hover-bg: var(--ui-accent-highlight-bg, #3f3f46);
   --ui-overlay-bg: rgba(0, 0, 0, 0.2);
 
   --ui-text: #d4d4d8;
@@ -73,8 +74,7 @@
 
   --ui-row-hover-bg: #3f3f46;
   --ui-row-active-bg: rgba(37, 99, 235, 0.28);
-  --ui-icon-btn-active-hover-bg: rgba(255, 255, 255, 0.12);
-  --ui-icon-btn-active-text: #ffffff;
+  --ui-icon-btn-active-hover-bg: var(--ui-accent-soft-bg);
   --ui-row-active-text: #ffffff;
 
   --ui-danger-text: #f87171;
@@ -89,6 +89,19 @@
   --ui-accent-soft-bg: rgba(147, 197, 253, 0.12);
   --ui-confirm-hover: #4ade80;
   --ui-cancel-hover: #f87171;
+  --ui-accent-focus: var(--ui-text-muted);
+  --ui-tab-pill-plain: #ffffff;
+  --ui-tab-pill-plain-text: #18181b;
+  --ui-tab-pill-accent: var(--ui-accent-950, #172554);
+  --ui-tab-pill-accent-text: var(--ui-accent-50, #eff6ff);
+  --ui-tab-inactive-light: var(--ui-accent-950, #172554);
+  --ui-tab-inactive-dark: color-mix(in srgb, #ffffff 70%, transparent);
+  --ui-tab-hover-light: color-mix(in oklab, var(--ui-accent-950, #172554) 10%, transparent);
+  --ui-tab-hover-dark: color-mix(in oklab, var(--ui-accent-900, #1e3a8a) 60%, transparent);
+  --ui-tab-open-bg: var(--ui-tab-hover-dark);
+  --ui-date-selected-bg: var(--ui-accent-selected-bg, rgba(96, 165, 250, 0.26));
+  --ui-date-selected-text: var(--ui-accent-selected-text, #ffffff);
+  --ui-date-selected-hover-bg: var(--ui-accent-highlight-bg, rgba(96, 165, 250, 0.32));
 
   --ui-btn-bg: #27272a;
   --ui-btn-hover-bg: #27272a;
@@ -141,10 +154,11 @@
   --ui-footer-hero-hover-bg: #3f3f46;
   --ui-footer-hero-border: #3f3f46;
   --ui-footer-hero-hover-border: #71717a;
-  --ui-footer-hero-text: #ffffff;
+  --ui-footer-hero-text: var(--ui-accent-action-text, #ffffff);
   --ui-footer-ghost-hover-bg: #27272a;
   --ui-accent-solid: #2563eb;
   --ui-accent-solid-hover: #3b82f6;
+  --ui-accent-action-text: #ffffff;
 
   /* Tooltips. */
   --ui-tooltip-bg: #18181b;
@@ -192,9 +206,9 @@
   --ui-date-header-hover: var(--ui-card-hover);
   --ui-date-body-bg: var(--ui-card-bg);
   --ui-date-footer-bg: var(--ui-card-band);
-  --ui-date-chip-bg: #e4e4e7;
-  --ui-date-chip-text: #3f3f46;
-  --ui-date-chip-hover-bg: #d4d4d8;
+  --ui-date-chip-bg: var(--ui-accent-selected-bg, #e4e4e7);
+  --ui-date-chip-text: var(--ui-accent-selected-text, #3f3f46);
+  --ui-date-chip-hover-bg: var(--ui-accent-highlight-bg, #d4d4d8);
   --ui-overlay-bg: rgba(0, 0, 0, 0.2);
 
   --ui-text: #3f3f46;
@@ -217,8 +231,7 @@
 
   --ui-row-hover-bg: #e4e4e7;
   --ui-row-active-bg: #eff6ff;
-  --ui-icon-btn-active-hover-bg: rgba(0, 0, 0, 0.07);
-  --ui-icon-btn-active-text: #18181b;
+  --ui-icon-btn-active-hover-bg: var(--ui-accent-soft-bg);
   --ui-row-active-text: #1d4ed8;
 
   --ui-danger-text: #dc2626;
@@ -233,6 +246,19 @@
   --ui-accent-soft-bg: rgba(29, 78, 216, 0.08);
   --ui-confirm-hover: #16a34a;
   --ui-cancel-hover: #dc2626;
+  --ui-accent-focus: var(--ui-text-muted);
+  --ui-tab-pill-plain: #18181b;
+  --ui-tab-pill-plain-text: #ffffff;
+  --ui-tab-pill-accent: var(--ui-accent-950, #172554);
+  --ui-tab-pill-accent-text: var(--ui-accent-50, #eff6ff);
+  --ui-tab-inactive-light: var(--ui-accent-950, #172554);
+  --ui-tab-inactive-dark: color-mix(in srgb, #ffffff 70%, transparent);
+  --ui-tab-hover-light: color-mix(in oklab, var(--ui-accent-950, #172554) 10%, transparent);
+  --ui-tab-hover-dark: color-mix(in oklab, var(--ui-accent-900, #1e3a8a) 60%, transparent);
+  --ui-tab-open-bg: var(--ui-tab-hover-dark);
+  --ui-date-selected-bg: var(--ui-accent-selected-bg, #bfdbfe);
+  --ui-date-selected-text: var(--ui-accent-selected-text, #1d4ed8);
+  --ui-date-selected-hover-bg: var(--ui-accent-highlight-bg, #93c5fd);
 
   --ui-btn-bg: #27272a;
   --ui-btn-hover-bg: #e4e4e7;
@@ -277,10 +303,11 @@
   --ui-footer-hero-hover-bg: #27272a;
   --ui-footer-hero-border: #18181b;
   --ui-footer-hero-hover-border: #3f3f46;
-  --ui-footer-hero-text: #ffffff;
+  --ui-footer-hero-text: var(--ui-accent-action-text, #ffffff);
   --ui-footer-ghost-hover-bg: #e4e4e7;
   --ui-accent-solid: #2563eb;
   --ui-accent-solid-hover: #3b82f6;
+  --ui-accent-action-text: #ffffff;
 
   --ui-tooltip-bg: #ffffff;
   --ui-tooltip-text: #18181b;
@@ -484,79 +511,116 @@
   --ui-accent-950: #022c22;
 }
 
-/* Derived interaction accent — the mode picks the contrast step. */
+/* Derived interaction accent — CANONICAL ROLES. Components must consume
+   these (or the aliases below); never pick an accent step per component. */
 [data-accent] {
-  --ui-chrome-accent: var(--ui-accent-600);
-  --ui-accent-solid: var(--ui-accent-700);
-  --ui-accent-solid-hover: var(--ui-accent-800);
-  --ui-check-accent: var(--ui-accent-700);
-  --ui-check-check: #ffffff;
-  --ui-accent-soft-text: var(--ui-accent-700);
+  /* Canonical roles */
+  --ui-accent-action: var(--ui-accent-700);
+  --ui-accent-action-hover: var(--ui-accent-800);
+  --ui-accent-action-text: #ffffff;
+  --ui-accent-selected-bg: var(--ui-accent-200);
+  --ui-accent-selected-text: var(--ui-accent-900);
+  --ui-accent-hover-bg: color-mix(in oklab, var(--ui-accent-600) 6%, transparent);
+  --ui-accent-hover-text: var(--ui-text-strong);
+  --ui-accent-highlight-bg: var(--ui-accent-300);
+  --ui-accent-highlight-text: var(--ui-accent-900);
   --ui-accent-soft-bg: color-mix(in oklab, var(--ui-accent-600) 10%, transparent);
-  --ui-seg-pill: var(--ui-accent-950);
-  --ui-seg-hover: color-mix(in oklab, var(--ui-accent-600) 6%, transparent);
-  --ui-date-selected-bg: var(--ui-accent-800);
-  --ui-date-selected-hover-bg: var(--ui-accent-900);
+  --ui-accent-soft-text: var(--ui-accent-700);
+  --ui-accent-pill-bg: var(--ui-accent-950);
+  --ui-accent-pill-text: var(--ui-accent-50);
+  --ui-accent-check-bg: var(--ui-accent-800);
+  --ui-accent-check-mark: #ffffff;
+  --ui-accent-header-bg: var(--ui-accent-900);
+  --ui-accent-header-hover: var(--ui-accent-800);
+  --ui-accent-focus: var(--ui-text-muted);
+
+  /* Component aliases — one role per concern */
+  --ui-accent-solid: var(--ui-accent-action);
+  --ui-accent-solid-hover: var(--ui-accent-action-hover);
+  --ui-item-selected-bg: var(--ui-accent-selected-bg);
+  --ui-item-selected-text: var(--ui-accent-selected-text);
+  --ui-item-hover-bg: var(--ui-accent-hover-bg);
+  --ui-item-hover-text: var(--ui-accent-hover-text);
+  --ui-item-highlight-bg: var(--ui-accent-highlight-bg);
+  --ui-item-highlight-text: var(--ui-accent-highlight-text);
+  --ui-row-active-bg: var(--ui-accent-selected-bg);
+  --ui-row-active-text: var(--ui-accent-selected-text);
+  --ui-row-hover-bg: var(--ui-accent-hover-bg);
+  --ui-check-row-bg: var(--ui-accent-selected-bg);
+  --ui-check-row-hover-bg: var(--ui-accent-hover-bg);
+  --ui-check-accent: var(--ui-accent-check-bg);
+  --ui-check-check: var(--ui-accent-check-mark);
+  --ui-check-pill-hover-bg: var(--ui-accent-soft-bg);
+  --ui-icon-btn-active-hover-bg: var(--ui-accent-soft-bg);
+  --ui-icon-btn-active-text: var(--ui-accent-soft-text);
+  --ui-btn-active-bg: var(--ui-accent-selected-bg);
+  --ui-btn-active-text: var(--ui-accent-selected-text);
+  --ui-btn-hover-bg: var(--ui-accent-soft-bg);
+  --ui-seg-pill: var(--ui-accent-pill-bg);
+  --ui-seg-hover: var(--ui-accent-hover-bg);
+  --ui-check-list-bg: var(--ui-panel-bg);
+  --ui-check-list-border: var(--ui-border-strong);
+  --ui-check-border: var(--ui-border-strong);
+  --ui-check-hover-border: var(--ui-text-muted);
 }
 
 [data-mode="light"][data-accent] {
-  --ui-item-selected-bg: var(--ui-accent-200);
-  --ui-item-selected-text: var(--ui-accent-900);
-  --ui-item-hover-bg: color-mix(in oklab, var(--ui-accent-600) 6%, transparent);
-  --ui-row-active-bg: var(--ui-accent-100);
-  --ui-row-active-text: var(--ui-accent-900);
-  --ui-row-hover-bg: color-mix(in oklab, var(--ui-accent-600) 7%, transparent);
-  --ui-check-row-bg: var(--ui-accent-100);
-  --ui-check-row-hover-bg: var(--ui-accent-200);
-  --ui-check-list-bg: var(--ui-panel-bg);
-  --ui-check-list-border: var(--ui-border-strong);
-  --ui-check-accent: var(--ui-accent-800);
-  --ui-check-check: #ffffff;
+  --ui-accent-selected-bg: var(--ui-accent-200);
+  --ui-accent-selected-text: var(--ui-accent-900);
+  --ui-accent-hover-bg: color-mix(in oklab, var(--ui-accent-600) 6%, transparent);
+  --ui-accent-hover-text: var(--ui-text-strong);
+  --ui-accent-highlight-bg: var(--ui-accent-300);
+  --ui-accent-highlight-text: var(--ui-accent-900);
+  --ui-accent-soft-bg: color-mix(in oklab, var(--ui-accent-600) 10%, transparent);
+  --ui-accent-soft-text: var(--ui-accent-700);
+  --ui-accent-pill-bg: var(--ui-accent-950);
+  --ui-accent-pill-text: var(--ui-accent-50);
+  --ui-accent-check-bg: var(--ui-accent-800);
+  --ui-accent-check-mark: #ffffff;
+  --ui-accent-header-bg: var(--ui-accent-900);
+  --ui-accent-header-hover: var(--ui-accent-800);
+  --ui-accent-focus: var(--ui-text-muted);
   --ui-check-border: #52525b;
   --ui-check-hover-border: #27272a;
-  --ui-check-pill-hover-bg: color-mix(in oklab, var(--ui-accent-600) 8%, transparent);
-  --ui-icon-btn-active-hover-bg: color-mix(in oklab, var(--ui-accent-600) 7%, transparent);
-  --ui-btn-active-bg: var(--ui-accent-100);
-  --ui-btn-active-text: var(--ui-accent-900);
-  --ui-btn-hover-bg: var(--ui-accent-100);
 }
 
 [data-mode="dark"][data-accent] {
-  --ui-check-accent: var(--ui-accent-400);
-  --ui-check-check: #052e22;
-  --ui-accent-soft-text: var(--ui-accent-300);
+  --ui-accent-selected-bg: color-mix(in oklab, var(--ui-accent-400) 26%, transparent);
+  --ui-accent-selected-text: #ffffff;
+  --ui-accent-hover-bg: color-mix(in oklab, var(--ui-accent-400) 8%, transparent);
+  --ui-accent-hover-text: #ffffff;
+  --ui-accent-highlight-bg: color-mix(in oklab, var(--ui-accent-400) 32%, transparent);
+  --ui-accent-highlight-text: #ffffff;
   --ui-accent-soft-bg: color-mix(in oklab, var(--ui-accent-400) 12%, transparent);
-  --ui-item-selected-bg: color-mix(in oklab, var(--ui-accent-400) 26%, transparent);
-  --ui-item-selected-text: #ffffff;
-  --ui-item-hover-bg: color-mix(in oklab, var(--ui-accent-400) 8%, transparent);
-  --ui-row-active-bg: color-mix(in oklab, var(--ui-accent-400) 22%, transparent);
-  --ui-row-active-text: #ffffff;
-  --ui-row-hover-bg: color-mix(in oklab, var(--ui-accent-400) 10%, transparent);
-  --ui-check-row-bg: color-mix(in oklab, var(--ui-accent-400) 16%, transparent);
-  --ui-check-row-hover-bg: color-mix(in oklab, var(--ui-accent-400) 22%, transparent);
-  --ui-check-list-bg: var(--ui-panel-bg);
-  --ui-check-list-border: var(--ui-border-strong);
-  --ui-check-pill-hover-bg: color-mix(in oklab, var(--ui-accent-400) 10%, transparent);
-  --ui-icon-btn-active-hover-bg: color-mix(in oklab, var(--ui-accent-400) 12%, transparent);
-  --ui-btn-active-bg: color-mix(in oklab, var(--ui-accent-400) 20%, transparent);
-  --ui-btn-active-text: #ffffff;
-  --ui-btn-hover-bg: color-mix(in oklab, var(--ui-accent-400) 8%, transparent);
-  --ui-seg-pill: var(--ui-accent-800);
-  --ui-date-selected-bg: var(--ui-accent-800);
-  --ui-date-selected-hover-bg: var(--ui-accent-900);
+  --ui-accent-soft-text: var(--ui-accent-300);
+  --ui-accent-pill-bg: var(--ui-accent-800);
+  --ui-accent-pill-text: #ffffff;
+  --ui-accent-check-bg: var(--ui-accent-400);
+  --ui-accent-check-mark: #052e22;
+  --ui-accent-header-bg: var(--ui-accent-950);
+  --ui-accent-header-hover: var(--ui-accent-900);
+  --ui-accent-focus: var(--ui-text-muted);
 }
 
 /* Zinc is monochrome: black check on light, white check on dark. */
 [data-accent="zinc"][data-mode="light"] {
-  --ui-check-accent: #18181b;
-  --ui-check-check: #ffffff;
+  --ui-accent-check-bg: #18181b;
+  --ui-accent-check-mark: #ffffff;
   --ui-accent-soft-text: #52525b;
 }
 
 [data-accent="zinc"][data-mode="dark"] {
-  --ui-check-accent: #e4e4e7;
-  --ui-check-check: #18181b;
+  --ui-accent-check-bg: #e4e4e7;
+  --ui-accent-check-mark: #18181b;
   --ui-accent-soft-text: #d4d4d8;
+}
+
+[data-accent="blue"][data-mode="dark"] {
+  --ui-accent-check-mark: #172554;
+}
+
+[data-accent="emerald"][data-mode="dark"] {
+  --ui-accent-check-mark: #022c22;
 }
 
 /* ── Accent surface ladder (roadmap 302) ────────────────────────────────
@@ -584,24 +648,22 @@
   --ui-text-muted: #3f3f46;
   --ui-text-faint: #52525b;
   --ui-text-disabled: #a1a1aa;
-  --ui-check-check: #ffffff;
-  --ui-date-selected-bg: var(--ui-accent-800);
-  --ui-card-header-bg: var(--ui-accent-900);
+  --ui-card-header-bg: var(--ui-accent-header-bg);
   --ui-card-header-text: #ffffff;
   --ui-card-header-muted: color-mix(in srgb, #ffffff 72%, transparent);
   --ui-card-header-icon: #ffffff;
-  --ui-card-header-hover: var(--ui-accent-800);
+  --ui-card-header-hover: var(--ui-accent-header-hover);
   --ui-card-count-bg: color-mix(in srgb, #ffffff 16%, transparent);
   --ui-card-count-text: #ffffff;
-  --ui-date-header-bg: var(--ui-accent-900);
+  --ui-date-header-bg: var(--ui-accent-header-bg);
   --ui-date-header-text: #ffffff;
   --ui-date-header-muted: color-mix(in srgb, #ffffff 75%, transparent);
-  --ui-date-header-hover: var(--ui-accent-800);
+  --ui-date-header-hover: var(--ui-accent-header-hover);
   --ui-date-body-bg: var(--ui-panel-bg);
   --ui-date-footer-bg: var(--ui-accent-50);
-  --ui-date-chip-bg: var(--ui-accent-100);
-  --ui-date-chip-text: var(--ui-accent-900);
-  --ui-date-chip-hover-bg: var(--ui-accent-200);
+  --ui-date-chip-bg: var(--ui-accent-selected-bg);
+  --ui-date-chip-text: var(--ui-accent-selected-text);
+  --ui-date-chip-hover-bg: var(--ui-accent-highlight-bg);
   --ui-input-bg: var(--ui-accent-50);
   --ui-input-hover-bg: color-mix(in oklab, #000000 4%, transparent);
   --ui-input-focus-bg: var(--ui-input-hover-bg);
@@ -610,11 +672,11 @@
   --ui-card-border: var(--ui-border-strong);
   --ui-card-band: #f4f4f5;
   --ui-card-hover: color-mix(in oklab, var(--ui-accent-600) 6%, transparent);
-  --ui-footer-hero-bg: var(--ui-accent-950);
-  --ui-footer-hero-hover-bg: var(--ui-accent-900);
-  --ui-footer-hero-border: var(--ui-accent-950);
-  --ui-footer-hero-hover-border: var(--ui-accent-900);
-  --ui-footer-ghost-hover-bg: var(--ui-accent-200);
+  --ui-footer-hero-bg: var(--ui-accent-action);
+  --ui-footer-hero-hover-bg: var(--ui-accent-action-hover);
+  --ui-footer-hero-border: var(--ui-accent-action);
+  --ui-footer-hero-hover-border: var(--ui-accent-action-hover);
+  --ui-footer-ghost-hover-bg: var(--ui-accent-soft-bg);
 }
 
 [data-surface="accent"][data-mode="dark"] {
@@ -637,24 +699,22 @@
   --ui-text-muted: #d4d4d8;
   --ui-text-faint: #a1a1aa;
   --ui-text-disabled: #52525b;
-  --ui-check-check: #052e22;
-  --ui-date-selected-bg: var(--ui-accent-800);
-  --ui-card-header-bg: var(--ui-accent-950);
+  --ui-card-header-bg: var(--ui-accent-header-bg);
   --ui-card-header-text: #ffffff;
   --ui-card-header-muted: color-mix(in srgb, #ffffff 68%, transparent);
   --ui-card-header-icon: #ffffff;
-  --ui-card-header-hover: var(--ui-accent-900);
+  --ui-card-header-hover: var(--ui-accent-header-hover);
   --ui-card-count-bg: color-mix(in srgb, #ffffff 14%, transparent);
   --ui-card-count-text: #ffffff;
-  --ui-date-header-bg: var(--ui-accent-950);
+  --ui-date-header-bg: var(--ui-accent-header-bg);
   --ui-date-header-text: #ffffff;
   --ui-date-header-muted: color-mix(in srgb, #ffffff 72%, transparent);
-  --ui-date-header-hover: var(--ui-accent-900);
+  --ui-date-header-hover: var(--ui-accent-header-hover);
   --ui-date-body-bg: var(--ui-panel-bg);
   --ui-date-footer-bg: color-mix(in oklab, var(--ui-accent-950) 40%, #18181b);
-  --ui-date-chip-bg: var(--ui-accent-800);
-  --ui-date-chip-text: #ffffff;
-  --ui-date-chip-hover-bg: var(--ui-accent-700);
+  --ui-date-chip-bg: var(--ui-accent-selected-bg);
+  --ui-date-chip-text: var(--ui-accent-selected-text);
+  --ui-date-chip-hover-bg: var(--ui-accent-highlight-bg);
   --ui-input-bg: color-mix(in oklab, var(--ui-accent-700) 45%, #27272a);
   --ui-input-hover-bg: color-mix(in oklab, #ffffff 6%, transparent);
   --ui-input-focus-bg: var(--ui-input-hover-bg);
@@ -663,11 +723,11 @@
   --ui-card-border: var(--ui-border-strong);
   --ui-card-band: #232327;
   --ui-card-hover: color-mix(in oklab, var(--ui-accent-400) 8%, transparent);
-  --ui-footer-hero-bg: var(--ui-accent-900);
-  --ui-footer-hero-hover-bg: var(--ui-accent-800);
-  --ui-footer-hero-border: var(--ui-accent-900);
-  --ui-footer-hero-hover-border: var(--ui-accent-800);
-  --ui-footer-ghost-hover-bg: color-mix(in oklab, var(--ui-accent-800) 50%, transparent);
+  --ui-footer-hero-bg: var(--ui-accent-action);
+  --ui-footer-hero-hover-bg: var(--ui-accent-action-hover);
+  --ui-footer-hero-border: var(--ui-accent-action);
+  --ui-footer-hero-hover-border: var(--ui-accent-action-hover);
+  --ui-footer-ghost-hover-bg: var(--ui-accent-soft-bg);
 }
 
 /* ── Shared interaction rules ─────────────────────────────────────────── */
@@ -677,7 +737,7 @@
 }
 
 .ui-interactive:focus-visible {
-  outline: 2px solid var(--ui-accent-soft-text);
+  outline: 2px solid var(--ui-accent-focus, var(--ui-text-muted));
   outline-offset: 1px;
 }
 
@@ -882,6 +942,7 @@
 }
 
 .ui-icon-btn-active {
+  background: var(--ui-accent-soft-bg);
   color: var(--ui-icon-btn-active-text, var(--ui-accent-soft-text));
 }
 
@@ -1089,7 +1150,7 @@
 }
 
 .ui-checkbox input:focus-visible + .ui-checkbox-box {
-  outline: 2px solid var(--ui-accent-soft-text);
+  outline: 2px solid var(--ui-accent-focus, var(--ui-text-muted));
   outline-offset: 1px;
 }
 
@@ -1413,7 +1474,7 @@
 
 .ui-checklist-item-checked {
   background: var(--ui-check-row-bg);
-  color: var(--ui-text-strong);
+  color: var(--ui-accent-selected-text, var(--ui-text-strong));
 }
 
 .ui-checklist-item-checked:hover {

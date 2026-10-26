@@ -32,7 +32,7 @@ const BASE = `inline-flex items-center gap-2 rounded-lg text-xs transition curso
    a zinc-700 border used to vanish). */
 const HERO_TONES: Record<NonNullable<ModalFooterButtonProps['tone']>, string> = {
   zinc: 'bg-[var(--ui-footer-hero-bg)] text-[color:var(--ui-footer-hero-text)] font-semibold border border-[color:var(--ui-footer-hero-border)] hover:bg-[var(--ui-footer-hero-hover-bg)] hover:border-[color:var(--ui-footer-hero-hover-border)] disabled:opacity-40 disabled:cursor-not-allowed',
-  accent: 'bg-[var(--ui-accent-solid)] text-white font-semibold border border-transparent hover:bg-[var(--ui-accent-solid-hover)] disabled:opacity-40 disabled:cursor-not-allowed',
+  accent: 'bg-[var(--ui-accent-solid)] text-[color:var(--ui-accent-action-text)] font-semibold border border-transparent hover:bg-[var(--ui-accent-solid-hover)] disabled:opacity-40 disabled:cursor-not-allowed',
   danger: 'bg-[var(--ui-danger-solid)] text-white font-semibold border border-[color:var(--ui-danger-solid)] hover:bg-[var(--ui-danger-solid-hover)] disabled:opacity-40 disabled:cursor-not-allowed',
 };
 

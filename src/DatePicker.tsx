@@ -112,7 +112,7 @@ export default function DatePicker({ selected, onChange, theme: themeProp, showC
   const MONTH_CELL_STYLE = { fontSize: monthCellFs, paddingTop: monthCellPy, paddingBottom: monthCellPy };
   const CHIP_STYLE = { fontSize: chipFs, padding: `${chipPy}px ${chipPx}px` };
 
-  const selectedCls = 'bg-[var(--ui-date-selected-bg)] text-white hover:bg-[var(--ui-date-selected-hover-bg)]';
+  const selectedCls = 'bg-[var(--ui-date-selected-bg)] text-[color:var(--ui-date-selected-text)] hover:bg-[var(--ui-date-selected-hover-bg)]';
   const plainCls = 'text-[color:var(--ui-text)] hover:bg-[var(--ui-card-hover)]';
 
   return (
@@ -172,7 +172,7 @@ export default function DatePicker({ selected, onChange, theme: themeProp, showC
               >
                 {m}
                 {monthHasSelected(i) && (
-                  <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${i === viewMonth ? 'bg-white' : 'bg-[var(--ui-accent-solid)]'}`} />
+                  <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${i === viewMonth ? 'bg-[var(--ui-date-selected-text)]' : 'bg-[var(--ui-accent-solid)]'}`} />
                 )}
               </button>
             ))}

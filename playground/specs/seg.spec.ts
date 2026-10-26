@@ -40,9 +40,9 @@ test('track variant: blue + emerald project-chrome palettes', async ({ page }) =
   const blue = page.getByTestId('seg-track-blue').locator('[role="group"]');
   const emerald = page.getByTestId('seg-track-emerald').locator('[role="group"]');
   await expect(blue.locator('span[aria-hidden]')).toHaveCSS('background-color', 'rgb(23, 37, 84)');
-  await expect(blue.getByRole('button', { name: 'Strips' })).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(blue.getByRole('button', { name: 'Strips' })).toHaveCSS('color', 'rgb(239, 246, 255)');
   await expect(emerald.locator('span[aria-hidden]')).toHaveCSS('background-color', 'rgb(2, 44, 34)');
-  await expect(emerald.getByRole('button', { name: 'Strips' })).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(emerald.getByRole('button', { name: 'Strips' })).toHaveCSS('color', 'rgb(236, 253, 245)');
 });
 
 test('track variant: tablist semantics (role=tab + aria-selected)', async ({ page }) => {

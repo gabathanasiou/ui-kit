@@ -2,6 +2,7 @@
 
 **Read this before changing colours, the Modal shell, or any menu/dropdown theming.**
 Status: shipped in **v0.1.115** (roadmap 302), refined in **v0.1.116**; the Theme lab is the visual harness.
+**Adopting it in an app/surface? Read [`ADOPTING-THEMING.md`](ADOPTING-THEMING.md) first — the do/don't recipes and the modal-inside-modal rules.**
 
 The kit themes on **two axes plus a surface flag**. Keeping them separate is the
 whole model: lightness is a design decision, a project's colour is an identity
@@ -92,6 +93,35 @@ Rules:
 - **Header hovers stay in the accent family** (a deeper/lighter accent step),
   never a white/grey wash.
 - **Danger/success/warning never follow the accent.**
+
+## Canonical roles — consume these, never a raw step
+
+| Role | Light | Dark | Used by |
+| --- | --- | --- | --- |
+| `--ui-accent-action` / `-hover` | A700 / A800, white text | A700 / A800 | Button primary, footer hero, `tone="accent"` |
+| `--ui-accent-selected-bg` / `-text` | A200 / A900 | A400 @ 26% / white | menu selected, row active, checklist/radio checked, date chips, selected date |
+| `--ui-accent-hover-bg` / `-text` | A600 @ 6% / strong text | A400 @ 8% / white | menu/row/cell/seg hover |
+| `--ui-accent-highlight-bg` / `-text` | A300 / A900 | A400 @ 32% / white | keyboard highlight (distinct from selected) |
+| `--ui-accent-soft-bg` / `-text` | A600 @ 10% / A700 | A400 @ 12% / A300 | active icon buttons, soft badges, ghost hover |
+| `--ui-accent-header-bg` / `-hover` | A900 / A800 | A950 / A900 | card + calendar headers (modal header is A950 in both modes) |
+| `--ui-accent-pill-bg` / `-text` | A950 / A50 | A800 / white | Seg pill, chrome variant, toggles |
+| `--ui-accent-check-bg` / `-mark` | A800 / white | A400 / accent-tinted dark ink | checkbox + radio |
+| `--ui-accent-focus` | neutral | neutral | keyboard focus outlines (never coloured) |
+
+Rules:
+
+- **Components must not choose a raw accent step.** If a surface needs a new
+  colour, add a role here (and its alias) rather than reaching for A600/A900.
+- **Outlines are never coloured.** Focus uses `--ui-accent-focus` (neutral);
+  hairlines use `--ui-border` / `--ui-border-strong`.
+- **Chrome-only components** (tab pills, toolbar segments, editor toggles)
+  resolve their accent from an ambient `ThemeScope`. Without one they fall back
+  to the legacy blue. Wrap the chrome surface in a scope; do not re-hardcode
+  `blue-950`/`emerald-950`.
+- **Legacy `[data-theme]` presets** remain for old call sites but are not the
+  canonical path: a `data-theme` menu uses the old blue/white selection and
+  overrides the accent scope. New surfaces use `mode` + `accent` (+ `surface`
+  when tinted).
 
 ## Tokens
 
