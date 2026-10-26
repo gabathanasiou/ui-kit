@@ -43,6 +43,7 @@ export type SearchMenuRow = {
 } | {
     kind: 'item';
     hit: SearchMenuHit;
+    hidden?: boolean;
 } | {
     kind: 'empty';
 } | {
@@ -76,5 +77,8 @@ export declare function buildSearchMenuRows(params: {
     browseGroups?: boolean;
     /** Groups the user expanded with the chevron (browse state only). */
     expandedGroups?: ReadonlySet<string>;
+    /** Keep every group's item rows mounted (collapsed groups marked `hidden`)
+     *  so the tree can animate its rows instead of popping them in/out. */
+    includeGroupItems?: boolean;
     emptyActionLabels?: string[];
 }): SearchMenuRow[];

@@ -237,7 +237,18 @@ test('SearchMenu inline: click opens, category rows jump, empty action adds', as
   await expect(page.locator('[data-search-item="anna"]')).toBeVisible();
   await expect(page.locator('[data-search-item="bob"]')).toBeVisible();
   await page.getByRole('button', { name: 'Collapse Cast' }).click();
-  await expect(page.locator('[data-search-item="anna"]')).toHaveCount(0);
+  await expect(page.locator('[data-search-item="anna"]')).toBeHidden();
+
+  // Keyboard tree: Right expands, Right again collapses, Left collapses too.
+  await input.focus();
+  await input.press('ArrowRight');
+  await expect(page.locator('[data-search-item="anna"]')).toBeVisible();
+  await input.press('ArrowRight');
+  await expect(page.locator('[data-search-item="anna"]')).toBeHidden();
+  await input.press('ArrowRight');
+  await expect(page.locator('[data-search-item="anna"]')).toBeVisible();
+  await input.press('ArrowLeft');
+  await expect(page.locator('[data-search-item="anna"]')).toBeHidden();
 
   await input.pressSequentially('roy');
   await expect(input).toBeFocused();
@@ -256,6 +267,17 @@ test('SearchMenu inline: click opens, category rows jump, empty action adds', as
   await action.click();
   await expect(status).toContainText('pick: new-');
   await expect(searchPanel(page)).toHaveCount(0);
+
+  // Accordion mode: opening Sets closes Cast; collapsing Sets leaves all shut.
+  await page.getByText('One open', { exact: true }).click();
+  await input.click();
+  await page.getByRole('button', { name: 'Expand Cast' }).click();
+  await expect(page.locator('[data-search-item="anna"]')).toBeVisible();
+  await page.getByRole('button', { name: 'Expand Sets' }).click();
+  await expect(page.locator('[data-search-item="stage2"]')).toBeVisible();
+  await expect(page.locator('[data-search-item="anna"]')).toBeHidden();
+  await page.getByRole('button', { name: 'Collapse Sets' }).click();
+  await expect(page.locator('[data-search-item="stage2"]')).toBeHidden();
 });
 
 test('SearchMenu expandable: button morphs into the field and back', async ({ page }) => {

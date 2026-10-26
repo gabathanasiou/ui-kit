@@ -45,6 +45,9 @@ export interface SearchMenuProps {
     /** Category rows get a chevron that expands their records in the browse
      *  state (a tree-style category browser). */
     expandableGroups?: boolean;
+    /** `multiple` = several categories can be open; `single` = opening one
+     *  collapses the others (accordion). All-collapsed is always allowed. */
+    groupExpandMode?: 'multiple' | 'single';
     autoFocus?: boolean;
     /** Expandable mode widths (px). */
     collapsedWidth?: number;
@@ -65,5 +68,5 @@ export interface SearchMenuProps {
     /** Zero or more actions for the no-results state (fully caller-defined). */
     emptyActions?: SearchMenuEmptyAction[];
 }
-export declare function SearchMenu({ items, groups, mode, triggerLabel, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, autoFocus, collapsedWidth, expandedWidth, panelWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, }: SearchMenuProps): React.JSX.Element;
+export declare function SearchMenu({ items, groups, mode, triggerLabel, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, groupExpandMode, autoFocus, collapsedWidth, expandedWidth, panelWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, }: SearchMenuProps): React.JSX.Element;
 export default SearchMenu;

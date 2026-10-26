@@ -61,6 +61,9 @@ export interface SearchMenuProps {
   /** Category rows get a chevron that expands their records in the browse
    *  state (a tree-style category browser). */
   expandableGroups?: boolean;
+  /** `multiple` = several categories can be open; `single` = opening one
+   *  collapses the others (accordion). All-collapsed is always allowed. */
+  groupExpandMode?: 'multiple' | 'single';
   autoFocus?: boolean;
   /** Expandable mode widths (px). */
   collapsedWidth?: number;
@@ -93,6 +96,7 @@ export function SearchMenu({
   closeOnSelect = true,
   openOnFocus = true,
   expandableGroups = false,
+  groupExpandMode = 'multiple',
   autoFocus = true,
   collapsedWidth = 128,
   expandedWidth = 288,
@@ -164,9 +168,12 @@ export function SearchMenu({
   );
 
   const navigateRows = useMemo(
-    () => rows.map((row, index) => ({ row, index })).filter(x => x.row.kind !== 'empty'),
+    () => rows
+      .map((row, index) => ({ row, index }))
+      .filter(x => x.row.kind !== 'empty' && !(x.row.kind === 'item' && x.row.hidden)),
     [rows],
   );
+  const browseTree = expandableGroups && !query.trim();
 
   const close = useCallback(() => {
     setOpen(false);
@@ -192,10 +199,15 @@ export function SearchMenu({
   const toggleGroup = useCallback((key: string) => {
     setExpandedGroups(prev => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        if (groupExpandMode === 'single') next.clear();
+        next.add(key);
+      }
       return next;
     });
-  }, []);
+  }, [groupExpandMode]);
 
   const openPanel = useCallback(() => {
     setExpanded(true);
@@ -264,6 +276,27 @@ export function SearchMenu({
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
       moveHighlight(-1);
+    } else if ((event.key === 'ArrowRight' || event.key === 'ArrowLeft')
+      && expandableGroups && open && !query.trim()) {
+      const row = rows[highlighted];
+      if (row?.kind === 'group') {
+        const groupExpanded = expandedGroups.has(row.group.key);
+        if (event.key === 'ArrowRight') {
+          // Right expands; Right again (or Left) collapses.
+          event.preventDefault();
+          toggleGroup(row.group.key);
+        } else if (groupExpanded) {
+          event.preventDefault();
+          toggleGroup(row.group.key);
+        }
+      } else if (row?.kind === 'item' && event.key === 'ArrowLeft' && row.hit.item.group) {
+        // Left from a child collapses the parent and returns to its row.
+        event.preventDefault();
+        const groupKey = row.hit.item.group;
+        if (expandedGroups.has(groupKey)) toggleGroup(groupKey);
+        const groupIndex = rows.findIndex(r => r.kind === 'group' && r.group.key === groupKey);
+        if (groupIndex >= 0) setHighlighted(groupIndex);
+      }
     } else if (event.key === 'Enter') {
       event.preventDefault();
       const row = rows[highlighted] ?? rows[0];
@@ -285,7 +318,10 @@ export function SearchMenu({
   useEffect(() => {
     const firstItem = rows.findIndex(row => row.kind === 'item');
     setHighlighted(firstItem >= 0 ? firstItem : 0);
-  }, [query, rows]);
+    // Only a QUERY change resets the highlight; expanding a group must keep
+    // the group row lit so Right-Right can collapse it again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
 
   const inlineInput = (
     <div className="relative w-full">
@@ -354,6 +390,128 @@ export function SearchMenu({
     </div>
   );
 
+  const renderItemRow = (row: Extract<SearchMenuRow, { kind: 'item' }>, rowIndex: number) => {
+    const active = highlighted === rowIndex;
+    return (
+      <button
+        key={`item:${row.hit.item.id}`}
+        type="button"
+        role="option"
+        aria-selected={false}
+        tabIndex={-1}
+        data-search-item={row.hit.item.id}
+        onMouseEnter={() => setHighlighted(rowIndex)}
+        onClick={() => activate(row)}
+        style={itemSize}
+        className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''} ${row.hit.item.disabled ? 'opacity-30 pointer-events-none' : ''}`}
+      >
+        {row.hit.item.icon && <span className={`${d.icon} shrink-0`}>{row.hit.item.icon}</span>}
+        <span className="flex-1 truncate">{row.hit.item.label}</span>
+        {(row.hit.detail || row.hit.item.detail) && (
+          <span className="shrink-0 max-w-[55%] truncate text-[10px] text-zinc-400">{row.hit.detail || row.hit.item.detail}</span>
+        )}
+      </button>
+    );
+  };
+
+  const renderGroupRow = (row: Extract<SearchMenuRow, { kind: 'group' }>, rowIndex: number) => {
+    const groupExpanded = expandedGroups.has(row.group.key);
+    const showChevron = expandableGroups && !query.trim();
+    const active = highlighted === rowIndex;
+    return (
+      <div
+        key={`group:${row.group.key}`}
+        role="option"
+        aria-selected={false}
+        aria-expanded={showChevron ? groupExpanded : undefined}
+        data-search-group={row.group.key}
+        onMouseEnter={() => setHighlighted(rowIndex)}
+        style={itemSize}
+        className={`w-full rounded flex items-center gap-1 outline-none select-none font-medium ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''}`}
+      >
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => activate(row)}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        >
+          {row.group.icon && <span className={`${d.icon} shrink-0`}>{row.group.icon}</span>}
+          <span className="flex-1 truncate">{row.group.label}</span>
+          {row.group.count !== undefined && (
+            <span className="shrink-0 text-[10px] tabular-nums text-zinc-400">{row.group.count}</span>
+          )}
+        </button>
+        {showChevron && (
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label={`${groupExpanded ? 'Collapse' : 'Expand'} ${row.group.label}`}
+            aria-expanded={groupExpanded}
+            onClick={e => { e.stopPropagation(); toggleGroup(row.group.key); }}
+            className="shrink-0 rounded p-0.5 text-zinc-400 hover:text-zinc-700"
+          >
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${groupExpanded ? 'rotate-180' : ''}`} />
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const renderActionRow = (row: Extract<SearchMenuRow, { kind: 'action' }>, rowIndex: number) => {
+    const active = highlighted === rowIndex;
+    return (
+      <button
+        key={`action:${row.actionIndex}`}
+        type="button"
+        role="option"
+        aria-selected={false}
+        tabIndex={-1}
+        data-search-action
+        onMouseEnter={() => setHighlighted(rowIndex)}
+        onClick={() => activate(row)}
+        style={itemSize}
+        className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''}`}
+      >
+        <span className={`${d.icon} shrink-0`}>{emptyActions?.[row.actionIndex]?.icon || <Plus className="w-3.5 h-3.5" />}</span>
+        <span className="flex-1 truncate">{row.label}</span>
+      </button>
+    );
+  };
+
+  const renderEmptyRow = () => (
+    <div key="__empty" className="px-3 py-3 text-center" data-search-empty>
+      {renderEmpty ? renderEmpty({ query, close }) : (
+        <>
+          <div className="mx-auto mb-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+            <Search className="w-3.5 h-3.5" />
+          </div>
+          <div className="text-xs font-medium text-zinc-500">{emptyTitle || `No matches for “${query.trim()}”`}</div>
+          <div className="mt-0.5 text-[10px] text-zinc-400">{emptyHint || 'Try a name, phone number, board ID or category.'}</div>
+        </>
+      )}
+    </div>
+  );
+
+  // Group a group row with its child rows so the body can animate as one block.
+  const blocks: Array<{ group?: Extract<SearchMenuRow, { kind: 'group' }>; index?: number; items?: { row: Extract<SearchMenuRow, { kind: 'item' }>; index: number }[]; row?: SearchMenuRow }> = [];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (row.kind === 'group') {
+      const items: { row: Extract<SearchMenuRow, { kind: 'item' }>; index: number }[] = [];
+      let j = i + 1;
+      while (j < rows.length && rows[j].kind === 'item' && (rows[j] as Extract<SearchMenuRow, { kind: 'item' }>).hit.item.group === row.group.key) {
+        items.push({ row: rows[j] as Extract<SearchMenuRow, { kind: 'item' }>, index: j });
+        j++;
+      }
+      blocks.push({ group: row, index: i, items });
+      i = j - 1;
+    } else if (row.kind === 'item') {
+      blocks.push({ row, index: i });
+    } else {
+      blocks.push({ row, index: i });
+    }
+  }
+
   const panel = open ? createPortal(
     <div
       ref={setPanelRef}
@@ -374,103 +532,43 @@ export function SearchMenu({
       <div className="overflow-y-auto scrollbar-custom flex flex-col">
         {rows.length === 0 && (
           <div className="px-3 py-3 text-xs text-zinc-400" data-search-empty>
-            {renderEmpty
-              ? renderEmpty({ query, close })
-              : <>Type to search…</>}
+            {renderEmpty ? renderEmpty({ query, close }) : <>Type to search…</>}
           </div>
         )}
-        {rows.map((row, rowIndex) => {
-          if (row.kind === 'empty') {
+        {blocks.map(block => {
+          if (block.group) {
+            const groupExpanded = expandedGroups.has(block.group.group.key);
+            const items = block.items || [];
             return (
-              <div key="__empty" className="px-3 py-3 text-center" data-search-empty>
-                {renderEmpty ? renderEmpty({ query, close }) : (
-                  <>
-                    <div className="mx-auto mb-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
-                      <Search className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="text-xs font-medium text-zinc-500">{emptyTitle || `No matches for “${query.trim()}”`}</div>
-                    <div className="mt-0.5 text-[10px] text-zinc-400">{emptyHint || 'Try a name, phone number, board ID or category.'}</div>
-                  </>
-                )}
-              </div>
-            );
-          }
-          const active = highlighted === rowIndex;
-          if (row.kind === 'group') {
-            const groupExpanded = expandedGroups.has(row.group.key);
-            const showChevron = expandableGroups && !query.trim();
-            return (
-              <div
-                key={`group:${row.group.key}`}
-                role="option"
-                aria-selected={false}
-                data-search-group={row.group.key}
-                onMouseEnter={() => setHighlighted(rowIndex)}
-                style={itemSize}
-                className={`w-full rounded flex items-center gap-1 outline-none select-none font-medium ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''}`}
-              >
-                <button
-                  type="button"
-                  onClick={() => activate(row)}
-                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                >
-                  {row.group.icon && <span className={`${d.icon} shrink-0`}>{row.group.icon}</span>}
-                  <span className="flex-1 truncate">{row.group.label}</span>
-                  {row.group.count !== undefined && (
-                    <span className="shrink-0 text-[10px] tabular-nums text-zinc-400">{row.group.count}</span>
-                  )}
-                </button>
-                {showChevron && (
-                  <button
-                    type="button"
-                    aria-label={`${groupExpanded ? 'Collapse' : 'Expand'} ${row.group.label}`}
-                    aria-expanded={groupExpanded}
-                    onClick={e => { e.stopPropagation(); toggleGroup(row.group.key); }}
-                    className="shrink-0 rounded p-0.5 text-zinc-400 hover:text-zinc-700"
+              <React.Fragment key={`group:${block.group.group.key}`}>
+                {renderGroupRow(block.group, block.index as number)}
+                {browseTree && (
+                  <div
+                    data-search-group-items={block.group.group.key}
+                    aria-hidden={!groupExpanded}
+                    className="motion-reduce:transition-none"
+                    style={{
+                      display: 'grid',
+                      gridTemplateRows: groupExpanded ? '1fr' : '0fr',
+                      opacity: groupExpanded ? 1 : 0,
+                      transition: 'grid-template-rows 220ms cubic-bezier(0.32, 0.72, 0, 1), opacity 150ms ease',
+                    }}
                   >
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${groupExpanded ? 'rotate-180' : ''}`} />
-                  </button>
+                    <div className="overflow-hidden flex flex-col">
+                      {items.map(item => renderItemRow(item.row, item.index))}
+                    </div>
+                  </div>
                 )}
-              </div>
+                {!browseTree && items.map(item => renderItemRow(item.row, item.index))}
+              </React.Fragment>
             );
           }
-          if (row.kind === 'action') {
-            return (
-              <button
-                key={`action:${row.actionIndex}`}
-                type="button"
-                role="option"
-                aria-selected={false}
-                data-search-action
-                onMouseEnter={() => setHighlighted(rowIndex)}
-                onClick={() => activate(row)}
-                style={itemSize}
-                className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''}`}
-              >
-                <span className={`${d.icon} shrink-0`}>{emptyActions?.[row.actionIndex]?.icon || <Plus className="w-3.5 h-3.5" />}</span>
-                <span className="flex-1 truncate">{row.label}</span>
-              </button>
-            );
-          }
-          return (
-            <button
-              key={`item:${row.hit.item.id}`}
-              type="button"
-              role="option"
-              aria-selected={false}
-              data-search-item={row.hit.item.id}
-              onMouseEnter={() => setHighlighted(rowIndex)}
-              onClick={() => activate(row)}
-              style={itemSize}
-              className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''} ${row.hit.item.disabled ? 'opacity-30 pointer-events-none' : ''}`}
-            >
-              {row.hit.item.icon && <span className={`${d.icon} shrink-0`}>{row.hit.item.icon}</span>}
-              <span className="flex-1 truncate">{row.hit.item.label}</span>
-              {(row.hit.detail || row.hit.item.detail) && (
-                <span className="shrink-0 max-w-[55%] truncate text-[10px] text-zinc-400">{row.hit.detail || row.hit.item.detail}</span>
-              )}
-            </button>
-          );
+          const row = block.row as SearchMenuRow;
+          const rowIndex = block.index as number;
+          if (row.kind === 'empty') return renderEmptyRow();
+          if (row.kind === 'action') return renderActionRow(row, rowIndex);
+          if (row.kind === 'item') return renderItemRow(row, rowIndex);
+          return null;
         })}
       </div>
     </div>,

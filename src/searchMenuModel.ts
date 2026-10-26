@@ -41,7 +41,7 @@ export interface SearchMenuHit {
 
 export type SearchMenuRow =
   | { kind: 'group'; group: SearchMenuGroup }
-  | { kind: 'item'; hit: SearchMenuHit }
+  | { kind: 'item'; hit: SearchMenuHit; hidden?: boolean }
   | { kind: 'empty' }
   | { kind: 'action'; label: string; actionIndex: number };
 
@@ -115,6 +115,9 @@ export function buildSearchMenuRows(params: {
   browseGroups?: boolean;
   /** Groups the user expanded with the chevron (browse state only). */
   expandedGroups?: ReadonlySet<string>;
+  /** Keep every group's item rows mounted (collapsed groups marked `hidden`)
+   *  so the tree can animate its rows instead of popping them in/out. */
+  includeGroupItems?: boolean;
   emptyActionLabels?: string[];
 }): SearchMenuRow[] {
   const { hits, visibleGroups, hasQuery } = searchMenuContent(params.items, params.groups, params.query);
@@ -124,7 +127,12 @@ export function buildSearchMenuRows(params: {
     if (params.browseGroups !== false) {
       for (const group of visibleGroups) {
         rows.push({ kind: 'group', group });
-        if (params.expandedGroups?.has(group.key)) {
+        const expanded = params.expandedGroups?.has(group.key) ?? false;
+        if (params.includeGroupItems) {
+          for (const item of params.items) {
+            if (item.group === group.key) rows.push({ kind: 'item', hit: { item }, hidden: !expanded });
+          }
+        } else if (expanded) {
           for (const item of params.items) {
             if (item.group === group.key) rows.push({ kind: 'item', hit: { item } });
           }

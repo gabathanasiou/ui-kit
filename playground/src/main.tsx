@@ -677,6 +677,7 @@ function DeepSearchDemo() {
   const [records, setRecords] = useState<SearchMenuItem[]>(DEEP_RECORDS);
   const [active, setActive] = useState<string | null>(null);
   const [pick, setPick] = useState<string | null>(null);
+  const [groupMode, setGroupMode] = useState<'multiple' | 'single'>('multiple');
   const groups = DEEP_CATEGORIES.map(c => ({ ...c, count: records.filter(r => r.group === c.key).length }));
   const common = {
     items: records,
@@ -684,6 +685,7 @@ function DeepSearchDemo() {
     onSelect: (item: SearchMenuItem) => { setPick(item.id); setActive(item.group || null); },
     onSelectGroup: (group: { key: string }) => setActive(group.key),
     expandableGroups: true,
+    groupExpandMode: groupMode,
     emptyActions: [
       {
         label: (q: string) => `Search all for “${q.trim()}”`,
@@ -710,6 +712,14 @@ function DeepSearchDemo() {
       </div>
       <div data-testid="search-menu-expandable">
         <SearchMenu {...common} triggerLabel="Search" placeholder="Search records or categories…" />
+      </div>
+      <div data-testid="search-menu-group-mode">
+        <Seg
+          value={groupMode}
+          options={[{ v: 'multiple', l: 'Many open' }, { v: 'single', l: 'One open' }]}
+          onChange={v => setGroupMode(v as 'multiple' | 'single')}
+          variant="track"
+        />
       </div>
       <span className="label" data-testid="deep-search-status">active: {active || '—'} · pick: {pick || '—'}</span>
     </div>
