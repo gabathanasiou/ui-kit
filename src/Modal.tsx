@@ -3,6 +3,7 @@ import * as RadixDialog from '@radix-ui/react-dialog';
 import { X, RotateCcw } from 'lucide-react';
 import { IS_COARSE, useCoarseScale, coarsePx } from './device';
 import { usePortalTarget, useCurrentWindow } from './popout';
+import { useKitTheme, ThemeProvider } from './ThemeScope';
 
 const MAX_EDGE = 8;
 
@@ -166,6 +167,17 @@ export interface ModalProps {
   onReset?: () => void;
   /** Stack/zoom/size transitions on this instance (default true). */
   morph?: boolean;
+  /** Surface mode (roadmap 302). Defaults to the ambient ThemeScope's mode,
+     then to `dark` — the app's overlay language. `light` renders a white
+     shell; every child that reads kit tokens follows. */
+  theme?: 'light' | 'dark';
+  /** Header-band treatment: `neutral` (default) keeps the standard light/dark
+     modal; `accent` uses the project surface ladder — strong accent-950 header
+     (the app-header look), pale accent body, accent-100 wells/footer. */
+  surface?: 'neutral' | 'accent';
+  /** Project identity for the accent ladder + interaction accent. Defaults to
+     the ambient ThemeScope's accent; otherwise the neutral zinc seed. */
+  accent?: 'zinc' | 'blue' | 'emerald';
   /** Lock the modal open (default true): Esc/backdrop/overlay-touch/X are
      no-ops and the X button is hidden — the caller decides when it closes
      (e.g. the Project Manager when no project is open). */
@@ -195,7 +207,14 @@ export default function Modal({
   flat = false,
   closable = true,
   dismissOnBackdrop = true,
+  theme: themeProp,
+  surface: surfaceProp,
+  accent: accentProp,
 }: ModalProps) {
+  const kit = useKitTheme();
+  const theme = themeProp ?? kit?.mode ?? 'dark';
+  const surface = surfaceProp ?? kit?.surface ?? 'neutral';
+  const accent = accentProp ?? kit?.accent ?? 'zinc';
   const contentRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
@@ -768,7 +787,8 @@ export default function Modal({
   }, []);
 
   return (
-    <RadixDialog.Root open={open} onOpenChange={(o) => { if (!o) doClose(); }}>
+    <ThemeProvider mode={theme} accent={accent} surface={surface} context="surface">
+      <RadixDialog.Root open={open} onOpenChange={(o) => { if (!o) doClose(); }}>
       <RadixDialog.Portal container={portalTarget ?? undefined}>
         <RadixDialog.Overlay
           className={`ui-modal-overlay fixed inset-0 z-[9999]${closing ? ' ui-modal-overlay-closing' : ''}`}
@@ -784,49 +804,54 @@ export default function Modal({
           onKeyDown={onKeyDown}
           onInteractOutside={(e) => { if (!dismissOnBackdrop) e.preventDefault(); }}
           data-modal-stack
-          className={`fixed z-[10000] bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden flex flex-col focus:outline-none ${posClasses} ${sizeClasses}`}
-          style={{ touchAction: 'manipulation', ...(Object.keys(combinedStyle).length > 0 ? combinedStyle : {}) }}
+          data-mode={theme}
+          data-accent={accent}
+          data-surface={surface}
+          className={`ui-modal fixed z-[10000] bg-[var(--ui-modal-bg)] border border-[color:var(--ui-modal-border)] rounded-lg shadow-xl overflow-hidden flex flex-col focus:outline-none ${posClasses} ${sizeClasses}`}
+          style={{ touchAction: 'manipulation', colorScheme: theme, ...(Object.keys(combinedStyle).length > 0 ? combinedStyle : {}) }}
         >
           {flat ? (
             <div
               style={FLAT_HEADER_STYLE} className={`flex items-center justify-between ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              data-testid="modal-header"
               onPointerDown={(e) => { if (!morphing) onPointerDown(e); }}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onClick={onHeaderClick}
             >
-              <RadixDialog.Title style={FLAT_TITLE_STYLE} className="font-bold text-white truncate">
+              <RadixDialog.Title style={FLAT_TITLE_STYLE} className="font-bold text-[color:var(--ui-modal-title)] truncate">
                 {title}
               </RadixDialog.Title>
               {closable && (
-                <RadixDialog.Close data-modal-close className="text-zinc-500 hover:text-white transition-colors shrink-0">
+                <RadixDialog.Close data-modal-close className="text-[color:var(--ui-modal-muted)] hover:text-[color:var(--ui-modal-title)] transition-colors shrink-0">
                   <X style={{ width: flatCloseDim, height: flatCloseDim }} />
                 </RadixDialog.Close>
               )}
             </div>
           ) : (
           <div
-            style={HEADER_STYLE} className={`flex items-center justify-between border-b border-zinc-800 shrink-0 bg-zinc-950 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            style={HEADER_STYLE} className={`flex items-center justify-between border-b border-[color:var(--ui-modal-header-border)] shrink-0 bg-[var(--ui-modal-header-bg)] ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            data-testid="modal-header"
             onPointerDown={(e) => { if (!morphing) onPointerDown(e); }}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onClick={onHeaderClick}
           >
             <div className="flex items-center gap-2 min-w-0">
-              {icon && <span className="text-zinc-400 shrink-0">{icon}</span>}
-              <RadixDialog.Title style={HEADER_TITLE_STYLE} className="font-bold text-white truncate">
+              {icon && <span className="text-[color:var(--ui-modal-icon)] shrink-0">{icon}</span>}
+              <RadixDialog.Title style={HEADER_TITLE_STYLE} className="font-bold text-[color:var(--ui-modal-title)] truncate">
                 {title}
               </RadixDialog.Title>
             </div>
             <div className="flex items-center gap-2">
               {onReset && (
-                <button onClick={onReset} style={RESET_STYLE} className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors bg-zinc-800 hover:bg-zinc-700 rounded shrink-0">
+                <button onClick={onReset} style={RESET_STYLE} className="flex items-center gap-1 text-[color:var(--ui-modal-muted)] hover:text-[color:var(--ui-modal-muted-hover)] transition-colors bg-[var(--ui-modal-control-bg)] hover:bg-[var(--ui-modal-control-hover-bg)] rounded shrink-0">
                   <RotateCcw style={{ width: resetDim, height: resetDim }} />
                   Reset
                 </button>
               )}
               {closable && (
-                <RadixDialog.Close data-modal-close className="text-zinc-500 hover:text-white transition-colors shrink-0">
+                <RadixDialog.Close data-modal-close className="text-[color:var(--ui-modal-muted)] hover:text-[color:var(--ui-modal-title)] transition-colors shrink-0">
                   <X style={{ width: closeDim, height: closeDim }} />
                 </RadixDialog.Close>
               )}
@@ -834,7 +859,7 @@ export default function Modal({
           </div>
           )}
 
-          <div ref={bodyRef} style={flat ? FLAT_BODY_STYLE : undefined} className="overflow-y-auto flex-1 bg-zinc-900 text-zinc-100">
+          <div ref={bodyRef} data-testid="modal-body" style={flat ? FLAT_BODY_STYLE : undefined} className="overflow-y-auto flex-1 bg-[var(--ui-modal-body-bg)] text-[color:var(--ui-modal-body-text)]">
             {children}
           </div>
 
@@ -848,6 +873,7 @@ export default function Modal({
         </RadixDialog.Content>
       </RadixDialog.Portal>
     </RadixDialog.Root>
+    </ThemeProvider>
   );
 }
 
@@ -855,7 +881,7 @@ export function ModalFooter({ children }: { children: React.ReactNode }) {
   const scale = useCoarseScale();
   const footerPadX = coarsePx(20, 24, scale), footerPadY = coarsePx(8, 12, scale);
   return (
-    <div className="flex items-center justify-end gap-3 border-t border-zinc-800 bg-zinc-950" style={{ padding: `${footerPadY}px ${footerPadX}px` }}>
+    <div className="flex items-center justify-end gap-3 border-t border-[color:var(--ui-modal-border)] bg-[var(--ui-modal-footer-bg)]" style={{ padding: `${footerPadY}px ${footerPadX}px` }}>
       {children}
     </div>
   );

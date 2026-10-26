@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCoarseScale, coarsePx } from './device';
+import { useKitTheme } from './ThemeScope';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -42,7 +43,9 @@ export interface DatePickerProps {
   className?: string;
 }
 
-export default function DatePicker({ selected, onChange, theme = 'light', showChips = true, className = '', initialView }: DatePickerProps) {
+export default function DatePicker({ selected, onChange, theme: themeProp, showChips = true, className = '', initialView }: DatePickerProps) {
+  const kit = useKitTheme();
+  const theme = themeProp ?? kit?.mode ?? 'light';
   const today = new Date();
   const seed = (() => {
     if (!initialView) return today;
@@ -91,7 +94,6 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
      marker on the month grid. */
   const monthHasSelected = (m: number) => selected.some(d => d.startsWith(`${viewYear}-${String(m + 1).padStart(2, '0')}`));
 
-  const dark = theme === 'dark';
   /* Coarse pointers (iPad/mobile): bigger touch targets + readable text —
      the kit's standard sizing up (menus, modals, footer buttons). Proportional
      via the global coarseScale (inline — Tailwind can't JIT runtime classes). */
@@ -110,16 +112,16 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
   const MONTH_CELL_STYLE = { fontSize: monthCellFs, paddingTop: monthCellPy, paddingBottom: monthCellPy };
   const CHIP_STYLE = { fontSize: chipFs, padding: `${chipPy}px ${chipPx}px` };
 
-  const selectedCls = dark ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-zinc-900 text-white hover:bg-zinc-800';
-  const plainCls = dark ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-100';
+  const selectedCls = 'bg-[var(--ui-date-selected-bg)] text-white hover:bg-[var(--ui-date-selected-hover-bg)]';
+  const plainCls = 'text-[color:var(--ui-text)] hover:bg-[var(--ui-card-hover)]';
 
   return (
-    <div className={`border rounded-lg overflow-hidden w-full ${dark ? 'border-zinc-700 bg-zinc-900' : 'border-zinc-200 bg-white'} ${className}`}>
-      <div className={`flex items-center justify-between px-3 py-2 border-b ${dark ? 'bg-zinc-800/60 border-zinc-700' : 'bg-zinc-50 border-zinc-200'}`}>
+    <div data-mode={theme} data-accent={kit?.accent} data-surface={kit?.surface} className={`border rounded-lg overflow-hidden w-full border-[color:var(--ui-border-strong)] bg-[var(--ui-date-body-bg)] text-[color:var(--ui-text)] ${className}`}>
+      <div className="flex items-center justify-between px-3 py-2 border-b bg-[var(--ui-date-header-bg)] text-[color:var(--ui-date-header-text)] border-[color:var(--ui-border)]">
         <button
           type="button"
           onClick={() => (view === 'months' ? stepYear(-1) : stepMonth(-1))}
-          style={NAV_BTN_STYLE} className={`rounded transition-colors ${dark ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100' : 'text-zinc-600 hover:bg-zinc-200'}`}
+          style={NAV_BTN_STYLE} className="rounded transition-colors text-[color:var(--ui-date-header-muted)] hover:bg-[var(--ui-date-header-hover)] hover:text-[color:var(--ui-date-header-text)]"
           aria-label={view === 'months' ? 'Previous year' : 'Previous month'}
         >
           <ChevronLeft style={NAV_ICON_STYLE} />
@@ -129,7 +131,7 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
             type="button"
             onClick={() => setView('months')}
             aria-label="Select year and month"
-            className={`text-sm font-semibold rounded px-2 py-0.5 transition-colors ${dark ? 'text-zinc-100 hover:bg-zinc-800' : 'text-zinc-800 hover:bg-zinc-200'}`}
+            className="text-sm font-semibold rounded px-2 py-0.5 transition-colors text-[color:var(--ui-date-header-text)] hover:bg-[var(--ui-date-header-hover)]"
           >
             {new Date(viewYear, viewMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}
           </button>
@@ -146,13 +148,13 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
               if (e.key === 'Enter') { e.preventDefault(); commitYear(); }
               if (e.key === 'Escape') setYearDraft(null);
             }}
-            style={{ width: yearW }} className={`text-sm text-center font-semibold rounded outline-none py-0.5 ${dark ? ' bg-zinc-700 text-zinc-100 focus:bg-zinc-600' : ' bg-zinc-200 text-zinc-800 focus:bg-zinc-300'}`}
+            style={{ width: yearW }} className="text-sm text-center font-semibold rounded outline-none py-0.5 bg-[var(--ui-date-header-hover)] text-[color:var(--ui-date-header-text)]"
           />
         )}
         <button
           type="button"
           onClick={() => (view === 'months' ? stepYear(1) : stepMonth(1))}
-          style={NAV_BTN_STYLE} className={`rounded transition-colors ${dark ? 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100' : 'text-zinc-600 hover:bg-zinc-200'}`}
+          style={NAV_BTN_STYLE} className="rounded transition-colors text-[color:var(--ui-date-header-muted)] hover:bg-[var(--ui-date-header-hover)] hover:text-[color:var(--ui-date-header-text)]"
           aria-label={view === 'months' ? 'Next year' : 'Next month'}
         >
           <ChevronRight style={NAV_ICON_STYLE} />
@@ -166,21 +168,21 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
                 key={m}
                 type="button"
                 onClick={() => { setViewMonth(i); setView('days'); }}
-                style={MONTH_CELL_STYLE} className={`relative font-medium transition-colors border-b ${i === viewMonth ? selectedCls : plainCls} ${dark ? 'border-zinc-800/60' : 'border-zinc-50'}`}
+                style={MONTH_CELL_STYLE} className={`relative font-medium transition-colors border-b border-[color:var(--ui-border)] ${i === viewMonth ? selectedCls : plainCls}`}
               >
                 {m}
                 {monthHasSelected(i) && (
-                  <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${i === viewMonth ? 'bg-white' : dark ? 'bg-blue-500' : 'bg-zinc-900'}`} />
+                  <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${i === viewMonth ? 'bg-white' : 'bg-[var(--ui-accent-solid)]'}`} />
                 )}
               </button>
             ))}
           </div>
-          <div className={`text-center border-t ${dark ? 'border-zinc-800' : 'border-zinc-100'}`}>
+          <div className="text-center border-t border-[color:var(--ui-border)]">
             <button
               type="button"
               onClick={() => { setViewYear(today.getFullYear()); setViewMonth(today.getMonth()); setView('days'); }}
               style={{ paddingTop: cellPy, paddingBottom: cellPy, fontSize: cellFs }}
-              className={`px-3 font-semibold rounded transition-colors ${dark ? 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'}`}
+              className="px-3 font-semibold rounded transition-colors text-[color:var(--ui-text-muted)] hover:text-[color:var(--ui-text-strong)] hover:bg-[var(--ui-card-hover)]"
             >
               Today
             </button>
@@ -189,7 +191,7 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
       ) : (
         <div className="grid grid-cols-7 text-center">
           {DAYS.map(d => (
-            <div key={d} style={DAY_HEADER_STYLE} className={`font-semibold uppercase tracking-wider border-b ${dark ? 'text-zinc-500 border-zinc-800' : 'text-zinc-400 border-zinc-100'}`}>{d}</div>
+            <div key={d} style={DAY_HEADER_STYLE} className="font-semibold uppercase tracking-wider border-b text-[color:var(--ui-text-faint)] border-[color:var(--ui-border)]">{d}</div>
           ))}
           {cells.map(cell => (
             cell.empty ? (
@@ -199,9 +201,7 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
                 key={cell.key}
                 type="button"
                 onClick={() => toggle(cell.key)}
-                style={CELL_STYLE} className={`font-medium transition-colors border-b ${dark ? 'border-zinc-800/60' : 'border-zinc-50'} ${
-                  selectedSet.has(cell.key) ? selectedCls : (dark ? 'text-zinc-300 hover:bg-zinc-800' : 'text-zinc-700 hover:bg-zinc-100')
-                }`}
+                style={CELL_STYLE} className={`font-medium transition-colors border-b border-[color:var(--ui-border)] ${selectedSet.has(cell.key) ? selectedCls : plainCls}`}
               >
                 {cell.day}
               </button>
@@ -210,8 +210,8 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
         </div>
       )}
       {showChips && selected.length > 0 && (
-        <div className={`px-3 py-2 border-t ${dark ? 'border-zinc-700 bg-zinc-800/40' : 'border-zinc-200 bg-zinc-50'}`}>
-          <div className={`text-[10px] uppercase font-semibold tracking-wider mb-1.5 ${dark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+        <div className="px-3 py-2 border-t border-[color:var(--ui-border)] bg-[var(--ui-date-footer-bg)]">
+          <div className="text-[10px] uppercase font-semibold tracking-wider mb-1.5 text-[color:var(--ui-text-muted)]">
             {selected.length} date{selected.length !== 1 ? 's' : ''} selected
           </div>
           <div className="flex flex-wrap gap-1">
@@ -227,10 +227,10 @@ export default function DatePicker({ selected, onChange, theme = 'light', showCh
                   type="button"
                   onClick={() => toggle(d)}
                   aria-label={`Remove ${label}`}
-                  style={CHIP_STYLE} className={`inline-flex items-center gap-1 rounded font-medium cursor-pointer transition-colors ${dark ? 'bg-zinc-700 text-zinc-200 hover:bg-zinc-600' : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300'}`}
+                  style={CHIP_STYLE} className="inline-flex items-center gap-1 rounded font-medium cursor-pointer transition-colors bg-[var(--ui-date-chip-bg)] text-[color:var(--ui-date-chip-text)] hover:bg-[var(--ui-date-chip-hover-bg)]"
                 >
                   {label}
-                  <span className={`leading-none ${dark ? 'text-zinc-400' : 'text-zinc-500'}`} aria-hidden="true">&times;</span>
+                  <span className="leading-none text-[color:var(--ui-text-muted)]" aria-hidden="true">&times;</span>
                 </button>
               );
             })}

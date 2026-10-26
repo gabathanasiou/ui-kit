@@ -13,7 +13,9 @@
  * feedback is instant on touch as always.
  */
 
-:root {
+:root,
+[data-mode="dark"],
+[data-theme="dark"] {
   /* dark (default) — zinc equivalents */
   --ui-menu-bg: rgba(9, 9, 11, 0.95);
   --ui-menu-border: #27272a;
@@ -23,12 +25,29 @@
   --ui-input-hover-bg: rgba(255, 255, 255, 0.04);
   --ui-input-border: #3f3f46;
   --ui-input-text: #e4e4e7;
-  /* Section cards (CardSection) — a RAISED surface, deliberately distinct
      from text-field fills (--ui-input-bg) so sections read as panels, not
      inputs. */
   --ui-card-bg: rgba(255, 255, 255, 0.05);
   --ui-card-border: #3f3f46;
   --ui-card-band: rgba(0, 0, 0, 0.18);
+  --ui-card-hover: rgba(255, 255, 255, 0.05);
+  --ui-card-icon: #a1a1aa;
+  --ui-card-count-bg: rgba(255, 255, 255, 0.08);
+  --ui-card-count-text: #a1a1aa;
+  --ui-card-header-bg: transparent;
+  --ui-card-header-text: var(--ui-text-strong);
+  --ui-card-header-muted: var(--ui-text-muted);
+  --ui-card-header-icon: var(--ui-card-icon);
+  --ui-card-header-hover: var(--ui-card-hover);
+  --ui-date-header-bg: var(--ui-card-band);
+  --ui-date-header-text: var(--ui-text-strong);
+  --ui-date-header-muted: var(--ui-text-muted);
+  --ui-date-header-hover: var(--ui-card-hover);
+  --ui-date-body-bg: var(--ui-card-bg);
+  --ui-date-footer-bg: var(--ui-card-band);
+  --ui-date-chip-bg: #27272a;
+  --ui-date-chip-text: #e4e4e7;
+  --ui-date-chip-hover-bg: #3f3f46;
   --ui-overlay-bg: rgba(0, 0, 0, 0.2);
 
   --ui-text: #d4d4d8;
@@ -60,8 +79,8 @@
   --ui-danger-hover-text: #fca5a5;
   --ui-danger-active-bg: rgba(127, 29, 29, 0.5);
   --ui-danger-active-text: #fecaca;
-  --ui-danger-solid: #dc2626;
-  --ui-danger-solid-hover: #ef4444;
+  --ui-danger-solid: oklch(0.577 0.245 27.325);
+  --ui-danger-solid-hover: oklch(0.637 0.237 25.331);
 
   --ui-accent-soft-text: #93c5fd;
   --ui-accent-soft-bg: rgba(147, 197, 253, 0.12);
@@ -69,7 +88,9 @@
   --ui-cancel-hover: #f87171;
 
   --ui-btn-bg: #27272a;
-  --ui-btn-hover-bg: #3f3f46;
+  --ui-btn-hover-bg: #27272a;
+  --ui-btn-active-bg: rgba(30, 58, 138, 0.5);
+  --ui-btn-active-text: #ffffff;
 
   --ui-label: #71717a;
 
@@ -91,10 +112,54 @@
   --ui-radius-menu: 8px;
   --ui-radius-input: 6px;
   --ui-radius-btn: 6px;
+  /* Modal chrome (roadmap 302) — the shell reads these, never Tailwind zinc.
+     `--ui-modal-header-base` is the NEUTRAL band; `chrome="accent"` swaps the
+     header to `--ui-chrome-bg` (the project tint). */
+  --ui-modal-bg: #18181b;
+  --ui-modal-border: #27272a;
+  --ui-modal-header-base: #09090b;
+  --ui-modal-header-bg: var(--ui-modal-header-base);
+  --ui-modal-header-border: var(--ui-modal-border);
+  --ui-modal-body-bg: #18181b;
+  --ui-modal-body-text: #f4f4f5;
+  --ui-modal-title: #ffffff;
+  --ui-modal-icon: #a1a1aa;
+  --ui-modal-muted: #71717a;
+  --ui-modal-muted-hover: #d4d4d8;
+  --ui-modal-control-bg: #27272a;
+  --ui-modal-control-hover-bg: #3f3f46;
+  --ui-modal-footer-bg: var(--ui-modal-header-base);
+  --ui-border: #27272a;
+  --ui-border-strong: #52525b;
+  --ui-seg-track-bg: #09090b;
+
+  /* Footer hero (the one primary action) + project accent. */
+  --ui-footer-hero-bg: #27272a;
+  --ui-footer-hero-hover-bg: #3f3f46;
+  --ui-footer-hero-border: #3f3f46;
+  --ui-footer-hero-hover-border: #71717a;
+  --ui-footer-hero-text: #ffffff;
+  --ui-footer-ghost-hover-bg: #27272a;
+  --ui-accent-solid: #2563eb;
+  --ui-accent-solid-hover: #3b82f6;
+
+  /* Tooltips. */
+  --ui-tooltip-bg: #18181b;
+  --ui-tooltip-text: #ffffff;
+  --ui-tooltip-border: rgba(255, 255, 255, 0.2);
+  --ui-tooltip-sep: #3f3f46;
+
+  /* Project chrome tint (mode owns the strength, accent owns the hue). */
+  --ui-chrome-accent: #71717a;
+  --ui-chrome-tint: 14%;
+  --ui-chrome-bg: var(--ui-modal-header-base);
+  --ui-chrome-border: var(--ui-modal-border);
+
   --ui-shadow-menu: 0 10px 40px -10px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-[data-theme="light"] {
+[data-theme="light"],
+[data-mode="light"] {
   --ui-menu-bg: #ffffff;
   --ui-menu-border: #e4e4e7;
   --ui-panel-bg: #ffffff;
@@ -106,6 +171,24 @@
   --ui-card-bg: #fafafa;
   --ui-card-border: #e4e4e7;
   --ui-card-band: #f4f4f5;
+  --ui-card-hover: rgba(0, 0, 0, 0.04);
+  --ui-card-icon: #71717a;
+  --ui-card-count-bg: #e4e4e7;
+  --ui-card-count-text: #52525b;
+  --ui-card-header-bg: transparent;
+  --ui-card-header-text: var(--ui-text-strong);
+  --ui-card-header-muted: var(--ui-text-muted);
+  --ui-card-header-icon: var(--ui-card-icon);
+  --ui-card-header-hover: var(--ui-card-hover);
+  --ui-date-header-bg: var(--ui-card-band);
+  --ui-date-header-text: var(--ui-text-strong);
+  --ui-date-header-muted: var(--ui-text-muted);
+  --ui-date-header-hover: var(--ui-card-hover);
+  --ui-date-body-bg: var(--ui-card-bg);
+  --ui-date-footer-bg: var(--ui-card-band);
+  --ui-date-chip-bg: #e4e4e7;
+  --ui-date-chip-text: #3f3f46;
+  --ui-date-chip-hover-bg: #d4d4d8;
   --ui-overlay-bg: rgba(0, 0, 0, 0.2);
 
   --ui-text: #3f3f46;
@@ -137,8 +220,8 @@
   --ui-danger-hover-text: #dc2626;
   --ui-danger-active-bg: #fecaca;
   --ui-danger-active-text: #b91c1c;
-  --ui-danger-solid: #dc2626;
-  --ui-danger-solid-hover: #ef4444;
+  --ui-danger-solid: oklch(0.577 0.245 27.325);
+  --ui-danger-solid-hover: oklch(0.637 0.237 25.331);
 
   --ui-accent-soft-text: #1d4ed8;
   --ui-accent-soft-bg: rgba(29, 78, 216, 0.08);
@@ -146,7 +229,9 @@
   --ui-cancel-hover: #dc2626;
 
   --ui-btn-bg: #27272a;
-  --ui-btn-hover-bg: #3f3f46;
+  --ui-btn-hover-bg: #e4e4e7;
+  --ui-btn-active-bg: #eff6ff;
+  --ui-btn-active-text: #1d4ed8;
 
   --ui-label: #71717a;
 
@@ -163,6 +248,40 @@
   --ui-check-list-border: #e4e4e7;
   --ui-check-row-bg: #f4f4f5;
   --ui-check-row-hover-bg: #fafafa;
+
+  --ui-modal-bg: #ffffff;
+  --ui-modal-border: #e4e4e7;
+  --ui-modal-header-base: #fafafa;
+  --ui-modal-header-bg: var(--ui-modal-header-base);
+  --ui-modal-header-border: var(--ui-modal-border);
+  --ui-modal-body-bg: #ffffff;
+  --ui-modal-body-text: #18181b;
+  --ui-modal-title: #18181b;
+  --ui-modal-icon: #71717a;
+  --ui-modal-muted: #71717a;
+  --ui-modal-muted-hover: #18181b;
+  --ui-modal-control-bg: #f4f4f5;
+  --ui-modal-control-hover-bg: #e4e4e7;
+  --ui-modal-footer-bg: var(--ui-modal-header-base);
+  --ui-border: #e4e4e7;
+  --ui-border-strong: #d4d4d8;
+  --ui-seg-track-bg: transparent;
+
+  --ui-footer-hero-bg: #18181b;
+  --ui-footer-hero-hover-bg: #27272a;
+  --ui-footer-hero-border: #18181b;
+  --ui-footer-hero-hover-border: #3f3f46;
+  --ui-footer-hero-text: #ffffff;
+  --ui-footer-ghost-hover-bg: #e4e4e7;
+  --ui-accent-solid: #2563eb;
+  --ui-accent-solid-hover: #3b82f6;
+
+  --ui-tooltip-bg: #ffffff;
+  --ui-tooltip-text: #18181b;
+  --ui-tooltip-border: rgba(0, 0, 0, 0.12);
+  --ui-tooltip-sep: #e4e4e7;
+
+  --ui-chrome-tint: 8%;
 
   --ui-shadow-menu: 0 10px 40px -10px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -209,8 +328,8 @@
   --ui-danger-hover-text: #fecaca;
   --ui-danger-active-bg: rgba(248, 113, 113, 0.25);
   --ui-danger-active-text: #fecaca;
-  --ui-danger-solid: #dc2626;
-  --ui-danger-solid-hover: #ef4444;
+  --ui-danger-solid: oklch(0.577 0.245 27.325);
+  --ui-danger-solid-hover: oklch(0.637 0.237 25.331);
 
   --ui-accent-soft-text: #ffffff;
   --ui-accent-soft-bg: rgba(255, 255, 255, 0.1);
@@ -284,8 +403,8 @@
   --ui-danger-hover-text: #fecaca;
   --ui-danger-active-bg: rgba(248, 113, 113, 0.25);
   --ui-danger-active-text: #fecaca;
-  --ui-danger-solid: #dc2626;
-  --ui-danger-solid-hover: #ef4444;
+  --ui-danger-solid: oklch(0.577 0.245 27.325);
+  --ui-danger-solid-hover: oklch(0.637 0.237 25.331);
 
   --ui-accent-soft-text: #ffffff;
   --ui-accent-soft-bg: rgba(255, 255, 255, 0.1);
@@ -312,6 +431,235 @@
   --ui-check-row-hover-bg: rgba(255, 255, 255, 0.08);
 
   --ui-shadow-menu: 0 10px 48px -8px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Project accent (roadmap 302) ──────────────────────────────────────
+   One scale per accent; every themed fill/state derives from it. Colour
+   lives in FILLS and BANDS — hairlines stay neutral (--ui-border). */
+[data-accent="zinc"] {
+  --ui-accent-50: #ffffff;
+  --ui-accent-100: #f4f4f5;
+  --ui-accent-200: #e4e4e7;
+  --ui-accent-300: #d4d4d8;
+  --ui-accent-400: #a1a1aa;
+  --ui-accent-500: #71717a;
+  --ui-accent-600: #52525b;
+  --ui-accent-700: #3f3f46;
+  --ui-accent-800: #27272a;
+  --ui-accent-900: #18181b;
+  --ui-accent-950: #09090b;
+}
+
+[data-accent="blue"] {
+  --ui-accent-50: #eff6ff;
+  --ui-accent-100: #dbeafe;
+  --ui-accent-200: #bfdbfe;
+  --ui-accent-300: #93c5fd;
+  --ui-accent-400: #60a5fa;
+  --ui-accent-500: #3b82f6;
+  --ui-accent-600: #2563eb;
+  --ui-accent-700: #1d4ed8;
+  --ui-accent-800: #1e40af;
+  --ui-accent-900: #1e3a8a;
+  --ui-accent-950: #172554;
+}
+
+[data-accent="emerald"] {
+  --ui-accent-50: #ecfdf5;
+  --ui-accent-100: #d1fae5;
+  --ui-accent-200: #a7f3d0;
+  --ui-accent-300: #6ee7b7;
+  --ui-accent-400: #34d399;
+  --ui-accent-500: #10b981;
+  --ui-accent-600: #059669;
+  --ui-accent-700: #047857;
+  --ui-accent-800: #065f46;
+  --ui-accent-900: #064e3b;
+  --ui-accent-950: #022c22;
+}
+
+/* Derived interaction accent — the mode picks the contrast step. */
+[data-accent] {
+  --ui-chrome-accent: var(--ui-accent-600);
+  --ui-accent-solid: var(--ui-accent-700);
+  --ui-accent-solid-hover: var(--ui-accent-800);
+  --ui-check-accent: var(--ui-accent-700);
+  --ui-check-check: #ffffff;
+  --ui-accent-soft-text: var(--ui-accent-700);
+  --ui-accent-soft-bg: color-mix(in oklab, var(--ui-accent-600) 10%, transparent);
+  --ui-seg-pill: var(--ui-accent-950);
+  --ui-seg-hover: color-mix(in oklab, var(--ui-accent-600) 6%, transparent);
+  --ui-date-selected-bg: var(--ui-accent-800);
+  --ui-date-selected-hover-bg: var(--ui-accent-900);
+}
+
+[data-mode="light"][data-accent] {
+  --ui-item-selected-bg: var(--ui-accent-200);
+  --ui-item-selected-text: var(--ui-accent-900);
+  --ui-item-hover-bg: color-mix(in oklab, var(--ui-accent-600) 6%, transparent);
+  --ui-row-active-bg: var(--ui-accent-100);
+  --ui-row-active-text: var(--ui-accent-900);
+  --ui-row-hover-bg: color-mix(in oklab, var(--ui-accent-600) 7%, transparent);
+  --ui-check-row-bg: var(--ui-accent-100);
+  --ui-check-row-hover-bg: var(--ui-accent-200);
+  --ui-check-list-bg: var(--ui-panel-bg);
+  --ui-check-list-border: var(--ui-border-strong);
+  --ui-check-accent: var(--ui-accent-800);
+  --ui-check-check: #ffffff;
+  --ui-check-border: #52525b;
+  --ui-check-hover-border: #27272a;
+  --ui-check-pill-hover-bg: color-mix(in oklab, var(--ui-accent-600) 8%, transparent);
+  --ui-icon-btn-active-hover-bg: color-mix(in oklab, var(--ui-accent-600) 7%, transparent);
+  --ui-btn-active-bg: var(--ui-accent-100);
+  --ui-btn-active-text: var(--ui-accent-900);
+  --ui-btn-hover-bg: var(--ui-accent-100);
+}
+
+[data-mode="dark"][data-accent] {
+  --ui-check-accent: var(--ui-accent-400);
+  --ui-check-check: #052e22;
+  --ui-accent-soft-text: var(--ui-accent-300);
+  --ui-accent-soft-bg: color-mix(in oklab, var(--ui-accent-400) 12%, transparent);
+  --ui-item-selected-bg: color-mix(in oklab, var(--ui-accent-400) 26%, transparent);
+  --ui-item-selected-text: #ffffff;
+  --ui-item-hover-bg: color-mix(in oklab, var(--ui-accent-400) 8%, transparent);
+  --ui-row-active-bg: color-mix(in oklab, var(--ui-accent-400) 22%, transparent);
+  --ui-row-active-text: #ffffff;
+  --ui-row-hover-bg: color-mix(in oklab, var(--ui-accent-400) 10%, transparent);
+  --ui-check-row-bg: color-mix(in oklab, var(--ui-accent-400) 16%, transparent);
+  --ui-check-row-hover-bg: color-mix(in oklab, var(--ui-accent-400) 22%, transparent);
+  --ui-check-list-bg: var(--ui-panel-bg);
+  --ui-check-list-border: var(--ui-border-strong);
+  --ui-check-pill-hover-bg: color-mix(in oklab, var(--ui-accent-400) 10%, transparent);
+  --ui-icon-btn-active-hover-bg: color-mix(in oklab, var(--ui-accent-400) 12%, transparent);
+  --ui-btn-active-bg: color-mix(in oklab, var(--ui-accent-400) 20%, transparent);
+  --ui-btn-active-text: #ffffff;
+  --ui-btn-hover-bg: color-mix(in oklab, var(--ui-accent-400) 8%, transparent);
+  --ui-seg-pill: var(--ui-accent-800);
+  --ui-date-selected-bg: var(--ui-accent-800);
+  --ui-date-selected-hover-bg: var(--ui-accent-900);
+}
+
+/* Zinc is monochrome: black check on light, white check on dark. */
+[data-accent="zinc"][data-mode="light"] {
+  --ui-check-accent: #18181b;
+  --ui-check-check: #ffffff;
+  --ui-accent-soft-text: #52525b;
+}
+
+[data-accent="zinc"][data-mode="dark"] {
+  --ui-check-accent: #e4e4e7;
+  --ui-check-check: #18181b;
+  --ui-accent-soft-text: #d4d4d8;
+}
+
+/* ── Accent surface ladder (roadmap 302) ────────────────────────────────
+   `surface="accent"` opts a container (a Drive/shared modal) into the project
+   colour: header = THE app-header step (accent-950), body = pale accent,
+   wells/footer = accent-100. Hairlines stay neutral. Local/zinc keeps the
+   neutral light/dark modal. */
+[data-surface="accent"][data-mode="light"] {
+  --ui-modal-header-base: var(--ui-accent-950);
+  --ui-modal-header-bg: var(--ui-accent-950);
+  --ui-modal-header-border: var(--ui-border);
+  --ui-modal-title: #ffffff;
+  --ui-modal-icon: color-mix(in srgb, #ffffff 72%, transparent);
+  --ui-modal-muted: color-mix(in srgb, #ffffff 60%, transparent);
+  --ui-modal-muted-hover: #ffffff;
+  --ui-modal-control-bg: color-mix(in srgb, #ffffff 12%, transparent);
+  --ui-modal-control-hover-bg: color-mix(in srgb, #ffffff 20%, transparent);
+  --ui-modal-bg: #ffffff;
+  --ui-modal-border: var(--ui-border);
+  --ui-modal-body-bg: #ffffff;
+  --ui-modal-body-text: #18181b;
+  --ui-modal-footer-bg: var(--ui-accent-50);
+  --ui-text: #27272a;
+  --ui-text-strong: #09090b;
+  --ui-text-muted: #3f3f46;
+  --ui-text-faint: #52525b;
+  --ui-text-disabled: #a1a1aa;
+  --ui-check-check: #ffffff;
+  --ui-date-selected-bg: var(--ui-accent-800);
+  --ui-card-header-bg: var(--ui-accent-900);
+  --ui-card-header-text: #ffffff;
+  --ui-card-header-muted: color-mix(in srgb, #ffffff 72%, transparent);
+  --ui-card-header-icon: #ffffff;
+  --ui-card-header-hover: color-mix(in srgb, #ffffff 10%, transparent);
+  --ui-card-count-bg: color-mix(in srgb, #ffffff 16%, transparent);
+  --ui-card-count-text: #ffffff;
+  --ui-date-header-bg: var(--ui-accent-900);
+  --ui-date-header-text: #ffffff;
+  --ui-date-header-muted: color-mix(in srgb, #ffffff 75%, transparent);
+  --ui-date-header-hover: color-mix(in srgb, #ffffff 12%, transparent);
+  --ui-date-body-bg: var(--ui-panel-bg);
+  --ui-date-footer-bg: var(--ui-accent-50);
+  --ui-date-chip-bg: var(--ui-accent-100);
+  --ui-date-chip-text: var(--ui-accent-900);
+  --ui-date-chip-hover-bg: var(--ui-accent-200);
+  --ui-input-bg: var(--ui-accent-50);
+  --ui-input-hover-bg: color-mix(in oklab, var(--ui-accent-600) 6%, transparent);
+  --ui-input-border: var(--ui-border-strong);
+  --ui-card-bg: var(--ui-panel-bg);
+  --ui-card-border: var(--ui-border);
+  --ui-card-band: var(--ui-panel-bg);
+  --ui-card-hover: color-mix(in oklab, var(--ui-accent-600) 6%, transparent);
+  --ui-footer-hero-bg: var(--ui-accent-950);
+  --ui-footer-hero-hover-bg: var(--ui-accent-900);
+  --ui-footer-hero-border: var(--ui-accent-950);
+  --ui-footer-hero-hover-border: var(--ui-accent-900);
+  --ui-footer-ghost-hover-bg: var(--ui-accent-200);
+}
+
+[data-surface="accent"][data-mode="dark"] {
+  --ui-modal-header-base: var(--ui-accent-950);
+  --ui-modal-header-bg: var(--ui-accent-950);
+  --ui-modal-header-border: var(--ui-border);
+  --ui-modal-title: #ffffff;
+  --ui-modal-icon: color-mix(in srgb, #ffffff 72%, transparent);
+  --ui-modal-muted: color-mix(in srgb, #ffffff 60%, transparent);
+  --ui-modal-muted-hover: #ffffff;
+  --ui-modal-control-bg: color-mix(in srgb, #ffffff 12%, transparent);
+  --ui-modal-control-hover-bg: color-mix(in srgb, #ffffff 20%, transparent);
+  --ui-modal-bg: #18181b;
+  --ui-modal-border: var(--ui-border);
+  --ui-modal-body-bg: #18181b;
+  --ui-modal-body-text: #f4f4f5;
+  --ui-modal-footer-bg: color-mix(in oklab, var(--ui-accent-950) 40%, #18181b);
+  --ui-text: #f4f4f5;
+  --ui-text-strong: #ffffff;
+  --ui-text-muted: #d4d4d8;
+  --ui-text-faint: #a1a1aa;
+  --ui-text-disabled: #52525b;
+  --ui-check-check: #052e22;
+  --ui-date-selected-bg: var(--ui-accent-800);
+  --ui-card-header-bg: var(--ui-accent-950);
+  --ui-card-header-text: #ffffff;
+  --ui-card-header-muted: color-mix(in srgb, #ffffff 68%, transparent);
+  --ui-card-header-icon: #ffffff;
+  --ui-card-header-hover: color-mix(in srgb, #ffffff 8%, transparent);
+  --ui-card-count-bg: color-mix(in srgb, #ffffff 14%, transparent);
+  --ui-card-count-text: #ffffff;
+  --ui-date-header-bg: var(--ui-accent-950);
+  --ui-date-header-text: #ffffff;
+  --ui-date-header-muted: color-mix(in srgb, #ffffff 72%, transparent);
+  --ui-date-header-hover: color-mix(in srgb, #ffffff 10%, transparent);
+  --ui-date-body-bg: var(--ui-panel-bg);
+  --ui-date-footer-bg: color-mix(in oklab, var(--ui-accent-950) 40%, #18181b);
+  --ui-date-chip-bg: var(--ui-accent-800);
+  --ui-date-chip-text: #ffffff;
+  --ui-date-chip-hover-bg: var(--ui-accent-700);
+  --ui-input-bg: color-mix(in oklab, var(--ui-accent-700) 45%, #27272a);
+  --ui-input-hover-bg: color-mix(in oklab, var(--ui-accent-400) 8%, transparent);
+  --ui-input-border: var(--ui-border-strong);
+  --ui-card-bg: var(--ui-panel-bg);
+  --ui-card-border: var(--ui-border);
+  --ui-card-band: var(--ui-panel-bg);
+  --ui-card-hover: color-mix(in oklab, var(--ui-accent-400) 8%, transparent);
+  --ui-footer-hero-bg: var(--ui-accent-900);
+  --ui-footer-hero-hover-bg: var(--ui-accent-800);
+  --ui-footer-hero-border: var(--ui-accent-900);
+  --ui-footer-hero-hover-border: var(--ui-accent-800);
+  --ui-footer-ghost-hover-bg: color-mix(in oklab, var(--ui-accent-800) 50%, transparent);
 }
 
 /* ── Shared interaction rules ─────────────────────────────────────────── */
@@ -355,6 +703,17 @@
 .ui-card-band {
   background: var(--ui-card-band);
   border-color: var(--ui-card-border);
+}
+
+/* Header count chip — a compact band token, not floating faint text. */
+.ui-card-count {
+  background: var(--ui-card-count-bg);
+  color: var(--ui-card-count-text);
+  border-radius: 999px;
+  padding: 0 7px;
+  font-weight: 600;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
 }
 
 /* Danger-toned section card: the WHOLE card (header + band) tints with the
@@ -1040,7 +1399,7 @@
 }
 
 .ui-checklist-item-checked:hover {
-  background: var(--ui-check-row-bg);
+  background: var(--ui-check-row-hover-bg);
 }
 
 .ui-checklist-label {

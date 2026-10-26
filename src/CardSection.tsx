@@ -54,16 +54,16 @@ export function CardSection({ title, icon, count, tone = 'default', collapsed, o
       {/* Transparent-ish hover (white/5) so it reads on ANY card color — the
          old ui-row gray clash showed on tinted cards. Title + chevron stay
          neutral/white regardless of tone (the tone is the background). */}
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 hover:bg-white/5 transition-colors" style={headSize}>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 bg-[var(--ui-card-header-bg)] text-[color:var(--ui-card-header-text)] hover:bg-[var(--ui-card-header-hover)] transition-colors" style={headSize}>
         <button
           type="button"
           onClick={onToggle}
           className="flex items-center gap-2 flex-1 min-w-0 text-left cursor-pointer"
         >
-          {collapsed ? <ChevronRight className="text-zinc-400 shrink-0" style={chevronStyle} /> : <ChevronDown className="text-zinc-400 shrink-0" style={chevronStyle} />}
-          {icon}
-          <span className="font-semibold text-zinc-200 truncate">{title}</span>
-          {count && <span className="text-zinc-500 shrink-0" style={{ fontSize: countFs }}>{count}</span>}
+          {collapsed ? <ChevronRight className="text-[color:var(--ui-card-header-muted)] shrink-0" style={chevronStyle} /> : <ChevronDown className="text-[color:var(--ui-card-header-muted)] shrink-0" style={chevronStyle} />}
+          {icon && <span className="text-[color:var(--ui-card-header-icon)] shrink-0 inline-flex">{icon}</span>}
+          <span className="font-semibold text-[color:var(--ui-card-header-text)] truncate">{title}</span>
+          {count && <span className="ui-card-count shrink-0" style={{ fontSize: countFs }}>{count}</span>}
         </button>
         {trailing && <div className="shrink-0">{trailing}</div>}
       </div>

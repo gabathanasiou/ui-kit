@@ -67,4 +67,4 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
  *  + the tabs' refs) so the selection box glides. On a `dark` toolbar
  *  `plain` is white — a zinc-950 pill vanished into the bar. */
 export declare const TAB_PILL: Record<'light' | 'dark', Record<'plain' | 'blue' | 'emerald', string>>;
-export default function Button({ variant, theme, cloud, active, iconOnly, icon, collapse, iconWithLabel, className, type, children, ...rest }: ButtonProps): React.JSX.Element;
+export default function Button({ variant, theme: themeProp, cloud: cloudProp, active, iconOnly, icon, collapse, iconWithLabel, className, type, children, ...rest }: ButtonProps): React.JSX.Element;

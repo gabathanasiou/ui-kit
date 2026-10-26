@@ -24,4 +24,4 @@ export interface DatePickerProps {
     initialView?: string;
     className?: string;
 }
-export default function DatePicker({ selected, onChange, theme, showChips, className, initialView }: DatePickerProps): React.JSX.Element;
+export default function DatePicker({ selected, onChange, theme: themeProp, showChips, className, initialView }: DatePickerProps): React.JSX.Element;

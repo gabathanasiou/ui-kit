@@ -7,6 +7,7 @@ import { IS_COARSE, getCoarseScale, useCoarseScale, coarsePx } from './device';
 import { useOverlayMorph } from './overlayMorph';
 import { useDropdownPosition, DROPDOWN_MAX_HEIGHT } from './useDropdownPosition';
 import { registerOverlayClose } from './overlayRegistry';
+import { useKitTheme, menuAttributesOf } from './ThemeScope';
 
 export type DropdownTheme = 'light' | 'dark' | 'blue' | 'emerald';
 
@@ -462,7 +463,7 @@ export default function DropdownMenu({
   trigger,
   align = 'left',
   width,
-  theme = 'dark',
+  theme: themeProp,
   children,
   morph = true,
   contentClassName,
@@ -474,6 +475,9 @@ export default function DropdownMenu({
   searchValue,
   onSearchValueChange,
 }: DropdownMenuProps) {
+  const kit = useKitTheme();
+  const menu = menuAttributesOf(themeProp, kit);
+  const theme = menu.theme;
   const [subChain, setSubChain] = useState<string[]>([]);
   const [keyboardOpenedSub, setKeyboardOpenedSub] = useState<string | null>(null);
   const portalTarget = usePortalTarget();
@@ -795,7 +799,7 @@ export default function DropdownMenu({
               <MenuSearchContext.Provider value={{ query, setQuery }}>
                 <RadixDropdownMenu.Content
                   ref={setComposedRef}
-                  data-theme={theme}
+                  {...menu.attrs}
                   data-ui-fixed
                   className={`${contentClasses} ${width || ''} ${contentClassName || ''}`}
                   style={{

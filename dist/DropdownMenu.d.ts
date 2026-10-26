@@ -168,7 +168,7 @@ export interface DropdownMenuProps {
     searchValue?: string;
     onSearchValueChange?: (q: string) => void;
 }
-export default function DropdownMenu({ open, onClose, onOpenChange, trigger, align, width, theme, children, morph, contentClassName, maxMenuHeight, initialHighlightIndex, searchable, searchPlaceholder, searchFilter, searchValue, onSearchValueChange, }: DropdownMenuProps): React.JSX.Element;
+export default function DropdownMenu({ open, onClose, onOpenChange, trigger, align, width, theme: themeProp, children, morph, contentClassName, maxMenuHeight, initialHighlightIndex, searchable, searchPlaceholder, searchFilter, searchValue, onSearchValueChange, }: DropdownMenuProps): React.JSX.Element;
 export interface ItemManagerDropdownProps {
     open: boolean;
     onClose: (open: boolean) => void;

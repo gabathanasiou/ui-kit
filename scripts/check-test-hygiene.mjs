@@ -30,8 +30,10 @@ const WAIT_BASELINE = 9;
 // 15 = 14 + header-tabs.spec.ts (roadmap 258: Button icon-first collapse +
 // iconWithLabel swap + the shared sliding-pill hook — collapsed accessible
 // names + glide geometry are DOM measurements the unit layer can't reach).
+// 84 = 82 + 2 theme-lab cases (roadmap 302: mode × accent × chrome band — the
+// computed surface colours + scope attributes the unit layer can't reach).
 const SPEC_CAP = 15;
-const TEST_CAP = 82;
+const TEST_CAP = 84;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

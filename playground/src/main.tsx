@@ -9,6 +9,7 @@ import {
   RichTextEditor, FormatToolbar, LongPressMenuProvider, RICH_TEXT_STATE_IDLE,
   CardSection, setCoarseScale, useCoarseScale, useInputSize, IS_COARSE,
   NumberInput, Seg, FloatingToggle, useSlidingPill,
+  ThemeScope, menuThemeOf, inputCls,
 } from '../../src/index';
 import { Table2, CalendarRange, CalendarDays, Palette, Scale, Clapperboard, BarChart3 } from 'lucide-react';
 import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem } from '../../src/index';
@@ -22,6 +23,235 @@ import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem } fr
    - useOverlayMorph clone panels (the app's DropdownPanel pattern)
    - every button variant/theme, inputs, tooltips, context menus
    ──────────────────────────────────────────────────────────────────────────── */
+
+// ── 0. Theme lab: mode × accent (roadmap 302) ────────────────────────────────
+
+const LAB_MODES = ['light', 'dark'] as const;
+const LAB_ACCENTS = ['zinc', 'blue', 'emerald'] as const;
+
+function ThemeLabSection() {
+  const [mode, setMode] = useState<'light' | 'dark'>('dark');
+  const [accent, setAccent] = useState<'zinc' | 'blue' | 'emerald'>('emerald');
+  const [surface, setSurface] = useState<'neutral' | 'accent'>('accent');
+  const [open, setOpen] = useState(false);
+  const [pick, setPick] = useState('Hold');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  const [modalMenuOpen, setModalMenuOpen] = useState(false);
+  const [date, setDate] = useState<string[]>(['2026-11-03', '2026-11-04']);
+  const [checked, setChecked] = useState(true);
+  const [seg, setSeg] = useState('details');
+  const [num, setNum] = useState(8);
+  const [cardOpen, setCardOpen] = useState(true);
+  const [cast, setCast] = useState<string[]>(['1']);
+  const [unit, setUnit] = useState<string | number>('main');
+
+  const castItems = [
+    { id: '1', label: '1. GEORGE', secondary: 'INT. BEDROOM' },
+    { id: '2', label: '2. MARY', secondary: 'INT. LOUNGE' },
+    { id: '3', label: '3. CLARENCE', secondary: 'EXT. BRIDGE' },
+  ];
+  const toggleCast = (id: string | number) =>
+    setCast(c => c.includes(String(id)) ? c.filter(x => x !== String(id)) : [...c, String(id)]);
+
+  const typeMenu = (
+    <DropdownMenu
+      open={menuOpen}
+      onOpenChange={setMenuOpen}
+      width="w-44"
+      trigger={<Button data-testid="theme-lab-menu-trigger">Type: {pick}</Button>}
+    >
+      {['Hold', 'Travel', 'Prep'].map(v => (
+        <DropdownItem key={v} selected={pick === v} onClick={() => { setPick(v); setMenuOpen(false); }}>{v}</DropdownItem>
+      ))}
+    </DropdownMenu>
+  );
+
+  return (
+    <section data-section="theme-lab" data-testid="theme-lab">
+      <h2>Theme lab — mode × accent (roadmap 302)</h2>
+      <div className="flex flex-wrap items-center gap-2 mb-3 px-4">
+        <span className="label">Mode</span>
+        {LAB_MODES.map(m => (
+          <Button
+            key={m}
+            data-testid={`theme-mode-${m}`}
+            variant={mode === m ? 'primary' : 'subtle'}
+            onClick={() => setMode(m)}
+          >{m}</Button>
+        ))}
+        <span className="label ml-3">Accent</span>
+        {LAB_ACCENTS.map(a => (
+          <Button
+            key={a}
+            data-testid={`theme-accent-${a}`}
+            variant={accent === a ? 'primary' : 'subtle'}
+            cloud={a === 'emerald' ? 'emerald' : a === 'blue'}
+            onClick={() => setAccent(a)}
+          >{a}</Button>
+        ))}
+        <span className="label ml-3">Surface</span>
+        <Button
+          data-testid="theme-chrome-toggle"
+          variant={surface === 'accent' ? 'primary' : 'subtle'}
+          onClick={() => setSurface(s => s === 'accent' ? 'neutral' : 'accent')}
+        >{surface}</Button>
+        <Button data-testid="theme-lab-open" variant="primary" onClick={() => setOpen(true)}>Open themed modal</Button>
+      </div>
+
+      <ThemeScope mode={mode} accent={accent} surface={surface} className="mx-4 rounded-xl overflow-hidden border border-[color:var(--ui-modal-border)] shadow-xl" style={{ background: 'var(--ui-modal-body-bg)', color: 'var(--ui-modal-body-text)' }}>
+        <div
+          data-testid="theme-lab-preview-header"
+          className="flex items-center justify-between gap-2 px-3 py-2 border-b"
+          style={{
+            background: 'var(--ui-modal-header-bg)',
+            borderColor: 'var(--ui-modal-header-border)',
+            color: 'var(--ui-modal-title)',
+          }}
+        >
+          <span className="text-xs font-bold">THEME LAB · {mode} / {accent} / {surface}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] opacity-60">the app header colour follows the project</span>
+            {/* Chrome context: a menu opened from the coloured header is FULLY themed. */}
+            <ThemeScope mode="dark" accent={accent} surface="neutral" context="chrome">
+              <DropdownMenu
+                open={headerMenuOpen}
+                onOpenChange={setHeaderMenuOpen}
+                width="w-48"
+                trigger={<Button variant="tab-header" data-testid="theme-lab-header-menu-trigger">Header menu</Button>}
+              >
+                {['Hold', 'Travel', 'Prep'].map(v => (
+                  <DropdownItem key={v} selected={pick === v} onClick={() => { setPick(v); setHeaderMenuOpen(false); }}>{v}</DropdownItem>
+                ))}
+              </DropdownMenu>
+            </ThemeScope>
+          </div>
+        </div>
+
+        <div className="grid gap-3 p-3 md:grid-cols-2">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Button>Subtle</Button>
+              <Button variant="primary">Primary</Button>
+              <Button variant="danger-ghost">Danger</Button>
+              <Tooltip content="Tooltips portal — they carry the theme scope themselves">
+                <Button iconOnly aria-label="About this theme" data-testid="theme-lab-tooltip"><Palette size={14} /></Button>
+              </Tooltip>
+            </div>
+            <Seg
+              value={seg}
+              options={[
+                { v: 'details', l: 'Details' },
+                { v: 'times', l: 'Times' },
+                { v: 'crew', l: 'Crew' },
+              ]}
+              onChange={setSeg}
+              variant="track"
+            />
+            <label className="flex items-center gap-2 text-xs">
+              <Checkbox checked={checked} onChange={setChecked} label="Send the call sheet to cast" />
+            </label>
+            <div className="flex items-center gap-2 text-xs">
+              <span>Day length</span>
+              <NumberInput value={num} min={1} max={24} fallback={8} onCommit={setNum} step={1} ariaLabel="Day length" />
+              <span>hours</span>
+            </div>
+            {typeMenu}
+          </div>
+
+          <div className="space-y-3">
+            <DatePicker selected={date} onChange={setDate} showChips />
+            <Checklist title="Cast" items={castItems} selected={cast} onToggle={toggleCast} />
+            <RadioList
+              title="Unit"
+              items={[{ id: 'main', label: 'Main unit' }, { id: 'second', label: 'Second unit' }]}
+              value={unit}
+              onChange={setUnit}
+            />
+          </div>
+        </div>
+
+        <Modal
+          open={open}
+          onClose={() => setOpen(false)}
+          title={`Day 4 — ${accent} ${surface} surface`}
+          icon={<Palette className="w-4 h-4" />}
+          width="max-w-2xl"
+          theme={mode}
+          accent={accent}
+          surface={surface}
+          footer={(
+            <ModalFooter>
+              <ModalFooterButton variant="danger" className="mr-auto" onClick={() => setOpen(false)}>Delete day</ModalFooterButton>
+              <ModalFooterButton variant="ghost" onClick={() => setOpen(false)}>Cancel</ModalFooterButton>
+              <ModalFooterButton tone={surface === 'accent' && accent !== 'zinc' ? 'accent' : 'zinc'} onClick={() => setOpen(false)}>Save day</ModalFooterButton>
+            </ModalFooter>
+          )}
+        >
+          <div className="grid gap-3 p-4 md:grid-cols-2" data-testid="theme-lab-modal-body">
+            <div className="space-y-3">
+              <CardSection title="Day details" count="2" collapsed={!cardOpen} onToggle={() => setCardOpen(o => !o)}>
+                <label className="block text-xs">
+                  Location
+                  <input className={`w-full mt-1 ${inputCls()}`} defaultValue="Stage 5 — Riverside" />
+                </label>
+                <label className="block text-xs">
+                  Notes
+                  <input className={`w-full mt-1 ${inputCls()}`} placeholder="Weather cover, parking…" />
+                </label>
+                <div className="flex items-center justify-between text-xs">
+                  <span>Day length</span>
+                  <NumberInput value={num} min={1} max={24} fallback={8} onCommit={setNum} step={1} ariaLabel="Day length" />
+                </div>
+              </CardSection>
+
+              <div className="flex flex-wrap gap-2">
+                <Button variant="primary">Add scene</Button>
+                <Button>Duplicate</Button>
+                <Button variant="danger-ghost">Clear</Button>
+                <Tooltip content="The header wears the project chrome; the body and wells follow it softly">
+                  <Button iconOnly aria-label="Why this looks like this"><Palette size={14} /></Button>
+                </Tooltip>
+              </div>
+
+              <DropdownMenu
+                open={modalMenuOpen}
+                onOpenChange={setModalMenuOpen}
+                width="w-48"
+                trigger={<Button data-testid="theme-lab-modal-menu-trigger">Event type: {pick}</Button>}
+              >
+                {['Hold', 'Travel', 'Prep'].map(v => (
+                  <DropdownItem key={v} selected={pick === v} onClick={() => { setPick(v); setModalMenuOpen(false); }}>{v}</DropdownItem>
+                ))}
+              </DropdownMenu>
+
+              <div className="space-y-1">
+                <div className="text-[10px] uppercase tracking-wider text-[color:var(--ui-text-muted)]">States (surface row tokens)</div>
+                <div className="flex flex-wrap items-center gap-1 text-[10px]">
+                  <span className="ui-item px-2 py-1">rest</span>
+                  <span className="ui-item px-2 py-1" style={{ background: 'var(--ui-item-hover-bg)' }}>hover</span>
+                  <span className="ui-item ui-item-selected px-2 py-1">selected</span>
+                  <span className="ui-item px-2 py-1 opacity-30">disabled</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Seg
+                value={seg}
+                options={[{ v: 'details', l: 'Details' }, { v: 'times', l: 'Times' }, { v: 'crew', l: 'Crew' }]}
+                onChange={setSeg}
+                variant="track"
+              />
+              <DatePicker selected={date} onChange={setDate} showChips />
+              <Checklist title="Cast" items={castItems} selected={cast} onToggle={toggleCast} />
+            </div>
+          </div>
+        </Modal>
+      </ThemeScope>
+    </section>
+  );
+}
 
 // ── 1. Buttons: every variant × theme ────────────────────────────────────────
 
@@ -1330,6 +1560,7 @@ function App() {
       <p style={{ margin: '4px 16px 0', fontSize: 12, color: '#71717a' }}>
         DropdownMenu: use the trigger click to dismiss (that's the buggy path). Panels: open/close twice (StrictMode phantom clone).
       </p>
+      <ThemeLabSection />
       <ButtonSection />
       <section data-section="dropdowns">
         <h2>DropdownMenus — controlled / uncontrolled / submenu / item manager / searchable</h2>

@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { usePortalTarget, useCurrentWindow } from './popout';
 import { useCoarseScale, coarsePx } from './device';
+import { useKitTheme } from './ThemeScope';
 
 /** The accessible name a tooltip lends its trigger, or null when the trigger
  *  already has one (`aria-label`/`title`) or shows its own text — visible
@@ -26,6 +27,7 @@ export function tooltipAriaLabel(children: React.ReactNode, content: string): Re
 }
 
 export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> = ({ content, children }) => {
+  const kit = useKitTheme();
   const scale = useCoarseScale();
   const padX = coarsePx(10, 12, scale), padY = coarsePx(6, 6, scale), fs = coarsePx(10, 12, scale);
   const tipStyle = { padding: `${padY}px ${padX}px`, fontSize: fs };
@@ -64,13 +66,15 @@ export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> =
       {trigger}
       {show && createPortal(
         <div
-          className="fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-white/20 bg-zinc-900 text-white pointer-events-none"
+          data-mode={kit?.mode}
+          data-accent={kit?.accent}
+          className="fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-[color:var(--ui-tooltip-border)] bg-[var(--ui-tooltip-bg)] text-[color:var(--ui-tooltip-text)] pointer-events-none"
           style={{ ...tipStyle, left: pos.x, top: pos.y - 4, transform: 'translate(-50%, -100%)', zIndex: 99999 }}
         >
           {content.split('\n• ').map((line, i) => (
-            <div key={i} className={i > 0 ? 'mt-0.5 pt-0.5 border-t border-zinc-700' : ''}>{line}</div>
+            <div key={i} className={i > 0 ? 'mt-0.5 pt-0.5 border-t border-[color:var(--ui-tooltip-sep)]' : ''}>{line}</div>
           ))}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-zinc-900" />
+          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-[color:var(--ui-tooltip-bg)]" />
         </div>,
         portalTarget ?? document.body
       )}

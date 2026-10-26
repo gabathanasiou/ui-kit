@@ -4,6 +4,7 @@ import { ArrowUp, ArrowDown, Copy, Trash2 } from 'lucide-react';
 import { IS_COARSE, useCoarseScale, useCoarseSize, coarsePx } from './device';
 import { Tooltip } from './Tooltip';
 import { useSlidingPill } from './slidingPill';
+import { useKitTheme, segModeOf } from './ThemeScope';
 
 // ---- dark editor-toolbox vocabulary (touch devices scale up — app pattern) ----
 
@@ -75,35 +76,14 @@ export interface SegOption {
 /** Track palettes: the light/dark surfaces plus the project-chrome accents. */
 export type SegTheme = 'light' | 'dark' | 'blue' | 'emerald';
 
-/** Track palettes: `light` toolbars/pages (dark active pill), `dark` modals
- *  (raised zinc pill on a sunken track), and the colored project-chrome
- *  accents — `blue` (Drive/cloud projects) and `emerald` (shared projects) —
- *  which tint the pill + labels to match the toolbar's pill pair. */
-const TRACK: Record<SegTheme, { wrap: string; pill: string; active: string; idle: string }> = {
-  light: {
-    wrap: 'border-zinc-200',
-    pill: 'bg-zinc-950',
-    active: 'text-white',
-    idle: 'text-zinc-500 hover:text-zinc-900',
-  },
-  dark: {
-    wrap: 'border-zinc-700 bg-zinc-950',
-    pill: 'bg-zinc-800',
-    active: 'text-white',
-    idle: 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50',
-  },
-  blue: {
-    wrap: 'border-blue-200',
-    pill: 'bg-blue-950',
-    active: 'text-blue-50',
-    idle: 'text-blue-950/60 hover:text-blue-950 hover:bg-blue-950/10',
-  },
-  emerald: {
-    wrap: 'border-emerald-200',
-    pill: 'bg-emerald-950',
-    active: 'text-emerald-50',
-    idle: 'text-emerald-950/60 hover:text-emerald-950 hover:bg-emerald-950/10',
-  },
+/** Track recipe — the outline and labels are NEUTRAL; the moving pill is the
+ *  only themed fill (tokens: `--ui-seg-pill`, `--ui-seg-track-bg`,
+ *  `--ui-seg-hover`). The `theme` prop still scopes legacy call sites. */
+const TRACK = {
+  wrap: 'border-[color:var(--ui-border-strong)] bg-[var(--ui-seg-track-bg)]',
+  pill: 'bg-[var(--ui-seg-pill)]',
+  active: 'text-white',
+  idle: 'text-[color:var(--ui-text-muted)] hover:text-[color:var(--ui-text-strong)] hover:bg-[var(--ui-seg-hover)]',
 };
 
 /** Segmented control.
@@ -137,7 +117,14 @@ export const Seg: React.FC<{
   tablist?: boolean;
   /** Accessible name for the container (group/tablist). */
   ariaLabel?: string;
-}> = ({ value, options, onChange, disabled, active, stretch, dense, variant = 'chrome', theme = 'light', tablist, ariaLabel }) => {
+}> = ({ value, options, onChange, disabled, active, stretch, dense, variant = 'chrome', theme: themeProp, tablist, ariaLabel }) => {
+  const kit = useKitTheme();
+  const theme = themeProp ?? segModeOf(kit);
+  /* Self-scope the track so the pill/outline tokens resolve even when the Seg
+     is the first themed element (no ancestor scope). `blue`/`emerald` are the
+     legacy LIGHT toolbar accents; dark stays dark. */
+  const trackAccent = themeProp === 'blue' || themeProp === 'emerald' ? themeProp : kit?.accent ?? 'zinc';
+  const trackAttrs = { 'data-mode': theme === 'dark' ? 'dark' : 'light', 'data-accent': trackAccent };
   const chrome = useToolbarChrome();
   const height = dense && !IS_COARSE ? 24 : chrome.control.height;
   const trackSize = useCoarseSize({ px: 12, py: 6, fs: 12 }, { px: 16, py: 10, fs: 14 });
@@ -159,18 +146,18 @@ export const Seg: React.FC<{
   const pill = useSlidingPill(wrapRef, btnRefs, activeIndex);
 
   if (variant === 'track') {
-    const T = TRACK[theme];
     return (
       <div
         ref={wrapRef}
         role={tablist ? 'tablist' : 'group'}
         aria-label={ariaLabel}
-        className={`relative inline-flex items-center rounded border p-0.5 ${stretch ? 'w-full' : ''} ${T.wrap}`}
+        {...trackAttrs}
+        className={`relative inline-flex items-center rounded border p-0.5 ${stretch ? 'w-full' : ''} ${TRACK.wrap}`}
       >
         {pill.style && (
           <span
             aria-hidden
-            className={`absolute rounded ${T.pill} ${pill.motionClass}`}
+            className={`absolute rounded ${TRACK.pill} ${pill.motionClass}`}
             style={{ ...pill.style, top: 2, bottom: 2 }}
           />
         )}
@@ -190,7 +177,7 @@ export const Seg: React.FC<{
               aria-pressed={tablist ? undefined : on}
               aria-label={o.ariaLabel ?? (o.l ? undefined : o.title)}
               style={trackSegStyle}
-              className={`relative z-10 inline-flex cursor-pointer select-none items-center justify-center gap-1.5 whitespace-nowrap rounded font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${stretch ? 'flex-1' : ''} ${on ? T.active : T.idle}`}
+              className={`relative z-10 inline-flex cursor-pointer select-none items-center justify-center gap-1.5 whitespace-nowrap rounded font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${stretch ? 'flex-1' : ''} ${on ? TRACK.active : TRACK.idle}`}
             >
               {o.icon}
               {o.l}

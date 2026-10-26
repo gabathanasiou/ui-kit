@@ -6,6 +6,7 @@ import { useCurrentWindow } from './popout';
 import { useOverlayMorph } from './overlayMorph';
 import { registerOverlayClose } from './overlayRegistry';
 import DropdownSubmenu from './DropdownSubmenu';
+import { useKitTheme, menuAttributesOf } from './ThemeScope';
 import {
   DropdownThemeContext, SubmenuContext, MenuHighlightContext, useMenuHighlight,
   useMenuHighlightState, useMenuKeys, useMenuKeyLock, useMenuWheel, menuItemLabel,
@@ -40,7 +41,18 @@ export interface ContextMenuProps {
  * Press-point anchored and STATIC (it does not follow scrolling); the close
  * morph shrinks back to where the menu was opened.
  */
-export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, children, containerRef, theme = 'light', morph = true }) => {
+export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, children, containerRef, theme: themeProp, morph = true }) => {
+  const kit = useKitTheme();
+  /* A surface/panel context keeps the menu light/dark and lets the accent
+     reach selection/hover; a chrome context uses the full preset. The
+     historical default (no scope) stays light — context menus anchor on
+     light surfaces. */
+  const resolved = themeProp
+    ? { theme: themeProp, attrs: { 'data-theme': themeProp } }
+    : kit
+      ? menuAttributesOf(undefined, kit)
+      : { theme: 'light' as const, attrs: { 'data-theme': 'light' as const } };
+  const { theme } = resolved;
   const scale = useCoarseScale();
   const CTX_TEXT_FS = coarsePx(12, 14, scale);
   const contentElRef = useRef<HTMLDivElement | null>(null);
@@ -148,7 +160,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
           <MenuHighlightContext.Provider value={highlight}>
             <RadixDropdownMenu.Content
               ref={setComposedRef}
-              data-theme={theme}
+              {...resolved.attrs}
               data-ui-fixed
               className="fixed ui-menu rounded-lg shadow-xl p-1 z-[9999] min-w-[180px] max-h-[85vh] overflow-y-auto scrollbar-custom"
               style={{ fontSize: CTX_TEXT_FS, left: pos?.left ?? pressRef.current.left, top: pos?.top ?? pressRef.current.top, touchAction: 'manipulation' }}

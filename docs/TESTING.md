@@ -121,6 +121,10 @@ inline-style/utility-class/parent selectors.
 4. Read the trace from the first retry (`test-results/**/trace.zip`).
 5. Only if it's genuinely yours: fix it; if flaky, quarantine it in the same change.
 
+**Known (2026-10-26)**: `rich-text-staged-tokens.spec.ts` → "a token typed after a
+pair stays a separate chip (no link bleed)" fails on clean HEAD in BOTH projects
+(baseline-confirmed) — pre-existing, not a diff. Fix or quarantine separately.
+
 ## Commands
 
 - `npm run test:unit` — Vitest (watch: `test:unit:watch`).

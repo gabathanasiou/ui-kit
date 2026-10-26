@@ -2,6 +2,7 @@
 import React from 'react';
 import { useCoarseScale, useCoarseSize, coarsePx } from './device';
 import { TabFace } from './TabFace';
+import { useKitTheme, buttonCloudOf } from './ThemeScope';
 
 /**
  * Toolbar/action button — the shared button recipe so consumer toolbars stop
@@ -78,8 +79,8 @@ export const TAB_PILL: Record<'light' | 'dark', Record<'plain' | 'blue' | 'emera
 
 export default function Button({
   variant = 'subtle',
-  theme = 'light',
-  cloud = false,
+  theme: themeProp,
+  cloud: cloudProp,
   active = false,
   iconOnly = false,
   icon,
@@ -90,6 +91,12 @@ export default function Button({
   children,
   ...rest
 }: ButtonProps) {
+  /* Ambient defaults: a surrounding ThemeScope owns the mode and the project
+     accent; an explicit prop still wins. No scope keeps the historical
+     light/default look. */
+  const kit = useKitTheme();
+  const theme = themeProp ?? kit?.mode ?? 'light';
+  const cloud = cloudProp ?? buttonCloudOf(kit);
   /* Proportional coarse scaling: base sizes interpolate by the global scale
      (inline style — Tailwind can't JIT runtime classes). */
   const subtleSize = useCoarseSize({ px: 10, py: 4, fs: 12 }, { px: 14, py: 8, fs: 14 });
@@ -110,7 +117,7 @@ export default function Button({
     },
     dark: {
       active: 'text-zinc-900',
-      inactive: 'text-zinc-500 hover:text-zinc-300',
+      inactive: 'text-zinc-400 hover:text-zinc-200',
     },
   };
 
@@ -155,20 +162,20 @@ export default function Button({
   type BaseVariant = 'subtle' | 'primary' | 'danger-ghost';
   const VARIANTS: Record<'light' | 'dark', Record<BaseVariant, { base: string; open: string }>> = {
     light: {
-      subtle: { base: `${PAD} text-zinc-600 hover:bg-zinc-200`, open: 'bg-zinc-200! text-zinc-900' },
+      subtle: { base: `${PAD} text-zinc-600 hover:bg-[var(--ui-btn-hover-bg)]`, open: 'bg-[var(--ui-btn-hover-bg)]! text-zinc-900' },
       primary: { base: `${PAD_PRIMARY} bg-zinc-900 hover:bg-zinc-800 text-white`, open: 'bg-zinc-800!' },
       'danger-ghost': { base: `${PAD} text-rose-600 hover:bg-rose-50`, open: 'bg-rose-50!' },
     },
     dark: {
-      subtle: { base: `${PAD} text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800`, open: 'bg-zinc-800! text-zinc-300' },
+      subtle: { base: `${PAD} text-zinc-400 hover:text-zinc-200 hover:bg-[var(--ui-btn-hover-bg)]`, open: 'bg-[var(--ui-btn-hover-bg)]! text-zinc-200' },
       primary: { base: `${PAD_PRIMARY} bg-zinc-800 hover:bg-zinc-700 text-white`, open: 'bg-zinc-700!' },
       'danger-ghost': { base: `${PAD} text-red-400 hover:bg-rose-950/40`, open: 'bg-rose-950/40!' },
     },
   };
 
   const CLOUD_PRIMARY: Record<CloudTone, { base: string; open: string }> = {
-    blue: { base: `${PAD_PRIMARY} bg-blue-950 hover:bg-blue-900 text-white`, open: 'bg-blue-900!' },
-    emerald: { base: `${PAD_PRIMARY} bg-emerald-950 hover:bg-emerald-900 text-white`, open: 'bg-emerald-900!' },
+    blue: { base: `${PAD_PRIMARY} bg-[var(--ui-accent-solid)] hover:bg-[var(--ui-accent-solid-hover)] text-white`, open: 'bg-[var(--ui-accent-solid-hover)]!' },
+    emerald: { base: `${PAD_PRIMARY} bg-[var(--ui-accent-solid)] hover:bg-[var(--ui-accent-solid-hover)] text-white`, open: 'bg-[var(--ui-accent-solid-hover)]!' },
   };
 
   const isOpen = (rest as { 'data-state'?: string })['data-state'] === 'open';
@@ -179,9 +186,7 @@ export default function Button({
   const tone: CloudTone | null = cloud === 'emerald' ? 'emerald' : cloud ? 'blue' : null;
   /* Toggled state: accent fill + white text (dark) / blue text (light). The
      `!` overrides beat the variant's base/`open` colors; no outline. */
-  const ACTIVE = theme === 'dark'
-    ? 'bg-blue-900/50! text-white!'
-    : 'bg-blue-50! text-blue-700!';
+  const ACTIVE = 'bg-[var(--ui-btn-active-bg)]! text-[color:var(--ui-btn-active-text)]!';
   let cls: string;
   if (variant === 'tab') {
     const t = TAB[theme];
@@ -196,7 +201,7 @@ export default function Button({
   } else {
     cls = `${spec.base} ${isOpen ? spec.open : ''}`;
     if (active) cls = `${cls} ${ACTIVE}`;
-    if (variant === 'primary' && theme === 'light' && tone) {
+    if (variant === 'primary' && tone) {
       const cp = CLOUD_PRIMARY[tone];
       cls = isOpen ? `${cp.base} ${cp.open}` : cp.base;
     }
@@ -212,6 +217,8 @@ export default function Button({
   return (
     <button
       type={type}
+      data-mode={theme}
+      data-accent={kit?.accent}
       className={`${BASE} ${iconOnly ? 'justify-center' : ''} ${collapsible ? 'group' : ''} ${cls} ${className}`}
       style={sizing}
       {...rest}

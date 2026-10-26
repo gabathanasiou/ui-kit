@@ -63,3 +63,56 @@ test('dropdown inside a modal dismisses with a trigger click and reopens', async
   await t.click();
   await expect(menu).toBeVisible();
 });
+
+/* Theme lab (roadmap 302): the modal shell carries the two axes and the
+   accent band is a real tint, not a hardcoded colour. */
+test('theme lab: accent chrome tints the modal header, neutral does not', async ({ page }) => {
+  await page.goto('/');
+
+  /* A menu opened from the coloured HEADER is fully themed (chrome context). */
+  await page.getByTestId('theme-lab-header-menu-trigger').click();
+  const headerMenu = page.locator('[role="menu"]');
+  await expect(headerMenu).toHaveAttribute('data-theme', 'emerald');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('[role="menu"]')).toHaveCount(0, { timeout: 5000 });
+
+  await page.getByTestId('theme-lab-open').click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toHaveAttribute('data-mode', 'dark');
+  await expect(dialog).toHaveAttribute('data-accent', 'emerald');
+  await expect(dialog).toHaveAttribute('data-surface', 'accent');
+  const accentBg = await page.getByTestId('modal-header').evaluate(el => getComputedStyle(el).backgroundColor);
+
+  /* A menu opened INSIDE the modal stays light/dark — only its accent States
+     are themed (surface context). */
+  await page.getByTestId('theme-lab-modal-menu-trigger').click();
+  const modalMenu = page.locator('[role="menu"]');
+  await expect(modalMenu).toHaveAttribute('data-mode', 'dark');
+  await expect(modalMenu).toHaveAttribute('data-accent', 'emerald');
+  await expect(modalMenu).not.toHaveAttribute('data-theme');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('[role="menu"]')).toHaveCount(0, { timeout: 5000 });
+
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0, { timeout: 5000 });
+  await page.getByTestId('theme-chrome-toggle').click();
+  await page.getByTestId('theme-lab-open').click();
+  await expect(page.getByRole('dialog')).toHaveAttribute('data-surface', 'neutral');
+  const neutralBg = await page.getByTestId('modal-header').evaluate(el => getComputedStyle(el).backgroundColor);
+
+  expect(accentBg).not.toBe(neutralBg);
+});
+
+test('theme lab: light mode renders a light shell', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('theme-mode-light').click();
+  await page.getByTestId('theme-accent-zinc').click();
+  await page.getByTestId('theme-chrome-toggle').click();
+  await page.getByTestId('theme-lab-open').click();
+
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toHaveAttribute('data-mode', 'light');
+  await expect(dialog).toHaveAttribute('data-accent', 'zinc');
+  await expect(page.getByTestId('modal-body')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await expect(page.getByTestId('modal-header')).toHaveCSS('background-color', 'rgb(250, 250, 250)');
+});

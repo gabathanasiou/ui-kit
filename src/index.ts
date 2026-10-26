@@ -17,6 +17,8 @@ export type { DropdownPanelPos, UseDropdownPositionOptions } from './useDropdown
 export { useTouchMode } from './useTouchMode';
 export { default as Button, TAB_PILL } from './Button';
 export type { ButtonProps } from './Button';
+export { ThemeScope, ThemeProvider, useKitTheme, menuThemeOf, menuAttributesOf, segModeOf, buttonCloudOf } from './ThemeScope';
+export type { KitMode, KitAccent, KitSurface, KitContext, KitMenuTheme, KitTheme, ThemeProviderProps, ThemeScopeProps } from './ThemeScope';
 export { default as FloatingToggle } from './FloatingToggle';
 export type { FloatingToggleProps } from './FloatingToggle';
 export { default as ModalFooterButton } from './ModalFooterButton';

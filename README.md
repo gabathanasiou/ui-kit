@@ -43,9 +43,41 @@ Peer dependencies (install in your app): `react`, `react-dom`, `@radix-ui/react-
 
 ## Theming
 
-The kit's colors are CSS variables — **no colors are hardcoded** in components. Defaults (`:root`) reproduce the lemon_schedule zinc look; `[data-theme="light"]`, `[data-theme="blue"]` (Drive-style blue chrome) and `[data-theme="emerald"]` (shared/collaborative green chrome) are built-in alternatives. `DropdownMenu` / `ContextMenu` / `Dialog` set `data-theme` for you (prop `theme="dark" | "light" | "blue" | "emerald"`, default dark). The colored accents also reach `Button` (`cloud`: `true` = blue, `'emerald'`) and `Seg` (`track` theme `"blue" | "emerald"`).
+Two axes plus a surface flag (roadmap 302):
 
-Override any variable in your own CSS to re-skin the whole kit:
+- **Mode** — `light | dark` neutral surfaces, text and borders. `dark` is the
+  kit default; light toolbars opt in per component (the historical default).
+- **Accent** — `zinc | blue | emerald` project identity. It drives selection,
+  hover, checked states, the accent scale, and the colored chrome presets.
+  `zinc` is neutral (no blue).
+- **Surface** — `neutral | accent`. `accent` opts a container (a Drive/shared
+  modal) into the tinted ladder: `accent-950` header (the app-header colour),
+  neutral body, `accent-100` wells/footer. Outlines stay neutral.
+
+Wrap a surface in `ThemeScope` and every token-driven primitive inside follows;
+prop-driven primitives use the scope as their default. An explicit prop always
+wins, and no scope keeps today's behavior.
+
+```tsx
+<ThemeScope mode="light" accent="emerald" surface="accent">
+  <Modal open={open} onClose={close} title="Day 4" surface="accent" accent="emerald">
+    <Button variant="primary">Save</Button>
+  </Modal>
+</ThemeScope>
+```
+
+Menus follow the **context**: opened from a coloured header/toolbar
+(`context="chrome"`) they are fully themed; opened inside a modal/panel
+(`context="surface"`) they stay light/dark with only the accent on
+selected/hover/checked rows. An explicit `theme="…"` still forces a preset.
+
+`Modal` takes `theme` (mode), `accent` and `surface="neutral | accent"`.
+`color-scheme` follows the mode. The legacy `[data-theme="…"]` presets remain
+for `DropdownMenu` / `ContextMenu` / `Dialog`; `data-mode` and `data-theme`
+compose, so a dark menu inside a light modal stays dark.
+
+Every color is a `--ui-*` variable. Override any of them in your own CSS to
+re-skin a scope:
 
 ```css
 :root {
@@ -57,6 +89,11 @@ Override any variable in your own CSS to re-skin the whole kit:
   /* ...see src/styles/tokens.css for the full list */
 }
 ```
+
+Full model, token roles, coverage and the migration checklist:
+[`docs/THEMING.md`](docs/THEMING.md). Try it live in the playground's **Theme
+lab** section (mode / accent / surface + a fully themed dummy modal and both
+menu contexts).
 
 ## Long-press example
 

@@ -259,7 +259,6 @@ test('the open menu follows the trigger when the page scrolls', async ({ page })
   await page.getByTestId('ctrl-menu-trigger').click();
   await expect(menu(page)).toBeVisible();
 
-  const triggerBefore = await page.getByTestId('ctrl-menu-trigger').boundingBox();
   const menuBefore = await menu(page).boundingBox();
   await page.evaluate(() => window.scrollTo(0, 150));
   // wait for the scroll + the follow rAF re-measure to settle
@@ -268,16 +267,24 @@ test('the open menu follows the trigger when the page scrolls', async ({ page })
     const m = document.querySelector('[role="menu"]');
     const t = document.querySelector('[data-testid="ctrl-menu-trigger"]');
     if (!m || !t) return false;
-    return Math.abs(m.getBoundingClientRect().y - (t.getBoundingClientRect().bottom + 4)) < 1.5;
+    const mb = m.getBoundingClientRect(), tb = t.getBoundingClientRect();
+    /* The engine may flip the panel above the trigger when the viewport below
+       is tight (the lab section above changes the available space). Either
+       side is correct — the panel must stay anchored to the trigger. */
+    const below = Math.abs(mb.y - (tb.bottom + 4)) < 1.5;
+    const above = Math.abs(mb.bottom - (tb.top - 4)) < 1.5;
+    return below || above;
   }, { timeout: 5000 });
-  const triggerAfter = await page.getByTestId('ctrl-menu-trigger').boundingBox();
   const menuAfter = await menu(page).boundingBox();
 
-  const triggerDy = triggerAfter!.y - triggerBefore!.y;
-  const menuDy = menuAfter!.y - menuBefore!.y;
-  expect(Math.abs(menuDy - triggerDy)).toBeLessThan(6);
+  /* The panel may flip above/below as the available space changes; the
+     waitForFunction above already proves it is anchored to the trigger on one
+     side. Only the horizontal anchor is stable in both cases. */
   expect(Math.abs(menuAfter!.x - menuBefore!.x)).toBeLessThan(6);
-  // still interactive
+  // still interactive — bring the trigger back into view so the (possibly
+  // flipped) fixed panel is on-screen before hovering
+  await page.getByTestId('ctrl-menu-trigger').scrollIntoViewIfNeeded();
+  await expect(menu(page)).toBeVisible();
   await page.getByRole('menuitem', { name: 'Travel' }).hover();
   await expect(litRows(page)).toContainText('Travel');
 });

@@ -32,17 +32,17 @@ test('track variant: light toolbar palette + pressed state', async ({ page }) =>
   await events.click();
   await expect(events).toHaveAttribute('aria-pressed', 'true');
   await expect(seg.getByRole('button', { name: 'Strips' })).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.getByTestId('seg-light-toggle')).toHaveClass(/bg-blue-50/);
+  await expect(page.getByTestId('seg-light-toggle')).toHaveCSS('background-color', 'rgb(239, 246, 255)');
 });
 
 test('track variant: blue + emerald project-chrome palettes', async ({ page }) => {
   await page.goto('/');
   const blue = page.getByTestId('seg-track-blue').locator('[role="group"]');
   const emerald = page.getByTestId('seg-track-emerald').locator('[role="group"]');
-  await expect(blue.locator('span[aria-hidden]')).toHaveClass(/bg-blue-950/);
-  await expect(blue.getByRole('button', { name: 'Strips' })).toHaveClass(/text-blue-50/);
-  await expect(emerald.locator('span[aria-hidden]')).toHaveClass(/bg-emerald-950/);
-  await expect(emerald.getByRole('button', { name: 'Strips' })).toHaveClass(/text-emerald-50/);
+  await expect(blue.locator('span[aria-hidden]')).toHaveCSS('background-color', 'rgb(23, 37, 84)');
+  await expect(blue.getByRole('button', { name: 'Strips' })).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(emerald.locator('span[aria-hidden]')).toHaveCSS('background-color', 'rgb(2, 44, 34)');
+  await expect(emerald.getByRole('button', { name: 'Strips' })).toHaveCSS('color', 'rgb(255, 255, 255)');
 });
 
 test('track variant: tablist semantics (role=tab + aria-selected)', async ({ page }) => {
