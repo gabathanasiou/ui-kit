@@ -11,7 +11,7 @@ import {
   NumberInput, Seg, FloatingToggle, useSlidingPill,
   ThemeScope, ThemeProvider, menuThemeOf, inputCls, SearchMenu, MorphSearchField,
 } from '../../src/index';
-import { Table2, CalendarRange, CalendarDays, Palette, Scale, Clapperboard, BarChart3, Users, Building2, UserRound, MapPin, Search, Plus } from 'lucide-react';
+import { Table2, CalendarRange, CalendarDays, Palette, Scale, Clapperboard, BarChart3, Users, Building2, UserRound, MapPin, Search, Plus, Filter } from 'lucide-react';
 import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem, SearchMenuItem } from '../../src/index';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -718,11 +718,11 @@ function DeepSearchDemo() {
         <MorphSearchField
           value={filter}
           onChange={setFilter}
-          triggerLabel="Filter"
+          triggerLabel={filter.trim() || 'Filter'}
+          triggerIcon={filter.trim() ? <Filter className="w-3.5 h-3.5" /> : <Search className="w-3.5 h-3.5" />}
           placeholder="Filter rows…"
           collapsedWidth={88}
           expandedWidth={190}
-          active={!!filter.trim()}
         />
       </div>
       <span className="label" data-testid="morph-search-status">filter: {filter || '—'}</span>

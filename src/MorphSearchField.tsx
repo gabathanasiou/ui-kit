@@ -23,6 +23,9 @@ export interface MorphSearchFieldProps {
   onChange: (value: string) => void;
   /** Collapsed button label. Default: "Filter". */
   triggerLabel?: string;
+  /** Trigger + field leading icon (default: a magnifier). Pass a funnel while
+   *  a filter is applied so the collapsed control says WHAT is filtered. */
+  triggerIcon?: React.ReactNode;
   placeholder?: string;
   /** Collapsed button width in px. Default 88. */
   collapsedWidth?: number;
@@ -44,6 +47,7 @@ export function MorphSearchField({
   value,
   onChange,
   triggerLabel = 'Filter',
+  triggerIcon,
   placeholder = 'Filter…',
   collapsedWidth = 88,
   expandedWidth = 200,
@@ -149,7 +153,7 @@ export function MorphSearchField({
           variant={variant}
           size="minimal"
           theme={theme}
-          icon={<Search className="w-3.5 h-3.5" />}
+          icon={triggerIcon ?? <Search className="w-3.5 h-3.5" />}
           active={active}
           onClick={expand}
           className={`w-full justify-start ${expanded ? 'pointer-events-none' : ''}`}
@@ -158,7 +162,7 @@ export function MorphSearchField({
           aria-label={ariaLabel || triggerLabel}
           data-morph-search-trigger
         >
-          <span>{triggerLabel}</span>
+          <span className="min-w-0 truncate">{triggerLabel}</span>
         </Button>
       </div>
       <div
@@ -169,7 +173,9 @@ export function MorphSearchField({
         }}
         aria-hidden={!expanded}
       >
-        <Search className="w-3.5 h-3.5 ui-icon absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <span className="ui-icon absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+          {triggerIcon ?? <Search className="w-3.5 h-3.5" />}
+        </span>
         <input
           ref={inputRef}
           value={value}

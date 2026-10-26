@@ -312,9 +312,12 @@ test('MorphSearchField: button morphs into a filter field and keeps the term', a
   await input.pressSequentially('roy');
   await expect(status).toHaveText('filter: roy');
 
-  // Clicking away collapses but KEEPS the filter (the toolbar count stays).
+  // Clicking away collapses but KEEPS the filter (the toolbar count stays):
+  // the trigger now names the term and swaps its magnifier for a funnel.
   await page.getByTestId('deep-search-status').click();
   await expect(trigger).toBeVisible();
+  await expect(trigger).toContainText('roy');
+  await expect(trigger.locator('svg.lucide-funnel')).toHaveCount(1);
   await expect(input).not.toBeFocused();
   await expect(status).toHaveText('filter: roy');
 

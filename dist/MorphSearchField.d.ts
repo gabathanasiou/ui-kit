@@ -18,6 +18,9 @@ export interface MorphSearchFieldProps {
     onChange: (value: string) => void;
     /** Collapsed button label. Default: "Filter". */
     triggerLabel?: string;
+    /** Trigger + field leading icon (default: a magnifier). Pass a funnel while
+     *  a filter is applied so the collapsed control says WHAT is filtered. */
+    triggerIcon?: React.ReactNode;
     placeholder?: string;
     /** Collapsed button width in px. Default 88. */
     collapsedWidth?: number;
@@ -34,5 +37,5 @@ export interface MorphSearchFieldProps {
     className?: string;
     "aria-label"?: string;
 }
-export declare function MorphSearchField({ value, onChange, triggerLabel, placeholder, collapsedWidth, expandedWidth, variant, theme, active, autoFocus, onExpandedChange, className, 'aria-label': ariaLabel, }: MorphSearchFieldProps): React.JSX.Element;
+export declare function MorphSearchField({ value, onChange, triggerLabel, triggerIcon, placeholder, collapsedWidth, expandedWidth, variant, theme, active, autoFocus, onExpandedChange, className, 'aria-label': ariaLabel, }: MorphSearchFieldProps): React.JSX.Element;
 export default MorphSearchField;
