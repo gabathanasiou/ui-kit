@@ -60,7 +60,7 @@ This distinction is deliberate:
 | --- | --- | --- |
 | Header (THE app-header colour) | `accent-950` + white title/icon | `accent-950` + white |
 | Body | neutral `#fff` | neutral `#18181b` |
-| Card / input wells | fields `accent-50`; card shell **neutral raised** | fields `accent-700` mix; card shell **neutral raised** |
+| Card / input wells | card shell **neutral raised**; inputs **transparent** (inherit) | card shell **neutral raised**; inputs **transparent** (inherit) |
 | Footer | `accent-50` | `accent-950` mix |
 | Card + calendar headers | `accent-900` + white | `accent-950` + white |
 | Header hover | `accent-800` (deeper, never grey) | `accent-900` (lighter, never grey) |
@@ -82,9 +82,11 @@ Rules:
   use `accent-700`/`800` with white text; the dark-mode checkbox uses a dark
   check mark on `accent-400`.
 - **Inputs share one recipe.** Text boxes (`.ui-input`) and number boxes
-  (`.ui-number-box`) both fill from `--ui-input-bg`; hover/focus changes only the
-  neutral border (`--ui-input-hover-border` / `--ui-input-focus-border`) — never
-  an accent wash. One token set drives both.
+  (`.ui-number-box`) are **transparent** — they inherit the surrounding surface.
+  Hover adds a neutral fill lift (white 6% dark / black 4% light) with the border
+  unchanged; focus keeps the inherited background and highlights the neutral
+  border (`--ui-input-focus-border`). Both are animated (120ms). One token set
+  drives both.
 - **Card shells stay neutral; only their headers wear the accent.** A neutral
   raised fill + `--ui-border-strong` keeps the card readable on the neutral body.
 - **Header hovers stay in the accent family** (a deeper/lighter accent step),

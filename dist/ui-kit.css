@@ -23,9 +23,9 @@
   --ui-panel-border: #27272a;
   --ui-input-bg: #27272a;
   --ui-input-hover-bg: rgba(255, 255, 255, 0.04);
-  --ui-input-hover-border: var(--ui-text-muted);
+  --ui-input-hover-border: var(--ui-input-border);
   --ui-input-focus-border: var(--ui-text-muted);
-  --ui-input-focus-bg: var(--ui-input-bg);
+  --ui-input-focus-bg: transparent;
   --ui-input-border: #3f3f46;
   --ui-input-text: #e4e4e7;
      from text-field fills (--ui-input-bg) so sections read as panels, not
@@ -169,9 +169,9 @@
   --ui-panel-border: #e4e4e7;
   --ui-input-bg: #f4f4f5;
   --ui-input-hover-bg: rgba(0, 0, 0, 0.04);
-  --ui-input-hover-border: var(--ui-text-muted);
+  --ui-input-hover-border: var(--ui-input-border);
   --ui-input-focus-border: var(--ui-text-muted);
-  --ui-input-focus-bg: var(--ui-input-bg);
+  --ui-input-focus-bg: transparent;
   --ui-input-border: #e4e4e7;
   --ui-input-text: #18181b;
   --ui-card-bg: #fafafa;
@@ -603,8 +603,8 @@
   --ui-date-chip-text: var(--ui-accent-900);
   --ui-date-chip-hover-bg: var(--ui-accent-200);
   --ui-input-bg: var(--ui-accent-50);
-  --ui-input-hover-bg: var(--ui-input-bg);
-  --ui-input-focus-bg: var(--ui-input-bg);
+  --ui-input-hover-bg: color-mix(in oklab, #000000 4%, transparent);
+  --ui-input-focus-bg: transparent;
   --ui-input-border: var(--ui-border-strong);
   --ui-card-bg: #fafafa;
   --ui-card-border: var(--ui-border-strong);
@@ -656,8 +656,8 @@
   --ui-date-chip-text: #ffffff;
   --ui-date-chip-hover-bg: var(--ui-accent-700);
   --ui-input-bg: color-mix(in oklab, var(--ui-accent-700) 45%, #27272a);
-  --ui-input-hover-bg: var(--ui-input-bg);
-  --ui-input-focus-bg: var(--ui-input-bg);
+  --ui-input-hover-bg: color-mix(in oklab, #ffffff 6%, transparent);
+  --ui-input-focus-bg: transparent;
   --ui-input-border: var(--ui-border-strong);
   --ui-card-bg: #1f1f23;
   --ui-card-border: var(--ui-border-strong);
@@ -867,7 +867,7 @@
   touch-action: manipulation;
   color: var(--ui-text-faint);
   cursor: pointer;
-  transition: color 150ms ease;
+  transition: color 150ms ease, background-color 150ms ease;
 }
 
 .ui-icon-btn:active {
@@ -944,11 +944,12 @@
 
 .ui-input {
   touch-action: manipulation;
-  background: var(--ui-input-bg);
+  background: transparent;
   border: 1px solid var(--ui-input-border);
   color: var(--ui-input-text);
   border-radius: var(--ui-radius-input);
   outline: none;
+  transition: background-color 120ms ease, border-color 120ms ease;
 }
 
 /* Subtle fill while the pointer is over the field OR it's being edited
@@ -995,7 +996,7 @@
 .ui-number-box {
   border: 1px solid var(--ui-input-border);
   border-radius: var(--ui-radius-input);
-  background: var(--ui-input-bg);
+  background: transparent;
   color: var(--ui-input-text);
   transition: background-color 120ms ease, border-color 120ms ease;
 }
@@ -1187,6 +1188,7 @@
 
 .ui-row {
   touch-action: manipulation;
+  transition: background-color 150ms ease;
 }
 
 /* Same press squeeze as .ui-item: the current row fill recedes to a smaller
