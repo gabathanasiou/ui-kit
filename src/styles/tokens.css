@@ -24,8 +24,8 @@
   --ui-input-bg: #27272a;
   --ui-input-hover-bg: rgba(255, 255, 255, 0.04);
   --ui-input-hover-border: var(--ui-input-border);
-  --ui-input-focus-border: var(--ui-text-muted);
-  --ui-input-focus-bg: transparent;
+  --ui-input-focus-border: var(--ui-text-faint);
+  --ui-input-focus-bg: var(--ui-input-hover-bg);
   --ui-input-border: #3f3f46;
   --ui-input-text: #e4e4e7;
      from text-field fills (--ui-input-bg) so sections read as panels, not
@@ -170,8 +170,8 @@
   --ui-input-bg: #f4f4f5;
   --ui-input-hover-bg: rgba(0, 0, 0, 0.04);
   --ui-input-hover-border: var(--ui-input-border);
-  --ui-input-focus-border: var(--ui-text-muted);
-  --ui-input-focus-bg: transparent;
+  --ui-input-focus-border: var(--ui-text-faint);
+  --ui-input-focus-bg: var(--ui-input-hover-bg);
   --ui-input-border: #e4e4e7;
   --ui-input-text: #18181b;
   --ui-card-bg: #fafafa;
@@ -604,7 +604,7 @@
   --ui-date-chip-hover-bg: var(--ui-accent-200);
   --ui-input-bg: var(--ui-accent-50);
   --ui-input-hover-bg: color-mix(in oklab, #000000 4%, transparent);
-  --ui-input-focus-bg: transparent;
+  --ui-input-focus-bg: var(--ui-input-hover-bg);
   --ui-input-border: var(--ui-border-strong);
   --ui-card-bg: #fafafa;
   --ui-card-border: var(--ui-border-strong);
@@ -657,7 +657,7 @@
   --ui-date-chip-hover-bg: var(--ui-accent-700);
   --ui-input-bg: color-mix(in oklab, var(--ui-accent-700) 45%, #27272a);
   --ui-input-hover-bg: color-mix(in oklab, #ffffff 6%, transparent);
-  --ui-input-focus-bg: transparent;
+  --ui-input-focus-bg: var(--ui-input-hover-bg);
   --ui-input-border: var(--ui-border-strong);
   --ui-card-bg: #1f1f23;
   --ui-card-border: var(--ui-border-strong);

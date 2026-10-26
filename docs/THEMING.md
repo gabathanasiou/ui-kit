@@ -84,9 +84,9 @@ Rules:
 - **Inputs share one recipe.** Text boxes (`.ui-input`) and number boxes
   (`.ui-number-box`) are **transparent** — they inherit the surrounding surface.
   Hover adds a neutral fill lift (white 6% dark / black 4% light) with the border
-  unchanged; focus keeps the inherited background and highlights the neutral
-  border (`--ui-input-focus-border`). Both are animated (120ms). One token set
-  drives both.
+  unchanged; **focus keeps that lift** and only nudges the border
+  (`--ui-input-focus-border`, a subtle neutral step). Both are animated (120ms).
+  One token set drives both.
 - **Card shells stay neutral; only their headers wear the accent.** A neutral
   raised fill + `--ui-border-strong` keeps the card readable on the neutral body.
 - **Header hovers stay in the accent family** (a deeper/lighter accent step),
