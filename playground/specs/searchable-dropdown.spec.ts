@@ -143,3 +143,30 @@ test('the search box is the same size as a dropdown item', async ({ page }) => {
   const item = await visibleItems(page).first().evaluate(el => el.getBoundingClientRect().height);
   expect(Math.abs(box - item)).toBeLessThan(10);
 });
+
+test('grouped menu: category headers render once and searching matches the category', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('grouped-searchable-trigger').click();
+  const groups = page.locator('[data-menu-group]');
+  const input = menu(page).getByPlaceholder('Search locations or categories…');
+
+  // Each category gets ONE header above its first visible row.
+  await expect(visibleItems(page)).toHaveCount(8);
+  await expect(groups).toHaveText(['Set', 'Unit base', 'Hospital', 'Police']);
+
+  // A group match keeps every row in that category — the row labels never
+  // say "set", so this can only come from the group filter.
+  await input.fill('set');
+  await expect(visibleItems(page)).toHaveCount(3);
+  await expect(groups).toHaveText(['Set']);
+  await expect(visibleItems(page).first()).toContainText('Riverside House');
+
+  // A category with a single row still shows its header; filtered-out groups
+  // drop their header with their rows (no orphans).
+  await input.fill('hospital');
+  await expect(visibleItems(page)).toHaveCount(1);
+  await expect(groups).toHaveText(['Hospital']);
+  await input.fill('base');
+  await expect(visibleItems(page)).toHaveCount(2);
+  await expect(groups).toHaveText(['Unit base']);
+});

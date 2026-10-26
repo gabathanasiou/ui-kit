@@ -573,6 +573,41 @@ function SearchableMenuDemo() {
   );
 }
 
+const LOCATIONS = [
+  { name: 'Riverside House', group: 'Set' },
+  { name: 'Grand Hotel — rooftop', group: 'Set' },
+  { name: 'Warehouse 12', group: 'Set' },
+  { name: 'Unit base — Lot 4', group: 'Unit base' },
+  { name: 'Unit base — North yard', group: 'Unit base' },
+  { name: 'St. Mary’s Hospital', group: 'Hospital' },
+  { name: 'Central Police Station', group: 'Police' },
+  { name: 'Holding — Court cells', group: 'Police' },
+];
+
+function GroupedSearchableMenuDemo() {
+  /* Grouped searchable menu: rows carry a `group` (locations by type). A
+     category header renders on the first VISIBLE row of its group; searching
+     matches the group label too, so "set" lists the whole Set category. */
+  const [open, setOpen] = useState(false);
+  const [pick, setPick] = useState<string | null>(null);
+  return (
+    <div className="row" data-testid="grouped-searchable-menu">
+      <DropdownMenu open={open} onOpenChange={setOpen} width="w-72"
+        searchable searchPlaceholder="Search locations or categories…"
+        trigger={<Button data-testid="grouped-searchable-trigger">Grouped searchable {pick ? `— ${pick}` : ''}</Button>}
+      >
+        {LOCATIONS.map(loc => (
+          <DropdownItem key={loc.name} group={loc.group} selected={pick === loc.name}
+            onClick={() => { setPick(loc.name); setOpen(false); }}
+          >
+            {loc.name}
+          </DropdownItem>
+        ))}
+      </DropdownMenu>
+    </div>
+  );
+}
+
 function SearchableTriggerDemo() {
   /* Trigger-as-search (combobox): the trigger field IS the search box. The
      query is CONTROLLED (`searchValue`/`onSearchValueChange`) — the menu
@@ -1594,6 +1629,7 @@ function App() {
         <UncontrolledMenu />
         <InitialHighlightMenu />
         <SearchableMenuDemo />
+        <GroupedSearchableMenuDemo />
         <SearchableTriggerDemo />
         <LongMenuDemo />
         <RightEdgeMenu />

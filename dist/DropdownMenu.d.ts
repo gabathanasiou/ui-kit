@@ -10,6 +10,13 @@ export declare function useItemSize(): {
     fontSize: string;
     lineHeight: string;
 };
+/** Group-header sizing for grouped menus — same coarse knob as the rows, one
+ *  step smaller and tighter so the category reads as a label, not a row. */
+export declare function useMenuGroupSize(): {
+    padding: string;
+    fontSize: string;
+    lineHeight: string;
+};
 export declare function getDropdownClasses(theme?: DropdownTheme): {
     itemDefault: string;
     itemDanger: string;
@@ -53,6 +60,9 @@ export interface MenuHighlightItem {
     activate: () => void;
     /** A submenu trigger row — ArrowRight opens it (the generic activate). */
     submenu?: boolean;
+    /** Optional category label. Grouped menus render a header when this changes
+     *  between VISIBLE rows; the searchable filter also matches it. */
+    group?: string;
 }
 export interface MenuHighlightApi {
     items: MenuHighlightItem[];
@@ -87,6 +97,7 @@ export declare function useHighlightRow(opts: {
     label: () => string;
     activate: () => void;
     disabled?: boolean;
+    group?: string;
 }): {
     api: MenuHighlightApi | null;
     myIndex: number;
@@ -156,9 +167,10 @@ export interface DropdownMenuProps {
     searchable?: boolean;
     searchPlaceholder?: string;
     /** Custom label matcher for the search filter — defaults to a
-     *  case-insensitive substring match. Receives the trimmed query + the item
-     *  label; return true to keep the row. */
-    searchFilter?: (query: string, label: string) => boolean;
+     *  case-insensitive substring match against the row label OR its `group`.
+     *  Receives the trimmed query, the item label, and the item group; return
+     *  true to keep the row. */
+    searchFilter?: (query: string, label: string, group?: string) => boolean;
     /** Controlled search query. When provided (with `searchable`) the menu uses
      *  THIS value as the filter and does NOT render its own search box — the
      *  trigger itself (typically the text field that opens the menu) IS the

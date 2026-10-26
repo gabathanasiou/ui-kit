@@ -21,6 +21,11 @@ interface DropdownItemProps {
      *  sits OUTSIDE the truncating label span so it never gets squeezed or
      *  ellipsized. */
     trailing?: React.ReactNode;
+    /** Optional category. The menu renders a header the first time this changes
+     *  between VISIBLE rows (so filtering never leaves an orphan header), and a
+     *  searchable menu's query matches the group too — typing "set" keeps the
+     *  whole Set category. Keep grouped rows contiguous for the intended order. */
+    group?: string;
 }
-export default function DropdownItem({ onClick, icon, disabled, variant, className, children, keepOpen, selected, rightAction, trailing, }: DropdownItemProps): React.JSX.Element;
+export default function DropdownItem({ onClick, icon, disabled, variant, className, children, keepOpen, selected, rightAction, trailing, group, }: DropdownItemProps): React.JSX.Element;
 export {};

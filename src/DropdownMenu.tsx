@@ -26,6 +26,17 @@ export function useItemSize() {
   };
 }
 
+/** Group-header sizing for grouped menus — same coarse knob as the rows, one
+ *  step smaller and tighter so the category reads as a label, not a row. */
+export function useMenuGroupSize() {
+  const scale = useCoarseScale();
+  return {
+    padding: `${coarsePx(6, 9, scale)}px ${coarsePx(12, 16, scale)}px ${coarsePx(2, 3, scale)}px`,
+    fontSize: `${coarsePx(10, 11, scale)}px`,
+    lineHeight: `${coarsePx(14, 16, scale)}px`,
+  };
+}
+
 // ── Single source of truth for all dropdown styling ──
 // Colors/interactions come from tokens.css (.ui-*) via [data-theme]; only
 // layout/size utilities are inlined. Coarse sizing is gated on the global
@@ -130,6 +141,9 @@ export interface MenuHighlightItem {
   activate: () => void;
   /** A submenu trigger row — ArrowRight opens it (the generic activate). */
   submenu?: boolean;
+  /** Optional category label. Grouped menus render a header when this changes
+   *  between VISIBLE rows; the searchable filter also matches it. */
+  group?: string;
 }
 
 export interface MenuHighlightApi {
@@ -203,14 +217,14 @@ export function useMenuHighlightState(filter?: (item: MenuHighlightItem) => bool
  *  returns the row's index + whether it is the lit row + a pointer-hover
  *  setter. Menus without a provider get `api: null` → unlit, unregistered
  *  rows (bespoke surfaces keep their own behavior). */
-export function useHighlightRow(opts: { label: () => string; activate: () => void; disabled?: boolean }) {
+export function useHighlightRow(opts: { label: () => string; activate: () => void; disabled?: boolean; group?: string }) {
   const api = useMenuHighlight();
   const apiRef = useRef(api);
   apiRef.current = api;
   const selfRef = useRef<MenuHighlightItem | null>(null);
 
   useEffect(() => {
-    const self: MenuHighlightItem = { label: opts.label(), activate: opts.activate };
+    const self: MenuHighlightItem = { label: opts.label(), activate: opts.activate, group: opts.group?.trim() || undefined };
     selfRef.current = self;
     return apiRef.current?.register(self);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -443,9 +457,10 @@ export interface DropdownMenuProps {
   searchable?: boolean;
   searchPlaceholder?: string;
   /** Custom label matcher for the search filter — defaults to a
-   *  case-insensitive substring match. Receives the trimmed query + the item
-   *  label; return true to keep the row. */
-  searchFilter?: (query: string, label: string) => boolean;
+   *  case-insensitive substring match against the row label OR its `group`.
+   *  Receives the trimmed query, the item label, and the item group; return
+   *  true to keep the row. */
+  searchFilter?: (query: string, label: string, group?: string) => boolean;
   /** Controlled search query. When provided (with `searchable`) the menu uses
    *  THIS value as the filter and does NOT render its own search box — the
    *  trigger itself (typically the text field that opens the menu) IS the
@@ -537,7 +552,12 @@ export default function DropdownMenu({
     if (!searchable) return undefined;
     const q = filterQuery.trim().toLowerCase();
     if (!q) return ALWAYS_VISIBLE;
-    return (it: MenuHighlightItem) => (searchFilter ? searchFilter(q, it.label) : it.label.toLowerCase().includes(q));
+    return (it: MenuHighlightItem) => {
+      if (searchFilter) return searchFilter(q, it.label, it.group);
+      /* Search the category too: typing "set" keeps every row in the Set
+         group, even when the row labels never say "set". */
+      return it.label.toLowerCase().includes(q) || (it.group?.toLowerCase().includes(q) ?? false);
+    };
   }, [filterQuery, searchable, searchFilter]);
 
   const highlight = useMenuHighlightState(filter);

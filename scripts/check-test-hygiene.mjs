@@ -32,8 +32,10 @@ const WAIT_BASELINE = 9;
 // names + glide geometry are DOM measurements the unit layer can't reach).
 // 84 = 82 + 2 theme-lab cases (roadmap 302: mode × accent × chrome band — the
 // computed surface colours + scope attributes the unit layer can't reach).
+// 85 = 84 + grouped searchable menu (category headers follow the VISIBLE set;
+// typeahead/highlight filtering and group search are DOM wiring).
 const SPEC_CAP = 15;
-const TEST_CAP = 84;
+const TEST_CAP = 85;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

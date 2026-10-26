@@ -5,7 +5,7 @@ Shared interaction primitives for Gabriel's apps — extracted from the **lemon_
 **What's inside**
 - `device.ts` — pointer/hover capability model: `IS_COARSE`, `IS_TOUCH_CAPABLE`, `isTouchLike()` (Apple Pencil = finger), last-pointer tracking, hardware-keyboard detection, the pencil click shim for Safari overlays
 - `useTouchMode()` — touch-first UI variant switching
-- `DropdownMenu` / `DropdownItem` / `DropdownSubmenu` — Radix-wired menus with `onTouchStart` claim trick, tap-vs-drag disambiguation, one `getDropdownClasses()` design-system function, plus `ItemManagerDropdown` (list with rename/duplicate/delete)
+- `DropdownMenu` / `DropdownItem` / `DropdownSubmenu` — Radix-wired menus with `onTouchStart` claim trick, tap-vs-drag disambiguation, one `getDropdownClasses()` design-system function, grouped rows (`group` headers + category-matching search), plus `ItemManagerDropdown` (list with rename/duplicate/delete)
 - `ContextMenu` + `LongPressMenuProvider` — long-press ring → synthetic `contextmenu` (touch's right-click), shared with desktop right-click. Opt in with `data-context-menu` on any element; opt out a subtree with `useLongPressOptOut()`
 - `Dialog` — `confirm() / prompt() / alert()` provider (Enter/Esc/click-outside, "don't ask again")
 - `Modal` + `ModalFooter` — draggable dialog with stacked morph (child grows from the modal beneath it, survivor shrinks back), standalone zoom in/out, and animated content-driven size changes; Enter confirms the footer primary action when nothing interactive is focused; `morph={false}` opts out per-instance
