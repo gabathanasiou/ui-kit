@@ -61,6 +61,12 @@ export interface SearchMenuProps {
   /** Category rows get a chevron that expands their records in the browse
    *  state (a tree-style category browser). */
   expandableGroups?: boolean;
+  /** Browse state: show every group's records under a PLAIN category header —
+   *  no chevron, nothing to click, so a short catalogue is one glance instead
+   *  of one click per category. Implies the tree body renders even when
+   *  `expandableGroups` is false; `groupExpandMode` still applies if both are
+   *  set (chevrons + groups start open). */
+  browseExpanded?: boolean;
   /** `multiple` = several categories can be open; `single` = opening one
    *  collapses the others (accordion). All-collapsed is always allowed. */
   groupExpandMode?: 'multiple' | 'single';
@@ -96,6 +102,7 @@ export function SearchMenu({
   closeOnSelect = true,
   openOnFocus = true,
   expandableGroups = false,
+  browseExpanded = false,
   groupExpandMode = 'multiple',
   autoFocus = true,
   collapsedWidth = 128,
@@ -119,7 +126,9 @@ export function SearchMenu({
 
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(mode === 'inline');
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const groupKeySig = useMemo(() => groups.map(g => g.key).join('\u0000'), [groups]);
+  const allGroups = useMemo(() => new Set(groupKeySig ? groupKeySig.split('\u0000') : []), [groupKeySig]);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => (browseExpanded ? allGroups : new Set()));
   const [highlighted, setHighlighted] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -159,21 +168,28 @@ export function SearchMenu({
       items,
       groups,
       query,
-      browseGroups: openOnFocus,
+      browseGroups: openOnFocus || browseExpanded,
       expandedGroups,
       emptyActionLabels,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items, groups, query, openOnFocus, expandedGroups, emptyActionLabels.join('\u0000')],
+    [items, groups, query, openOnFocus, browseExpanded, expandedGroups, emptyActionLabels.join('\u0000')],
   );
 
   const navigateRows = useMemo(
     () => rows
       .map((row, index) => ({ row, index }))
-      .filter(x => x.row.kind !== 'empty' && !(x.row.kind === 'item' && x.row.hidden)),
-    [rows],
+      .filter(x => {
+        if (x.row.kind === 'empty') return false;
+        if (x.row.kind === 'item' && x.row.hidden) return false;
+        // Plain group headers (browseExpanded without expandableGroups) are
+        // not actionable — keep the arrows on the records.
+        if (x.row.kind === 'group' && !onSelectGroup && !expandableGroups) return false;
+        return true;
+      }),
+    [rows, onSelectGroup, expandableGroups],
   );
-  const browseTree = expandableGroups && !query.trim();
+  const browseTree = (expandableGroups || browseExpanded) && !query.trim();
 
   const close = useCallback(() => {
     setOpen(false);
@@ -186,15 +202,22 @@ export function SearchMenu({
     }
     setQuery('');
     setHighlighted(0);
-    setExpandedGroups(new Set());
+    setExpandedGroups(browseExpanded ? allGroups : new Set());
     onClose?.();
-  }, [mode, onClose, setQuery]);
+  }, [mode, onClose, setQuery, browseExpanded, allGroups]);
 
-  // Search results use the hit rows; keep the browse tree collapsed when a
-  // query is active and reset it when the surface closes.
+  // A query collapses the browse tree; clearing it restores the browse default
+  // (every group open when `browseExpanded`, otherwise all collapsed).
   useEffect(() => {
-    if (query.trim()) setExpandedGroups(new Set());
-  }, [query]);
+    if (query.trim() || !browseExpanded) {
+      setExpandedGroups(prev => (prev.size ? new Set() : prev));
+      return;
+    }
+    setExpandedGroups(prev => {
+      if (prev.size === allGroups.size && [...allGroups].every(key => prev.has(key))) return prev;
+      return allGroups;
+    });
+  }, [query, browseExpanded, allGroups]);
 
   const toggleGroup = useCallback((key: string) => {
     setExpandedGroups(prev => {
@@ -417,7 +440,17 @@ export function SearchMenu({
   const renderGroupRow = (row: Extract<SearchMenuRow, { kind: 'group' }>, rowIndex: number) => {
     const groupExpanded = expandedGroups.has(row.group.key);
     const showChevron = expandableGroups && !query.trim();
+    const actionable = !!onSelectGroup || expandableGroups;
     const active = highlighted === rowIndex;
+    const face = (
+      <>
+        {row.group.icon && <span className={`${d.icon} shrink-0`}>{row.group.icon}</span>}
+        <span className="flex-1 truncate">{row.group.label}</span>
+        {row.group.count !== undefined && (
+          <span className="shrink-0 text-[10px] tabular-nums text-zinc-400">{row.group.count}</span>
+        )}
+      </>
+    );
     return (
       <div
         key={`group:${row.group.key}`}
@@ -429,18 +462,18 @@ export function SearchMenu({
         style={itemSize}
         className={`w-full rounded flex items-center gap-1 outline-none select-none font-medium ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''}`}
       >
-        <button
-          type="button"
-          tabIndex={-1}
-          onClick={() => activate(row)}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left"
-        >
-          {row.group.icon && <span className={`${d.icon} shrink-0`}>{row.group.icon}</span>}
-          <span className="flex-1 truncate">{row.group.label}</span>
-          {row.group.count !== undefined && (
-            <span className="shrink-0 text-[10px] tabular-nums text-zinc-400">{row.group.count}</span>
-          )}
-        </button>
+        {actionable ? (
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => activate(row)}
+            className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          >
+            {face}
+          </button>
+        ) : (
+          <span className="flex min-w-0 flex-1 items-center gap-2">{face}</span>
+        )}
         {showChevron && (
           <button
             type="button"

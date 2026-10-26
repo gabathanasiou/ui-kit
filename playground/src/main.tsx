@@ -714,6 +714,9 @@ function DeepSearchDemo() {
       <div data-testid="search-menu-expandable">
         <SearchMenu {...common} triggerLabel="Search" placeholder="Search records or categories…" />
       </div>
+      <div data-testid="search-menu-browse-expanded">
+        <SearchMenu {...common} expandableGroups={false} browseExpanded triggerLabel="Browse all" placeholder="Browse records…" />
+      </div>
       <div data-testid="morph-search-field">
         <MorphSearchField
           value={filter}

@@ -297,6 +297,22 @@ test('SearchMenu expandable: button morphs into the field and back', async ({ pa
   await expect(wrap.locator('[data-search-trigger]')).toBeVisible();
   await expect(input).not.toBeFocused();
   await expect(searchPanel(page)).toHaveCount(0);
+
+  // `browseExpanded`: plain category headers, every record visible (no
+  // accordion); typing filters and clearing restores the all-open list.
+  const browse = page.getByTestId('search-menu-browse-expanded');
+  await browse.getByRole('button', { name: /Browse all/ }).click();
+  await expect(searchPanel(page)).toBeVisible();
+  await expect(page.locator('[data-search-group="cast"]')).toBeVisible();
+  await expect(page.locator('[data-search-item="anna"]')).toBeVisible();
+  await expect(page.locator('[data-search-item="bob"]')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Expand Cast|Collapse Cast/ })).toHaveCount(0);
+  const browseInput = browse.locator('[data-search-input]');
+  await browseInput.fill('roy');
+  await expect(page.locator('[data-search-item="anna"]')).toBeVisible();
+  await expect(page.locator('[data-search-item="bob"]')).toHaveCount(0);
+  await browseInput.fill('');
+  await expect(page.locator('[data-search-item="bob"]')).toBeVisible();
 });
 
 test('MorphSearchField: button morphs into a filter field and keeps the term', async ({ page }) => {
