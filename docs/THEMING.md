@@ -1,7 +1,7 @@
 # Theming — mode, accent, surface
 
 **Read this before changing colours, the Modal shell, or any menu/dropdown theming.**
-Status: shipped in **v0.1.115** (roadmap 302); the Theme lab is the visual harness.
+Status: shipped in **v0.1.115** (roadmap 302), refined in **v0.1.116**; the Theme lab is the visual harness.
 
 The kit themes on **two axes plus a surface flag**. Keeping them separate is the
 whole model: lightness is a design decision, a project's colour is an identity
@@ -60,9 +60,10 @@ This distinction is deliberate:
 | --- | --- | --- |
 | Header (THE app-header colour) | `accent-950` + white title/icon | `accent-950` + white |
 | Body | neutral `#fff` | neutral `#18181b` |
-| Card / input wells | `accent-100` / lighter `accent-50` fields | `accent-900` mixes |
+| Card / input wells | fields `accent-50`; card shell **neutral raised** | fields `accent-700` mix; card shell **neutral raised** |
 | Footer | `accent-50` | `accent-950` mix |
 | Card + calendar headers | `accent-900` + white | `accent-950` + white |
+| Header hover | `accent-800` (deeper, never grey) | `accent-900` (lighter, never grey) |
 | Calendar body | **neutral** (only header/footer accent) | **neutral** |
 | Checklist / radio list | **neutral** panel; only checked rows + boxes accent | **neutral** |
 | Selection | `accent-200` + `accent-900` text | `accent-400` @ 26% + white |
@@ -80,6 +81,14 @@ Rules:
   accent steps (light) / lighter steps (dark); selected dates and solid buttons
   use `accent-700`/`800` with white text; the dark-mode checkbox uses a dark
   check mark on `accent-400`.
+- **Inputs share one recipe.** Text boxes (`.ui-input`) and number boxes
+  (`.ui-number-box`) both fill from `--ui-input-bg`; hover/focus changes only the
+  neutral border (`--ui-input-hover-border` / `--ui-input-focus-border`) — never
+  an accent wash. One token set drives both.
+- **Card shells stay neutral; only their headers wear the accent.** A neutral
+  raised fill + `--ui-border-strong` keeps the card readable on the neutral body.
+- **Header hovers stay in the accent family** (a deeper/lighter accent step),
+  never a white/grey wash.
 - **Danger/success/warning never follow the accent.**
 
 ## Tokens
