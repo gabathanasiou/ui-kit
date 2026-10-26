@@ -298,3 +298,31 @@ test('SearchMenu expandable: button morphs into the field and back', async ({ pa
   await expect(input).not.toBeFocused();
   await expect(searchPanel(page)).toHaveCount(0);
 });
+
+test('MorphSearchField: button morphs into a filter field and keeps the term', async ({ page }) => {
+  await page.goto('/');
+  const wrap = page.getByTestId('morph-search-field');
+  const trigger = wrap.locator('[data-morph-search-trigger]');
+  const input = wrap.locator('[data-morph-search-input]');
+  const status = page.getByTestId('morph-search-status');
+
+  await trigger.click();
+  await expect(input).toBeVisible();
+  await expect(input).toBeFocused();
+  await input.pressSequentially('roy');
+  await expect(status).toHaveText('filter: roy');
+
+  // Clicking away collapses but KEEPS the filter (the toolbar count stays).
+  await page.getByTestId('deep-search-status').click();
+  await expect(trigger).toBeVisible();
+  await expect(input).not.toBeFocused();
+  await expect(status).toHaveText('filter: roy');
+
+  // Reopening restores the term; Escape clears it and returns to the trigger.
+  await trigger.click();
+  await expect(input).toHaveValue('roy');
+  await input.press('Escape');
+  await expect(trigger).toBeVisible();
+  await expect(status).toHaveText('filter: —');
+  await expect(trigger).toBeFocused();
+});

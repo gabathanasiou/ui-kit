@@ -74,6 +74,8 @@ export { clampNumber, steppedValue, scrubbedValue, SCRUB_PX_PER_STEP } from './n
 export { default as CardSection } from './CardSection';
 export type { CardSectionProps } from './CardSection';
 
+export { MorphSearchField } from './MorphSearchField';
+export type { MorphSearchFieldProps } from './MorphSearchField';
 export { SearchMenu } from './SearchMenu';
 export type { SearchMenuProps, SearchMenuMode, SearchMenuEmptyAction } from './SearchMenu';
 export { parseSearchTags, matchSearchItem, searchMenuContent, buildSearchMenuRows } from './searchMenuModel';

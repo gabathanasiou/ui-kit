@@ -39,8 +39,9 @@ const WAIT_BASELINE = 9;
 // 87 = 86 + the focus guard (focus landing in the menu returns to the field).
 // 88 = 87 + the deep-search demo (typed-only open, category rows, jump).
 // 89 = 88 + the two SearchMenu modes (inline textbox + expandable button).
+// 90 = 89 + MorphSearchField (the filter-only button↔field morph; Glide toolbars).
 const SPEC_CAP = 15;
-const TEST_CAP = 89;
+const TEST_CAP = 90;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

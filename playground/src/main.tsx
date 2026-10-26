@@ -9,7 +9,7 @@ import {
   RichTextEditor, FormatToolbar, LongPressMenuProvider, RICH_TEXT_STATE_IDLE,
   CardSection, setCoarseScale, useCoarseScale, useInputSize, IS_COARSE,
   NumberInput, Seg, FloatingToggle, useSlidingPill,
-  ThemeScope, ThemeProvider, menuThemeOf, inputCls, SearchMenu,
+  ThemeScope, ThemeProvider, menuThemeOf, inputCls, SearchMenu, MorphSearchField,
 } from '../../src/index';
 import { Table2, CalendarRange, CalendarDays, Palette, Scale, Clapperboard, BarChart3, Users, Building2, UserRound, MapPin, Search, Plus } from 'lucide-react';
 import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem, SearchMenuItem } from '../../src/index';
@@ -678,6 +678,7 @@ function DeepSearchDemo() {
   const [active, setActive] = useState<string | null>(null);
   const [pick, setPick] = useState<string | null>(null);
   const [groupMode, setGroupMode] = useState<'multiple' | 'single'>('multiple');
+  const [filter, setFilter] = useState('');
   const groups = DEEP_CATEGORIES.map(c => ({ ...c, count: records.filter(r => r.group === c.key).length }));
   const common = {
     items: records,
@@ -713,6 +714,18 @@ function DeepSearchDemo() {
       <div data-testid="search-menu-expandable">
         <SearchMenu {...common} triggerLabel="Search" placeholder="Search records or categories…" />
       </div>
+      <div data-testid="morph-search-field">
+        <MorphSearchField
+          value={filter}
+          onChange={setFilter}
+          triggerLabel="Filter"
+          placeholder="Filter rows…"
+          collapsedWidth={88}
+          expandedWidth={190}
+          active={!!filter.trim()}
+        />
+      </div>
+      <span className="label" data-testid="morph-search-status">filter: {filter || '—'}</span>
       <div data-testid="search-menu-group-mode">
         <Seg
           value={groupMode}
