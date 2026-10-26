@@ -54,7 +54,13 @@ export function useDialog() {
   return ctx;
 }
 
-export function DialogProvider({ children }: { children: React.ReactNode }) {
+export function DialogProvider({ children, theme, accent, surface }: {
+  children: React.ReactNode;
+  /** Explicit dialog theme; omit to inherit the nearest ThemeProvider/Scope. */
+  theme?: 'light' | 'dark';
+  accent?: 'zinc' | 'blue' | 'emerald';
+  surface?: 'neutral' | 'accent';
+}) {
   const [dialog, setDialog] = useState<DialogState>(null);
   const [suppressCheck, setSuppressCheck] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -190,7 +196,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
               ) : dialog.kind === 'confirm' ? (
                 <ModalFooterButton
                   data-modal-confirm
-                  variant="danger-solid"
+                  variant={dialog.options.danger ? 'danger-solid' : 'hero'}
                   onClick={confirmAction}
                 >
                   Confirm
@@ -206,7 +212,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
       >
         <div className="flex flex-col" style={{ gap: bodyGap }}>
           {dialog?.options.message && (
-            <p style={{ fontSize: descFs }} className="text-zinc-400 leading-relaxed">
+            <p style={{ fontSize: descFs }} className="text-[color:var(--ui-text-muted)] leading-relaxed">
               {dialog.options.message}
             </p>
           )}

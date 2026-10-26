@@ -9,7 +9,7 @@ import {
   RichTextEditor, FormatToolbar, LongPressMenuProvider, RICH_TEXT_STATE_IDLE,
   CardSection, setCoarseScale, useCoarseScale, useInputSize, IS_COARSE,
   NumberInput, Seg, FloatingToggle, useSlidingPill,
-  ThemeScope, menuThemeOf, inputCls,
+  ThemeScope, ThemeProvider, menuThemeOf, inputCls,
 } from '../../src/index';
 import { Table2, CalendarRange, CalendarDays, Palette, Scale, Clapperboard, BarChart3 } from 'lucide-react';
 import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem } from '../../src/index';
@@ -28,6 +28,18 @@ import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem } fr
 
 const LAB_MODES = ['light', 'dark'] as const;
 const LAB_ACCENTS = ['zinc', 'blue', 'emerald'] as const;
+
+function LabDialogDemo() {
+  const dialog = useDialog();
+  return (
+    <Button
+      data-testid="theme-lab-dialog"
+      onClick={() => { void dialog.confirm({ title: 'Themed dialog', message: 'This confirm inherits the modal surface.' }); }}
+    >
+      Show themed dialog
+    </Button>
+  );
+}
 
 function ThemeLabSection() {
   const [mode, setMode] = useState<'light' | 'dark'>('dark');
@@ -88,8 +100,17 @@ function ThemeLabSection() {
             variant={accent === a ? 'primary' : 'subtle'}
             cloud={a === 'emerald' ? 'emerald' : a === 'blue'}
             onClick={() => setAccent(a)}
-          >{a}</Button>
+          >{a === 'zinc' ? 'none (zinc)' : a}</Button>
         ))}
+        <span className="label ml-3">Lego override</span>
+        <ThemeProvider mode="light" accent="blue">
+          <Seg
+            value={seg}
+            options={[{ v: 'details', l: 'Details' }, { v: 'times', l: 'Times' }]}
+            onChange={setSeg}
+            variant="track"
+          />
+        </ThemeProvider>
         <span className="label ml-3">Surface</span>
         <Button
           data-testid="theme-chrome-toggle"
@@ -224,6 +245,10 @@ function ThemeLabSection() {
                   <DropdownItem key={v} selected={pick === v} onClick={() => { setPick(v); setModalMenuOpen(false); }}>{v}</DropdownItem>
                 ))}
               </DropdownMenu>
+
+              <DialogProvider>
+                <LabDialogDemo />
+              </DialogProvider>
 
               <div className="space-y-1">
                 <div className="text-[10px] uppercase tracking-wider text-[color:var(--ui-text-muted)]">States (surface row tokens)</div>

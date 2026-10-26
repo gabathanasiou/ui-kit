@@ -101,6 +101,45 @@ than hand-writing the rules.
 | Seg | Neutral outline/labels; accent pill. |
 | Tabs | Pill role; chrome tabs need a chrome `ThemeScope` so the pill resolves the accent. |
 
+## Colour one control manually (Lego scopes)
+
+The accent is inherited from the nearest scope, so a single control can have a
+different accent without a colour prop:
+
+```tsx
+{/* Only this Seg is blue, even inside an emerald modal. */}
+<ThemeProvider mode="dark" accent="blue">
+  <Seg value={view} options={…} onChange={setView} variant="track" />
+</ThemeProvider>
+```
+
+- Use `ThemeProvider` (context only) when the child writes its own `data-*`
+  attributes (Button, Seg, DatePicker, DropdownMenu).
+- Use `ThemeScope` when a container/panel needs the attributes on a wrapper
+  (token-driven children like CardSection, Checklist, inputs).
+- **No per-component `color`/`accent` props.** A new colour is one
+  `[data-accent="…"]` block + the `KitAccent` union — then every role works.
+
+The Theme lab's **Lego override** Seg is this exact pattern: it stays blue while
+the modal is emerald (or zinc).
+
+## Dialogs
+
+Confirm/prompt/alert dialogs render through the kit Modal and inherit the
+surface automatically **only if their `DialogProvider` sits inside the theme
+scope**. The app's global provider usually sits above the project scope, so:
+
+- move `DialogProvider` inside the project/surface scope, or
+- pass the theme explicitly:
+  ```tsx
+  <DialogProvider theme="dark" accent="emerald" surface="accent">
+  ```
+- The dialog's primary action uses **action** (accent); destructive confirms use
+  **danger** only when `confirm({ danger: true })` is set.
+
+The Theme lab's “Show themed dialog” button is mounted inside a nested
+`DialogProvider`, so it demonstrates the inherited surface.
+
 ## Do / Don't
 
 | Do | Don't |

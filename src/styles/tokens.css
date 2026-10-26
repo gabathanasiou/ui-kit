@@ -1451,6 +1451,9 @@
   background: var(--ui-check-list-bg);
   border: 1px solid var(--ui-check-list-border);
   border-radius: 6px;
+  /* Selected rows are full-width squares; clip them to the rounded shell so
+     their fill does not poke through the corners. */
+  overflow: hidden;
   color: var(--ui-text);
 }
 

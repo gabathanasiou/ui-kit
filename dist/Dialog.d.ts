@@ -21,7 +21,11 @@ interface DialogContextType {
     alert: (opts: AlertOptions) => Promise<void>;
 }
 export declare function useDialog(): DialogContextType;
-export declare function DialogProvider({ children }: {
+export declare function DialogProvider({ children, theme, accent, surface }: {
     children: React.ReactNode;
+    /** Explicit dialog theme; omit to inherit the nearest ThemeProvider/Scope. */
+    theme?: 'light' | 'dark';
+    accent?: 'zinc' | 'blue' | 'emerald';
+    surface?: 'neutral' | 'accent';
 }): React.JSX.Element;
 export {};
