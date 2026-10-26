@@ -22,6 +22,26 @@ function isNeutral(c: string): boolean {
   return false;
 }
 
+/** Backgrounds that would reveal an accent leaking into the modal body. */
+async function modalSurfaceColours(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const dialog = document.querySelector('[role="dialog"]')!;
+    const body = dialog.querySelector('[data-testid="theme-lab-modal-body"]')!;
+    const byText = (t: string) => [...dialog.querySelectorAll('button')].find(b => b.textContent?.trim() === t);
+    const grab = (el: Element | null | undefined) => el ? getComputedStyle(el).backgroundColor : null;
+    return [
+      grab(dialog.querySelector('[data-testid="modal-body"]')),
+      grab(body.querySelector('.ui-card')),
+      grab(body.querySelector('.ui-card > div:first-child')),
+      grab(byText('Add scene')),
+      grab(byText('Save day')),
+      grab(body.querySelector('[data-testid="theme-lab-main-seg"] span[aria-hidden]')),
+      grab(body.querySelector('.ui-checklist-item-checked')),
+      grab([...body.querySelectorAll('button')].find(b => /Remove/.test(b.getAttribute('aria-label') || ''))),
+    ].filter((x): x is string => !!x);
+  });
+}
+
 /* Debugging spec: modals + portals.
    - a DropdownMenu INSIDE a Modal must portal above the modal, and Escape
      must dismiss ONLY the menu (never the enclosing modal)
@@ -120,9 +140,20 @@ test('theme lab: accent chrome tints the modal header, neutral does not', async 
   await page.getByTestId('theme-chrome-toggle').click();
   await page.getByTestId('theme-lab-open').click();
   await expect(page.getByRole('dialog')).toHaveAttribute('data-surface', 'neutral');
+  /* Neutral surface SUPPRESSES the accent even though the lab's accent is
+     still emerald: the modal resolves to zinc, so no selection/check/chip
+     inside may carry chroma. */
+  await expect(page.getByRole('dialog')).toHaveAttribute('data-accent', 'zinc');
   const neutralBg = await page.getByTestId('modal-header').evaluate(el => getComputedStyle(el).backgroundColor);
 
   expect(accentBg).not.toBe(neutralBg);
+  for (const c of await modalSurfaceColours(page)) expect(isNeutral(c), c).toBe(true);
+
+  /* A manual (Lego) accent inside the neutral modal still colours its subtree. */
+  const lego = page.getByTestId('theme-lab-modal-lego');
+  await expect(lego.locator('[role="group"]')).toHaveAttribute('data-accent', 'blue');
+  const legoPill = await lego.locator('[role="group"] span[aria-hidden]').evaluate(el => getComputedStyle(el).backgroundColor);
+  expect(isNeutral(legoPill)).toBe(false);
 
   /* EXACT CASE: accent = none (zinc). Nothing inside the modal may carry a
      chromatic accent; red danger actions are deliberately excluded. */
@@ -131,23 +162,7 @@ test('theme lab: accent chrome tints the modal header, neutral does not', async 
   await page.getByTestId('theme-lab-open').click();
   const zincDialog = page.getByRole('dialog');
   await expect(zincDialog).toHaveAttribute('data-accent', 'zinc');
-  const colours = await page.evaluate(() => {
-    const dialog = document.querySelector('[role="dialog"]')!;
-    const body = dialog.querySelector('[data-testid="theme-lab-modal-body"]')!;
-    const byText = (t: string) => [...dialog.querySelectorAll('button')].find(b => b.textContent?.trim() === t);
-    const grab = (el: Element | null | undefined) => el ? getComputedStyle(el).backgroundColor : null;
-    return [
-      grab(dialog.querySelector('[data-testid="modal-body"]')),
-      grab(body.querySelector('.ui-card')),
-      grab(body.querySelector('.ui-card > div:first-child')),
-      grab(byText('Add scene')),
-      grab(byText('Save day')),
-      grab(body.querySelector('[role="group"] span[aria-hidden]')),
-      grab(body.querySelector('.ui-checklist-item-checked')),
-      grab([...body.querySelectorAll('button')].find(b => /Remove/.test(b.getAttribute('aria-label') || ''))),
-    ].filter((x): x is string => !!x);
-  });
-  for (const c of colours) expect(isNeutral(c), c).toBe(true);
+  for (const c of await modalSurfaceColours(page)) expect(isNeutral(c), c).toBe(true);
 });
 
 test('theme lab: light mode renders a light shell', async ({ page }) => {

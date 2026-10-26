@@ -53,6 +53,7 @@ function ThemeLabSection() {
   const [date, setDate] = useState<string[]>(['2026-11-03', '2026-11-04']);
   const [checked, setChecked] = useState(true);
   const [seg, setSeg] = useState('details');
+  const [legoSeg, setLegoSeg] = useState('a');
   const [num, setNum] = useState(8);
   const [cardOpen, setCardOpen] = useState(true);
   const [cast, setCast] = useState<string[]>(['1']);
@@ -195,7 +196,7 @@ function ThemeLabSection() {
         <Modal
           open={open}
           onClose={() => setOpen(false)}
-          title={`Day 4 — ${accent} ${surface} surface`}
+          title={`Day 4 — ${surface === 'accent' ? `${accent} accent` : 'neutral'} surface`}
           icon={<Palette className="w-4 h-4" />}
           width="max-w-2xl"
           theme={mode}
@@ -262,12 +263,25 @@ function ThemeLabSection() {
             </div>
 
             <div className="space-y-3">
-              <Seg
-                value={seg}
-                options={[{ v: 'details', l: 'Details' }, { v: 'times', l: 'Times' }, { v: 'crew', l: 'Crew' }]}
-                onChange={setSeg}
-                variant="track"
-              />
+              <div data-testid="theme-lab-modal-lego" className="flex items-center gap-2">
+                <span className="text-[10px] uppercase tracking-wider text-[color:var(--ui-text-muted)]">Lego</span>
+                <ThemeProvider mode={mode} accent="blue">
+                  <Seg
+                    value={legoSeg}
+                    options={[{ v: 'a', l: 'A' }, { v: 'b', l: 'B' }]}
+                    onChange={setLegoSeg}
+                    variant="track"
+                  />
+                </ThemeProvider>
+              </div>
+              <div data-testid="theme-lab-main-seg">
+                <Seg
+                  value={seg}
+                  options={[{ v: 'details', l: 'Details' }, { v: 'times', l: 'Times' }, { v: 'crew', l: 'Crew' }]}
+                  onChange={setSeg}
+                  variant="track"
+                />
+              </div>
               <DatePicker selected={date} onChange={setDate} showChips />
               <Checklist title="Cast" items={castItems} selected={cast} onToggle={toggleCast} />
             </div>
@@ -585,11 +599,15 @@ const LOCATIONS = [
 ];
 
 function GroupedSearchableMenuDemo() {
-  /* Grouped searchable menu: rows carry a `group` (locations by type). A
-     category header renders on the first VISIBLE row of its group; searching
-     matches the group label too, so "set" lists the whole Set category. */
+  /* Grouped menus: rows carry a `group` (locations by type). A category header
+     renders on the first VISIBLE row of its group; a searchable menu's query
+     matches the group label too, so "set" lists the whole Set category. The
+     same headers render in a plain (non-searchable) menu — grouping is a
+     DropdownItem concern, not a search feature. */
   const [open, setOpen] = useState(false);
+  const [plainOpen, setPlainOpen] = useState(false);
   const [pick, setPick] = useState<string | null>(null);
+  const [plainPick, setPlainPick] = useState<string | null>(null);
   return (
     <div className="row" data-testid="grouped-searchable-menu">
       <DropdownMenu open={open} onOpenChange={setOpen} width="w-72"
@@ -599,6 +617,17 @@ function GroupedSearchableMenuDemo() {
         {LOCATIONS.map(loc => (
           <DropdownItem key={loc.name} group={loc.group} selected={pick === loc.name}
             onClick={() => { setPick(loc.name); setOpen(false); }}
+          >
+            {loc.name}
+          </DropdownItem>
+        ))}
+      </DropdownMenu>
+      <DropdownMenu open={plainOpen} onOpenChange={setPlainOpen} width="w-72"
+        trigger={<Button data-testid="grouped-trigger">Grouped menu {plainPick ? `— ${plainPick}` : ''}</Button>}
+      >
+        {LOCATIONS.map(loc => (
+          <DropdownItem key={loc.name} group={loc.group} selected={plainPick === loc.name}
+            onClick={() => { setPlainPick(loc.name); setPlainOpen(false); }}
           >
             {loc.name}
           </DropdownItem>

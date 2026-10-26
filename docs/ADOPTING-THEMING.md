@@ -18,12 +18,14 @@ and the menus should inherit.
 | --- | --- | --- |
 | `data-mode` | `light` \| `dark` | Neutral surfaces/text/borders |
 | `data-accent` | `zinc` \| `blue` \| `emerald` | The project colour |
-| `data-surface` | `neutral` \| `accent` | `accent` opts into the tinted ladder (strong header, pale wells) |
-| `data-context` | `surface` \| `chrome` | `chrome` = coloured header → menus open fully coloured |
+| `data-surface` | `neutral` \| `accent` | `accent` opts into the tinted ladder (strong header, pale wells) **and applies the accent**; `neutral` keeps the normal palette **and drops the accent** |
+| `data-context` | `surface` \| `chrome` | `chrome` = coloured header → identity colour always applies, menus open fully coloured |
 
-Normal modal: `surface="neutral"`. Coloured Drive/shared modal:
-`surface="accent"`. Local project: `accent="blue"`, `surface="neutral"` (blue
-selection, neutral shell). Kit default: `accent="zinc"`, neutral.
+Normal modal: `surface="neutral"` → no accent inside (selection/checks/Seg/
+chips are neutral). Coloured Drive/shared modal: `surface="accent"` → accent
+header + accent states. Local project: `accent="blue"`, `surface="neutral"`
+(blue header/tabs only; normal modals stay neutral). Kit default:
+`accent="zinc"`, neutral.
 
 ## Recipes
 
@@ -48,9 +50,11 @@ selection, neutral shell). Kit default: `accent="zinc"`, neutral.
 
 ### Normal modal
 
-Use `surface="neutral"`. The header/body/card/calendar stay light/dark; the
-accent still reaches selection, checks, the Seg pill and focus-free states.
-`accent="zinc"` removes even those (fully neutral kit default).
+Use `surface="neutral"`. The header/body/card/calendar stay light/dark and the
+accent is **suppressed** inside: selection, checks, Seg and date chips are
+neutral. The project colour still lives in the chrome (app header/tabs) and in
+any explicit accent-tinted surface. If you want accent states inside, use
+`surface="accent"` (or a manual Lego scope for one control).
 
 ### Page / panel
 
@@ -59,6 +63,10 @@ accent still reaches selection, checks, the Seg pill and focus-free states.
   <MyPanel />
 </ThemeScope>
 ```
+
+A scope that sets only `accent` (no `surface`) is a manual override: it keeps
+blue inside even when its parent is neutral. Add `surface="neutral"` when you
+want the normal neutral panel with a blue identity for chrome children.
 
 ### Chrome header / toolbar (fully coloured menus)
 
@@ -91,23 +99,23 @@ than hand-writing the rules.
 
 | Element | Behaviour inside a modal |
 | --- | --- |
-| Modal shell | `surface="accent"`: A950 header, neutral body, A100 footer. `neutral`: normally themed light/dark shell. |
-| Dropdown / ContextMenu | Neutral panel; items use the **soft button hover**, selected uses the selected role, selected+hover lifts. **Do not pass `theme`** unless forcing a preset. |
-| Tooltip | Carries mode/accent itself (portal). |
+| Modal shell | `surface="accent"`: A950 header, neutral body, A100 footer + accent states. `neutral`: normally themed light/dark shell with **no accent inside**. |
+| Dropdown / ContextMenu | Neutral panel; items use the **soft button hover**, selected uses the selected role, selected+hover lifts. On a neutral surface all of it is neutral; on an accent surface, accent states. **Do not pass `theme`** unless forcing a preset. |
+| Tooltip | Carries mode + effective accent itself (portal). |
 | Inputs / NumberInput | Transparent; inherit the surface. Hover = neutral lift; focus = neutral border. Never accent-filled. |
-| Button primary | Accent action inside an accent surface; neutral primary inside a neutral surface. |
-| Cards / calendar | Card header accent, card body neutral. Calendar **accent header**, neutral body/footer — only selected days/chips accent. |
-| Checkbox / Checklist / Radio | Neutral panel; selected row/box uses the accent check/selection roles. |
-| Seg | Neutral outline/labels; accent pill. |
+| Button primary | Accent action on an accent surface; neutral primary on a neutral surface. |
+| Cards / calendar | Accent header/body on an accent surface; neutral shell on a neutral surface. Calendar body/footer are always neutral. |
+| Checkbox / Checklist / Radio | Neutral panel; selected row/box uses the accent roles only where the accent applies. |
+| Seg | Neutral outline/labels; accent pill only on chrome/accent surfaces or a local override. |
 | Tabs | Pill role; chrome tabs need a chrome `ThemeScope` so the pill resolves the accent. |
 
 ## Colour one control manually (Lego scopes)
 
 The accent is inherited from the nearest scope, so a single control can have a
-different accent without a colour prop:
+different accent without a colour prop — including inside a neutral modal:
 
 ```tsx
-{/* Only this Seg is blue, even inside an emerald modal. */}
+{/* Only this Seg is blue, even inside a neutral (or emerald) modal. */}
 <ThemeProvider mode="dark" accent="blue">
   <Seg value={view} options={…} onChange={setView} variant="track" />
 </ThemeProvider>
@@ -117,11 +125,13 @@ different accent without a colour prop:
   attributes (Button, Seg, DatePicker, DropdownMenu).
 - Use `ThemeScope` when a container/panel needs the attributes on a wrapper
   (token-driven children like CardSection, Checklist, inputs).
+- An accent-only scope is a manual override even when its parent is neutral.
+  Declaring `surface="neutral"` on it explicitly neutralises again.
 - **No per-component `color`/`accent` props.** A new colour is one
   `[data-accent="…"]` block + the `KitAccent` union — then every role works.
 
-The Theme lab's **Lego override** Seg is this exact pattern: it stays blue while
-the modal is emerald (or zinc).
+The Theme lab has both examples: the **Lego override** Seg in the controls row,
+and a blue **Lego** Seg inside the neutral-surface modal.
 
 ## Dialogs
 
@@ -145,7 +155,9 @@ The Theme lab's “Show themed dialog” button is mounted inside a nested
 | Do | Don't |
 | --- | --- |
 | Theme the modal/panel once | Pass `theme` to every dropdown |
-| Use `surface` for tinted vs normal | Recolour headers/bodies by hand |
+| Use `surface="neutral"` for normal modals | Expect a neutral surface to keep accent selection |
+| Use `surface="accent"` for tinted Drive/shared surfaces | Tint individual controls by hand |
+| Wrap the app header/tabs in `context="chrome"` | Expect a neutral surface to colour chrome |
 | Use `--ui-accent-action/selected/hover/highlight/soft/header/pill/check` roles | Pick A600/A800/A950 per component |
 | Use `bg-[var(--ui-…)]` / `text-[color:var(--ui-…)]` | Hardcode `bg-zinc-900`, `text-white`, `bg-blue-950` |
 | Keep outlines neutral (`--ui-border`, `--ui-accent-focus`) | Colour borders or focus rings |
@@ -163,6 +175,9 @@ The Theme lab's “Show themed dialog” button is mounted inside a nested
 | Two “selected” rows look different | One component is still using a raw step; map it to `--ui-accent-selected-*`. |
 | A dropdown is unclickable inside a modal | It is not portaled above the modal; use the kit menu (z-index handled) or the shared panel. |
 | Emerald project still shows blue toggles/tabs | The chrome surface is not wrapped in a `ThemeScope` with the project accent, or a hardcoded blue class remains. |
+| A neutral modal still shows accent selection/checks | A nested accent-only scope is intentionally overriding it (Lego), or a component received an explicit `theme`/`accent` prop. |
+| A manual (Lego) accent turned neutral | Its scope explicitly declares `surface="neutral"`; set only `accent` (or use `surface="accent"`). |
+| The app header lost its colour after a neutral-surface change | The header/tabs are inside the neutral surface scope. Wrap them in `ThemeScope context="chrome"`; neutral only suppresses surface content. |
 
 ## Verification
 

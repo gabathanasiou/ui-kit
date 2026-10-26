@@ -11,13 +11,27 @@ decision, and neither should force a hand-written theme block.
 | Axis | Attribute | Values | Owns |
 | --- | --- | --- | --- |
 | Mode | `data-mode` | `light` \| `dark` | Neutral surfaces, body text, borders, control fills |
-| Accent | `data-accent` | `zinc` \| `blue` \| `emerald` | Selection, hover, checks, the accent scale, colored chrome presets |
-| Surface | `data-surface` | `neutral` \| `accent` | `accent` opts a container into the tinted ladder (strong header, pale wells) |
-| Context | `data-context` | `surface` \| `chrome` | `chrome` = a coloured header/toolbar → menus open FULLY coloured; `surface` = a modal/panel → menus stay light/dark with accent states |
+| Accent | `data-accent` | `zinc` \| `blue` \| `emerald` | Project identity: chrome, accent surfaces, manual overrides — **suppressed inside a neutral surface** |
+| Surface | `data-surface` | `neutral` \| `accent` | `accent` opts a container into the tinted ladder (strong header, pale wells) **and applies the accent**; `neutral` keeps the normal palette **and drops the accent** |
+| Context | `data-context` | `surface` \| `chrome` | `chrome` = a coloured header/toolbar → identity colours always apply, menus open FULLY coloured; `surface` = a modal/panel → neutral chrome stays neutral, accent states only on an accent surface |
 
 `zinc` = no project colour: **neutral** selection (the kit default).
 `blue` = Drive-style chrome. `emerald` = shared/collaborative chrome.
 Add a colour by adding one `[data-accent="…"]` block — no component changes.
+
+**Where the accent applies** — this is the rule that keeps cloud projects
+looking like today (blue header/tabs, neutral modals):
+
+| Container | surface | context | Accent inside? |
+| --- | --- | --- | --- |
+| App header / tabs | `neutral` | `chrome` | **yes** — identity colour |
+| Normal modal / panel | `neutral` | `surface` | **no** — resolves to zinc |
+| Tinted (Drive/shared) modal | `accent` | `surface` | **yes** |
+| Manual “Lego” scope | inherited | inherited | **yes** when the scope sets ONLY `accent` |
+
+A nested `ThemeScope`/`ThemeProvider` that sets only `accent` is a manual
+override and keeps it even inside a neutral surface. Declaring
+`surface="neutral"` explicitly re-neutralises.
 
 ## ThemeScope / ThemeProvider
 
@@ -29,8 +43,10 @@ Add a colour by adding one `[data-accent="…"]` block — no component changes.
 </ThemeScope>
 ```
 
-- `ThemeProvider` publishes the pair without a DOM wrapper — the Modal uses it
-  so its whole subtree (portals included) inherits the surface theme.
+- `ThemeProvider` publishes the resolved theme without a DOM wrapper — the
+  Modal uses it so its whole subtree (portals included) inherits the surface
+  theme. An accent-only provider is a manual override; an explicit
+  `surface="neutral"` neutralises.
 - `ThemeScope` is the provider + `data-mode`/`data-accent`/`data-surface`/
   `data-context` on a wrapper (pages, panels, cards).
 - Portaled kit roots (menus, tooltips, context menus) re-write the axes on the
@@ -48,14 +64,19 @@ This distinction is deliberate:
   themed** — deep blue/emerald panel, white-alpha hover/selection. That is what
   the app's header menus do today.
 - **Surface context** (inside a modal/panel): menus stay **light or dark**
-  (neutral panel) and only their **accent** is tinted — selected row, hover,
-  checked state. A fully coloured panel inside a pastel modal reads wrong.
+  (neutral panel). On an **accent surface** their selected/hover/checked states
+  follow the accent; on a **neutral surface** the accent is suppressed, so they
+  stay fully neutral. A nested accent-only scope (Lego) re-enables the tint for
+  that menu/surface.
 - An explicit `theme="blue | emerald | light | dark"` still forces a preset
   anywhere ("unless specified").
 
 ## Surfaces — the accent ladder
 
-`surface="accent"` (Drive/shared modals) uses a 4-step ladder:
+`surface="accent"` (Drive/shared modals) uses a 4-step ladder. A
+`surface="neutral"` container uses the normal light/dark palette and carries no
+accent inside (selection, checks, Seg, date chips are neutral); its colour
+identity lives in chrome (the app header/tabs) or an explicit local override.
 
 | Role | Light | Dark |
 | --- | --- | --- |
@@ -103,6 +124,10 @@ Rules:
 - **Danger/success/warning never follow the accent.**
 
 ## Canonical roles — consume these, never a raw step
+
+These roles apply only where the accent is active (chrome, an accent surface,
+or a manual accent-only scope). Inside a neutral surface the same aliases
+resolve to the neutral ladder.
 
 | Role | Light | Dark | Used by |
 | --- | --- | --- | --- |
@@ -155,13 +180,13 @@ Rules:
 
 | Surface | Follows the scope today |
 | --- | --- |
-| `DropdownMenu`, `ContextMenu`, `DropdownSubmenu` | yes — chrome preset or surface mode+accent |
+| `DropdownMenu`, `ContextMenu`, `DropdownSubmenu` | yes — chrome preset or surface mode + effective accent (zinc on a neutral surface) |
 | `Checkbox`, `Checklist`, `RadioList`, `NumberInput` | yes — token-driven |
-| `CardSection` | yes — accent header + count chip, accent body |
+| `CardSection` | yes — accent header + count chip on accent surfaces; neutral otherwise |
 | `Tooltip` (portal-safe) | yes |
-| `Button` | yes — mode, project accent, accent hovers, accent active state |
-| `Seg` (track) | yes — neutral border/labels, accent pill |
-| `DatePicker` | yes — neutral shell (header/footer/body), accent selected days + chips |
+| `Button` | yes — mode; project accent on chrome/accent surfaces; neutral on neutral surfaces |
+| `Seg` (track) | yes — neutral border/labels; accent pill only where the accent applies |
+| `DatePicker` | yes — accent header/selection/chips on accent surfaces; neutral on neutral surfaces |
 | `Modal`, `ModalFooter`, `ModalFooterButton` | yes — full shell |
 | `RichTextEditor` / `FormatToolbar` / editor `TB_*` | not yet (dark-only follow-up) |
 
@@ -171,9 +196,10 @@ Rules:
 surface controls, a live preview with a **chrome-context** header menu, and a
 full dummy modal using buttons, menus, Seg, date picker, number input,
 checklist, radio list, card section, tooltip and footer buttons — plus a
-surface menu opened *inside* the modal. Specs:
-`playground/specs/modal-portal.spec.ts` (scope attributes, chrome-vs-surface
-menus, computed surface colours).
+surface menu opened *inside* the modal and a **Lego** blue Seg that stays blue
+inside a neutral modal. Specs: `playground/specs/modal-portal.spec.ts` (scope
+attributes, chrome-vs-surface menus, neutral-surface suppression + the manual
+override, computed surface colours).
 
 ## Migration checklist for a new surface
 

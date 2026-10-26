@@ -3,7 +3,7 @@ import * as RadixDialog from '@radix-ui/react-dialog';
 import { X, RotateCcw } from 'lucide-react';
 import { IS_COARSE, useCoarseScale, coarsePx } from './device';
 import { usePortalTarget, useCurrentWindow } from './popout';
-import { useKitTheme, ThemeProvider } from './ThemeScope';
+import { useKitTheme, resolveKitTheme, ResolvedThemeProvider } from './ThemeScope';
 
 const MAX_EDGE = 8;
 
@@ -172,11 +172,15 @@ export interface ModalProps {
      shell; every child that reads kit tokens follows. */
   theme?: 'light' | 'dark';
   /** Header-band treatment: `neutral` (default) keeps the standard light/dark
-     modal; `accent` uses the project surface ladder — strong accent-950 header
-     (the app-header look), pale accent body, accent-100 wells/footer. */
+     modal and SUPPRESSES the accent inside (the normal checkbox/menu/date
+     states go neutral); `accent` uses the project surface ladder — strong
+     accent-950 header (the app-header look), pale accent body, accent-100
+     wells/footer — and keeps selection/hover/checked on the accent. */
   surface?: 'neutral' | 'accent';
   /** Project identity for the accent ladder + interaction accent. Defaults to
-     the ambient ThemeScope's accent; otherwise the neutral zinc seed. */
+     the ambient ThemeScope's accent; otherwise the neutral zinc seed. A
+     neutral surface maps this to zinc for its whole subtree, except a nested
+     accent-only ThemeProvider/ThemeScope (a manual Lego override). */
   accent?: 'zinc' | 'blue' | 'emerald';
   /** Lock the modal open (default true): Esc/backdrop/overlay-touch/X are
      no-ops and the X button is hidden — the caller decides when it closes
@@ -212,9 +216,16 @@ export default function Modal({
   accent: accentProp,
 }: ModalProps) {
   const kit = useKitTheme();
-  const theme = themeProp ?? kit?.mode ?? 'dark';
-  const surface = surfaceProp ?? kit?.surface ?? 'neutral';
-  const accent = accentProp ?? kit?.accent ?? 'zinc';
+  /* A modal is a SURFACE: size is inherited, but a neutral surface suppresses
+     the accent. Only an explicit `surface="accent"` (or a chrome parent) keeps
+     the project colour inside; manual Lego scopes re-enable it locally. */
+  const resolved = resolveKitTheme(
+    { mode: themeProp, accent: accentProp, surface: surfaceProp, context: 'surface' },
+    kit,
+  );
+  const theme = resolved.mode;
+  const surface = resolved.surface;
+  const accent = resolved.accent;
   const contentRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
@@ -787,7 +798,7 @@ export default function Modal({
   }, []);
 
   return (
-    <ThemeProvider mode={theme} accent={accent} surface={surface} context="surface">
+    <ResolvedThemeProvider theme={resolved}>
       <RadixDialog.Root open={open} onOpenChange={(o) => { if (!o) doClose(); }}>
       <RadixDialog.Portal container={portalTarget ?? undefined}>
         <RadixDialog.Overlay
@@ -873,7 +884,7 @@ export default function Modal({
         </RadixDialog.Content>
       </RadixDialog.Portal>
     </RadixDialog.Root>
-    </ThemeProvider>
+    </ResolvedThemeProvider>
   );
 }
 

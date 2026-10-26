@@ -4,15 +4,20 @@ import React from 'react';
  *
  *   mode    — the neutral ladder: light or dark surfaces, text, borders.
  *   accent  — the project identity: zinc (none), blue (Drive-style) or
- *             emerald (shared). Drives selection/hover/checked, the modal
- *             surface ladder and the colored chrome presets.
- *   surface — `neutral` keeps the normal light/dark palette; `accent` opts a
- *             container into the tinted ladder (strong header, soft body,
- *             faint wells) — the project-coloured modal.
+ *             emerald (shared). Chrome (the app header/tabs) and explicitly
+ *             accent-tinted surfaces use it; a NEUTRAL surface suppresses it.
+ *   surface — `neutral` keeps the normal light/dark palette AND drops the
+ *             accent inside (normal modals); `accent` opts a container into the
+ *             tinted ladder (strong header, soft body, faint wells) and keeps
+ *             selection/hover/checked on the project colour.
  *   context — where the theme lives. `chrome` = a coloured header/toolbar:
- *             menus open FULLY coloured. `surface` = a modal/panel: menus stay
- *             light/dark and only their accent (selection/hover/checked) is
- *             tinted. An explicit `theme` prop still overrides either.
+ *             identity colours always apply and menus open FULLY coloured.
+ *             `surface` = a modal/panel: menus stay light/dark, with accent
+ *             states only when the surface is accented.
+ *
+ * Manual colour (the "Lego" override): a nested provider that sets ONLY
+ * `accent` keeps that accent even inside a neutral surface; a nested provider
+ * that explicitly declares `surface="neutral"` neutralises again.
  *
  * A surface owns its theme: `ThemeProvider` publishes it, `ThemeScope` also
  * writes the attributes on a wrapper. Portaled kit roots (menus, tooltips,
@@ -40,6 +45,17 @@ export interface ThemeProviderProps {
     context?: KitContext;
     children: React.ReactNode;
 }
+/** Resolve one theme layer against its parent. `surface="neutral"` in a
+ *  SURFACE context means the accent is not applied: identity colours belong to
+ *  chrome (the app header/tabs) or to an explicitly accent-tinted surface.
+ *  A child that sets ONLY `accent` is a manual (Lego) override and keeps it. */
+export declare function resolveKitTheme(input: Partial<KitTheme>, parent: KitTheme | null): KitTheme;
+/** Publish an already-resolved theme (Modal/ThemeScope use this so their
+ *  surface decision is not re-resolved into a second neutral layer). */
+export declare function ResolvedThemeProvider({ theme, children }: {
+    theme: KitTheme;
+    children: React.ReactNode;
+}): React.JSX.Element;
 /** Context-only surface owner — use inside a component that already renders
  *  its own portal/root (Modal), so the whole subtree (portals included)
  *  inherits the theme without an extra DOM wrapper. */
@@ -55,11 +71,13 @@ export declare function useKitTheme(): KitTheme | null;
 /** `DropdownMenu` / `ContextMenu` preset for an ambient scope. A CHROME
  *  context opens fully coloured menus on dark chrome (blue/emerald) or the
  *  plain dark menu for zinc. A SURFACE context stays light/dark — its accent
- *  reaches the selected/hover rows through the tokens, never the panel. */
+ *  reaches the selected/hover rows only when the surface is accented (a
+ *  neutral surface carries no accent). */
 export declare function menuThemeOf(theme: KitTheme | null, fallback?: KitMenuTheme): KitMenuTheme;
 /** What a menu should render: the preset plus the attributes that must travel
  *  with its portal root. Explicit `theme` wins; a chrome scope sets the full
- *  preset; a surface scope sets mode + accent (neutral panel, accent states). */
+ *  preset; a surface scope sets mode + the effective accent (neutral panel;
+ *  accented states only on an accent surface or a manual override). */
 export declare function menuAttributesOf(explicit: KitMenuTheme | undefined, theme: KitTheme | null): {
     theme: KitMenuTheme;
     attrs: Record<string, string>;
@@ -68,6 +86,6 @@ export declare function menuAttributesOf(explicit: KitMenuTheme | undefined, the
  *  palette: the pill follows `--ui-seg-pill`). */
 export declare function segModeOf(theme: KitTheme | null, fallback?: KitMode): KitMode;
 /** `Button`'s `cloud` accent for an ambient scope. Chrome surfaces and
- *  accent-tinted containers use the project colour; a NEUTRAL surface keeps
- *  the neutral primary (selection/checkbox accents still follow the theme). */
+ *  accent-tinted containers use the project colour; a NEUTRAL surface stays
+ *  neutral (and its accent is suppressed). */
 export declare function buttonCloudOf(theme: KitTheme | null): boolean | 'emerald';

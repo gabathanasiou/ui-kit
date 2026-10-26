@@ -15,11 +15,15 @@ export interface ModalProps {
        shell; every child that reads kit tokens follows. */
     theme?: 'light' | 'dark';
     /** Header-band treatment: `neutral` (default) keeps the standard light/dark
-       modal; `accent` uses the project surface ladder — strong accent-950 header
-       (the app-header look), pale accent body, accent-100 wells/footer. */
+       modal and SUPPRESSES the accent inside (the normal checkbox/menu/date
+       states go neutral); `accent` uses the project surface ladder — strong
+       accent-950 header (the app-header look), pale accent body, accent-100
+       wells/footer — and keeps selection/hover/checked on the accent. */
     surface?: 'neutral' | 'accent';
     /** Project identity for the accent ladder + interaction accent. Defaults to
-       the ambient ThemeScope's accent; otherwise the neutral zinc seed. */
+       the ambient ThemeScope's accent; otherwise the neutral zinc seed. A
+       neutral surface maps this to zinc for its whole subtree, except a nested
+       accent-only ThemeProvider/ThemeScope (a manual Lego override). */
     accent?: 'zinc' | 'blue' | 'emerald';
     /** Lock the modal open (default true): Esc/backdrop/overlay-touch/X are
        no-ops and the X button is hidden — the caller decides when it closes

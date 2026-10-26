@@ -169,4 +169,14 @@ test('grouped menu: category headers render once and searching matches the categ
   await input.fill('base');
   await expect(visibleItems(page)).toHaveCount(2);
   await expect(groups).toHaveText(['Unit base']);
+
+  // Grouping is not a search feature: a plain menu renders the same headers
+  // with no search box.
+  await input.press('Escape');
+  await expect(menu(page)).toHaveCount(0, { timeout: 5000 });
+  await page.getByTestId('grouped-trigger').click();
+  await expect(menu(page)).toBeVisible();
+  await expect(visibleItems(page)).toHaveCount(8);
+  await expect(groups).toHaveText(['Set', 'Unit base', 'Hospital', 'Police']);
+  await expect(menu(page).locator('[data-menu-search]')).toHaveCount(0);
 });
