@@ -64,9 +64,8 @@ This distinction is deliberate:
 | Card / input wells | card shell **neutral raised**; inputs **transparent** (inherit) | card shell **neutral raised**; inputs **transparent** (inherit) |
 | Footer | `accent-50` | `accent-950` mix |
 | Card headers | `accent-900` + white | `accent-950` + white |
-| Calendar shell | **neutral** header/footer/body — only selection/chips accent | **neutral** |
+| Calendar | **accent header**; **neutral** body + footer; selection/chips accent | accent header, neutral body/footer |
 | Card-header hover | `accent-800` (deeper, never grey) | `accent-900` (lighter, never grey) |
-| Calendar body | **neutral** (only header/footer accent) | **neutral** |
 | Checklist / radio list | **neutral** panel; only checked rows + boxes accent | **neutral** |
 | Selection | `accent-200` + `accent-900` text | `accent-400` @ 26% + white |
 | Hover | accent-600 @ 6–7% | accent-400 @ 8–10% |
@@ -92,7 +91,8 @@ Rules:
 - **Card shells stay neutral; only their headers wear the accent.** A neutral
   raised fill + `--ui-border-strong` keeps the card readable on the neutral body.
 - **Card-header hovers stay in the accent family** (a deeper/lighter step), never
-  a white/grey wash. The calendar shell stays neutral in accent surfaces.
+  a white/grey wash. The calendar BODY and FOOTER stay neutral in accent surfaces;
+  only its header is accented (the card-header role).
 - **Menus behave like buttons:** the cursor uses the soft button fill; a selected
   row keeps the selected fill and only lifts on hover. Manager rows use the
   lighter row hover.

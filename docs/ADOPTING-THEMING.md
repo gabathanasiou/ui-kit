@@ -96,7 +96,7 @@ than hand-writing the rules.
 | Tooltip | Carries mode/accent itself (portal). |
 | Inputs / NumberInput | Transparent; inherit the surface. Hover = neutral lift; focus = neutral border. Never accent-filled. |
 | Button primary | Accent action inside an accent surface; neutral primary inside a neutral surface. |
-| Cards / calendar | Card header accent, card body neutral. Calendar shell **fully neutral** (header/footer/body) — only selected days/chips accent. |
+| Cards / calendar | Card header accent, card body neutral. Calendar **accent header**, neutral body/footer — only selected days/chips accent. |
 | Checkbox / Checklist / Radio | Neutral panel; selected row/box uses the accent check/selection roles. |
 | Seg | Neutral outline/labels; accent pill. |
 | Tabs | Pill role; chrome tabs need a chrome `ThemeScope` so the pill resolves the accent. |
