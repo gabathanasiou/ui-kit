@@ -861,9 +861,19 @@ export default function DropdownMenu({
                   /* Trigger-as-search: the field owns the keyboard. Anything
                      that focuses the menu (Radix's open autofocus, a stray
                      click) hands it straight back, so typing never dies. */
-                  onFocus={externalSearch ? () => {
+                  onFocus={externalSearch ? e => {
+                    /* Only the panel itself stealing focus is a problem. Row
+                       focus is legitimate (a click/keyboard activation) — the
+                       earlier blanket guard detached rows mid-click. */
+                    if (e.target !== e.currentTarget) return;
                     const trigger = triggerRef.current;
                     if (trigger && trigger.ownerDocument.activeElement !== trigger) trigger.focus();
+                  } : undefined}
+                  /* Trigger-as-search: after a selection/close the keyboard
+                     belongs back in the field, not on the body. */
+                  onCloseAutoFocus={externalSearch ? e => {
+                    e.preventDefault();
+                    triggerRef.current?.focus();
                   } : undefined}
                 >
                   {internalSearch && (

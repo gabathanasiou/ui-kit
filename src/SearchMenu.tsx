@@ -1,0 +1,520 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { ChevronDown, Plus, Search, X } from 'lucide-react';
+import { getDropdownClasses, useItemSize, type DropdownTheme } from './DropdownMenu';
+import { useDropdownPosition } from './useDropdownPosition';
+import { useCurrentDocument, usePortalTarget } from './popout';
+import { useOverlayMorph } from './overlayMorph';
+import { inputCls } from './input';
+import Button from './Button';
+import {
+  buildSearchMenuRows,
+  type SearchMenuGroup,
+  type SearchMenuItem,
+  type SearchMenuRow,
+} from './searchMenuModel';
+
+/**
+ * SearchMenu — the shared "deep search" surface (roadmap 172, ui-kit).
+ *
+ * Two trigger modes:
+ * - `expandable`: a button ("Search") that morphs into a text field on click
+ *   and collapses back when done (select, Escape, outside click).
+ * - `inline`: the field is always visible (the manager-sidebar pattern); click
+ *   or focus opens the panel.
+ *
+ * The panel groups records under clickable category rows (icon + count), keeps
+ * the keyboard in the field, supports comma tags (AND), and has a custom empty
+ * state/action ("No matches" + "Add …"). No Radix menu — a search field must
+ * keep focus, so the panel is positioned by the shared dropdown engine and the
+ * input owns the keyboard.
+ */
+
+export type SearchMenuMode = 'expandable' | 'inline';
+
+export interface SearchMenuEmptyAction {
+  /** Row label; a function receives the current query. */
+  label: string | ((query: string) => string);
+  onClick: (query: string) => void;
+  icon?: React.ReactNode;
+}
+
+export interface SearchMenuProps {
+  items: SearchMenuItem[];
+  /** Category registry (icon + count); records point at a group key. */
+  groups?: SearchMenuGroup[];
+  mode?: SearchMenuMode;
+  /** Expandable mode: collapsed button label. */
+  triggerLabel?: string;
+  placeholder?: string;
+  /** Controlled query (optional). */
+  query?: string;
+  onQueryChange?: (query: string) => void;
+  onSelect: (item: SearchMenuItem) => void;
+  /** Clicking a category row. */
+  onSelectGroup?: (group: SearchMenuGroup) => void;
+  /** Called whenever the surface closes/collapses. */
+  onClose?: () => void;
+  closeOnSelect?: boolean;
+  /** Open the panel on click/focus with an empty query (category browse). */
+  openOnFocus?: boolean;
+  /** Category rows get a chevron that expands their records in the browse
+   *  state (a tree-style category browser). */
+  expandableGroups?: boolean;
+  autoFocus?: boolean;
+  /** Expandable mode widths (px). */
+  collapsedWidth?: number;
+  expandedWidth?: number;
+  /** Panel width override (defaults to the trigger width). */
+  panelWidth?: number | string;
+  maxMenuHeight?: number;
+  theme?: DropdownTheme;
+  /** Panel morph (default true). */
+  morph?: boolean;
+  emptyTitle?: string;
+  emptyHint?: string;
+  /** Custom empty body (replaces the title/hint block; the action stays). */
+  renderEmpty?: (ctx: { query: string; close: () => void }) => React.ReactNode;
+  /** Zero or more actions for the no-results state (fully caller-defined). */
+  emptyActions?: SearchMenuEmptyAction[];
+}
+
+export function SearchMenu({
+  items,
+  groups = [],
+  mode = 'expandable',
+  triggerLabel = 'Search',
+  placeholder = 'Search…',
+  query: controlledQuery,
+  onQueryChange,
+  onSelect,
+  onSelectGroup,
+  onClose,
+  closeOnSelect = true,
+  openOnFocus = true,
+  expandableGroups = false,
+  autoFocus = true,
+  collapsedWidth = 128,
+  expandedWidth = 288,
+  panelWidth,
+  maxMenuHeight = 420,
+  theme = 'light',
+  morph = true,
+  emptyTitle,
+  emptyHint,
+  renderEmpty,
+  emptyActions,
+}: SearchMenuProps) {
+  const isControlled = controlledQuery !== undefined;
+  const [innerQuery, setInnerQuery] = useState('');
+  const query = isControlled ? controlledQuery : innerQuery;
+  const setQuery = useCallback((next: string) => {
+    if (!isControlled) setInnerQuery(next);
+    onQueryChange?.(next);
+  }, [isControlled, onQueryChange]);
+
+  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(mode === 'inline');
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [highlighted, setHighlighted] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const currentDocument = useCurrentDocument();
+  const portalTarget = usePortalTarget();
+  const d = getDropdownClasses(theme);
+  const itemSize = useItemSize();
+
+  const [pos, setPos] = useState({ top: 0, left: 0, maxH: 288, ready: false });
+  const [anchorWidth, setAnchorWidth] = useState(0);
+  useDropdownPosition({
+    anchorRef: rootRef,
+    panelRef,
+    open,
+    maxHeight: maxMenuHeight,
+    onPosition: next => setPos({ top: next.top, left: next.left, maxH: next.maxH, ready: next.ready }),
+  });
+  useEffect(() => {
+    if (!open || !rootRef.current) return;
+    setAnchorWidth(rootRef.current.getBoundingClientRect().width);
+  }, [open, expanded]);
+  const setPanelRef = useOverlayMorph<HTMLDivElement>({
+    visible: open,
+    morph,
+    anchor: () => rootRef.current?.getBoundingClientRect() ?? null,
+    ref: panelRef,
+    cloneOnUnmount: true,
+  });
+
+  const emptyActionLabels = (emptyActions || []).map(action =>
+    typeof action.label === 'function' ? action.label(query) : action.label,
+  );
+  const rows = useMemo<SearchMenuRow[]>(
+    () => buildSearchMenuRows({
+      items,
+      groups,
+      query,
+      browseGroups: openOnFocus,
+      expandedGroups,
+      emptyActionLabels,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, groups, query, openOnFocus, expandedGroups, emptyActionLabels.join('\u0000')],
+  );
+
+  const navigateRows = useMemo(
+    () => rows.map((row, index) => ({ row, index })).filter(x => x.row.kind !== 'empty'),
+    [rows],
+  );
+
+  const close = useCallback(() => {
+    setOpen(false);
+    if (mode === 'expandable') {
+      // The collapsed field stays mounted (it cross-fades with the button);
+      // never leave the keyboard in an invisible input.
+      inputRef.current?.blur();
+      setExpanded(false);
+      requestAnimationFrame(() => triggerRef.current?.focus());
+    }
+    setQuery('');
+    setHighlighted(0);
+    setExpandedGroups(new Set());
+    onClose?.();
+  }, [mode, onClose, setQuery]);
+
+  // Search results use the hit rows; keep the browse tree collapsed when a
+  // query is active and reset it when the surface closes.
+  useEffect(() => {
+    if (query.trim()) setExpandedGroups(new Set());
+  }, [query]);
+
+  const toggleGroup = useCallback((key: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const openPanel = useCallback(() => {
+    setExpanded(true);
+    setOpen(true);
+    setHighlighted(0);
+  }, []);
+
+  // Expandable: focus the field once it mounts.
+  useEffect(() => {
+    if (mode !== 'expandable' || !expanded || !open || !autoFocus) return;
+    const raf = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(raf);
+  }, [mode, expanded, open, autoFocus]);
+
+  // Outside click closes the surface.
+  useEffect(() => {
+    if (!open) return;
+    const doc = rootRef.current?.ownerDocument ?? currentDocument;
+    if (!doc) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (rootRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      close();
+    };
+    doc.addEventListener('pointerdown', onPointerDown, true);
+    return () => doc.removeEventListener('pointerdown', onPointerDown, true);
+  }, [open, close, currentDocument]);
+
+  const activate = useCallback((row: SearchMenuRow) => {
+    if (row.kind === 'group') {
+      if (onSelectGroup) {
+        onSelectGroup(row.group);
+        if (closeOnSelect) close();
+      } else if (expandableGroups) {
+        toggleGroup(row.group.key);
+      }
+      return;
+    }
+    if (row.kind === 'item') {
+      onSelect(row.hit.item);
+      if (closeOnSelect) close();
+      return;
+    }
+    if (row.kind === 'action') {
+      const action = emptyActions?.[row.actionIndex];
+      if (action) action.onClick(query);
+      if (closeOnSelect) close();
+    }
+  }, [close, closeOnSelect, emptyActions, expandableGroups, onSelect, onSelectGroup, query, toggleGroup]);
+
+  const moveHighlight = (dir: 1 | -1) => {
+    if (navigateRows.length === 0) return;
+    const current = navigateRows.findIndex(x => x.index === highlighted);
+    const next = current < 0
+      ? 0
+      : (current + dir + navigateRows.length) % navigateRows.length;
+    setHighlighted(navigateRows[next].index);
+  };
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      if (!open) openPanel();
+      else moveHighlight(1);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      moveHighlight(-1);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      const row = rows[highlighted] ?? rows[0];
+      if (row) activate(row);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      close();
+    }
+  };
+
+  const onChange = (next: string) => {
+    if (mode === 'expandable' && !expanded) return;
+    setQuery(next);
+    if (!open) setOpen(true);
+  };
+
+  // Light the first RECORD when the query changes (the category row above it
+  // is a jump target, not the default Enter action).
+  useEffect(() => {
+    const firstItem = rows.findIndex(row => row.kind === 'item');
+    setHighlighted(firstItem >= 0 ? firstItem : 0);
+  }, [query, rows]);
+
+  const inlineInput = (
+    <div className="relative w-full">
+      <Search className="w-3.5 h-3.5 ui-icon absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+      <input
+        ref={inputRef}
+        value={query}
+        data-search-input
+        role="combobox"
+        aria-expanded={open}
+        aria-controls="search-menu-panel"
+        aria-autocomplete="list"
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => { if (openOnFocus) openPanel(); }}
+        onClick={() => { if (openOnFocus) openPanel(); }}
+        onKeyDown={onKeyDown}
+        placeholder={placeholder}
+        className={`${inputCls('sm')} w-full pl-8 pr-7`}
+      />
+      {query && (
+        <button
+          type="button"
+          aria-label="Clear search"
+          className="ui-icon-btn absolute right-1 top-1/2 -translate-y-1/2 rounded p-0.5"
+          onPointerDown={e => e.preventDefault()}
+          onClick={() => { setQuery(''); if (!open) openPanel(); }}
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
+
+  /* The expandable field overlays the PRIMARY button's label area, so the
+     kit button (and its icon) never move during the morph. */
+  const overlayInput = (
+    <div className="absolute inset-0">
+      <Search className="w-3.5 h-3.5 ui-icon absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+      <input
+        ref={inputRef}
+        value={query}
+        data-search-input
+        role="combobox"
+        aria-expanded={open}
+        aria-controls="search-menu-panel"
+        aria-autocomplete="list"
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => { if (openOnFocus && expanded) openPanel(); }}
+        onClick={() => { if (openOnFocus && expanded) openPanel(); }}
+        onKeyDown={onKeyDown}
+        placeholder={placeholder}
+        tabIndex={expanded ? 0 : -1}
+        className={`${inputCls('sm')} h-full w-full pl-8 pr-7`}
+      />
+      {query && (
+        <button
+          type="button"
+          aria-label="Clear search"
+          className="ui-icon-btn absolute right-1 top-1/2 -translate-y-1/2 rounded p-0.5"
+          onPointerDown={e => e.preventDefault()}
+          onClick={() => { setQuery(''); if (!open && expanded) openPanel(); }}
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
+
+  const panel = open ? createPortal(
+    <div
+      ref={setPanelRef}
+      id="search-menu-panel"
+      data-theme={theme}
+      role="listbox"
+      aria-label={placeholder}
+      className="ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none min-w-0 overflow-hidden"
+      style={{
+        position: 'fixed',
+        left: pos.left,
+        top: pos.top,
+        width: panelWidth ?? (mode === 'expandable' ? expandedWidth : anchorWidth || undefined),
+        maxHeight: pos.maxH,
+        visibility: pos.ready ? 'visible' : 'hidden',
+      }}
+    >
+      <div className="overflow-y-auto scrollbar-custom flex flex-col">
+        {rows.length === 0 && (
+          <div className="px-3 py-3 text-xs text-zinc-400" data-search-empty>
+            {renderEmpty
+              ? renderEmpty({ query, close })
+              : <>Type to search…</>}
+          </div>
+        )}
+        {rows.map((row, rowIndex) => {
+          if (row.kind === 'empty') {
+            return (
+              <div key="__empty" className="px-3 py-3 text-center" data-search-empty>
+                {renderEmpty ? renderEmpty({ query, close }) : (
+                  <>
+                    <div className="mx-auto mb-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+                      <Search className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="text-xs font-medium text-zinc-500">{emptyTitle || `No matches for “${query.trim()}”`}</div>
+                    <div className="mt-0.5 text-[10px] text-zinc-400">{emptyHint || 'Try a name, phone number, board ID or category.'}</div>
+                  </>
+                )}
+              </div>
+            );
+          }
+          const active = highlighted === rowIndex;
+          if (row.kind === 'group') {
+            const groupExpanded = expandedGroups.has(row.group.key);
+            const showChevron = expandableGroups && !query.trim();
+            return (
+              <div
+                key={`group:${row.group.key}`}
+                role="option"
+                aria-selected={false}
+                data-search-group={row.group.key}
+                onMouseEnter={() => setHighlighted(rowIndex)}
+                style={itemSize}
+                className={`w-full rounded flex items-center gap-1 outline-none select-none font-medium ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''}`}
+              >
+                <button
+                  type="button"
+                  onClick={() => activate(row)}
+                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                >
+                  {row.group.icon && <span className={`${d.icon} shrink-0`}>{row.group.icon}</span>}
+                  <span className="flex-1 truncate">{row.group.label}</span>
+                  {row.group.count !== undefined && (
+                    <span className="shrink-0 text-[10px] tabular-nums text-zinc-400">{row.group.count}</span>
+                  )}
+                </button>
+                {showChevron && (
+                  <button
+                    type="button"
+                    aria-label={`${groupExpanded ? 'Collapse' : 'Expand'} ${row.group.label}`}
+                    aria-expanded={groupExpanded}
+                    onClick={e => { e.stopPropagation(); toggleGroup(row.group.key); }}
+                    className="shrink-0 rounded p-0.5 text-zinc-400 hover:text-zinc-700"
+                  >
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${groupExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+                )}
+              </div>
+            );
+          }
+          if (row.kind === 'action') {
+            return (
+              <button
+                key={`action:${row.actionIndex}`}
+                type="button"
+                role="option"
+                aria-selected={false}
+                data-search-action
+                onMouseEnter={() => setHighlighted(rowIndex)}
+                onClick={() => activate(row)}
+                style={itemSize}
+                className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''}`}
+              >
+                <span className={`${d.icon} shrink-0`}>{emptyActions?.[row.actionIndex]?.icon || <Plus className="w-3.5 h-3.5" />}</span>
+                <span className="flex-1 truncate">{row.label}</span>
+              </button>
+            );
+          }
+          return (
+            <button
+              key={`item:${row.hit.item.id}`}
+              type="button"
+              role="option"
+              aria-selected={false}
+              data-search-item={row.hit.item.id}
+              onMouseEnter={() => setHighlighted(rowIndex)}
+              onClick={() => activate(row)}
+              style={itemSize}
+              className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''} ${row.hit.item.disabled ? 'opacity-30 pointer-events-none' : ''}`}
+            >
+              {row.hit.item.icon && <span className={`${d.icon} shrink-0`}>{row.hit.item.icon}</span>}
+              <span className="flex-1 truncate">{row.hit.item.label}</span>
+              {(row.hit.detail || row.hit.item.detail) && (
+                <span className="shrink-0 max-w-[55%] truncate text-[10px] text-zinc-400">{row.hit.detail || row.hit.item.detail}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>,
+    portalTarget ?? currentDocument?.body ?? document.body,
+  ) : null;
+
+  return (
+    <div
+      ref={rootRef}
+      data-search-menu
+      data-mode={mode}
+      className="relative inline-flex"
+      style={mode === 'inline'
+        ? { width: '100%' }
+        : { width: expanded ? expandedWidth : collapsedWidth, transition: 'width 180ms ease' }}
+    >
+      {mode === 'inline' ? inlineInput : (
+        <>
+          <div className={`w-full transition-opacity duration-150 ${expanded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+            <Button
+              ref={triggerRef}
+              type="button"
+              variant="primary"
+              theme={theme === 'dark' ? 'dark' : 'light'}
+              icon={<Search className="w-3.5 h-3.5" />}
+              onClick={openPanel}
+              className={`w-full justify-start ${expanded ? 'pointer-events-none' : ''}`}
+              tabIndex={expanded ? -1 : 0}
+              data-search-trigger
+            >
+              <span>{triggerLabel}</span>
+            </Button>
+          </div>
+          <div
+            className={`absolute inset-0 transition-opacity duration-150 ${expanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            aria-hidden={!expanded}
+          >
+            {overlayInput}
+          </div>
+        </>
+      )}
+      {panel}
+    </div>
+  );
+}
+
+export default SearchMenu;

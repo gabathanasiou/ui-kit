@@ -37,8 +37,10 @@ const WAIT_BASELINE = 9;
 // 86 = 85 + trigger-as-search focus (the external field must keep the keyboard
 // after Radix focuses the menu content — pure browser wiring).
 // 87 = 86 + the focus guard (focus landing in the menu returns to the field).
+// 88 = 87 + the deep-search demo (typed-only open, category rows, jump).
+// 89 = 88 + the two SearchMenu modes (inline textbox + expandable button).
 const SPEC_CAP = 15;
-const TEST_CAP = 87;
+const TEST_CAP = 89;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

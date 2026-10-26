@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './playground.css';
 import {
@@ -9,10 +9,10 @@ import {
   RichTextEditor, FormatToolbar, LongPressMenuProvider, RICH_TEXT_STATE_IDLE,
   CardSection, setCoarseScale, useCoarseScale, useInputSize, IS_COARSE,
   NumberInput, Seg, FloatingToggle, useSlidingPill,
-  ThemeScope, ThemeProvider, menuThemeOf, inputCls,
+  ThemeScope, ThemeProvider, menuThemeOf, inputCls, SearchMenu,
 } from '../../src/index';
-import { Table2, CalendarRange, CalendarDays, Palette, Scale, Clapperboard, BarChart3 } from 'lucide-react';
-import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem } from '../../src/index';
+import { Table2, CalendarRange, CalendarDays, Palette, Scale, Clapperboard, BarChart3, Users, Building2, UserRound, MapPin, Search, Plus } from 'lucide-react';
+import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem, SearchMenuItem } from '../../src/index';
 
 /* ────────────────────────────────────────────────────────────────────────────
    ui-kit playground — the component zoo + debugging surfaces.
@@ -668,6 +668,67 @@ function SearchableTriggerDemo() {
     </div>
   );
 }
+
+function DeepSearchDemo() {
+  /* The shared SearchMenu in BOTH modes: inline (the manager textbox that
+     opens on click/focus) and expandable (a "Search" button that morphs into
+     a field). Categories are clickable icon+count rows; no matches shows a
+     custom empty state plus an "Add …" action. */
+  const [records, setRecords] = useState<SearchMenuItem[]>(DEEP_RECORDS);
+  const [active, setActive] = useState<string | null>(null);
+  const [pick, setPick] = useState<string | null>(null);
+  const groups = DEEP_CATEGORIES.map(c => ({ ...c, count: records.filter(r => r.group === c.key).length }));
+  const common = {
+    items: records,
+    groups,
+    onSelect: (item: SearchMenuItem) => { setPick(item.id); setActive(item.group || null); },
+    onSelectGroup: (group: { key: string }) => setActive(group.key),
+    expandableGroups: true,
+    emptyActions: [
+      {
+        label: (q: string) => `Search all for “${q.trim()}”`,
+        icon: <Search className="w-3.5 h-3.5" />,
+        onClick: (q: string) => setPick(`search:${q.trim()}`),
+      },
+      {
+        label: (q: string) => `Add “${q.trim()}”`,
+        icon: <Plus className="w-3.5 h-3.5" />,
+        onClick: (q: string) => {
+          const group = active || 'cast';
+          const id = `new-${Date.now()}`;
+          setRecords(prev => [...prev, { id, group, label: q.trim(), detail: 'New record' }]);
+          setPick(id);
+          setActive(group);
+        },
+      },
+    ],
+  };
+  return (
+    <div className="row" id="deep-search" data-testid="deep-search-demo">
+      <div data-testid="search-menu-inline" className="w-72">
+        <SearchMenu mode="inline" {...common} placeholder="Inline search — click to open…" />
+      </div>
+      <div data-testid="search-menu-expandable">
+        <SearchMenu {...common} triggerLabel="Search" placeholder="Search records or categories…" />
+      </div>
+      <span className="label" data-testid="deep-search-status">active: {active || '—'} · pick: {pick || '—'}</span>
+    </div>
+  );
+}
+
+const DEEP_CATEGORIES = [
+  { key: 'cast', label: 'Cast', icon: <Users className="w-3.5 h-3.5" />, count: 2 },
+  { key: 'sets', label: 'Sets', icon: <Building2 className="w-3.5 h-3.5" />, count: 1 },
+  { key: 'crew', label: 'Crew', icon: <UserRound className="w-3.5 h-3.5" />, count: 1 },
+  { key: 'locations', label: 'Locations', icon: <MapPin className="w-3.5 h-3.5" />, count: 1 },
+];
+const DEEP_RECORDS: SearchMenuItem[] = [
+  { id: 'anna', group: 'cast', label: 'ANNA', detail: 'Artiste: Roy Smith', fields: [{ label: 'Artiste', value: 'Roy Smith' }] },
+  { id: 'bob', group: 'cast', label: 'BOB', detail: 'Artiste: James Dean', fields: [{ label: 'Artiste', value: 'James Dean' }] },
+  { id: 'stage2', group: 'sets', label: 'STAGE 2', detail: 'Board ID 1', fields: [{ label: 'Board ID', value: '1' }] },
+  { id: 'mat', group: 'crew', label: 'MAT', detail: 'Driver · 555-0199', fields: [{ label: 'Phone', value: '555-0199' }, { label: 'Role', value: 'Driver' }] },
+  { id: 'grand', group: 'locations', label: 'Grand Hotel', detail: 'Stage · 1 Main St', fields: [{ label: 'Address', value: '1 Main St' }, { label: 'Type', value: 'Stage' }] },
+];
 
 // ── 3. Modals + portals ──────────────────────────────────────────────────────
 
@@ -1642,6 +1703,11 @@ function CoarseScaleControl() {
 }
 
 function App() {
+  // Deep-link the zoo sections (#deep-search etc.) after React has rendered.
+  useEffect(() => {
+    if (!location.hash) return;
+    document.querySelector(location.hash)?.scrollIntoView({ block: 'center' });
+  }, []);
   return (
     <>
       <CoarseScaleControl />
@@ -1659,7 +1725,7 @@ function App() {
         <InitialHighlightMenu />
         <SearchableMenuDemo />
         <GroupedSearchableMenuDemo />
-        <SearchableTriggerDemo />
+        <SearchableTriggerDemo />\n        <DeepSearchDemo />
         <LongMenuDemo />
         <RightEdgeMenu />
         <SubmenuDemo />

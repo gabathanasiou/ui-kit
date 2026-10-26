@@ -1012,6 +1012,9 @@
   background: transparent;
   border: 1px solid var(--ui-input-border);
   color: var(--ui-input-text);
+  /* The text caret follows the field's text colour — without this it inherits
+     the page colour and disappears on light inputs (the white "|" bug). */
+  caret-color: var(--ui-input-text);
   border-radius: var(--ui-radius-input);
   outline: none;
   transition: background-color 120ms ease, border-color 120ms ease;

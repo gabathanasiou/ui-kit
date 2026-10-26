@@ -218,3 +218,61 @@ test('trigger-as-search: focus that lands in the menu returns to the field', asy
   await menu(page).evaluate(el => el.focus());
   await expect(input).toBeFocused();
 });
+
+const searchPanel = (page: Page) => page.locator('[role="listbox"]');
+
+test('SearchMenu inline: click opens, category rows jump, empty action adds', async ({ page }) => {
+  await page.goto('/');
+  const inline = page.getByTestId('search-menu-inline');
+  const input = inline.locator('[data-search-input]');
+  const status = page.getByTestId('deep-search-status');
+
+  // Click the textbox → the search panel opens (browse state with categories).
+  await input.click();
+  await expect(searchPanel(page)).toBeVisible();
+  await expect(page.locator('[data-search-group="cast"]')).toBeVisible();
+
+  // Browse tree: the Cast chevron expands its records in place.
+  await page.getByRole('button', { name: 'Expand Cast' }).click();
+  await expect(page.locator('[data-search-item="anna"]')).toBeVisible();
+  await expect(page.locator('[data-search-item="bob"]')).toBeVisible();
+  await page.getByRole('button', { name: 'Collapse Cast' }).click();
+  await expect(page.locator('[data-search-item="anna"]')).toHaveCount(0);
+
+  await input.pressSequentially('roy');
+  await expect(input).toBeFocused();
+  await expect(page.locator('[data-search-item="anna"]')).toContainText('Artiste: Roy Smith');
+  await page.locator('[data-search-item="anna"]').click();
+  await expect(status).toHaveText('active: cast · pick: anna');
+  await expect(searchPanel(page)).toHaveCount(0);
+
+  // No matches → custom empty state + "Add …" action.
+  await input.click();
+  await input.pressSequentially('zzz');
+  await expect(page.locator('[data-search-empty]')).toBeVisible();
+  await expect(page.locator('[data-search-action]')).toHaveCount(2);
+  const action = page.locator('[data-search-action]').filter({ hasText: 'Add “zzz”' });
+  await expect(action).toBeVisible();
+  await action.click();
+  await expect(status).toContainText('pick: new-');
+  await expect(searchPanel(page)).toHaveCount(0);
+});
+
+test('SearchMenu expandable: button morphs into the field and back', async ({ page }) => {
+  await page.goto('/');
+  const wrap = page.getByTestId('search-menu-expandable');
+  const trigger = wrap.getByRole('button', { name: /Search/ });
+  await trigger.click();
+  const input = wrap.locator('[data-search-input]');
+  await expect(input).toBeVisible();
+  await expect(input).toBeFocused();
+  await input.pressSequentially('555');
+  await expect(page.locator('[data-search-item="mat"]')).toContainText('555-0199');
+  await expect(input).toBeFocused();
+  await input.press('Escape');
+  // The field stays mounted for the cross-fade, but the button is back and
+  // the keyboard leaves the (now hidden) field.
+  await expect(wrap.locator('[data-search-trigger]')).toBeVisible();
+  await expect(input).not.toBeFocused();
+  await expect(searchPanel(page)).toHaveCount(0);
+});
