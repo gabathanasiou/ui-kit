@@ -699,7 +699,10 @@ export default function DropdownMenu({
   useEffect(() => {
     if (pos.ready && open) {
       if (searchable) {
-        searchInputRef.current?.focus();
+        /* INTERNAL box: focus it. EXTERNAL/trigger-as-search: the trigger FIELD
+           is the search box — Radix's content autofocus must not steal the
+           keyboard from it, or the user cannot type. */
+        (searchInputRef.current ?? triggerRef.current)?.focus();
         return;
       }
       const el = contentElRef.current;
@@ -769,11 +772,31 @@ export default function DropdownMenu({
     }
   }, [onOpenChange]);
 
-  const triggerEl = React.isValidElement(trigger) ? (trigger as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void; onKeyDown?: (e: React.KeyboardEvent) => void }>) : null;
+  const triggerEl = React.isValidElement(trigger) ? (trigger as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void; onKeyDown?: (e: React.KeyboardEvent) => void; onKeyDownCapture?: (e: React.KeyboardEvent) => void }>) : null;
   const triggerNode = triggerEl
-    ? React.cloneElement(triggerEl as React.ReactElement<{ ref?: React.Ref<HTMLElement>; onClick?: (e: React.MouseEvent) => void; onPointerDown?: (e: React.PointerEvent) => void; onKeyDown?: (e: React.KeyboardEvent) => void }>, {
+    ? React.cloneElement(triggerEl as React.ReactElement<{ ref?: React.Ref<HTMLElement>; type?: string; onClick?: (e: React.MouseEvent) => void; onPointerDown?: (e: React.PointerEvent) => void; onKeyDown?: (e: React.KeyboardEvent) => void; onKeyDownCapture?: (e: React.KeyboardEvent) => void }>, {
         ref: (node: HTMLElement | null) => { triggerRef.current = node; },
-        onPointerDown: () => { triggerPointerDownRef.current = true; closeFromTriggerPointerDownRef.current = false; },
+        /* Radix's trigger primitive merges `type="button"` onto the child; a
+           text field trigger-as-search must stay a text field. */
+        ...(externalSearch ? { type: (triggerEl.props as { type?: string }).type ?? 'text' } : {}),
+        onPointerDown: (e: React.PointerEvent) => {
+          triggerPointerDownRef.current = true;
+          closeFromTriggerPointerDownRef.current = false;
+          /* Trigger-as-search: the field IS the search box. Radix's trigger
+             toggles on pointerdown and prevents the field's focus default —
+             both would make it untypable. Open it ourselves and keep the
+             caret in the field; the controlled query drives the filter. */
+          if (externalSearch) {
+            e.preventDefault();
+            if (!openRef.current) onOpenChange?.(true);
+            triggerRef.current?.focus();
+          }
+        },
+        /* Space is a printable search character, but Radix treats it as the
+           trigger's open/close key. Keep it in the field. */
+        onKeyDownCapture: (e: React.KeyboardEvent) => {
+          if (externalSearch && e.key === ' ') e.stopPropagation();
+        },
         onClick: (e: React.MouseEvent) => {
           triggerEl.props.onClick?.(e);
           triggerOnClick();

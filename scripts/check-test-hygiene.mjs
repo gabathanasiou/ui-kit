@@ -34,8 +34,10 @@ const WAIT_BASELINE = 9;
 // computed surface colours + scope attributes the unit layer can't reach).
 // 85 = 84 + grouped searchable menu (category headers follow the VISIBLE set;
 // typeahead/highlight filtering and group search are DOM wiring).
+// 86 = 85 + trigger-as-search focus (the external field must keep the keyboard
+// after Radix focuses the menu content — pure browser wiring).
 const SPEC_CAP = 15;
-const TEST_CAP = 85;
+const TEST_CAP = 86;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

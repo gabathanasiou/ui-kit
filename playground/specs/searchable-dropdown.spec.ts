@@ -180,3 +180,26 @@ test('grouped menu: category headers render once and searching matches the categ
   await expect(groups).toHaveText(['Set', 'Unit base', 'Hospital', 'Police']);
   await expect(menu(page).locator('[data-menu-search]')).toHaveCount(0);
 });
+
+test('trigger-as-search: the trigger field keeps focus and filters while typing', async ({ page }) => {
+  await page.goto('/');
+  const input = page.getByTestId('searchable-trigger-input');
+  await input.click();
+  await expect(menu(page)).toBeVisible();
+  // Radix focuses the menu content on open — the external trigger field must
+  // get the keyboard back, or the user cannot type.
+  await expect(input).toBeFocused();
+  await input.pressSequentially('tokyo');
+  await expect(input).toHaveValue('tokyo');
+  await expect(input).toBeFocused();
+  await expect(visibleItems(page)).toHaveCount(1);
+  await expect(visibleItems(page)).toContainText('Asia/Tokyo');
+  // Space is a search character, not the trigger's open/close key.
+  await input.press('Space');
+  await expect(input).toHaveValue('tokyo ');
+  await expect(input).toBeFocused();
+  await expect(menu(page)).toBeVisible();
+  await input.press('Backspace');
+  await expect(input).toHaveValue('tokyo');
+  await expect(visibleItems(page)).toHaveCount(1);
+});
