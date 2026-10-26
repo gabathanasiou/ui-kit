@@ -485,15 +485,22 @@ export function SearchMenu({
       className="relative inline-flex"
       style={mode === 'inline'
         ? { width: '100%' }
-        : { width: expanded ? expandedWidth : collapsedWidth, transition: 'width 180ms ease' }}
+        : { width: expanded ? expandedWidth : collapsedWidth, transition: 'width 220ms cubic-bezier(0.32, 0.72, 0, 1)' }}
     >
       {mode === 'inline' ? inlineInput : (
         <>
-          <div className={`w-full transition-opacity duration-150 ${expanded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          <div
+            className={`w-full origin-left ${expanded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+            style={{
+              transform: expanded ? 'scaleX(0.98)' : 'scaleX(1)',
+              transition: 'opacity 150ms ease, transform 220ms cubic-bezier(0.32, 0.72, 0, 1)',
+            }}
+          >
             <Button
               ref={triggerRef}
               type="button"
               variant="primary"
+              size="minimal"
               theme={theme === 'dark' ? 'dark' : 'light'}
               icon={<Search className="w-3.5 h-3.5" />}
               onClick={openPanel}
@@ -505,8 +512,12 @@ export function SearchMenu({
             </Button>
           </div>
           <div
-            className={`absolute inset-0 transition-opacity duration-150 ${expanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            className={`absolute inset-0 origin-left ${expanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
             aria-hidden={!expanded}
+            style={{
+              transform: expanded ? 'scaleX(1)' : 'scaleX(0.96)',
+              transition: 'opacity 150ms ease, transform 220ms cubic-bezier(0.32, 0.72, 0, 1)',
+            }}
           >
             {overlayInput}
           </div>

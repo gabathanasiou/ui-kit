@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { useCoarseScale, useCoarseSize, coarsePx } from './device';
+import { IS_COARSE, useCoarseScale, useCoarseSize, coarsePx } from './device';
 import { TabFace } from './TabFace';
 import { useKitTheme, buttonCloudOf } from './ThemeScope';
 
@@ -50,6 +50,10 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   /** Square icon-only shape (no label): equal width/height at the toolbar
    *  control size, contents centered. Pair with `aria-label`/`title`. */
   iconOnly?: boolean;
+  /** `minimal` matches the kit text input box exactly (same padding, border
+   *  and line-height) — for search triggers and controls sitting beside a
+   *  field. */
+  size?: 'default' | 'minimal';
   /** Leading icon — tab variants sit icon-first (before the label), inherits
    *  `currentColor`. */
   icon?: React.ReactNode;
@@ -83,6 +87,7 @@ export default function Button({
   cloud: cloudProp,
   active = false,
   iconOnly = false,
+  size: sizeProp = 'default',
   icon,
   collapse = false,
   iconWithLabel = true,
@@ -99,8 +104,8 @@ export default function Button({
   const cloud = cloudProp ?? buttonCloudOf(kit);
   /* Proportional coarse scaling: base sizes interpolate by the global scale
      (inline style — Tailwind can't JIT runtime classes). */
-  const subtleSize = useCoarseSize({ px: 10, py: 4, fs: 12 }, { px: 14, py: 8, fs: 14 });
-  const primarySize = useCoarseSize({ px: 12, py: 4, fs: 12 }, { px: 16, py: 8, fs: 14 });
+  const subtleSize = useCoarseSize({ px: 10, py: 7, fs: 12 }, { px: 14, py: 9, fs: 14 });
+  const primarySize = useCoarseSize({ px: 12, py: 7, fs: 12 }, { px: 16, py: 9, fs: 14 });
   const tabSize = useCoarseSize({ px: 12, py: 6, fs: 12 }, { px: 16, py: 10, fs: 14 });
   const PAD = '';
   const PAD_PRIMARY = '';
@@ -180,7 +185,13 @@ export default function Button({
 
   const isOpen = (rest as { 'data-state'?: string })['data-state'] === 'open';
   const spec = VARIANTS[theme][variant as BaseVariant];
-  const size = variant === 'primary' ? primarySize : variant.startsWith('tab') ? tabSize : subtleSize;
+  const variantSize = variant === 'primary' ? primarySize : variant.startsWith('tab') ? tabSize : subtleSize;
+  /* Exact text-input box: `inputCls` uses IS_COARSE (not the coarse scale), so
+     this intentionally follows the same switch (a 1px transparent border keeps
+     the box model identical). */
+  const minimalSize = IS_COARSE
+    ? { padding: '8px 12px', fontSize: '14px', lineHeight: '20px', border: '1px solid transparent' }
+    : { padding: '6px 8px', fontSize: '12px', lineHeight: '16px', border: '1px solid transparent' };
   const gap = coarsePx(6, 8, useCoarseScale());
   const iconDim = coarsePx(28, 40, useCoarseScale());
   const tone: CloudTone | null = cloud === 'emerald' ? 'emerald' : cloud ? 'blue' : null;
@@ -213,7 +224,9 @@ export default function Button({
   const collapsible = !!collapse && !!icon && !iconOnly;
   const sizing: React.CSSProperties = iconOnly
     ? { width: iconDim, height: iconDim, padding: 0, gap: 0 }
-    : { ...size, gap: collapsible ? 0 : gap };
+    : sizeProp === 'minimal'
+      ? { ...minimalSize, gap: collapsible ? 0 : gap }
+      : { ...variantSize, gap: collapsible ? 0 : gap };
   return (
     <button
       type={type}

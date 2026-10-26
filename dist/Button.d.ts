@@ -45,6 +45,10 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     /** Square icon-only shape (no label): equal width/height at the toolbar
      *  control size, contents centered. Pair with `aria-label`/`title`. */
     iconOnly?: boolean;
+    /** `minimal` matches the kit text input box exactly (same padding, border
+     *  and line-height) — for search triggers and controls sitting beside a
+     *  field. */
+    size?: 'default' | 'minimal';
     /** Leading icon — tab variants sit icon-first (before the label), inherits
      *  `currentColor`. */
     icon?: React.ReactNode;
@@ -67,4 +71,4 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
  *  + the tabs' refs) so the selection box glides. On a `dark` toolbar
  *  `plain` is white — a zinc-950 pill vanished into the bar. */
 export declare const TAB_PILL: Record<'light' | 'dark', Record<'plain' | 'blue' | 'emerald', string>>;
-export default function Button({ variant, theme: themeProp, cloud: cloudProp, active, iconOnly, icon, collapse, iconWithLabel, className, type, children, ...rest }: ButtonProps): React.JSX.Element;
+export default function Button({ variant, theme: themeProp, cloud: cloudProp, active, iconOnly, size: sizeProp, icon, collapse, iconWithLabel, className, type, children, ...rest }: ButtonProps): React.JSX.Element;
