@@ -858,6 +858,13 @@ export default function DropdownMenu({
                     visibility: pos.ready ? 'visible' : 'hidden',
                   }}
                   onPointerLeave={highlight.pointerLeave}
+                  /* Trigger-as-search: the field owns the keyboard. Anything
+                     that focuses the menu (Radix's open autofocus, a stray
+                     click) hands it straight back, so typing never dies. */
+                  onFocus={externalSearch ? () => {
+                    const trigger = triggerRef.current;
+                    if (trigger && trigger.ownerDocument.activeElement !== trigger) trigger.focus();
+                  } : undefined}
                 >
                   {internalSearch && (
                     <div className="shrink-0 px-0 pt-1 pb-1" style={{ paddingRight: searchGutter }}>

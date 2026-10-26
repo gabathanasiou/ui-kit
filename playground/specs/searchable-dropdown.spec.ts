@@ -194,6 +194,9 @@ test('trigger-as-search: the trigger field keeps focus and filters while typing'
   await expect(input).toBeFocused();
   await expect(visibleItems(page)).toHaveCount(1);
   await expect(visibleItems(page)).toContainText('Asia/Tokyo');
+  // The open morph must actually paint the panel (opacity 0 = invisible but
+  // still "visible" to Playwright's geometry check).
+  await expect.poll(() => menu(page).evaluate(el => getComputedStyle(el).opacity)).toBe('1');
   // Space is a search character, not the trigger's open/close key.
   await input.press('Space');
   await expect(input).toHaveValue('tokyo ');
@@ -202,4 +205,16 @@ test('trigger-as-search: the trigger field keeps focus and filters while typing'
   await input.press('Backspace');
   await expect(input).toHaveValue('tokyo');
   await expect(visibleItems(page)).toHaveCount(1);
+});
+
+test('trigger-as-search: focus that lands in the menu returns to the field', async ({ page }) => {
+  await page.goto('/');
+  const input = page.getByTestId('searchable-trigger-input');
+  await input.click();
+  await expect(menu(page)).toBeVisible();
+  await expect(input).toBeFocused();
+  // Simulate the focus steal that used to kill typing (Radix's open autofocus,
+  // a click on the panel, …).
+  await menu(page).evaluate(el => el.focus());
+  await expect(input).toBeFocused();
 });

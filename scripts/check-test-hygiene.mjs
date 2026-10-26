@@ -36,8 +36,9 @@ const WAIT_BASELINE = 9;
 // typeahead/highlight filtering and group search are DOM wiring).
 // 86 = 85 + trigger-as-search focus (the external field must keep the keyboard
 // after Radix focuses the menu content — pure browser wiring).
+// 87 = 86 + the focus guard (focus landing in the menu returns to the field).
 const SPEC_CAP = 15;
-const TEST_CAP = 86;
+const TEST_CAP = 87;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 
