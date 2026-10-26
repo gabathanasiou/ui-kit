@@ -30,6 +30,11 @@ export interface SearchMenuProps {
     mode?: SearchMenuMode;
     /** Expandable mode: collapsed button label. */
     triggerLabel?: string;
+    /** Expandable mode: the collapsed button's leading icon (default a
+     *  magnifier). Pass the domain icon — MapPin for locations, UserPlus/Plus
+     *  for adders — so the trigger says WHAT it opens; the expanded field keeps
+     *  the magnifier. */
+    triggerIcon?: React.ReactNode;
     placeholder?: string;
     /** Controlled query (optional). */
     query?: string;
@@ -74,5 +79,5 @@ export interface SearchMenuProps {
     /** Zero or more actions for the no-results state (fully caller-defined). */
     emptyActions?: SearchMenuEmptyAction[];
 }
-export declare function SearchMenu({ items, groups, mode, triggerLabel, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, autoFocus, collapsedWidth, expandedWidth, panelWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, }: SearchMenuProps): React.JSX.Element;
+export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, autoFocus, collapsedWidth, expandedWidth, panelWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, }: SearchMenuProps): React.JSX.Element;
 export default SearchMenu;

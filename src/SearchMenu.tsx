@@ -46,6 +46,11 @@ export interface SearchMenuProps {
   mode?: SearchMenuMode;
   /** Expandable mode: collapsed button label. */
   triggerLabel?: string;
+  /** Expandable mode: the collapsed button's leading icon (default a
+   *  magnifier). Pass the domain icon — MapPin for locations, UserPlus/Plus
+   *  for adders — so the trigger says WHAT it opens; the expanded field keeps
+   *  the magnifier. */
+  triggerIcon?: React.ReactNode;
   placeholder?: string;
   /** Controlled query (optional). */
   query?: string;
@@ -93,6 +98,7 @@ export function SearchMenu({
   groups = [],
   mode = 'expandable',
   triggerLabel = 'Search',
+  triggerIcon,
   placeholder = 'Search…',
   query: controlledQuery,
   onQueryChange,
@@ -633,7 +639,7 @@ export function SearchMenu({
               variant="primary"
               size="minimal"
               theme={theme === 'dark' ? 'dark' : 'light'}
-              icon={<Search className="w-3.5 h-3.5" />}
+              icon={triggerIcon ?? <Search className="w-3.5 h-3.5" />}
               onClick={openPanel}
               className={`w-full justify-start ${expanded ? 'pointer-events-none' : ''}`}
               tabIndex={expanded ? -1 : 0}
