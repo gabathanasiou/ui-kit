@@ -81,9 +81,18 @@ export type { MorphSearchFieldProps, MorphFieldAction } from './MorphSearchField
 export { MorphActionField } from './MorphActionField';
 export type { MorphActionFieldProps } from './MorphActionField';
 export { SearchMenu } from './SearchMenu';
-export type { SearchMenuProps, SearchMenuMode, SearchMenuEmptyAction } from './SearchMenu';
+export type { SearchMenuProps, SearchMenuMode, SearchMenuEmptyAction, SearchMenuHandle } from './SearchMenu';
 export { parseSearchTags, matchSearchItem, searchMenuContent, buildSearchMenuRows } from './searchMenuModel';
 export type { SearchMenuItem, SearchMenuGroup, SearchMenuHit, SearchMenuRow } from './searchMenuModel';
+export {
+  PickerField,
+} from './PickerField';
+export type { PickerFieldProps, PickerAppearance, PickerTriggerContext } from './PickerField';
+export {
+  pickerItemKey, pickerItemLabel, pickerSegments, lastPickerSegment, resolvePickerSegment,
+  resolvePickerText, pickerCommittedKeys, hasPickerMatch, unknownPickerValues, formatPickerValues,
+} from './pickerModel';
+export type { PickerItem, PickerDisplay, PickerResolveBy } from './pickerModel';
 export {
   useSelection, SelectionContext, useSelectionContext, NO_SELECTION_IDS,
   orderByCatalogue, sameSelection, toggleSelected, setSelected, groupSelectionState, countHidden,
