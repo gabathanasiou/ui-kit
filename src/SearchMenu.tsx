@@ -601,6 +601,9 @@ export function SearchMenu({
   useImperativeHandle(ref, () => ({
     moveHighlight,
     activateHighlighted: () => {
+      /* A POINTER-hovered row is visual only: Enter commits the field text.
+         Only a keyboard-armed highlight (arrows) is consumed by Enter. */
+      if (pointerDrivenRef.current) return false;
       const row = highlighted >= 0 ? allRows[highlighted] : undefined;
       if (!row) return false;
       activate(row);
