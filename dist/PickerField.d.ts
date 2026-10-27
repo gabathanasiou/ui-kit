@@ -56,7 +56,11 @@ export interface PickerFieldProps {
     anchoredKeys?: ReadonlySet<string>;
     anchoredLabel?: string;
     placeholder?: string;
+    /** Read-only FACE (no panel, no focus): a display value. */
     readOnly?: boolean;
+    /** Keep the field's text non-editable (keyboard-off on a touch device) while
+     *  the picker still OPENS on click/pick-through. */
+    inputReadOnly?: boolean;
     disabled?: boolean;
     autoFocus?: boolean;
     /** Open on mount (cell editors). */
@@ -104,5 +108,5 @@ export interface PickerFieldProps {
      *  it is selected. The key must resolve to a `hidden` PickerItem. */
     groupToken?: (groupKey: string) => string | undefined;
 }
-export declare function PickerField({ values, onChange, items, groups, resolveBy, mode, appearance, display, formatDisplay, formatEditing, renderTrigger, renderItem, badge, trailing, anchoredKeys, anchoredLabel, placeholder, readOnly, disabled, autoFocus, defaultOpen, selectAllOnOpen, uppercase, allowFreeText, theme: themeProp, className, style, panelWidth, panelMinWidth, maxMenuHeight, portalTarget, autoGrow, skipComma, collapsedWidth, expandedWidth, createLabel, onCreateItem, onExit, onEscape, onTabExit, loadItems, sortItems, max, disabledIds, indicator, browse, groupToken, }: PickerFieldProps): React.JSX.Element;
+export declare function PickerField({ values, onChange, items, groups, resolveBy, mode, appearance, display, formatDisplay, formatEditing, renderTrigger, renderItem, badge, trailing, anchoredKeys, anchoredLabel, placeholder, readOnly, inputReadOnly, disabled, autoFocus, defaultOpen, selectAllOnOpen, uppercase, allowFreeText, theme: themeProp, className, style, panelWidth, panelMinWidth, maxMenuHeight, portalTarget, autoGrow, skipComma, collapsedWidth, expandedWidth, createLabel, onCreateItem, onExit, onEscape, onTabExit, loadItems, sortItems, max, disabledIds, indicator, browse, groupToken, }: PickerFieldProps): React.JSX.Element;
 export default PickerField;

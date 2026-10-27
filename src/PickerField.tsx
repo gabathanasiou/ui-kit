@@ -80,7 +80,11 @@ export interface PickerFieldProps {
   anchoredKeys?: ReadonlySet<string>;
   anchoredLabel?: string;
   placeholder?: string;
+  /** Read-only FACE (no panel, no focus): a display value. */
   readOnly?: boolean;
+  /** Keep the field's text non-editable (keyboard-off on a touch device) while
+   *  the picker still OPENS on click/pick-through. */
+  inputReadOnly?: boolean;
   disabled?: boolean;
   autoFocus?: boolean;
   /** Open on mount (cell editors). */
@@ -150,6 +154,7 @@ export function PickerField({
   anchoredLabel = 'Element link anchor',
   placeholder = 'Select…',
   readOnly = false,
+  inputReadOnly = false,
   disabled = false,
   autoFocus = false,
   defaultOpen = false,
@@ -622,7 +627,7 @@ export function PickerField({
        EntityDropdown's transparent-input contract. */
     value: open ? text : (chip ? values.join(', ') : displayText),
     disabled,
-    readOnly,
+    readOnly: inputReadOnly,
     placeholder: '',
     onFocus: openPicker,
     onClick: openPicker,
