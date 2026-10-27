@@ -340,6 +340,21 @@ test('SearchMenu expandable: button morphs into the field and back', async ({ pa
   await expect(flat.getByRole('button', { name: /City 42/ })).toBeVisible();
 });
 
+test('SearchMenu expandable: field actions live inside the textbox and keep the panel open', async ({ page }) => {
+  await page.goto('/');
+  const wrap = page.getByTestId('search-menu-expandable');
+  await wrap.getByRole('button', { name: /Search/ }).click();
+  const input = wrap.locator('[data-search-input]');
+  await input.fill('New Prop');
+  const add = wrap.locator('[data-search-field-action="add"]');
+  await expect(add).toBeVisible();
+  await add.click();
+  await expect(searchPanel(page)).toBeVisible();
+  await expect(input).toBeFocused();
+  await expect(page.locator('[data-search-item]').filter({ hasText: 'New Prop' })).toBeVisible();
+  await input.press('Escape');
+});
+
 test('MorphSearchField: button morphs into a filter field and keeps the term', async ({ page }) => {
   await page.goto('/');
   const wrap = page.getByTestId('morph-search-field');

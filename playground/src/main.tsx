@@ -9,10 +9,10 @@ import {
   RichTextEditor, FormatToolbar, LongPressMenuProvider, RICH_TEXT_STATE_IDLE,
   CardSection, setCoarseScale, useCoarseScale, useInputSize, IS_COARSE,
   NumberInput, Seg, FloatingToggle, useSlidingPill,
-  ThemeScope, ThemeProvider, menuThemeOf, inputCls, SearchMenu, MorphSearchField,
+  ThemeScope, ThemeProvider, menuThemeOf, inputCls, SearchMenu, MorphSearchField, MorphActionField,
 } from '../../src/index';
 import { Table2, CalendarRange, CalendarDays, Palette, Scale, Clapperboard, BarChart3, Users, Building2, UserRound, MapPin, Search, Plus, Filter } from 'lucide-react';
-import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem, SearchMenuItem } from '../../src/index';
+import type { DropdownTheme, RichTextEditorHandle, RichTextState, TokenItem, SearchMenuItem, MorphFieldAction } from '../../src/index';
 
 /* ────────────────────────────────────────────────────────────────────────────
    ui-kit playground — the component zoo + debugging surfaces.
@@ -713,7 +713,26 @@ function DeepSearchDemo() {
         <SearchMenu mode="inline" {...common} placeholder="Inline search — click to open…" />
       </div>
       <div data-testid="search-menu-expandable">
-        <SearchMenu {...common} triggerLabel="Search" placeholder="Search records or categories…" />
+        <SearchMenu
+          {...common}
+          triggerLabel="Search"
+          placeholder="Search records or categories…"
+          fieldActions={[{
+            key: 'add',
+            label: 'Add from search',
+            icon: <Plus className="w-3.5 h-3.5" />,
+            keepOpen: true,
+            onClick: (q: string) => {
+              const label = q.trim();
+              if (!label) return;
+              const id = `new-${Date.now()}`;
+              const group = active || 'cast';
+              setRecords(prev => [...prev, { id, group, label, detail: 'New record' }]);
+              setPick(id);
+              setActive(group);
+            },
+          }]}
+        />
       </div>
       <div data-testid="search-menu-browse-expanded">
         <SearchMenu {...common} expandableGroups={false} browseExpanded triggerLabel="Browse all" placeholder="Browse records…" />
@@ -821,6 +840,81 @@ function SearchMenuMorphDemo() {
         </div>
       </div>
       <span className="label" data-testid="morph-status">pick: {pick} · {empty ? 'empty' : `${MORPH_ITEMS.length} records`}</span>
+    </div>
+  );
+}
+
+function MorphActionFieldDemo() {
+  const [role, setRole] = useState('');
+  const [roles, setRoles] = useState<string[]>([]);
+  const [location, setLocation] = useState('');
+  const [plain, setPlain] = useState('');
+  const [submitted, setSubmitted] = useState('');
+  const [mapDraft, setMapDraft] = useState('');
+  const mapAction: MorphFieldAction = {
+    key: 'map',
+    label: 'Pick on map',
+    icon: <MapPin className="w-3.5 h-3.5" />,
+    keepOpen: true,
+    onClick: value => setMapDraft(value),
+  };
+  return (
+    <div className="col" data-testid="morph-action-demo" style={{ width: 720 }}>
+      <div className="label">MorphActionField — create/rename, no dropdown</div>
+      <div className="flex items-center gap-3 rounded border border-zinc-700 p-2" data-testid="morph-action-role">
+        <span className="text-xs">Crew</span>
+        <div className="ml-auto">
+          <MorphActionField
+            triggerLabel="Add role"
+            placeholder="Role name…"
+            value={role}
+            onChange={setRole}
+            onSubmit={value => { setRoles(prev => [...prev, value]); setSubmitted(value); }}
+            onCancel={() => {}}
+            collapsedWidth={110}
+            expandedWidth={280}
+            fieldIcon={<Plus className="w-3.5 h-3.5" />}
+            theme="light"
+          />
+        </div>
+      </div>
+      <div className="flex items-center gap-3 rounded border border-zinc-700 p-2" data-testid="morph-action-location">
+        <span className="text-xs">Location</span>
+        <div className="ml-auto">
+          <MorphActionField
+            triggerLabel="Add location"
+            placeholder="Location name…"
+            value={location}
+            onChange={setLocation}
+            onSubmit={value => setSubmitted(value)}
+            onCancel={() => {}}
+            actions={[mapAction]}
+            collapsedWidth={140}
+            expandedWidth={300}
+            fieldIcon={<MapPin className="w-3.5 h-3.5" />}
+            theme="light"
+          />
+        </div>
+      </div>
+      <div className="flex items-center gap-3 rounded border border-zinc-700 p-2" data-testid="morph-action-plain">
+        <span className="text-xs">Plain field</span>
+        <div className="ml-auto">
+          <MorphActionField
+            triggerLabel="Add note"
+            placeholder="Note…"
+            value={plain}
+            onChange={setPlain}
+            onSubmit={value => setSubmitted(value)}
+            onCancel={() => {}}
+            collapsedWidth={100}
+            expandedWidth={260}
+            theme="light"
+          />
+        </div>
+      </div>
+      <span className="label" data-testid="morph-action-status">
+        roles: {roles.join(', ') || '—'} · last: {submitted || '—'} · map: {mapDraft || '—'}
+      </span>
     </div>
   );
 }
@@ -1862,6 +1956,7 @@ function App() {
         <GroupedSearchableMenuDemo />
         <SearchableTriggerDemo />\n        <DeepSearchDemo />
         <SearchMenuMorphDemo />
+        <MorphActionFieldDemo />
         <LongMenuDemo />
         <RightEdgeMenu />
         <SubmenuDemo />

@@ -7,7 +7,7 @@ import { test, expect, Page } from '@playwright/test';
 
 const panel = (page: Page) => page.locator('#search-menu-panel');
 
-async function measure(page: Page, rowTestId: string) {
+async function measure(page: Page, rowTestId: string, expandedWidth: number) {
   const row = page.getByTestId(rowTestId);
   const trigger = row.locator('[data-search-trigger]').first();
   const root = row.locator('[data-search-menu]').first();
@@ -20,10 +20,14 @@ async function measure(page: Page, rowTestId: string) {
     const cs = getComputedStyle(el);
     return `${cs.transitionProperty} ${cs.transitionDuration}`;
   });
-  await page.waitForTimeout(400);
+  // Wait for the width morph to reach its target without a fixed sleep.
+  await expect.poll(
+    async () => Math.round(await root.evaluate(el => el.getBoundingClientRect().width)),
+    { timeout: 2000 },
+  ).toBe(expandedWidth);
   const settled = await panel(page).evaluate(el => el.style.left);
   await page.keyboard.press('Escape');
-  await page.waitForTimeout(320);
+  await expect(panel(page)).toHaveCount(0, { timeout: 3000 });
   return { openMs, initial, settled, transition };
 }
 
@@ -31,14 +35,14 @@ test.describe('SearchMenu morph anchor', () => {
   // The morph is the subject — keep it enabled.
   test.use({ contextOptions: { reducedMotion: 'no-preference' } });
 
-  for (const [label, row] of [
-    ['master report-to (right-aligned)', 'morph-master-row'],
-    ['per-department report-to', 'morph-dept-row'],
-    ['add location (justify-between empty row)', 'morph-add-row'],
+  for (const [label, row, width] of [
+    ['master report-to (right-aligned)', 'morph-master-row', 280],
+    ['per-department report-to', 'morph-dept-row', 240],
+    ['add location (justify-between empty row)', 'morph-add-row', 280],
   ] as const) {
     test(`${label}: opens fast at its final left edge`, async ({ page }) => {
       await page.goto('/');
-      const { openMs, initial, settled, transition } = await measure(page, row);
+      const { openMs, initial, settled, transition } = await measure(page, row, width);
       // Not a perf budget (the playground server runs in parallel): a hang
       // guard only. The contract is that the panel does not wait for the
       // 220ms width morph; manual timing is ~20-90ms.
@@ -58,8 +62,8 @@ test.describe('SearchMenu morph anchor', () => {
     await page.goto('/');
     await page.getByTestId('morph-empty-toggle').click();
     await expect(page.getByTestId('morph-status')).toContainText('3 records');
-    for (const row of ['morph-master-row', 'morph-dept-row', 'morph-add-row']) {
-      const { initial, settled } = await measure(page, row);
+    for (const [row, width] of [['morph-master-row', 280], ['morph-dept-row', 240], ['morph-add-row', 280]] as const) {
+      const { initial, settled } = await measure(page, row, width);
       expect(Math.abs(Number.parseFloat(initial) - Number.parseFloat(settled))).toBeLessThan(1.5);
     }
   });

@@ -40,8 +40,12 @@ const WAIT_BASELINE = 9;
 // 88 = 87 + the deep-search demo (typed-only open, category rows, jump).
 // 89 = 88 + the two SearchMenu modes (inline textbox + expandable button).
 // 90 = 89 + MorphSearchField (the filter-only button↔field morph; Glide toolbars).
-const SPEC_CAP = 15;
-const TEST_CAP = 90;
+// 97 = 90 + SearchMenu morph anchor (final-rect positioning, 3 app layouts ×
+//      empty/full) + MorphActionField (create/rename field with inline actions).
+// 98 = 97 + SearchMenu field actions (buttons inside the expanded textbox).
+// 99 = 98 + the dark/zinc checked control colors (black fill + white mark).
+const SPEC_CAP = 18;
+const TEST_CAP = 99;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

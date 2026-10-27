@@ -3,6 +3,10 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import Button from './Button';
 import { inputCls } from './input';
+import MorphFieldShell from './MorphFieldShell';
+import { useIconButtonSize } from './device';
+import type { MorphFieldAction } from './morphFieldTypes';
+export type { MorphFieldAction } from './morphFieldTypes';
 
 /**
  * MorphSearchField — a toolbar search/filter trigger that MORPHS into a text
@@ -16,15 +20,16 @@ import { inputCls } from './input';
  * clears and collapses; clicking away / tabbing out collapses but keeps the
  * term; the clear button empties the field without collapsing.
  *
- * For a record SEARCH with a results panel use `SearchMenu` instead.
+ * The `actions` prop / `MorphActionField` wrapper turn the field into an inline
+ * CREATE surface: action buttons live inside the right edge. The shared
+ * `MorphFieldShell` owns the button→field cross-fade; no third copy.
  */
 export interface MorphSearchFieldProps {
   value: string;
   onChange: (value: string) => void;
   /** Collapsed button label. Default: "Filter". */
   triggerLabel?: string;
-  /** Trigger + field leading icon (default: a magnifier). Pass a funnel while
-   *  a filter is applied so the collapsed control says WHAT is filtered. */
+  /** Trigger leading icon (default: a magnifier). */
   triggerIcon?: React.ReactNode;
   placeholder?: string;
   /** Collapsed button width in px. Default 88. */
@@ -39,6 +44,21 @@ export interface MorphSearchFieldProps {
   autoFocus?: boolean;
   /** Notified when the field expands/collapses (never on value changes). */
   onExpandedChange?: (expanded: boolean) => void;
+  /** Action buttons inside the field's right edge. */
+  actions?: MorphFieldAction[];
+  /** Leading icon inside the expanded field. Defaults to `triggerIcon`; pass
+   *  `null` for a plain text box. */
+  leadingIcon?: React.ReactNode | null;
+  /** Show the filter clear button (default true). */
+  showClear?: boolean;
+  /** Enter submits the draft and collapses. */
+  onSubmit?: (value: string) => void;
+  /** Cancel handler for Escape / outside click when those cancel. */
+  onCancel?: () => void;
+  /** Escape cancels (instead of the filter default: clear). */
+  cancelOnEscape?: boolean;
+  /** Outside click cancels (instead of collapsing and keeping the value). */
+  cancelOnOutside?: boolean;
   className?: string;
   "aria-label"?: string;
 }
@@ -56,6 +76,13 @@ export function MorphSearchField({
   active = false,
   autoFocus = false,
   onExpandedChange,
+  actions,
+  leadingIcon,
+  showClear = true,
+  onSubmit,
+  onCancel,
+  cancelOnEscape = false,
+  cancelOnOutside = false,
   className = '',
   'aria-label': ariaLabel,
 }: MorphSearchFieldProps) {
@@ -65,6 +92,7 @@ export function MorphSearchField({
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const iconBtn = useIconButtonSize();
 
   const setOpen = useCallback((next: boolean) => {
     if (expandedRef.current === next) return;
@@ -98,7 +126,8 @@ export function MorphSearchField({
     if (autoFocus) expand();
   }, [autoFocus, expand]);
 
-  // Outside click / focus leaving the control collapses it but KEEPS the term.
+  // Outside click / focus leaving the control collapses it (keeping the value
+  // for the filter; cancelling for a create field).
   useEffect(() => {
     if (!expanded) return;
     const doc = rootRef.current?.ownerDocument ?? document;
@@ -106,47 +135,67 @@ export function MorphSearchField({
       const target = event.target as Node | null;
       if (!target) return;
       if (rootRef.current?.contains(target)) return;
+      if (cancelOnOutside) onCancel?.();
       collapse();
     };
     doc.addEventListener('pointerdown', onPointerDown, true);
     return () => doc.removeEventListener('pointerdown', onPointerDown, true);
-  }, [expanded, collapse]);
+  }, [expanded, collapse, cancelOnOutside, onCancel]);
 
   const onBlur = useCallback((event: React.FocusEvent<HTMLDivElement>) => {
     if (!expanded) return;
     const next = event.relatedTarget as Node | null;
     if (next && rootRef.current?.contains(next)) return;
+    if (cancelOnOutside) onCancel?.();
     collapse();
-  }, [expanded, collapse]);
+  }, [expanded, collapse, cancelOnOutside, onCancel]);
 
   const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && onSubmit) {
+      event.preventDefault();
+      onSubmit(value);
+      collapse(true);
+      return;
+    }
     if (event.key !== 'Escape') return;
     event.preventDefault();
     event.stopPropagation();
-    onChange('');
+    if (cancelOnEscape) {
+      onCancel?.();
+    } else {
+      onChange('');
+    }
     collapse(true);
-  }, [onChange, collapse]);
+  }, [onChange, collapse, cancelOnEscape, onCancel, onSubmit, value]);
+
+  const fieldLeadIcon = leadingIcon === undefined
+    ? (triggerIcon ?? <Search className="w-3.5 h-3.5" />)
+    : leadingIcon;
+  const actionCount = (actions?.length || 0) + (showClear && value ? 1 : 0);
+  const actionGap = 2;
+  const rightPad = 8 + actionCount * (iconBtn.box + actionGap);
+  const iconWrap = (node: React.ReactNode) => (
+    <span
+      style={{ width: iconBtn.icon, height: iconBtn.icon }}
+      className="flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
+    >
+      {node}
+    </span>
+  );
 
   return (
-    <div
-      ref={rootRef}
+    <MorphFieldShell
+      expanded={expanded}
+      collapsedWidth={collapsedWidth}
+      expandedWidth={expandedWidth}
+      rootRef={rootRef}
+      shrink
       data-morph-search
+      data-theme={theme}
       data-expanded={expanded ? 'true' : 'false'}
-      className={`relative inline-flex shrink-0 ${className}`}
-      style={{
-        width: expanded ? expandedWidth : collapsedWidth,
-        transition: 'width 220ms cubic-bezier(0.32, 0.72, 0, 1)',
-      }}
+      className={className}
       onBlur={onBlur}
-    >
-      <div
-        className={`w-full origin-left ${expanded ? 'opacity-0 pointer-events-none' : 'opacity-100'} motion-reduce:transition-none`}
-        style={{
-          transform: expanded ? 'scaleX(0.98)' : 'scaleX(1)',
-          transition: 'opacity 150ms ease, transform 220ms cubic-bezier(0.32, 0.72, 0, 1)',
-        }}
-        aria-hidden={expanded}
-      >
+      trigger={(
         <Button
           ref={triggerRef}
           type="button"
@@ -164,46 +213,69 @@ export function MorphSearchField({
         >
           <span className="min-w-0 truncate">{triggerLabel}</span>
         </Button>
-      </div>
-      <div
-        className={`absolute inset-0 origin-left ${expanded ? 'opacity-100' : 'opacity-0 pointer-events-none'} motion-reduce:transition-none`}
-        style={{
-          transform: expanded ? 'scaleX(1)' : 'scaleX(0.96)',
-          transition: 'opacity 150ms ease, transform 220ms cubic-bezier(0.32, 0.72, 0, 1)',
-        }}
-        aria-hidden={!expanded}
-      >
-        <span className="ui-icon absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-          {triggerIcon ?? <Search className="w-3.5 h-3.5" />}
-        </span>
-        <input
-          ref={inputRef}
-          value={value}
-          onChange={event => onChange(event.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder={placeholder}
-          aria-label={ariaLabel || placeholder}
-          tabIndex={expanded ? 0 : -1}
-          data-morph-search-input
-          className={`${inputCls('sm')} w-full pl-7 pr-7`}
-        />
-        {value && (
-          <button
-            type="button"
-            aria-label="Clear"
+      )}
+      field={(
+        <>
+          {fieldLeadIcon && (
+            <span
+              className="ui-icon absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ width: iconBtn.icon, height: iconBtn.icon }}
+            >
+              {iconWrap(fieldLeadIcon)}
+            </span>
+          )}
+          <input
+            ref={inputRef}
+            value={value}
+            onChange={event => onChange(event.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder={placeholder}
+            aria-label={ariaLabel || placeholder}
             tabIndex={expanded ? 0 : -1}
-            onClick={() => {
-              onChange('');
-              requestAnimationFrame(() => inputRef.current?.focus());
-            }}
-            className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-0.5 text-zinc-400 hover:text-zinc-700"
-            data-morph-search-clear
-          >
-            <X className="w-3 h-3" />
-          </button>
-        )}
-      </div>
-    </div>
+            data-morph-search-input
+            style={{ paddingLeft: fieldLeadIcon ? iconBtn.icon + 16 : 10, paddingRight: rightPad }}
+            className={`${inputCls('sm')} w-full`}
+          />
+          <span className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+            {actions?.map(action => (
+              <button
+                key={action.key}
+                type="button"
+                aria-label={action.label}
+                title={action.label}
+                tabIndex={expanded ? 0 : -1}
+                onMouseDown={event => event.preventDefault()}
+                onClick={() => {
+                  action.onClick(value, { close: () => collapse(true) });
+                  if (!action.keepOpen) collapse(true);
+                }}
+                style={{ width: iconBtn.box, height: iconBtn.box }}
+                className="flex items-center justify-center rounded text-zinc-400 hover:text-zinc-700"
+                data-morph-search-action={action.key}
+              >
+                {iconWrap(action.icon)}
+              </button>
+            ))}
+            {showClear && value && (
+              <button
+                type="button"
+                aria-label="Clear"
+                tabIndex={expanded ? 0 : -1}
+                onClick={() => {
+                  onChange('');
+                  requestAnimationFrame(() => inputRef.current?.focus());
+                }}
+                style={{ width: iconBtn.box, height: iconBtn.box }}
+                className="flex items-center justify-center rounded text-zinc-400 hover:text-zinc-700"
+                data-morph-search-clear
+              >
+                <X size={iconBtn.icon} />
+              </button>
+            )}
+          </span>
+        </>
+      )}
+    />
   );
 }
 

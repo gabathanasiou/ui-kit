@@ -7,6 +7,9 @@ import { useCurrentDocument, usePortalTarget } from './popout';
 import { useOverlayMorph, MORPH_MS } from './overlayMorph';
 import { inputCls } from './input';
 import Button from './Button';
+import MorphFieldShell from './MorphFieldShell';
+import { useIconButtonSize } from './device';
+import type { MorphFieldAction } from './morphFieldTypes';
 import {
   buildSearchMenuRows,
   type SearchMenuGroup,
@@ -114,6 +117,11 @@ export interface SearchMenuProps {
   /** Standing actions pinned below the list (always visible — e.g. a
    *  persistent "Add …" or management action); receives the current query. */
   footerActions?: SearchMenuEmptyAction[];
+  /** Icon actions INSIDE the expanded text field, right edge (e.g. a plus that
+   *  creates from the typed query). They receive the query + `{ close }`;
+   *  panel actions (`emptyActions`/`leadingActions`/`footerActions`) stay
+   *  separate. */
+  fieldActions?: MorphFieldAction[];
 }
 
 export function SearchMenu({
@@ -149,6 +157,7 @@ export function SearchMenu({
   leadingActions,
   hideLeadingOnEmpty = false,
   footerActions,
+  fieldActions,
 }: SearchMenuProps) {
   const isControlled = controlledQuery !== undefined;
   const [innerQuery, setInnerQuery] = useState('');
@@ -187,6 +196,9 @@ export function SearchMenu({
   const d = getDropdownClasses(theme);
   const itemSize = useItemSize();
   const groupSize = useMenuGroupSize();
+  const iconBtn = useIconButtonSize();
+  const fieldActionCount = (fieldActions?.length || 0) + (query ? 1 : 0);
+  const fieldRightPad = 8 + fieldActionCount * (iconBtn.box + 2);
 
   const [pos, setPos] = useState({ top: 0, left: 0, maxH: 288, ready: false });
   const [anchorWidth, setAnchorWidth] = useState(0);
@@ -472,9 +484,51 @@ export function SearchMenu({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
+  const fieldActionButtons = (onClear: () => void) => (
+    <span className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+      {fieldActions?.map(action => (
+        <button
+          key={action.key}
+          type="button"
+          aria-label={action.label}
+          title={action.label}
+          tabIndex={expanded ? 0 : -1}
+          onMouseDown={event => event.preventDefault()}
+          onClick={() => {
+            action.onClick(query, { close });
+            if (!action.keepOpen) close();
+          }}
+          style={{ width: iconBtn.box, height: iconBtn.box }}
+          className="flex items-center justify-center rounded text-zinc-400 hover:text-zinc-700"
+          data-search-field-action={action.key}
+        >
+          <span
+            style={{ width: iconBtn.icon, height: iconBtn.icon }}
+            className="flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
+          >
+            {action.icon}
+          </span>
+        </button>
+      ))}
+      {query && (
+        <button
+          type="button"
+          aria-label="Clear search"
+          tabIndex={expanded ? 0 : -1}
+          onPointerDown={event => event.preventDefault()}
+          onClick={onClear}
+          style={{ width: iconBtn.box, height: iconBtn.box }}
+          className="ui-icon-btn flex items-center justify-center rounded"
+        >
+          <X size={iconBtn.icon} />
+        </button>
+      )}
+    </span>
+  );
+
   const inlineInput = (
     <div className="relative w-full">
-      <Search className="w-3.5 h-3.5 ui-icon absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+      <Search size={iconBtn.icon} className="ui-icon absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
       <input
         ref={inputRef}
         value={query}
@@ -488,19 +542,10 @@ export function SearchMenu({
         onClick={() => { if (openOnFocus) openPanel(); }}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
-        className={`${inputCls('sm')} w-full pl-8 pr-7`}
+        style={{ paddingRight: fieldRightPad }}
+        className={`${inputCls('sm')} w-full pl-8`}
       />
-      {query && (
-        <button
-          type="button"
-          aria-label="Clear search"
-          className="ui-icon-btn absolute right-1 top-1/2 -translate-y-1/2 rounded p-0.5"
-          onPointerDown={e => e.preventDefault()}
-          onClick={() => { setQuery(''); if (!open) openPanel(); }}
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
-      )}
+      {fieldActionButtons(() => { setQuery(''); if (!open) openPanel(); })}
     </div>
   );
 
@@ -508,7 +553,7 @@ export function SearchMenu({
      kit button (and its icon) never move during the morph. */
   const overlayInput = (
     <div className="absolute inset-0">
-      <Search className="w-3.5 h-3.5 ui-icon absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+      <Search size={iconBtn.icon} className="ui-icon absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
       <input
         ref={inputRef}
         value={query}
@@ -523,19 +568,10 @@ export function SearchMenu({
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         tabIndex={expanded ? 0 : -1}
-        className={`${inputCls('sm')} h-full w-full pl-8 pr-7`}
+        style={{ paddingRight: fieldRightPad }}
+        className={`${inputCls('sm')} h-full w-full pl-8`}
       />
-      {query && (
-        <button
-          type="button"
-          aria-label="Clear search"
-          className="ui-icon-btn absolute right-1 top-1/2 -translate-y-1/2 rounded p-0.5"
-          onPointerDown={e => e.preventDefault()}
-          onClick={() => { setQuery(''); if (!open && expanded) openPanel(); }}
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
-      )}
+      {fieldActionButtons(() => { setQuery(''); if (!open && expanded) openPanel(); })}
     </div>
   );
 
@@ -670,9 +706,13 @@ export function SearchMenu({
             aria-expanded={groupExpanded}
             onMouseDown={e => e.preventDefault()}
             onClick={e => { e.stopPropagation(); toggleGroup(row.group.key); }}
-            className="shrink-0 rounded p-0.5 text-zinc-400 hover:text-zinc-700"
+            style={{ width: iconBtn.box, height: iconBtn.box }}
+            className="shrink-0 flex items-center justify-center rounded text-zinc-400 hover:text-zinc-700"
           >
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${groupExpanded ? 'rotate-180' : ''}`} />
+            <ChevronDown
+              size={iconBtn.icon}
+              className={`transition-transform duration-200 ${groupExpanded ? 'rotate-180' : ''}`}
+            />
           </button>
         )}
       </div>
@@ -815,54 +855,41 @@ export function SearchMenu({
     portalTarget ?? currentDocument?.body ?? document.body,
   ) : null;
 
+  if (mode === 'inline') {
+    return (
+      <div ref={rootRef} data-search-menu data-mode={mode} className="relative inline-flex" style={{ width: '100%' }}>
+        {inlineInput}
+        {panel}
+      </div>
+    );
+  }
+
   return (
-    <div
-      ref={rootRef}
+    <MorphFieldShell
+      expanded={expanded}
+      collapsedWidth={collapsedWidth}
+      expandedWidth={expandedWidth}
+      rootRef={rootRef}
       data-search-menu
       data-mode={mode}
-      className="relative inline-flex"
-      style={mode === 'inline'
-        ? { width: '100%' }
-        : { width: expanded ? expandedWidth : collapsedWidth, transition: `width ${MORPH_MS}ms cubic-bezier(0.32, 0.72, 0, 1)` }}
-    >
-      {mode === 'inline' ? inlineInput : (
-        <>
-          <div
-            className={`w-full origin-left ${expanded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-            style={{
-              transform: expanded ? 'scaleX(0.98)' : 'scaleX(1)',
-              transition: 'opacity 150ms ease, transform 220ms cubic-bezier(0.32, 0.72, 0, 1)',
-            }}
-          >
-            <Button
-              ref={triggerRef}
-              type="button"
-              variant="primary"
-              size="minimal"
-              theme={theme === 'dark' ? 'dark' : 'light'}
-              icon={triggerIcon ?? <Search className="w-3.5 h-3.5" />}
-              onClick={openPanel}
-              className={`w-full justify-start ${expanded ? 'pointer-events-none' : ''}`}
-              tabIndex={expanded ? -1 : 0}
-              data-search-trigger
-            >
-              <span>{triggerLabel}</span>
-            </Button>
-          </div>
-          <div
-            className={`absolute inset-0 origin-left ${expanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-            aria-hidden={!expanded}
-            style={{
-              transform: expanded ? 'scaleX(1)' : 'scaleX(0.96)',
-              transition: 'opacity 150ms ease, transform 220ms cubic-bezier(0.32, 0.72, 0, 1)',
-            }}
-          >
-            {overlayInput}
-          </div>
-        </>
+      trigger={(
+        <Button
+          ref={triggerRef}
+          type="button"
+          variant="primary"
+          size="minimal"
+          theme={theme === 'dark' ? 'dark' : 'light'}
+          icon={triggerIcon ?? <Search className="w-3.5 h-3.5" />}
+          onClick={openPanel}
+          className={`w-full justify-start ${expanded ? 'pointer-events-none' : ''}`}
+          tabIndex={expanded ? -1 : 0}
+          data-search-trigger
+        >
+          <span>{triggerLabel}</span>
+        </Button>
       )}
-      {panel}
-    </div>
+      field={<>{overlayInput}{panel}</>}
+    />
   );
 }
 

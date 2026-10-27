@@ -29,6 +29,7 @@ const SPECS = join(ROOT, 'playground/specs');
 
 // ---- Spec buckets (base names under playground/specs/, no extension) ----
 const MENUS = ['dropdown-menu', 'dropdown-highlight', 'context-menu', 'searchable-dropdown', 'modal-portal', 'modal-drag-dismiss'];
+const SEARCH = ['searchable-dropdown', 'search-menu-morph', 'morph-action-field'];
 const RICH = ['rich-text-formatting', 'rich-text-staged-tokens'];
 const CANARY = ['dropdown-menu', 'overlay-morph'];
 
@@ -58,19 +59,25 @@ const RULES = [
   // menus / positioning / modality
   { g: 'src/DropdownSubmenu.tsx', s: MENUS },
   { g: 'src/ContextMenu.tsx', s: ['context-menu'] },
-  { g: 'src/useDropdownPosition.ts', s: ['dropdown-flip', 'dropdown-highlight', 'searchable-dropdown', 'context-menu'] },
+  { g: 'src/useDropdownPosition.ts', s: ['dropdown-flip', 'dropdown-highlight', 'searchable-dropdown', 'search-menu-morph', 'context-menu'] },
+  { g: 'src/SearchMenu.tsx', s: SEARCH },
+  { g: 'src/searchMenuModel.ts', s: SEARCH },
+  { g: 'src/MorphSearchField.tsx', s: SEARCH },
+  { g: 'src/MorphActionField.tsx', s: SEARCH },
   { g: 'src/useLongPressMenu.tsx', s: ['context-menu', 'modal-drag-dismiss'] },
   { g: 'src/Modal.tsx', s: ['modal-portal', 'modal-drag-dismiss', 'dialog'] },
   { g: 'src/ModalFooterButton.tsx', s: ['dialog', 'modal-portal'] },
   { g: 'src/Dialog.tsx', s: ['dialog'] },
   { g: 'src/Button.tsx', s: [...MENUS, 'seg', 'header-tabs'] },
   { g: 'src/slidingPill.ts', s: ['seg', 'header-tabs'] },
-  { g: 'src/Checkbox.tsx', s: ['dialog'] },
+  { g: 'src/Checkbox.tsx', s: ['dialog', 'theme-lab'] },
+  { g: 'src/RadioList.tsx', s: ['theme-lab'] },
+  { g: 'src/styles/**', s: ['theme-lab'] },
   // switches / track chrome
   { g: 'src/FloatingToggle.tsx', s: ['seg'] },
   { g: 'src/Checklist.tsx', s: ['seg'] },
   // inputs
-  { g: 'src/input.ts', s: ['searchable-dropdown', 'dialog'] },
+  { g: 'src/input.ts', s: ['searchable-dropdown', 'dialog', 'search-menu-morph', 'morph-action-field'] },
   { g: 'src/numberInputMath.ts', s: ['number-input'] },
   { g: 'src/NumberInput.tsx', s: ['number-input'] },
   { g: 'src/index.ts', s: 'ALL' },
