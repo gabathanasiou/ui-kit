@@ -4,7 +4,7 @@ import { ChevronDown, Plus, Search, X } from 'lucide-react';
 import { getDropdownClasses, useItemSize, useMenuGroupSize, type DropdownTheme } from './DropdownMenu';
 import { useDropdownPosition } from './useDropdownPosition';
 import { useCurrentDocument, usePortalTarget } from './popout';
-import { useOverlayMorph } from './overlayMorph';
+import { useOverlayMorph, MORPH_MS } from './overlayMorph';
 import { inputCls } from './input';
 import Button from './Button';
 import {
@@ -152,6 +152,9 @@ export function SearchMenu({
   const inputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  /** True while the button→field width transition is still running. */
+  const morphingRef = useRef(false);
+  const morphTimerRef = useRef(0);
   const currentDocument = useCurrentDocument();
   const portalTarget = usePortalTarget();
   const d = getDropdownClasses(theme);
@@ -286,13 +289,33 @@ export function SearchMenu({
     });
   }, [groupExpandMode]);
 
-  const openPanel = useCallback(() => {
-    setExpanded(true);
+  const revealPanel = useCallback(() => {
     setOpen(true);
-    // Start on the first list row, not the pinned New action — Enter on an
-    // untouched picker must never create a record by accident.
     setHighlighted(leadingOffset);
   }, [leadingOffset]);
+
+  const openPanel = useCallback(() => {
+    // Expandable: let the button→field width transition finish BEFORE the
+    // panel is positioned. Measuring mid-morph anchors the panel to the
+    // collapsed rect (it then jumps when the user scrolls). The field is
+    // visible immediately; the panel arrives with it.
+    if (mode === 'expandable' && !expanded) {
+      setExpanded(true);
+      morphingRef.current = true;
+      window.clearTimeout(morphTimerRef.current);
+      morphTimerRef.current = window.setTimeout(() => {
+        morphingRef.current = false;
+        revealPanel();
+      }, MORPH_MS + 20);
+      return;
+    }
+    setExpanded(true);
+    // Start on the first list row, not the pinned New action — Enter on an
+    // untouched picker must never create a record by accident.
+    revealPanel();
+  }, [mode, expanded, revealPanel]);
+
+  useEffect(() => () => window.clearTimeout(morphTimerRef.current), []);
 
   // Expandable: focus the field once it mounts.
   useEffect(() => {
@@ -453,8 +476,8 @@ export function SearchMenu({
         aria-controls="search-menu-panel"
         aria-autocomplete="list"
         onChange={e => onChange(e.target.value)}
-        onFocus={() => { if (openOnFocus && expanded) openPanel(); }}
-        onClick={() => { if (openOnFocus && expanded) openPanel(); }}
+        onFocus={() => { if (openOnFocus && expanded && !morphingRef.current) openPanel(); }}
+        onClick={() => { if (openOnFocus && expanded && !morphingRef.current) openPanel(); }}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         tabIndex={expanded ? 0 : -1}
@@ -706,7 +729,7 @@ export function SearchMenu({
       className="relative inline-flex"
       style={mode === 'inline'
         ? { width: '100%' }
-        : { width: expanded ? expandedWidth : collapsedWidth, transition: 'width 220ms cubic-bezier(0.32, 0.72, 0, 1)' }}
+        : { width: expanded ? expandedWidth : collapsedWidth, transition: `width ${MORPH_MS}ms cubic-bezier(0.32, 0.72, 0, 1)` }}
     >
       {mode === 'inline' ? inlineInput : (
         <>
