@@ -168,9 +168,6 @@ export function SearchMenu({
   const inputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  /** True while the button→field width transition is still running. */
-  const morphingRef = useRef(false);
-  const morphTimerRef = useRef(0);
   const currentDocument = useCurrentDocument();
   const portalTarget = usePortalTarget();
   const d = getDropdownClasses(theme);
@@ -306,33 +303,13 @@ export function SearchMenu({
     });
   }, [groupExpandMode]);
 
-  const revealPanel = useCallback(() => {
-    setOpen(true);
-    setHighlighted(leadingOffset);
-  }, [leadingOffset]);
-
   const openPanel = useCallback(() => {
-    // Expandable: let the button→field width transition finish BEFORE the
-    // panel is positioned. Measuring mid-morph anchors the panel to the
-    // collapsed rect (it then jumps when the user scrolls). The field is
-    // visible immediately; the panel arrives with it.
-    if (mode === 'expandable' && !expanded) {
-      setExpanded(true);
-      morphingRef.current = true;
-      window.clearTimeout(morphTimerRef.current);
-      morphTimerRef.current = window.setTimeout(() => {
-        morphingRef.current = false;
-        revealPanel();
-      }, MORPH_MS + 20);
-      return;
-    }
     setExpanded(true);
+    setOpen(true);
     // Start on the first list row, not the pinned New action — Enter on an
     // untouched picker must never create a record by accident.
-    revealPanel();
-  }, [mode, expanded, revealPanel]);
-
-  useEffect(() => () => window.clearTimeout(morphTimerRef.current), []);
+    setHighlighted(leadingOffset);
+  }, [leadingOffset]);
 
   // Expandable: focus the field once it mounts.
   useEffect(() => {
@@ -493,8 +470,8 @@ export function SearchMenu({
         aria-controls="search-menu-panel"
         aria-autocomplete="list"
         onChange={e => onChange(e.target.value)}
-        onFocus={() => { if (openOnFocus && expanded && !morphingRef.current) openPanel(); }}
-        onClick={() => { if (openOnFocus && expanded && !morphingRef.current) openPanel(); }}
+        onFocus={() => { if (openOnFocus && expanded) openPanel(); }}
+        onClick={() => { if (openOnFocus && expanded) openPanel(); }}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         tabIndex={expanded ? 0 : -1}
