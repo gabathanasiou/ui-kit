@@ -527,6 +527,7 @@ export function SearchMenu({
         <button
           type="button"
           tabIndex={-1}
+          onMouseDown={e => e.preventDefault()}
           onClick={() => activate(row)}
           className="flex min-w-0 flex-1 items-center gap-2 text-left"
         >
@@ -540,6 +541,7 @@ export function SearchMenu({
             tabIndex={-1}
             aria-label={`${groupExpanded ? 'Collapse' : 'Expand'} ${row.group.label}`}
             aria-expanded={groupExpanded}
+            onMouseDown={e => e.preventDefault()}
             onClick={e => { e.stopPropagation(); toggleGroup(row.group.key); }}
             className="shrink-0 rounded p-0.5 text-zinc-400 hover:text-zinc-700"
           >
