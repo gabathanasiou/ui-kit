@@ -747,7 +747,11 @@ export default function DropdownMenu({
   useLayoutEffect(() => {
     if (!open || highlight.highlightedIndex < 0 || highlight.pointerDriven) return;
     const row = contentElRef.current?.querySelector<HTMLElement>(`[data-ei="${highlight.highlightedIndex}"]`);
-    revealRowInScroller(row, 'nearest', contentElRef.current);
+    /* No explicit scroller: in INTERNAL-search mode the content is
+       `overflow-hidden` and the rows scroll in `[data-menu-items]`; passing the
+       content made every keyboard reveal a no-op (the highlighted row walked
+       below the fold). The helper finds the row's real scroll parent. */
+    revealRowInScroller(row, 'nearest');
   }, [open, highlight.highlightedIndex, highlight.pointerDriven]);
 
   const handleOpenChange = useCallback((o: boolean) => {
@@ -1127,6 +1131,15 @@ export function ItemManagerDropdown({
   editValueRef.current = editValue;
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  /* The list mounts in Radix's PORTAL a commit AFTER `open` flips — an effect
+     keyed on `[open]` read `listRef.current === null` and never attached the
+     keyboard listener (the manager's bespoke arrows were dead until a
+     rename). Track the node so the listener attaches when it exists. */
+  const [listEl, setListEl] = useState<HTMLDivElement | null>(null);
+  const setListNode = useCallback((node: HTMLDivElement | null) => {
+    listRef.current = node;
+    setListEl(node);
+  }, []);
 
   // A manager list opens with its ACTIVE item already in view — the shared
   // preselected-surface contract (pre-paint reveal, then frozen once the
@@ -1160,8 +1173,13 @@ export function ItemManagerDropdown({
       const menu = listRef.current?.closest('.ui-menu');
       if (!menu || !menu.contains(e.target as Node)) return;
       const doc = menu.ownerDocument;
-      const rowNames = [...menu.querySelectorAll<HTMLElement>('[data-active] > [role="menuitem"]:first-child')];
-      const footerItems = [...menu.querySelectorAll<HTMLElement>('div:last-child > [role="menuitem"]')];
+      /* EVERY row's name item — `data-active` marks only the selected row, so
+         selecting on it walked the active row + the footer and skipped every
+         other item (the second arrow landed on "Reset"/"New"). */
+      const rowNames = [...menu.querySelectorAll<HTMLElement>('[data-im-row] > [role="menuitem"]:first-child')];
+      /* Scope to the footer CONTAINER: the loose `div:last-child` selector also
+         matched the last ROW's wrapper and duplicated its item at the end. */
+      const footerItems = [...menu.querySelectorAll<HTMLElement>(':scope > div:last-child > [role="menuitem"]')];
       const vertical = [...rowNames, ...footerItems];
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
@@ -1169,18 +1187,22 @@ export function ItemManagerDropdown({
         const a = doc.activeElement as HTMLElement | null;
         let cur = a ? vertical.indexOf(a) : -1;
         if (cur < 0 && a) {
-          const row = a.closest('[data-active]');
+          const row = a.closest('[data-im-row]');
           const nameItem = row?.querySelector<HTMLElement>('[role="menuitem"]:first-child');
           if (nameItem) cur = rowNames.indexOf(nameItem);
         }
         const dir = e.key === 'ArrowDown' ? 1 : -1;
         const next = cur < 0 ? (dir === 1 ? 0 : vertical.length - 1) : (cur + dir + vertical.length) % vertical.length;
-        vertical[next]?.focus({ preventScroll: true });
+        const nextEl = vertical[next];
+        nextEl?.focus({ preventScroll: true });
+        /* focus({preventScroll}) deliberately leaves the page alone — the row
+           must still be revealed inside the manager's own list. */
+        revealRowInScroller(nextEl?.closest<HTMLElement>('[data-im-row]') ?? nextEl, 'nearest', listRef.current);
         return;
       }
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         const a = doc.activeElement as HTMLElement | null;
-        const row = a?.closest('[data-active]') as HTMLElement | null;
+        const row = a?.closest('[data-im-row]') as HTMLElement | null;
         if (!row) return; // footer actions have no buttons to move into
         e.preventDefault();
         e.stopImmediatePropagation();
@@ -1193,10 +1215,10 @@ export function ItemManagerDropdown({
         return;
       }
     };
-    const doc = listRef.current?.ownerDocument ?? null;
+    const doc = listEl?.ownerDocument ?? null;
     doc?.addEventListener('keydown', onKey, { capture: true });
     return () => doc?.removeEventListener('keydown', onKey, { capture: true });
-  }, [open, editingId]);
+  }, [open, editingId, listEl]);
 
   useEffect(() => {
     if (!editingId) return;
@@ -1266,12 +1288,12 @@ export function ItemManagerDropdown({
       <div className={`shrink-0 ${d.headerText}`}>
         {header}
       </div>
-      <div ref={listRef} onPointerEnter={reveal.engage} onPointerDown={reveal.engage} className="flex-1 min-h-0 overflow-y-auto scrollbar-custom flex flex-col">
+      <div ref={setListNode} data-im-list onPointerEnter={reveal.engage} onPointerDown={reveal.engage} className="flex-1 min-h-0 overflow-y-auto scrollbar-custom flex flex-col">
       {items.map(item => {
         const isActive = item.id === activeId;
         const isEditing = editingId === item.id;
         return (
-          <div key={item.id} data-active={isActive ? '1' : undefined} className={`scroll-my-4 flex items-center gap-1 rounded ${isActive || isEditing ? d.rowActiveBg : d.rowHoverBg} ${editingId && !isEditing ? 'opacity-40 pointer-events-none' : ''}`}>
+          <div key={item.id} data-im-row={item.id} data-active={isActive ? '1' : undefined} className={`scroll-my-4 flex items-center gap-1 rounded ${isActive || isEditing ? d.rowActiveBg : d.rowHoverBg} ${editingId && !isEditing ? 'opacity-40 pointer-events-none' : ''}`}>
             {isEditing ? (
               <>
                 <div className="flex-1 min-w-0 flex items-center">

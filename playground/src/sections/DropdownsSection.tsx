@@ -152,10 +152,14 @@ function SubmenuDemo() {
 
 function ItemManagerDemo() {
   const [open, setOpen] = useState(false);
+  /* Enough rows to overflow the menu's height cap: the keyboard highlight has
+     to be revealed inside the list (real focus + preventScroll = nothing
+     scrolls it for free). */
   const [items, setItems] = useState([
     { id: '1', name: 'Alpha' },
     { id: '2', name: 'Beta' },
     { id: '3', name: 'Gamma' },
+    ...Array.from({ length: 27 }, (_, i) => ({ id: String(i + 4), name: `Item ${i + 4}` })),
   ]);
   const [active, setActive] = useState('1');
   return (

@@ -44,11 +44,12 @@ const WAIT_BASELINE = 9;
 //      empty/full) + MorphActionField (create/rename field with inline actions).
 // 98 = 97 + SearchMenu field actions (buttons inside the expanded textbox).
 // 99 = 98 + the dark/zinc checked control colors (black fill + white mark).
-// 102 = 99 + the trigger-as-search regressions (reopen/select-all/Tab, a
-//       paste without a keydown + click-commit) and the token popup's
-//       keyboard reveal (browser-only scroll-owner wiring).
+// 105 = 99 + the trigger-as-search regressions (reopen/select-all/Tab, a
+//       paste without a keydown + click-commit), the token popup's keyboard
+//       reveal, and the scroll-owner audit (searchable menu, item manager,
+//       long context menu) — all browser-only reveal wiring.
 const SPEC_CAP = 18;
-const TEST_CAP = 102;
+const TEST_CAP = 105;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

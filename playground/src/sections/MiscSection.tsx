@@ -72,6 +72,28 @@ function ContextMenuDemo() {
   );
 }
 
+/** Long menu: 30 rows overflow the 85vh cap. The highlight is detached from
+ *  focus (the key lock routes arrows from anywhere), so the panel itself must
+ *  scroll it into view — the shared reveal contract. */
+function LongContextMenuDemo() {
+  const [ctx, setCtx] = useState<{ x: number; y: number } | null>(null);
+  return (
+    <div className="row" data-testid="ctx-long-demo">
+      <button
+        data-testid="ctx-long-target"
+        onClick={e => { const r = (e.target as HTMLElement).getBoundingClientRect(); setCtx({ x: r.left, y: r.bottom + 4 }); }}
+      >
+        Long context menu (30 items)
+      </button>
+      <ContextMenu open={!!ctx} x={ctx?.x ?? 0} y={ctx?.y ?? 0} onClose={() => setCtx(null)}>
+        {Array.from({ length: 30 }, (_, i) => (
+          <ContextMenuItem key={i} onClick={() => setCtx(null)}>Item {i + 1}</ContextMenuItem>
+        ))}
+      </ContextMenu>
+    </div>
+  );
+}
+
 export function MiscSection() {
   return (
     <>
@@ -80,6 +102,7 @@ export function MiscSection() {
         hint="Single highlight (pointer + keys), typeahead, nested subs and the right-edge clamp. The floating right-edge button is the viewport repro."
       >
         <ContextMenuDemo />
+        <LongContextMenuDemo />
       </DemoCard>
       <DemoCard label="Long-press menu" hint="Touch: hold ~500ms. Pen/finger are treated the same; right-click works on desktop.">
         <LongPressDemo />
