@@ -403,6 +403,36 @@ test('SearchMenu expandable: field actions live inside the textbox and keep the 
   await input.press('Escape');
 });
 
+test('SearchMenu multiple: categories expand, group select-all, hidden-by-filter, hero commit', async ({ page }) => {
+  await page.goto('/');
+  const wrap = page.getByTestId('multi-search-accordion');
+  const status = page.getByTestId('multi-search-status');
+  await wrap.locator('[data-search-trigger]').click();
+  const panel = page.locator('#search-menu-panel');
+  await expect(panel).toBeVisible();
+
+  // Categories still expand — the row click does NOT select the category.
+  const grip = panel.locator('[data-search-group="Grip"]');
+  await grip.locator('[aria-label="Expand Grip"]').click();
+  await expect(panel.locator('[data-search-item="grip-key"]')).toBeVisible();
+
+  // Per-group select-all ticks the visible rows.
+  await grip.getByRole('button', { name: 'Select all Grip' }).click();
+  await expect(panel.locator('[data-search-item="grip-key"]')).toHaveAttribute('aria-selected', 'true');
+  await expect(panel.locator('[data-search-item="grip-best"]')).toHaveAttribute('aria-selected', 'true');
+  const footer = panel.locator('[data-selection-footer]');
+  await expect(footer).toContainText('3 selected');
+  await expect(page.locator('[data-selection-hero]')).toHaveText('Add 3 roles');
+
+  // Filtering hides selected rows but keeps them selected; the footer says so.
+  await wrap.locator('[data-search-input]').fill('gaffer');
+  await expect(footer).toContainText('3 hidden by filter');
+  await page.locator('[data-selection-hero]').click();
+  await expect(panel).toHaveCount(0);
+  await expect(status).toContainText('committed: camera-op, grip-key, grip-best');
+  await expect(status).toContainText('commits: 1');
+});
+
 test('MorphSearchField: button morphs into a filter field and keeps the term', async ({ page }) => {
   await page.goto('/');
   const wrap = page.getByTestId('morph-search-field');

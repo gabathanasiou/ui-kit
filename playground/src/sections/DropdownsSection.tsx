@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import {
-  Button, DropdownMenu, DropdownItem, DropdownSubmenu, ItemManagerDropdown,
+  Button, DropdownMenu, DropdownItem, DropdownSubmenu, ItemManagerDropdown, Seg,
 } from '../../../src/index';
 import type { DropdownTheme } from '../../../src/index';
 import { Check, Copy, Pencil, Trash2 } from 'lucide-react';
-import { MENU_ITEMS } from '../demoData';
+import { MENU_ITEMS, MULTI_ROLES } from '../demoData';
 import { DemoCard } from '../shell/chrome';
 
 /* Dropdown menus: the app's controlled pattern, the theme palettes, the plain
@@ -216,6 +216,90 @@ function MenuRowsDemo() {
   );
 }
 
+function MultipleMenuDemo() {
+  /* Roadmap 322 — rows TOGGLE and stay open; the footer hero commits ONE
+     draft. Escape / click-away / a trigger click cancel. The capped menu
+     proves the max rule: at the cap the unchecked rows disable, checked rows
+     stay clickable to uncheck. Sound Mixer is a disabled row. */
+  const [open, setOpen] = useState(false);
+  const [cappedOpen, setCappedOpen] = useState(false);
+  const [lightOpen, setLightOpen] = useState(false);
+  const [selected, setSelected] = useState<string[]>(['grip-key']);
+  const [capped, setCapped] = useState<string[]>([]);
+  const [commits, setCommits] = useState(0);
+  const [indicator, setIndicator] = useState<'box' | 'check'>('box');
+  return (
+    <div className="row" data-testid="multi-menu-demo">
+      <Seg
+        value={indicator}
+        options={[{ v: 'box', l: 'Checkbox' }, { v: 'check', l: 'Check icon' }]}
+        onChange={v => setIndicator(v as 'box' | 'check')}
+        variant="track"
+      />
+      <DropdownMenu
+        open={open}
+        onOpenChange={setOpen}
+        width="w-64"
+        multiple={{
+          selectedIds: selected,
+          onCommit: ids => { setSelected(ids); setCommits(n => n + 1); },
+          commitLabel: n => `Add ${n} ${n === 1 ? 'role' : 'roles'}`,
+          disabledIds: ['sound-mixer'],
+          indicator,
+        }}
+        trigger={<Button data-testid="multi-menu-trigger">Add roles {selected.length ? `— ${selected.length}` : ''}</Button>}
+      >
+        {MULTI_ROLES.map(role => (
+          <DropdownItem key={role.id} itemId={role.id} group={role.group} onClick={() => {}}>
+            {role.label}
+          </DropdownItem>
+        ))}
+      </DropdownMenu>
+      <DropdownMenu
+        open={cappedOpen}
+        onOpenChange={setCappedOpen}
+        width="w-64"
+        multiple={{
+          selectedIds: capped,
+          onCommit: setCapped,
+          commitLabel: n => `Take ${n}`,
+          max: 3,
+          indicator,
+        }}
+        trigger={<Button data-testid="multi-capped-trigger">Capped at 3 {capped.length ? `— ${capped.length}` : ''}</Button>}
+      >
+        {MULTI_ROLES.map(role => (
+          <DropdownItem key={role.id} itemId={role.id} group={role.group} onClick={() => {}}>
+            {role.label}
+          </DropdownItem>
+        ))}
+      </DropdownMenu>
+      <DropdownMenu
+        open={lightOpen}
+        onOpenChange={setLightOpen}
+        theme="light"
+        width="w-64"
+        multiple={{
+          selectedIds: selected,
+          onCommit: ids => { setSelected(ids); setCommits(n => n + 1); },
+          commitLabel: n => `Add ${n} ${n === 1 ? 'role' : 'roles'}`,
+          indicator,
+        }}
+        trigger={<Button theme="light" variant="primary" data-testid="multi-light-trigger">Light roles {selected.length ? `— ${selected.length}` : ''}</Button>}
+      >
+        {MULTI_ROLES.map(role => (
+          <DropdownItem key={role.id} itemId={role.id} group={role.group} onClick={() => {}}>
+            {role.label}
+          </DropdownItem>
+        ))}
+      </DropdownMenu>
+      <span className="label" data-testid="multi-menu-status">
+        committed: {selected.join(', ') || '—'} · commits: {commits} · capped: {capped.join(', ') || '—'} · indicator: {indicator}
+      </span>
+    </div>
+  );
+}
+
 export function DropdownsSection() {
   return (
     <>
@@ -242,6 +326,12 @@ export function DropdownsSection() {
       </DemoCard>
       <DemoCard label="Row options" hint="Icon, selected tint + tick, right action, disabled, danger.">
         <MenuRowsDemo />
+      </DemoCard>
+      <DemoCard
+        label="Multiple — draft + hero"
+        hint="Rows toggle and the panel stays open; the footer hero commits one draft. Escape, click-away or the trigger cancels. Sound Mixer is disabled; the capped menu disables unchecked rows at 3. Toggle Checkbox / Check icon to compare the row indicator."
+      >
+        <MultipleMenuDemo />
       </DemoCard>
       <DemoCard label="Submenus" hint="Nested subs coexist; each level owns its own highlight.">
         <SubmenuDemo />

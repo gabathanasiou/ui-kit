@@ -106,3 +106,70 @@ test('the trigger keeps its hover look while the menu is open', async ({ page })
   await page.mouse.move(10, 10);
   await expect.poll(() => t.evaluate(el => getComputedStyle(el).backgroundColor)).toBe(closedBg);
 });
+
+/* ── Multiple selection (roadmap 322) ─────────────────────────────────────── */
+
+const multiMenu = (page: Page) => page.locator('[role="menu"]');
+const multiFooter = (page: Page) => page.locator('[data-selection-footer]');
+
+test('multiple: rows toggle and stay open; the footer hero commits one draft', async ({ page }) => {
+  await page.goto('/');
+  const trigger = page.getByTestId('multi-menu-trigger');
+  await trigger.click();
+  await expect(multiMenu(page)).toBeVisible();
+
+  // Key Grip is the committed starting value (one tick already).
+  await expect(page.getByRole('menuitemcheckbox', { name: 'Key Grip' })).toHaveAttribute('aria-checked', 'true');
+  // Ticking more rows must NOT close the panel.
+  await page.getByRole('menuitemcheckbox', { name: 'Camera Operator' }).click();
+  await page.getByRole('menuitemcheckbox', { name: 'Gaffer' }).click();
+  await expect(multiMenu(page)).toBeVisible();
+  await expect(multiFooter(page)).toContainText('3 selected');
+  await expect(page.getByTestId('multi-menu-status')).toContainText('committed: grip-key');
+
+  // The hero is the only commit path — one call, catalogue order.
+  await page.locator('[data-selection-hero]').click();
+  await expect(multiMenu(page)).toHaveCount(0, { timeout: 5000 });
+  await expect(page.getByTestId('multi-menu-status')).toContainText('committed: camera-op, grip-key, electric-gaffer');
+  await expect(page.getByTestId('multi-menu-status')).toContainText('commits: 1');
+});
+
+test('multiple: Escape, click-away and a trigger click cancel the draft', async ({ page }) => {
+  await page.goto('/');
+  const trigger = page.getByTestId('multi-menu-trigger');
+  const status = page.getByTestId('multi-menu-status');
+
+  // Escape cancels.
+  await trigger.click();
+  await page.getByRole('menuitemcheckbox', { name: 'Camera Operator' }).click();
+  await expect(multiFooter(page)).toContainText('2 selected');
+  await page.keyboard.press('Escape');
+  await expect(multiMenu(page)).toHaveCount(0, { timeout: 5000 });
+  await expect(status).toContainText('committed: grip-key');
+  await expect(status).toContainText('commits: 0');
+
+  // Reopening seeds from the committed value (the tick was dropped).
+  await trigger.click();
+  await expect(page.getByRole('menuitemcheckbox', { name: 'Camera Operator' })).toHaveAttribute('aria-checked', 'false');
+  await expect(page.getByRole('menuitemcheckbox', { name: 'Key Grip' })).toHaveAttribute('aria-checked', 'true');
+
+  // A trigger click is a dismiss, not a commit.
+  await page.getByRole('menuitemcheckbox', { name: 'Gaffer' }).click();
+  await trigger.click();
+  await expect(multiMenu(page)).toHaveCount(0, { timeout: 5000 });
+  await expect(status).toContainText('committed: grip-key');
+});
+
+test('multiple: Cmd/Ctrl+A selects the visible set and max disables the rest', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('multi-capped-trigger').click();
+  await expect(multiMenu(page)).toBeVisible();
+
+  await page.keyboard.press('ControlOrMeta+a');
+  await expect(multiFooter(page)).toContainText('3 of 3 selected');
+  // At the cap the unchecked rows are disabled; checked rows stay clickable.
+  await expect(page.getByRole('menuitemcheckbox', { name: 'Best Boy Grip' })).toHaveAttribute('aria-disabled', 'true');
+  await page.getByRole('menuitemcheckbox', { name: 'Camera Operator' }).click();
+  await expect(multiFooter(page)).toContainText('2 of 3 selected');
+  await expect(page.getByRole('menuitemcheckbox', { name: 'Best Boy Grip' })).not.toHaveAttribute('aria-disabled', 'true');
+});

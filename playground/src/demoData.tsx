@@ -59,6 +59,18 @@ export const MORPH_ITEMS: SearchMenuItem[] = [
   { id: 'm-loc-3', label: 'Unit Base North', group: 'unitBase' },
 ];
 
+/** Multi-select demo catalogue (menus + SearchMenu): crew roles grouped by
+ *  department. The specs depend on these labels. */
+export const MULTI_ROLES = [
+  { id: 'camera-op', label: 'Camera Operator', group: 'Camera' },
+  { id: 'camera-1st', label: '1st AC', group: 'Camera' },
+  { id: 'grip-key', label: 'Key Grip', group: 'Grip' },
+  { id: 'grip-best', label: 'Best Boy Grip', group: 'Grip' },
+  { id: 'electric-gaffer', label: 'Gaffer', group: 'Electric' },
+  { id: 'electric-1st', label: '1st Electric', group: 'Electric' },
+  { id: 'sound-mixer', label: 'Sound Mixer', group: 'Sound' },
+];
+
 /* ── Header tabs (roadmap 258) ────────────────────────────────────────────── */
 
 export const HEADER_TAB_IDS = ['breakdown', 'schedule', 'calendar', 'design', 'rules', 'production', 'reports'] as const;

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Button, DropdownMenu, DropdownItem, SearchMenu, MorphSearchField, MorphActionField, Seg, Checkbox, useInputSize,
 } from '../../../src/index';
 import type { SearchMenuItem, MorphFieldAction } from '../../../src/index';
 import { Filter, MapPin, Plus, Search } from 'lucide-react';
 import {
-  DEEP_CATEGORIES, DEEP_RECORDS, FLAT_ITEMS, LOCATIONS, MORPH_GROUPS, MORPH_ITEMS, TIMEZONES,
+  DEEP_CATEGORIES, DEEP_RECORDS, FLAT_ITEMS, LOCATIONS, MORPH_GROUPS, MORPH_ITEMS, MULTI_ROLES, TIMEZONES,
 } from '../demoData';
 import { DemoCard } from '../shell/chrome';
 
@@ -235,6 +235,72 @@ function SearchableTriggerDemo() {
   );
 }
 
+/* ── Multiple selection (roadmap 322) ─────────────────────────────────────── */
+
+function MultipleSearchDemo() {
+  /* Records toggle and the panel stays open; categories still expand, and the
+     category row's check selects its VISIBLE rows. The footer hero commits;
+     Escape/click-away/trigger close cancel. Search to see the hidden-by-filter
+     note (selected rows the query hides stay selected). The same committed
+     value feeds the accordion and the plain-header variant. */
+  const [selected, setSelected] = useState<string[]>(['camera-op']);
+  const [commits, setCommits] = useState(0);
+  const [indicator, setIndicator] = useState<'box' | 'check'>('box');
+  const groups = useMemo(() => MULTI_ROLES
+    .map(role => role.group)
+    .filter((group, index, all) => all.indexOf(group) === index)
+    .map(group => ({ key: group, label: group, count: MULTI_ROLES.filter(role => role.group === group).length })), []);
+  const items = useMemo(() => MULTI_ROLES.map(role => ({ id: role.id, label: role.label, group: role.group })), []);
+  const multiple = {
+    selectedIds: selected,
+    onCommit: (ids: string[]) => { setSelected(ids); setCommits(n => n + 1); },
+    commitLabel: (n: number) => `Add ${n} ${n === 1 ? 'role' : 'roles'}`,
+    indicator,
+  };
+  return (
+    <div className="row" data-testid="multi-search-demo">
+      <Seg
+        value={indicator}
+        options={[{ v: 'box', l: 'Checkbox' }, { v: 'check', l: 'Check icon' }]}
+        onChange={v => setIndicator(v as 'box' | 'check')}
+        variant="track"
+      />
+      <div data-testid="multi-search-accordion">
+        <SearchMenu
+          items={items}
+          groups={groups}
+          multiple={multiple}
+          expandableGroups
+          groupExpandMode="single"
+          triggerLabel={`Pick roles${selected.length ? ` — ${selected.length}` : ''}`}
+          triggerIcon={<Plus className="w-3.5 h-3.5" />}
+          placeholder="Search roles…"
+          collapsedWidth={140}
+          expandedWidth={240}
+          panelWidth={300}
+        />
+      </div>
+      <div data-testid="multi-search-browse">
+        <SearchMenu
+          items={items}
+          groups={groups}
+          multiple={multiple}
+          browseExpanded
+          triggerLabel={`Browse roles${selected.length ? ` — ${selected.length}` : ''}`}
+          triggerIcon={<Plus className="w-3.5 h-3.5" />}
+          placeholder="Browse roles…"
+          collapsedWidth={160}
+          expandedWidth={240}
+          panelWidth={300}
+        />
+      </div>
+      <span className="label" data-testid="multi-search-status">
+        committed: {selected.join(', ') || '—'} · commits: {commits} · indicator: {indicator}
+      </span>
+    </div>
+  );
+}
+
 /* ── Morph fields ─────────────────────────────────────────────────────────── */
 
 /** Morph-anchor repro: the three app layouts that move the trigger's left
@@ -381,6 +447,12 @@ export function SearchSection() {
       </DemoCard>
       <DemoCard label="Grouped menus" hint="Category headers follow the visible rows; plain menus group too.">
         <GroupedSearchableMenuDemo />
+      </DemoCard>
+      <DemoCard
+        label="Multiple — draft + hero"
+        hint="Records toggle and the panel stays open; categories still expand and their check selects the group's visible rows. The footer hero commits; search to see the hidden-by-filter note. Toggle Checkbox / Check icon to compare the row indicator."
+      >
+        <MultipleSearchDemo />
       </DemoCard>
       <DemoCard label="Trigger-as-search" hint="The trigger field itself is the search box (combobox); focus stays in the field.">
         <SearchableTriggerDemo />
