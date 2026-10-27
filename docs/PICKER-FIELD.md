@@ -44,13 +44,15 @@ are conveniences for the default row.
 
 | Face | Use |
 |---|---|
-| `inline` | cell editor: thin, transparent, fills the row |
+| `inline` | cell editor: thin, transparent, fills the row (`autoGrow` grows with content) |
 | `wrap` | multi-line cell editor (textarea, full-box hitbox) |
 | `chip` | bordered form trigger with a chevron (Link Manager / rules) |
 | `morph` | a button that morphs into the field (form header rows) |
 
 All faces use the same panel and value model. Coarse sizing follows the global
-scale (`useCoarseScale`, `coarsePx`).
+scale (`useCoarseScale`, `coarsePx`). `skipComma` opens a multi field without
+the trailing `, ` (a typed-key cell open); `portalTarget` hosts the panel for
+cell editors/modals.
 
 ## 4. Editing contract
 
@@ -60,16 +62,23 @@ scale (`useCoarseScale`, `coarsePx`).
   position) and keeps the panel open. **The text is the value**: deleting a
   segment unchecks its row live, and a trailing comma commits the last segment
   (without one it is the query).
-- **Single**: the whole text is the query. Picking a row commits and closes;
-  `selectAllOnOpen` selects the current text so typing replaces it.
+- **Single**: opening lists **EVERY option** (the current value stays in the
+  field but is only highlighted, and the panel opens scrolled to it). The whole
+  typed text is the query. Picking a row commits and closes; `selectAllOnOpen`
+  selects the current text so typing replaces it. `allowFreeText={false}`
+  ignores typed text that matches no item (day/night, INT/EXT, fixed lists).
 - **Commit** on blur, outside click, Tab, or Enter when no row is lit. It emits
   ONE `onChange` only when the set changed. `onExit` fires on commit; Tab uses
   `onTabExit` (Glide hand-off) when provided.
 - **Escape cancels** — the draft is dropped and `onEscape` fires.
 - **Create from typed**: when the live query has no exact match (and
-  `onCreateItem` is set), a synthetic `Add “…”…` row appears. It is a real row:
-  it toggles, respects Escape/max, and `onCreateItem(value)` fires on COMMIT
-  for every committed key the catalogue does not know.
+  `onCreateItem` is set), a synthetic `Add “…”…` row appears **pinned at the
+  top** (emerald add-new face, **no checkbox** — it is an action, not a
+  record). Ticking it calls `onCreateItem(value)` immediately so the host can
+  add the record to the catalogue while the panel is still open. Commit then
+  calls `onCreateItem` for any remaining unknown typed segments (deduped), so
+  a typed-only value also creates on close. Escape still drops the field value;
+  the host owns a cancelled naming modal (it deletes the abandoned member).
 - `defaultOpen` / `autoFocus` open a cell editor immediately; `readOnly` renders
   the closed display; `uppercase` uppercases typed text.
 
@@ -118,6 +127,10 @@ set in multiple mode while the panel is open. The caret stays in the field.
 | `onCreateItem` | `onCreateItem` (on commit) |
 | `onExit` / `onEscape` / `onTabExit` | same |
 | `defaultOpen` / `autoFocus` / `selectAllOnOpen` | same |
+| `autoGrow` / `skipComma` / `portalTarget` | same |
+| `filterItem` | map to `fields` / `keywords` (the SearchMenu matcher) |
+| `SelectDropdown` fixed options | `allowFreeText={false}` + `browseAll` |
+| `GroupedSelect` tag/accent/hint rows | `rowClassName` / `renderItem` / `detail` |
 | `AsyncResultsDropdown` | `loadItems` |
 | cast Board IDs / naming modal / link guard | app adapter (not the kit) |
 
