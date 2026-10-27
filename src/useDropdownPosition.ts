@@ -157,6 +157,10 @@ export function useDropdownPosition({
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(onViewportChange);
+      // The ANCHOR resizes too: SearchMenu's button→field morph animates its
+      // width, and any trigger that grows/shrinks changes the panel's left
+      // edge. Position from the live rect, never the pre-morph one.
+      if (anchorRef.current) ro.observe(anchorRef.current);
       if (panelRef.current) ro.observe(panelRef.current);
       if (contentRef?.current) ro.observe(contentRef.current);
     }

@@ -327,7 +327,7 @@ function no({
     const y = u.current, v = (y == null ? void 0 : y.document) ?? null, M = (y == null ? void 0 : y.visualViewport) ?? null, T = () => p();
     M == null || M.addEventListener("resize", T), M == null || M.addEventListener("scroll", T), y == null || y.addEventListener("resize", T), v == null || v.addEventListener("scroll", T, { capture: !0, passive: !0 });
     let k = null;
-    return typeof ResizeObserver < "u" && (k = new ResizeObserver(T), e.current && k.observe(e.current), r != null && r.current && k.observe(r.current)), () => {
+    return typeof ResizeObserver < "u" && (k = new ResizeObserver(T), n.current && k.observe(n.current), e.current && k.observe(e.current), r != null && r.current && k.observe(r.current)), () => {
       h = !0, d && cancelAnimationFrame(d), M == null || M.removeEventListener("resize", T), M == null || M.removeEventListener("scroll", T), y == null || y.removeEventListener("resize", T), v == null || v.removeEventListener("scroll", T, { capture: !0 }), k == null || k.disconnect();
     };
   }, [t, n, e, r, i, o, s, l]);
