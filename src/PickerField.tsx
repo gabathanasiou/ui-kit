@@ -608,6 +608,7 @@ export function PickerField({
         collapsedWidth={collapsedWidth}
         expandedWidth={expandedWidth}
         rootRef={rootRef}
+        data-picker-field
         className={className}
         style={style}
         trigger={renderTrigger

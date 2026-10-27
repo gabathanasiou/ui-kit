@@ -11971,6 +11971,7 @@ function _h({
         collapsedWidth: U,
         expandedWidth: T,
         rootRef: xt,
+        "data-picker-field": !0,
         className: P,
         style: E,
         trigger: a ? a({ values: [...n], items: t, display: bt, open: te, toggle: vt }) : (
