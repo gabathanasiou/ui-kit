@@ -13,10 +13,14 @@ import { revealRowInScroller, useRevealRowOnOpen } from './revealInScroller';
 import type { MorphFieldAction } from './morphFieldTypes';
 import {
   buildSearchMenuRows,
+  searchMenuContent,
   type SearchMenuGroup,
   type SearchMenuItem,
   type SearchMenuRow,
 } from './searchMenuModel';
+import { useSelection, NO_SELECTION_IDS } from './selection';
+import type { MultipleSelectionProps } from './selection';
+import { SelectionCheck, SelectionFooter } from './SelectionControls';
 
 /**
  * SearchMenu — the shared "deep search" surface (roadmap 172, ui-kit).
@@ -123,6 +127,11 @@ export interface SearchMenuProps {
    *  panel actions (`emptyActions`/`leadingActions`/`footerActions`) stay
    *  separate. */
   fieldActions?: MorphFieldAction[];
+  /** Multiple-selection mode: records toggle and the panel stays open; the
+   *  footer hero commits the draft. Escape / click-away / trigger close
+   *  cancel. Categories still only expand — their row gains the select-all
+   *  check. */
+  multiple?: MultipleSelectionProps;
 }
 
 export function SearchMenu({
@@ -159,6 +168,7 @@ export function SearchMenu({
   hideLeadingOnEmpty = false,
   footerActions,
   fieldActions,
+  multiple,
 }: SearchMenuProps) {
   const isControlled = controlledQuery !== undefined;
   const [innerQuery, setInnerQuery] = useState('');
@@ -290,6 +300,32 @@ export function SearchMenu({
   );
   const browseTree = (expandableGroups || browseExpanded) && !query.trim();
 
+  /* Multi-select (roadmap 322): a DRAFT seeded from `multiple.selectedIds`.
+     The accordion still expands categories; record rows toggle. The footer
+     hero is the only commit; every other close drops the draft. */
+  const multipleActive = !!multiple;
+  const allItemIds = useMemo(() => items.map(item => item.id), [items]);
+  const visibleItemIds = useMemo(() => {
+    if (!query.trim()) return allItemIds;
+    return searchMenuContent(items, groups, query).hits.map(hit => hit.item.id);
+  }, [items, groups, query, allItemIds]);
+  const visibleIdSet = useMemo(() => new Set(visibleItemIds), [visibleItemIds]);
+  const selection = useSelection({
+    mode: 'draft',
+    selectedIds: multiple?.selectedIds ?? NO_SELECTION_IDS,
+    itemIds: allItemIds,
+    visibleIds: visibleItemIds,
+    max: multiple?.max,
+    disabledIds: multiple?.disabledIds,
+    indicator: multiple?.indicator,
+    onCommit: multiple?.onCommit,
+  });
+  const resetSelectionRef = useRef(selection.reset);
+  resetSelectionRef.current = selection.reset;
+  const heroLabel = typeof multiple?.commitLabel === 'function'
+    ? multiple.commitLabel(selection.count)
+    : multiple?.commitLabel ?? `Select ${selection.count}`;
+
   const close = useCallback(() => {
     setOpen(false);
     if (mode === 'expandable') {
@@ -339,6 +375,7 @@ export function SearchMenu({
       inputRef.current?.focus();
       return;
     }
+    resetSelectionRef.current();
     // Preserve the button→field width morph, but give the positioner the
     // FINAL rectangle now: a throwaway width flip (no transition) measures the
     // expanded layout before paint, then the normal transition runs. The panel
@@ -412,6 +449,11 @@ export function SearchMenu({
       return;
     }
     if (row.kind === 'item') {
+      if (multipleActive) {
+        /* Toggle only — the panel stays open until the footer hero commits. */
+        if (selection.canToggle(row.hit.item.id)) selection.toggle(row.hit.item.id);
+        return;
+      }
       onSelect(row.hit.item);
       if (closeOnSelect) close();
       return;
@@ -426,7 +468,7 @@ export function SearchMenu({
       if (action) action.onClick(query);
       if (closeOnSelect) close();
     }
-  }, [close, closeOnSelect, emptyActions, footerActions, groupsActionable, leadingActions, onSelect, onSelectGroup, query, toggleGroup]);
+  }, [close, closeOnSelect, emptyActions, footerActions, groupsActionable, leadingActions, multipleActive, onSelect, onSelectGroup, query, selection, toggleGroup]);
 
   const moveHighlight = (dir: 1 | -1) => {
     if (navigateRows.length === 0) return;
@@ -438,6 +480,12 @@ export function SearchMenu({
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (multipleActive && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a') {
+      event.preventDefault();
+      event.stopPropagation();
+      selection.setAll(true);
+      return;
+    }
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       if (!open) openPanel();
@@ -619,13 +667,17 @@ export function SearchMenu({
 
   const renderItemRow = (row: Extract<SearchMenuRow, { kind: 'item' }>, rowIndex: number) => {
     const active = highlighted === rowIndex;
-    const selected = selectedId !== undefined && row.hit.item.id === selectedId;
+    const singleSelected = !multipleActive && selectedId !== undefined && row.hit.item.id === selectedId;
+    const checked = multipleActive ? selection.isSelected(row.hit.item.id) : singleSelected;
+    /* At `max`, unchecked rows are disabled (checked rows stay clickable to
+       uncheck) — the shared selection contract. */
+    const rowDisabled = !!row.hit.item.disabled || (multipleActive && !selection.canToggle(row.hit.item.id));
     return (
       <button
         key={`item:${row.hit.item.id}`}
         type="button"
         role="option"
-        aria-selected={selected}
+        aria-selected={checked}
         tabIndex={-1}
         data-search-item={row.hit.item.id}
         data-search-row={rowIndex}
@@ -633,14 +685,15 @@ export function SearchMenu({
         onMouseEnter={() => setHighlighted(rowIndex, 'pointer')}
         onClick={() => activate(row)}
         style={itemSize}
-        className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${selected ? 'ui-item-selected' : ''} ${active ? 'ui-item-highlighted' : ''} ${row.hit.item.disabled ? 'opacity-30 pointer-events-none' : ''}`}
+        className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${singleSelected ? 'ui-item-selected' : ''} ${active ? 'ui-item-highlighted' : ''} ${rowDisabled ? 'opacity-30 pointer-events-none' : ''}`}
       >
+        {multipleActive && <SelectionCheck checked={checked} disabled={rowDisabled} indicator={multiple?.indicator} />}
         {row.hit.item.icon && <span className={`${d.icon} shrink-0`}>{row.hit.item.icon}</span>}
         <span className="flex-1 truncate">{row.hit.item.label}</span>
         {(row.hit.detail || row.hit.item.detail) && (
           <span className="shrink-0 max-w-[55%] truncate text-[10px] text-zinc-400">{row.hit.detail || row.hit.item.detail}</span>
         )}
-        {selected && <Check className="ui-icon w-3.5 h-3.5 shrink-0" aria-hidden />}
+        {singleSelected && <Check className="ui-icon w-3.5 h-3.5 shrink-0" aria-hidden />}
       </button>
     );
   };
@@ -650,9 +703,43 @@ export function SearchMenu({
     const showChevron = expandableGroups && !query.trim();
     const actionable = groupsActionable;
     const active = actionable && highlighted === rowIndex;
-    const count = row.group.count !== undefined && (
-      <span className={`shrink-0 tabular-nums ${actionable ? 'text-[10px] text-zinc-400' : 'opacity-70'}`}>{row.group.count}</span>
+    /* Multi-select: the group's VISIBLE rows drive the select-all + x/y
+       readout. Categories still expand — the check is the only new action. */
+    const groupItems = multipleActive
+      ? items.filter(item => item.group === row.group.key && visibleIdSet.has(item.id))
+      : [];
+    const groupSelectable = groupItems.filter(item => !selection.isDisabled(item.id)).map(item => item.id);
+    const groupChecked = groupSelectable.length > 0 ? selection.groupState(groupSelectable) : 'none';
+    const selectedInGroup = groupItems.reduce((n, item) => n + (selection.isSelected(item.id) ? 1 : 0), 0);
+    const selectAllControl = multipleActive && (
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-label={`Select all ${row.group.label}`}
+        onMouseDown={e => e.preventDefault()}
+        onClick={e => {
+          e.stopPropagation();
+          if (groupSelectable.length) selection.toggleGroup(groupSelectable);
+        }}
+        className="shrink-0 flex items-center justify-center rounded"
+      >
+        <SelectionCheck
+          checked={groupChecked === 'all'}
+          indeterminate={groupChecked === 'some'}
+          disabled={groupSelectable.length === 0}
+          indicator={multiple?.indicator}
+        />
+      </button>
     );
+    const count = multipleActive
+      ? (
+        <span className={`shrink-0 tabular-nums text-[10px] ${actionable ? 'text-zinc-400' : 'opacity-70'}`}>
+          {selectedInGroup}/{groupItems.length}
+        </span>
+      )
+      : row.group.count !== undefined && (
+        <span className={`shrink-0 tabular-nums ${actionable ? 'text-[10px] text-zinc-400' : 'opacity-70'}`}>{row.group.count}</span>
+      );
     // Plain header (browseExpanded, or any category during a query): the
     // dropdown group-label face — never an item, never hoverable, never a
     // keyboard stop. Clicking it must not look like it selects anything.
@@ -666,6 +753,7 @@ export function SearchMenu({
           style={groupSize}
           className="w-full flex items-center gap-2 select-none font-semibold uppercase tracking-wider ui-label"
         >
+          {selectAllControl}
           {row.group.icon && <span className={`${d.icon} shrink-0`}>{row.group.icon}</span>}
           <span className="flex-1 truncate">{row.group.label}</span>
           {count}
@@ -683,6 +771,7 @@ export function SearchMenu({
         style={itemSize}
         className={`w-full rounded flex items-center gap-1 outline-none select-none font-medium ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''}`}
       >
+        {selectAllControl}
         <button
           type="button"
           tabIndex={-1}
@@ -783,6 +872,7 @@ export function SearchMenu({
       data-theme={theme}
       role="listbox"
       aria-label={placeholder}
+      aria-multiselectable={multipleActive ? true : undefined}
       onPointerEnter={reveal.engage}
       onPointerDown={reveal.engage}
       className="ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none min-w-0 overflow-hidden"
@@ -848,6 +938,21 @@ export function SearchMenu({
           <div className={d.separator} />
           {footerRows.map((row, index) => renderActionRow(row, leadingOffset + rows.length + index))}
         </div>
+      )}
+      {multipleActive && multiple?.footer !== false && (
+        <SelectionFooter
+          count={selection.count}
+          max={multiple?.max}
+          hiddenCount={multiple?.hiddenNote === false ? 0 : selection.hiddenCount}
+          clear={multiple?.clear !== false}
+          theme={theme}
+          onClear={selection.clear}
+          hero={{
+            label: heroLabel,
+            onClick: () => { selection.commit(); close(); },
+            disabled: selection.count === 0,
+          }}
+        />
       )}
     </div>,
     portalTarget ?? currentDocument?.body ?? document.body,
