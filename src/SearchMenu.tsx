@@ -163,7 +163,16 @@ export function SearchMenu({
   const groupKeySig = useMemo(() => groups.map(g => g.key).join('\u0000'), [groups]);
   const allGroups = useMemo(() => new Set(groupKeySig ? groupKeySig.split('\u0000') : []), [groupKeySig]);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => (browseExpanded ? allGroups : new Set()));
-  const [highlighted, setHighlighted] = useState(0);
+  const [highlighted, setHighlightedState] = useState(0);
+  /** What moved the highlight: a mouse hover must NOT scroll the panel out
+   *  from under the cursor, while keyboard/programmatic moves must bring the
+   *  row into view (arrowing through a long list would otherwise walk off the
+   *  panel's visible area with the highlight). */
+  const pointerDrivenRef = useRef(false);
+  const setHighlighted = useCallback((index: number, source: 'keyboard' | 'pointer' = 'keyboard') => {
+    pointerDrivenRef.current = source === 'pointer';
+    setHighlightedState(index);
+  }, []);
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -491,6 +500,13 @@ export function SearchMenu({
     </div>
   );
 
+  /** Arrow keys walk the rows; keep the highlighted one in view. */
+  useEffect(() => {
+    if (!open || pointerDrivenRef.current) return;
+    const el = panelRef.current?.querySelector<HTMLElement>(`[data-search-row="${highlighted}"]`);
+    el?.scrollIntoView({ block: 'nearest' });
+  }, [open, highlighted]);
+
   /** Current-value anchor: opening a picker lands on the value it holds
    *  (a long catalogue would otherwise start at the top and hide it). */
   useEffect(() => {
@@ -514,7 +530,8 @@ export function SearchMenu({
         aria-selected={selected}
         tabIndex={-1}
         data-search-item={row.hit.item.id}
-        onMouseEnter={() => setHighlighted(rowIndex)}
+        data-search-row={rowIndex}
+        onMouseEnter={() => setHighlighted(rowIndex, 'pointer')}
         onClick={() => activate(row)}
         style={itemSize}
         className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${selected ? 'ui-item-selected' : ''} ${active ? 'ui-item-highlighted' : ''} ${row.hit.item.disabled ? 'opacity-30 pointer-events-none' : ''}`}
@@ -546,6 +563,7 @@ export function SearchMenu({
           key={`group:${row.group.key}`}
           role="presentation"
           data-search-group={row.group.key}
+          data-search-row={rowIndex}
           style={groupSize}
           className="w-full flex items-center gap-2 select-none font-semibold uppercase tracking-wider ui-label"
         >
@@ -562,7 +580,7 @@ export function SearchMenu({
         aria-selected={false}
         aria-expanded={showChevron ? groupExpanded : undefined}
         data-search-group={row.group.key}
-        onMouseEnter={() => setHighlighted(rowIndex)}
+        onMouseEnter={() => setHighlighted(rowIndex, 'pointer')}
         style={itemSize}
         className={`w-full rounded flex items-center gap-1 outline-none select-none font-medium ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''}`}
       >
@@ -609,7 +627,8 @@ export function SearchMenu({
         aria-selected={false}
         tabIndex={-1}
         data-search-action={row.source || 'empty'}
-        onMouseEnter={() => setHighlighted(rowIndex)}
+        data-search-row={rowIndex}
+        onMouseEnter={() => setHighlighted(rowIndex, 'pointer')}
         onClick={() => activate(row)}
         style={itemSize}
         className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''}`}
