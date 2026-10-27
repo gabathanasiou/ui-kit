@@ -11544,7 +11544,7 @@ function Af({
         onPointerLeave: () => {
           st.current && Ue(-1, "pointer");
         },
-        className: "ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none min-w-0 overflow-hidden pointer-events-auto",
+        className: "click-outside-ignore ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none min-w-0 overflow-hidden pointer-events-auto",
         style: {
           position: "fixed",
           left: Mt.left,

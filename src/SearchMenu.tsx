@@ -1068,7 +1068,12 @@ export function SearchMenu({
          (now back in the field) would re-toggle the row under the cursor
          instead of committing the draft. */
       onPointerLeave={() => { if (pointerDrivenRef.current) setHighlighted(-1, 'pointer'); }}
-      className="ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none min-w-0 overflow-hidden pointer-events-auto"
+      /* `click-outside-ignore` is glide-data-grid's contract: its
+         ClickOutsideContainer closes the cell editor on any pointerdown whose
+         ancestor chain lacks this class (the app's old DropdownPanel carried
+         it for the same reason). The panel is portaled outside the grid, so
+         without it every pick closed the editor. */
+      className="click-outside-ignore ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none min-w-0 overflow-hidden pointer-events-auto"
       style={{
         position: 'fixed',
         left: pos.left,
