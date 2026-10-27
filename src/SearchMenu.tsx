@@ -881,11 +881,6 @@ export function SearchMenu({
     const active = highlighted === rowIndex;
     const singleSelected = !multipleActive && selectedId !== undefined && row.hit.item.id === selectedId;
     const checked = multipleActive ? selection.isSelected(row.hit.item.id) : singleSelected;
-    /* Single-value fields: the CURSOR row is the blue one (mouse or arrows) —
-       the old autocomplete's one-highlight model. The current value keeps just
-       its trailing check when the cursor is elsewhere. Multi keeps the
-       checked-row wash + the neutral cursor. */
-    const selectedFace = multipleActive ? (checked ? 'ui-item-selected' : '') : (active ? 'ui-item-selected' : '');
     /* At `max`, unchecked rows are disabled (checked rows stay clickable to
        uncheck) — the shared selection contract. */
     const rowDisabled = !!row.hit.item.disabled || (multipleActive && !selection.canToggle(row.hit.item.id));
@@ -910,7 +905,7 @@ export function SearchMenu({
         onMouseEnter={() => setHighlighted(rowIndex, 'pointer')}
         onClick={() => activate(row)}
         style={{ ...itemSize, ...row.hit.item.rowStyle, ...toneStyle }}
-        className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${row.hit.item.rowClassName ?? ''} ${selectedFace} ${active ? 'ui-item-highlighted' : ''} ${rowDisabled ? 'opacity-30 pointer-events-none' : ''}`}
+        className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${row.hit.item.rowClassName ?? ''} ${singleSelected ? 'ui-item-selected' : ''} ${active ? 'ui-item-highlighted' : ''} ${rowDisabled ? 'opacity-30 pointer-events-none' : ''}`}
       >
         {multipleActive && row.hit.item.checkable !== false && (
           <SelectionCheck checked={checked} disabled={rowDisabled} indicator={multiple?.indicator} />
