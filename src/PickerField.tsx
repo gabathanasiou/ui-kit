@@ -426,20 +426,22 @@ export function PickerField({
   }, [values, editingText, onEscape]);
 
   /* Escape closes ONLY this picker — never the enclosing modal/dialog. The
-     listener runs at DOCUMENT capture and stops the event there (the app's
-     own dropdowns do the same via useEscapeCapture), so the dialog's Escape
-     handler never sees it. */
+     listener runs at WINDOW capture (ahead of Radix's document-capture
+     DismissableLayer) and stops the event there — the app's own dropdowns
+     use the same level via useEscapeCapture. */
   useEffect(() => {
     if (!open) return;
     const doc = rootRef.current?.ownerDocument ?? document;
+    const win = doc.defaultView;
+    if (!win) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       event.preventDefault();
       event.stopImmediatePropagation();
       cancel();
     };
-    doc.addEventListener('keydown', onKey, true);
-    return () => doc.removeEventListener('keydown', onKey, true);
+    win.addEventListener('keydown', onKey, true);
+    return () => win.removeEventListener('keydown', onKey, true);
   }, [open, cancel]);
 
   const onDraftChange = useCallback((keys: string[]) => {
