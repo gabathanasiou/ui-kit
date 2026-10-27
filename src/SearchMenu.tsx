@@ -115,6 +115,9 @@ export interface SearchMenuProps {
   expandedWidth?: number;
   /** Panel width override (defaults to the trigger width). */
   panelWidth?: number | string;
+  /** Never render narrower than this (px) — cell editors and chips whose
+   *  anchor is a thin box still need a readable panel. */
+  panelMinWidth?: number;
   maxMenuHeight?: number;
   theme?: DropdownTheme;
   /** Panel morph (default true). */
@@ -189,6 +192,7 @@ export function SearchMenu({
   collapsedWidth = 128,
   expandedWidth = 288,
   panelWidth,
+  panelMinWidth,
   maxMenuHeight = 420,
   theme = 'light',
   morph = true,
@@ -1046,6 +1050,7 @@ export function SearchMenu({
         left: pos.left,
         top: pos.top,
         width: panelWidth ?? (mode === 'expandable' ? expandedWidth : anchorWidth || undefined),
+        minWidth: panelMinWidth,
         maxHeight: pos.maxH,
         visibility: pos.ready ? 'visible' : 'hidden',
       }}

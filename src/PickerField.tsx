@@ -92,6 +92,9 @@ export interface PickerFieldProps {
   className?: string;
   style?: React.CSSProperties;
   panelWidth?: number | string;
+  /** Never render the panel narrower than this (px) — cell editors anchor to
+   *  a thin box but still need a readable list. */
+  panelMinWidth?: number;
   maxMenuHeight?: number;
   /** Portal host for the panel (Glide cells / modal hosts). */
   portalTarget?: HTMLElement | null;
@@ -152,6 +155,7 @@ export function PickerField({
   className = '',
   style,
   panelWidth,
+  panelMinWidth,
   maxMenuHeight,
   portalTarget,
   autoGrow = false,
@@ -577,6 +581,7 @@ export function PickerField({
       emptyHint={loading ? 'Fetching matching records.' : undefined}
       theme={theme}
       panelWidth={panelWidth}
+      panelMinWidth={panelMinWidth}
       maxMenuHeight={maxMenuHeight}
       portalTarget={portalTarget}
     />
