@@ -85,6 +85,12 @@ a committed `dist/`; consumers pin a github tag (`github:gabathanasiou/ui-kit#v0
 - The playground has a sticky **coarse-scale controller** (Off/50%/Full +
   slider + number + Reset) to verify every surface at any %.
 
+## Multiple selection (roadmap 322)
+`src/selection.ts` is the ONE model (draft, catalogue order, visible-set
+select-all, max/disabled). `DropdownMenu`/`SearchMenu` `multiple` + the shared
+`SelectionFooter`/`SelectionCheck` are its only panels — never add a second
+toggle/commit path.
+
 ## The Playground (debug everything here, not in the app)
 
 `npm run playground` → `:5183` (kit SOURCE, HMR, no build). `playground/src/

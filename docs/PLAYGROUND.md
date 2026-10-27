@@ -74,13 +74,17 @@ Consequences (learned the hard way):
 - Dropdowns: `ctrl-menu-trigger` (controlled, the app's DayEventsModal
   pattern), light + blue/emerald palettes, `initial-trigger`, `long-trigger` /
   `capped-trigger`, `submenu-trigger`, `itemmanager-trigger`,
-  `menu-rows-trigger`; edge repro `right-edge-trigger`.
+  `menu-rows-trigger`; edge repro `right-edge-trigger`; multiple selection
+  `multi-menu-trigger` / `multi-capped-trigger` / `multi-light-trigger` /
+  `multi-menu-status` (the Checkbox ↔ Check icon Seg switches the indicator).
 - Search: `search-menu-inline` / `-expandable` / `-browse-expanded` /
   `-flat-picker`, `deep-search-status`, `morph-search-field`,
   `morph-search-status`, `searchable-trigger`, `grouped-searchable-trigger`,
   `searchable-trigger-input`, morph anchor rows `morph-master-row` /
   `morph-dept-row` / `morph-add-row` (+ `morph-empty-toggle`, `morph-status`),
-  `morph-action-role` / `morph-action-location` / `morph-action-plain`.
+  `morph-action-role` / `morph-action-location` / `morph-action-plain`;
+  multiple selection `multi-search-accordion` / `multi-search-browse` /
+  `multi-search-status`.
 - Modals: `modal-open`, `stacked-open` → "Open Modal 2",
   `menu-modal-open` → `inmodal-menu-trigger` / `inmodal-long-trigger` /
   `inmodal-search-pick`, `kb-modal-open` (visualViewport readout),
