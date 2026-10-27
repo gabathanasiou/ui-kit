@@ -7,6 +7,7 @@ import type { MenuHighlightItem } from './DropdownMenu';
 import { useCoarseScale, coarsePx } from './device';
 import { usePortalTarget } from './popout';
 import { useOverlayMorph } from './overlayMorph';
+import { revealRowInScroller } from './revealInScroller';
 
 
 export interface DropdownSubmenuProps {
@@ -133,7 +134,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
   React.useLayoutEffect(() => {
     if (!subOpen || highlight.highlightedIndex < 0 || highlight.pointerDriven) return;
     const row = subContentRef.current?.querySelector<HTMLElement>(`[data-ei="${highlight.highlightedIndex}"]`);
-    row?.scrollIntoView({ block: 'nearest' });
+    revealRowInScroller(row, 'nearest', subContentRef.current);
   }, [subOpen, highlight.highlightedIndex, highlight.pointerDriven]);
   const lockDocRef = useRef<Document | null>(null);
   const setComposedRef = useCallback((node: HTMLDivElement | null) => {

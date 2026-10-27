@@ -9,6 +9,7 @@ import { inputCls } from './input';
 import Button from './Button';
 import MorphFieldShell from './MorphFieldShell';
 import { useIconButtonSize } from './device';
+import { revealRowInScroller, useRevealRowOnOpen } from './revealInScroller';
 import type { MorphFieldAction } from './morphFieldTypes';
 import {
   buildSearchMenuRows,
@@ -331,6 +332,13 @@ export function SearchMenu({
   }, [groupExpandMode]);
 
   const openPanel = useCallback(() => {
+    // Already open (a click INSIDE the expanded field reaches here too): only
+    // move the keyboard into the field. Re-running the open path would reset
+    // the highlight to the current value under the user's pointer.
+    if (open) {
+      inputRef.current?.focus();
+      return;
+    }
     // Preserve the button→field width morph, but give the positioner the
     // FINAL rectangle now: a throwaway width flip (no transition) measures the
     // expanded layout before paint, then the normal transition runs. The panel
@@ -364,7 +372,7 @@ export function SearchMenu({
       ? rows.findIndex(row => row.kind === 'item' && row.hit.item.id === selectedId)
       : -1;
     setHighlighted(current >= 0 ? leadingOffset + current : leadingOffset);
-  }, [mode, expanded, expandedWidth, leadingOffset, rows, selectedId]);
+  }, [open, mode, expanded, expandedWidth, leadingOffset, rows, selectedId]);
 
   useEffect(() => () => {
     window.clearTimeout(anchorRectTimerRef.current);
@@ -575,52 +583,39 @@ export function SearchMenu({
     </div>
   );
 
-  /** Bring a row into the panel's own scroller. `scrollIntoView` would also
-   *  scroll the PAGE / modal (Safari especially) — moving the list under the
-   *  pointer right as the user clicks. Adjust the inner scroller's scrollTop
-   *  instead, so nothing outside the panel ever moves. */
-  const scrollRowIntoView = useCallback((index: number, block: 'center' | 'nearest') => {
-    const panel = panelRef.current;
-    const scroller = panel?.querySelector<HTMLElement>('[data-search-scroller]');
-    const row = panel?.querySelector<HTMLElement>(`[data-search-row="${index}"]`);
-    if (!scroller || !row) return;
-    const r = row.getBoundingClientRect();
-    const sRect = scroller.getBoundingClientRect();
-    if (block === 'center') {
-      scroller.scrollTop += (r.top + r.height / 2) - (sRect.top + sRect.height / 2);
-      return;
-    }
-    if (r.top < sRect.top) scroller.scrollTop -= sRect.top - r.top;
-    else if (r.bottom > sRect.bottom) scroller.scrollTop += r.bottom - sRect.bottom;
-  }, []);
-
-  /** Arrow keys walk the rows; keep the highlighted one in view. */
+  /** Arrow keys walk the rows; keep the highlighted one in view (inside the
+   *  panel's own scroller — never the page/modal). */
   useEffect(() => {
     if (!open || pointerDrivenRef.current) return;
-    scrollRowIntoView(highlighted, 'nearest');
-  }, [open, highlighted, scrollRowIntoView]);
+    const panel = panelRef.current;
+    revealRowInScroller(
+      panel?.querySelector<HTMLElement>(`[data-search-row="${highlighted}"]`),
+      'nearest',
+      panel?.querySelector<HTMLElement>('[data-search-scroller]') ?? null,
+    );
+  }, [open, highlighted]);
 
-  /** Current-value anchor: opening a picker lands on the value it holds
-   *  (a long catalogue would otherwise start at the top and hide it). Runs on
-   *  the OPEN edge only — a select closes the panel, and scrolling while it
-   *  animates out reads as "it didn't take". Refs keep the scheduled scroll
-   *  alive across the re-renders that follow opening (deps stay stable). */
+  /** Current-value anchor: a picker that holds a value opens ON it, already
+   *  scrolled, before it becomes interactive (the shared reveal contract — see
+   *  `revealInScroller.ts`). Pairs with `engagedRef` on the panel: once the
+   *  pointer is on it, nothing scrolls the list again. */
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
-  const anchorDoneRef = useRef(false);
-  useEffect(() => {
-    if (!open) { anchorDoneRef.current = false; return; }
-    if (anchorDoneRef.current) return;
-    anchorDoneRef.current = true;
-    if (!selectedIdRef.current) return;
-    requestAnimationFrame(() => {
-      if (!open) return;
-      const index = rowsRef.current.findIndex(row => row.kind === 'item' && row.hit.item.id === selectedIdRef.current);
-      if (index >= 0) scrollRowIntoView(index, 'center');
-    });
-  }, [open, scrollRowIntoView]);
+  const reveal = useRevealRowOnOpen({
+    open,
+    block: 'center',
+    ready: pos.ready,
+    scroller: () => panelRef.current?.querySelector<HTMLElement>('[data-search-scroller]') ?? null,
+    row: () => {
+      const id = selectedIdRef.current;
+      if (!id) return null;
+      const index = rowsRef.current.findIndex(row => row.kind === 'item' && row.hit.item.id === id);
+      if (index < 0) return null;
+      return panelRef.current?.querySelector<HTMLElement>(`[data-search-row="${index}"]`) ?? null;
+    },
+  });
 
   const renderItemRow = (row: Extract<SearchMenuRow, { kind: 'item' }>, rowIndex: number) => {
     const active = highlighted === rowIndex;
@@ -634,6 +629,7 @@ export function SearchMenu({
         tabIndex={-1}
         data-search-item={row.hit.item.id}
         data-search-row={rowIndex}
+        onMouseDown={e => e.preventDefault()}
         onMouseEnter={() => setHighlighted(rowIndex, 'pointer')}
         onClick={() => activate(row)}
         style={itemSize}
@@ -787,6 +783,8 @@ export function SearchMenu({
       data-theme={theme}
       role="listbox"
       aria-label={placeholder}
+      onPointerEnter={reveal.engage}
+      onPointerDown={reveal.engage}
       className="ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none min-w-0 overflow-hidden"
       style={{
         position: 'fixed',

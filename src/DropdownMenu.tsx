@@ -8,6 +8,7 @@ import { useOverlayMorph } from './overlayMorph';
 import { useDropdownPosition, DROPDOWN_MAX_HEIGHT } from './useDropdownPosition';
 import { registerOverlayClose } from './overlayRegistry';
 import { useKitTheme, menuAttributesOf } from './ThemeScope';
+import { revealRowInScroller, useRevealRowOnOpen } from './revealInScroller';
 
 export type DropdownTheme = 'light' | 'dark' | 'blue' | 'emerald';
 
@@ -736,7 +737,7 @@ export default function DropdownMenu({
   useLayoutEffect(() => {
     if (!open || highlight.highlightedIndex < 0 || highlight.pointerDriven) return;
     const row = contentElRef.current?.querySelector<HTMLElement>(`[data-ei="${highlight.highlightedIndex}"]`);
-    row?.scrollIntoView({ block: 'nearest' });
+    revealRowInScroller(row, 'nearest', contentElRef.current);
   }, [open, highlight.highlightedIndex, highlight.pointerDriven]);
 
   const handleOpenChange = useCallback((o: boolean) => {
@@ -1009,14 +1010,14 @@ export function ItemManagerDropdown({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Open scrolled to the active item so the selection is always visible.
-  useEffect(() => {
-    if (open) {
-      requestAnimationFrame(() => {
-        listRef.current?.querySelector<HTMLElement>('[data-active="1"]')?.scrollIntoView({ block: 'nearest' });
-      });
-    }
-  }, [open]);
+  // A manager list opens with its ACTIVE item already in view — the shared
+  // preselected-surface contract (pre-paint reveal, then frozen once the
+  // pointer engages; see revealInScroller.ts).
+  const reveal = useRevealRowOnOpen({
+    open,
+    scroller: () => listRef.current,
+    row: () => listRef.current?.querySelector<HTMLElement>('[data-active="1"]') ?? null,
+  });
 
   /* ItemManager keyboard (bespoke — its rows are specialized, not registered
      highlight items): ArrowUp/Down move between the item ROWS and the footer
@@ -1147,7 +1148,7 @@ export function ItemManagerDropdown({
       <div className={`shrink-0 ${d.headerText}`}>
         {header}
       </div>
-      <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-custom flex flex-col">
+      <div ref={listRef} onPointerEnter={reveal.engage} onPointerDown={reveal.engage} className="flex-1 min-h-0 overflow-y-auto scrollbar-custom flex flex-col">
       {items.map(item => {
         const isActive = item.id === activeId;
         const isEditing = editingId === item.id;

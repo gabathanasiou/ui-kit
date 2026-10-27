@@ -340,6 +340,54 @@ test('SearchMenu expandable: button morphs into the field and back', async ({ pa
   await expect(flat.getByRole('button', { name: /City 42/ })).toBeVisible();
 });
 
+/* A picker that HOLDS a value opens already sitting on it — and the list is
+   frozen from the first frame it is visible. The old open-edge rAF scrolled a
+   frame LATE (first visible frame at one scrollTop, next frame at another),
+   which moved rows out from under the click that opened the menu: the classic
+   "I have to click the item twice". */
+test('picker with a value: opens already scrolled to it, and the list never moves once visible', async ({ page }) => {
+  await page.goto('/');
+  // Sample the panel every frame from BEFORE it opens.
+  await page.evaluate(() => {
+    (window as any).__revealTrace = [];
+    const tick = () => {
+      const panel = document.getElementById('search-menu-panel');
+      const scroller = panel?.querySelector<HTMLElement>('[data-search-scroller]');
+      (window as any).__revealTrace.push({
+        visible: panel ? getComputedStyle(panel).visibility === 'visible' : false,
+        top: scroller ? Math.round(scroller.scrollTop) : null,
+      });
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+
+  const flat = page.getByTestId('search-menu-flat-picker');
+  await flat.getByRole('button', { name: /Region/ }).click();
+  await expect(searchPanel(page)).toBeVisible();
+  await expect(page.locator('#search-menu-panel [data-search-item="tz-40"]')).toHaveAttribute('aria-selected', 'true');
+
+  const trace = await page.evaluate(() => (window as any).__revealTrace as { visible: boolean; top: number | null }[]);
+  const visibleTops = trace.filter(s => s.visible && s.top !== null).map(s => s.top as number);
+  expect(visibleTops.length, 'the panel painted').toBeGreaterThan(0);
+  expect(new Set(visibleTops).size, `list moved while visible: ${visibleTops.join(' → ')}`).toBe(1);
+  expect(visibleTops[0], 'opens scrolled to the current value, not at the top').toBeGreaterThan(0);
+
+  // The current row is inside the visible band (not merely "selected").
+  const current = page.locator('#search-menu-panel [data-search-item="tz-40"]');
+  expect(await current.evaluate((el) => {
+    const scroller = document.querySelector('[data-search-scroller]')!;
+    const r = el.getBoundingClientRect();
+    const b = scroller.getBoundingClientRect();
+    return r.top >= b.top - 1 && r.bottom <= b.bottom + 1;
+  })).toBe(true);
+
+  // ONE mouse click on a visible row commits and closes — no second try.
+  await page.locator('#search-menu-panel [data-search-item="tz-44"]').click();
+  await expect(searchPanel(page)).toHaveCount(0);
+  await expect(page.getByTestId('flat-picker-status')).toHaveText('flat pick: tz-44');
+});
+
 test('SearchMenu expandable: field actions live inside the textbox and keep the panel open', async ({ page }) => {
   await page.goto('/');
   const wrap = page.getByTestId('search-menu-expandable');

@@ -5,6 +5,7 @@ import { SuggestionOptions, SuggestionProps, SuggestionKeyDownProps } from '@tip
 import type { TokenItem } from './TokenExtension';
 import { MenuHighlightContext, useMenuHighlightState, useHighlightRow, getDropdownClasses } from './DropdownMenu';
 import { useCoarseScale, coarsePx } from './device';
+import { revealRowInScroller } from './revealInScroller';
 import type { MenuHighlightApi } from './DropdownMenu';
 
 // Caret-anchored token autocomplete for the rich text editor, adapted to the
@@ -45,9 +46,14 @@ const TokenPopup: React.FC<{
   const listRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     // Keyboard-driven highlights scroll into view; pointer hover must not
-    // move the row under the cursor (roadmap 187).
+    // move the row under the cursor (roadmap 187). Scoped to the popup's own
+    // list — never the editor/page behind it.
     if (api.pointerDriven) return;
-    listRef.current?.querySelector<HTMLElement>('.ui-item-highlighted')?.scrollIntoView({ block: 'nearest' });
+    revealRowInScroller(
+      listRef.current?.querySelector<HTMLElement>('.ui-item-highlighted'),
+      'nearest',
+      listRef.current,
+    );
   }, [api.highlightedIndex, api.pointerDriven]);
   /* Seed the FIRST row highlighted on open (and when a filter empties the
      highlight), so typing `@` shows a lit default like the old popup. */
