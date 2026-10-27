@@ -13,6 +13,8 @@ export type { ModalProps } from './Modal';
 export { LongPressMenuProvider, useLongPressOptOut, isInteractiveElement } from './useLongPressMenu';
 export { useDropdownPosition, DROPDOWN_MAX_HEIGHT } from './useDropdownPosition';
 export type { DropdownPanelPos, UseDropdownPositionOptions } from './useDropdownPosition';
+export { revealRowInScroller, useRevealRowOnOpen } from './revealInScroller';
+export type { RevealBlock, RevealRowOnOpenOptions, RevealRowOnOpen } from './revealInScroller';
 export { useTouchMode } from './useTouchMode';
 export { default as Button, TAB_PILL } from './Button';
 export type { ButtonProps } from './Button';
