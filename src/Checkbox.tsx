@@ -30,8 +30,8 @@ export function CheckMark({ checked, size, tone = 'accent' }: { checked: boolean
     >
       {checked ? (
         <svg viewBox="0 0 16 16" style={{ width: size, height: size }} aria-hidden>
-          <rect x="1" y="1" width="14" height="14" rx="3.5" fill="currentColor" />
-          <path d="M4.5 8.2 L7 10.7 L11.5 5.8" stroke="#ffffff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <rect x="1" y="1" width="14" height="14" rx="3.5" fill="currentColor" stroke="var(--ui-check-ring)" strokeWidth={1} />
+          <path d="M4.5 8.2 L7 10.7 L11.5 5.8" stroke="var(--ui-check-check)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </svg>
       ) : (
         <svg viewBox="0 0 16 16" style={{ width: size, height: size }} aria-hidden>
