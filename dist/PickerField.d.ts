@@ -38,10 +38,14 @@ export interface PickerFieldProps {
     resolveBy?: PickerResolveBy;
     mode?: 'single' | 'multiple';
     appearance?: PickerAppearance;
-    /** Closed-trigger face. `chips` renders the values as chips. */
+    /** Closed-trigger text. `chips` renders the values as chips. */
     display?: PickerDisplay;
     /** Arbitrary closed-trigger text (wins over the presets). */
     formatDisplay?: (values: string[], items: PickerItem[]) => string;
+    /** Text while the field is OPEN. Defaults to the item labels (with the
+     *  trailing ", " append position); pass keys for id-stored fields that
+     *  display names when closed (cast edits as "1, 2, "). */
+    formatEditing?: (values: string[], items: PickerItem[]) => string;
     /** Chip/morph closed trigger (the editable field is still the input). */
     renderTrigger?: (ctx: PickerTriggerContext) => React.ReactNode;
     /** Custom row content; the row chrome + selection check stay. */
@@ -100,5 +104,5 @@ export interface PickerFieldProps {
      *  it is selected. The key must resolve to a `hidden` PickerItem. */
     groupToken?: (groupKey: string) => string | undefined;
 }
-export declare function PickerField({ values, onChange, items, groups, resolveBy, mode, appearance, display, formatDisplay, renderTrigger, renderItem, badge, trailing, anchoredKeys, anchoredLabel, placeholder, readOnly, disabled, autoFocus, defaultOpen, selectAllOnOpen, uppercase, allowFreeText, theme: themeProp, className, style, panelWidth, panelMinWidth, maxMenuHeight, portalTarget, autoGrow, skipComma, collapsedWidth, expandedWidth, createLabel, onCreateItem, onExit, onEscape, onTabExit, loadItems, sortItems, max, disabledIds, indicator, browse, groupToken, }: PickerFieldProps): React.JSX.Element;
+export declare function PickerField({ values, onChange, items, groups, resolveBy, mode, appearance, display, formatDisplay, formatEditing, renderTrigger, renderItem, badge, trailing, anchoredKeys, anchoredLabel, placeholder, readOnly, disabled, autoFocus, defaultOpen, selectAllOnOpen, uppercase, allowFreeText, theme: themeProp, className, style, panelWidth, panelMinWidth, maxMenuHeight, portalTarget, autoGrow, skipComma, collapsedWidth, expandedWidth, createLabel, onCreateItem, onExit, onEscape, onTabExit, loadItems, sortItems, max, disabledIds, indicator, browse, groupToken, }: PickerFieldProps): React.JSX.Element;
 export default PickerField;

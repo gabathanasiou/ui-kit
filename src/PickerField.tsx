@@ -62,10 +62,14 @@ export interface PickerFieldProps {
   resolveBy?: PickerResolveBy;
   mode?: 'single' | 'multiple';
   appearance?: PickerAppearance;
-  /** Closed-trigger face. `chips` renders the values as chips. */
+  /** Closed-trigger text. `chips` renders the values as chips. */
   display?: PickerDisplay;
   /** Arbitrary closed-trigger text (wins over the presets). */
   formatDisplay?: (values: string[], items: PickerItem[]) => string;
+  /** Text while the field is OPEN. Defaults to the item labels (with the
+   *  trailing ", " append position); pass keys for id-stored fields that
+   *  display names when closed (cast edits as "1, 2, "). */
+  formatEditing?: (values: string[], items: PickerItem[]) => string;
   /** Chip/morph closed trigger (the editable field is still the input). */
   renderTrigger?: (ctx: PickerTriggerContext) => React.ReactNode;
   /** Custom row content; the row chrome + selection check stay. */
@@ -137,6 +141,7 @@ export function PickerField({
   appearance = 'inline',
   display = 'names',
   formatDisplay,
+  formatEditing,
   renderTrigger,
   renderItem,
   badge,
@@ -220,10 +225,11 @@ export function PickerField({
     [values, items, resolveBy, display, formatDisplay],
   );
   const editingText = useCallback((next: readonly string[]) => {
+    if (formatEditing) return formatEditing([...next], items);
     if (mode === 'single') return next[0] ? labelOf(next[0]) : '';
     const joined = next.map(labelOf).join(', ');
     return skipComma ? joined : (next.length ? `${joined}, ` : '');
-  }, [mode, labelOf, skipComma]);
+  }, [formatEditing, items, mode, labelOf, skipComma]);
 
   /** Keep the closed field in sync with the committed value. */
   useEffect(() => {
@@ -423,13 +429,13 @@ export function PickerField({
     /* Keep the field text in catalogue order (unknown/create values last) so
        editing and the committed value read the same. */
     const ordered = orderByCatalogue(keys, itemKeys);
-    const nextText = ordered.length ? `${ordered.map(labelOf).join(', ')}, ` : '';
+    const nextText = editingText(ordered);
     draftRef.current = ordered;
     textRef.current = nextText;
     setDraft(ordered);
     caretEndRef.current = true;
     setText(nextText);
-  }, [itemKeys, labelOf]);
+  }, [itemKeys, editingText]);
 
   const onSelect = useCallback((item: SearchMenuItem) => {
     const key = item.id;

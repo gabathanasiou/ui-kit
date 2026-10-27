@@ -240,6 +240,10 @@ export function SearchMenu({
    *  row into view (arrowing through a long list would otherwise walk off the
    *  panel's visible area with the highlight). */
   const pointerDrivenRef = useRef(false);
+  /** The last row picked in this session. A pick clears the visible highlight
+   *  (so the next Enter commits the draft) but arrow navigation resumes from
+   *  the picked row — Down goes to the next record, not back to the top. */
+  const lastActivatedRef = useRef<string | null>(null);
   const setHighlighted = useCallback((index: number, source: 'keyboard' | 'pointer' = 'keyboard') => {
     pointerDrivenRef.current = source === 'pointer';
     setHighlightedState(index);
@@ -512,6 +516,10 @@ export function SearchMenu({
     pendingAnchorRectRef.current = null;
   }, []);
 
+  useEffect(() => {
+    if (!open) lastActivatedRef.current = null;
+  }, [open]);
+
   // Expandable: focus the field once it mounts.
   useEffect(() => {
     if (mode !== 'expandable' || !expanded || !open || !autoFocus) return;
@@ -535,6 +543,8 @@ export function SearchMenu({
   }, [open, close, currentDocument, anchorRef]);
 
   const activate = useCallback((row: SearchMenuRow) => {
+    if (row.kind === 'item') lastActivatedRef.current = row.hit.item.id;
+    else if (row.kind === 'group' || row.kind === 'action') lastActivatedRef.current = null;
     if (row.kind === 'group') {
       if (onSelectGroup) {
         onSelectGroup(row.group);
@@ -568,7 +578,14 @@ export function SearchMenu({
 
   const moveHighlight = (dir: 1 | -1) => {
     if (navigateRows.length === 0) return;
-    const current = navigateRows.findIndex(x => x.index === highlighted);
+    let from = highlighted;
+    if (from < 0 && lastActivatedRef.current) {
+      const resume = navigateRows.find(
+        x => x.row.kind === 'item' && x.row.hit.item.id === lastActivatedRef.current,
+      );
+      if (resume) from = resume.index;
+    }
+    const current = navigateRows.findIndex(x => x.index === from);
     const next = current < 0
       ? 0
       : (current + dir + navigateRows.length) % navigateRows.length;
@@ -1051,7 +1068,7 @@ export function SearchMenu({
          (now back in the field) would re-toggle the row under the cursor
          instead of committing the draft. */
       onPointerLeave={() => { if (pointerDrivenRef.current) setHighlighted(-1, 'pointer'); }}
-      className="ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none min-w-0 overflow-hidden"
+      className="ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none min-w-0 overflow-hidden pointer-events-auto"
       style={{
         position: 'fixed',
         left: pos.left,

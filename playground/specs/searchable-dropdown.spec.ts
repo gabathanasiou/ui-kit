@@ -497,8 +497,19 @@ test('PickerField multiple: toggle, Escape cancels, Tab commits, typed create', 
 
   await input.click();
   await expect(panel).toBeVisible();
-  await panel.locator('[data-search-item="3"]').click();
+  // Keyboard: three Downs land on the third record (1 and 2 start checked);
+  // Enter PICKS and keeps the panel open; a later Down resumes BELOW it.
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await expect(panel.locator('.ui-item-highlighted')).toHaveAttribute('data-search-item', '3');
+  await page.keyboard.press('Enter');
+  await expect(panel).toBeVisible();
   await expect(panel.locator('[data-selection-footer]')).toContainText('3 selected');
+  await page.keyboard.press('ArrowDown');
+  await expect(panel.locator('.ui-item-highlighted')).toHaveAttribute('data-search-item', '4');
+  await page.keyboard.press('ArrowUp');
+  await expect(panel.locator('.ui-item-highlighted')).toHaveAttribute('data-search-item', '3');
   // The field text/draft changes, the COMMITTED value does not until close.
   await expect(status).toHaveText('cast: 1, 2');
   await page.keyboard.press('Escape');
