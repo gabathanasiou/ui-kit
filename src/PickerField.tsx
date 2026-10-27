@@ -21,7 +21,6 @@ import type { DropdownTheme } from './DropdownMenu';
 import { useKitTheme } from './ThemeScope';
 import { coarsePx, useCoarseScale } from './device';
 import MorphFieldShell from './MorphFieldShell';
-import Button from './Button';
 import { inputCls } from './input';
 
 /**
@@ -43,7 +42,7 @@ import { inputCls } from './input';
  * (blur / outside / Tab) — only when it actually changed. Escape cancels.
  */
 
-export type PickerAppearance = 'inline' | 'chip' | 'wrap' | 'morph' | 'button';
+export type PickerAppearance = 'inline' | 'chip' | 'wrap' | 'morph';
 
 export interface PickerTriggerContext {
   values: string[];
@@ -77,9 +76,6 @@ export interface PickerFieldProps {
   anchoredKeys?: ReadonlySet<string>;
   anchoredLabel?: string;
   placeholder?: string;
-  /** Panel search placeholder (`appearance="button"` — the trigger is not an
-   *  editable field, the search lives in the panel). */
-  searchPlaceholder?: string;
   readOnly?: boolean;
   disabled?: boolean;
   autoFocus?: boolean;
@@ -145,7 +141,6 @@ export function PickerField({
   anchoredKeys,
   anchoredLabel = 'Element link anchor',
   placeholder = 'Select…',
-  searchPlaceholder = 'Search…',
   readOnly = false,
   disabled = false,
   autoFocus = false,
@@ -190,10 +185,7 @@ export function PickerField({
   /** Single mode: the live QUERY is separate from the field text. Opening
    *  shows the current value in the field but lists EVERY option (the current
    *  one highlighted) — EntityDropdown's single-select behaviour. */
-  const [singleQuery, setSingleQuery] = useState('');
-  /** `appearance="button"`: the panel owns the search, the trigger holds no
-   *  editable text — this query never touches the value. */
-  const [panelQuery, setPanelQuery] = useState('');  const [draft, setDraft] = useState<string[]>(() => [...values]);
+  const [singleQuery, setSingleQuery] = useState('');  const [draft, setDraft] = useState<string[]>(() => [...values]);
   const [asyncItems, setAsyncItems] = useState<PickerItem[] | null>(null);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
@@ -248,7 +240,6 @@ export function PickerField({
     setDraft([...values]);
     setText(nextText);
     setSingleQuery('');
-    setPanelQuery('');
     setOpen(true);
   }, [open, readOnly, disabled, values, editingText]);
 
@@ -280,9 +271,7 @@ export function PickerField({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const searchQuery = appearance === 'button'
-    ? panelQuery
-    : (mode === 'single' ? singleQuery : lastPickerSegment(text));
+  const searchQuery = mode === 'single' ? singleQuery : lastPickerSegment(text);
   const baseItems = loadItems ? (asyncItems ?? []) : items;
   const orderedBase = useMemo(
     () => (sortItems ? sortItems(baseItems, draft) : baseItems),
@@ -385,10 +374,7 @@ export function PickerField({
     }
     const currentText = textRef.current;
     const known = new Set(itemKeys);
-    const next = appearance === 'button'
-      /* Button face: the trigger is not editable — the draft IS the value. */
-      ? (mode === 'single' ? draftRef.current.slice(0, 1) : orderByCatalogue([...draftRef.current], itemKeys))
-      : mode === 'single'
+    const next = mode === 'single'
       ? (() => {
           const segment = currentText.trim();
           if (!segment) return allowFreeText ? [] : values;
@@ -403,11 +389,10 @@ export function PickerField({
     draftRef.current = next;
     setDraft(next);
     setSingleQuery('');
-    setPanelQuery('');
     setOpen(false);
     commitValues(next);
     onExit?.();
-  }, [readOnly, disabled, mode, items, resolveBy, itemKeys, allowFreeText, values, commitValues, onExit, appearance]);
+  }, [readOnly, disabled, mode, items, resolveBy, itemKeys, allowFreeText, values, commitValues, onExit]);
 
   /* Outside clicks close through SearchMenu's controlled-open callback — that
      is the COMMIT edge for a value field (the panel can close before the
@@ -426,7 +411,6 @@ export function PickerField({
     setDraft([...values]);
     setText(nextText);
     setSingleQuery('');
-    setPanelQuery('');
     setOpen(false);
     onEscape?.();
   }, [values, editingText, onEscape]);
@@ -555,15 +539,12 @@ export function PickerField({
       ref={searchRef}
       mode="inline"
       hideTrigger
-      panelSearch={appearance === 'button'}
-      placeholder={searchPlaceholder}
       open={open}
       onOpenChange={handlePanelOpenChange}
       anchorRef={appearance === 'morph' ? morphFieldRef : rootRef}
       items={panelItems}
       groups={groups}
       query={searchQuery}
-      onQueryChange={appearance === 'button' ? setPanelQuery : undefined}
       onSelect={onSelect}
       closeOnSelect={mode === 'single'}
       selectedId={mode === 'single' ? draft[0] : undefined}
@@ -616,6 +597,10 @@ export function PickerField({
     spellCheck: false,
   };
 
+  const chipPadY = coarsePx(5, 7, scale);
+  const chipPadX = coarsePx(9, 12, scale);
+  const chipFont = coarsePx(12, 14, scale);
+
   if (appearance === 'morph') {
     return (
       <MorphFieldShell
@@ -628,16 +613,20 @@ export function PickerField({
         trigger={renderTrigger
           ? renderTrigger({ values: [...values], items, display: displayText, open, toggle: openPicker })
           : (
-            <Button
-              size="minimal"
-              variant="primary"
-              theme={theme === 'dark' ? 'dark' : 'light'}
-              onClick={openPicker}
+            /* The collapsed face IS the chip: one trigger recipe for both
+               faces, so a morph picker matches every other value field. */
+            <button
+              type="button"
               disabled={disabled}
-              className={`w-full justify-start ${empty ? 'text-current/70' : ''}`}
+              onClick={openPicker}
+              className="flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded border border-[color:var(--ui-border-strong)] bg-[var(--ui-panel-bg)] text-left outline-none transition-colors hover:border-[color:var(--ui-input-focus-border)] disabled:cursor-default disabled:opacity-50"
+              style={{ padding: `${chipPadY}px ${chipPadX}px`, fontSize: chipFont }}
             >
-              {displayText || placeholder}
-            </Button>
+              <span className={`min-w-0 flex-1 truncate ${empty ? 'italic text-[color:var(--ui-text-muted)]' : ''}`}>
+                {displayText || placeholder}
+              </span>
+              <ChevronDown className="pointer-events-none h-3 w-3 shrink-0 text-[color:var(--ui-text-faint)]" />
+            </button>
           )}
         field={(
           <div ref={morphFieldRef} className="relative h-full">
@@ -653,32 +642,10 @@ export function PickerField({
   }
 
   const chip = appearance === 'chip';
-  const buttonFace = appearance === 'button';
   const wrap = appearance === 'wrap';
   const inlineAutoGrow = !chip && !wrap && autoGrow;
-  const padY = chip || buttonFace ? coarsePx(5, 7, scale) : 0;
-  const padX = chip || buttonFace ? coarsePx(9, 12, scale) : 0;
-  const chipFont = coarsePx(12, 14, scale);
-
-  if (buttonFace) {
-    return (
-      <div ref={rootRef} data-picker-field className={`relative ${className}`} style={style}>
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => { if (open) handlePanelOpenChange(false); else openPicker(); }}
-          className="flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded border border-[color:var(--ui-border-strong)] bg-[var(--ui-panel-bg)] text-left outline-none transition-colors hover:bg-[var(--ui-seg-track-bg)] focus:border-[color:var(--ui-input-focus-border)] disabled:cursor-default disabled:opacity-50"
-          style={{ padding: `${padY}px ${padX}px`, fontSize: chipFont }}
-        >
-          <span className={`min-w-0 flex-1 truncate ${empty ? 'italic text-[color:var(--ui-text-muted)]' : ''}`}>
-            {displayText || placeholder}
-          </span>
-          <ChevronDown className="pointer-events-none h-3 w-3 shrink-0 text-[color:var(--ui-text-faint)]" />
-        </button>
-        {panel}
-      </div>
-    );
-  }
+  const padY = chip ? coarsePx(5, 7, scale) : 0;
+  const padX = chip ? coarsePx(9, 12, scale) : 0;
 
   return (
     <div

@@ -454,9 +454,9 @@ function PickerFieldDemo() {
         </div>
 
         <div data-testid="picker-button">
-          <span className="label">Button — count face, panel search, whole-group tag</span>
+          <span className="label">Morph button — count face, expands into the search field</span>
           <PickerField
-            appearance="button"
+            appearance="morph"
             mode="multiple"
             display="count"
             values={buttonRoles}
@@ -468,8 +468,9 @@ function PickerFieldDemo() {
             groups={PICKER_ROLE_GROUPS}
             groupToken={group => `all:${group}`}
             browse="accordion"
-            searchPlaceholder="Search roles…"
             placeholder="No roles"
+            collapsedWidth={180}
+            expandedWidth={300}
             panelWidth={300}
           />
           <span className="label" data-testid="picker-button-status">button: {buttonRoles.join(', ') || '—'}</span>

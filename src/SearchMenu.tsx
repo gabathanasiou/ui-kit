@@ -152,9 +152,6 @@ export interface SearchMenuProps {
   hideTrigger?: boolean;
   /** Panel anchor + outside-click containment (defaults to the trigger). */
   anchorRef?: React.RefObject<HTMLElement | null>;
-  /** Render a search field INSIDE the panel (a button-trigger picker, where the
-   *  trigger is not an editable field). Focus moves there when the panel opens. */
-  panelSearch?: boolean;
   /** Portal host for the panel (defaults to the popout target / body). */
   portalTarget?: HTMLElement | null;
   /** Expandable mode: replace the collapsed trigger button. */
@@ -208,7 +205,6 @@ export function SearchMenu({
   onOpenChange,
   hideTrigger = false,
   anchorRef,
-  panelSearch = false,
   portalTarget: portalTargetProp,
   renderTrigger,
   renderItem: renderItemProp,
@@ -414,14 +410,6 @@ export function SearchMenu({
       return allGroups;
     });
   }, [query, browseExpanded, allGroups]);
-
-  /* Button-trigger pickers own no field: the panel's search input takes the
-     keyboard when the panel opens. */
-  useEffect(() => {
-    if (!panelSearch || !open) return;
-    const raf = requestAnimationFrame(() => inputRef.current?.focus());
-    return () => cancelAnimationFrame(raf);
-  }, [panelSearch, open]);
 
   /* Accordion: a picker that HOLDS a value opens ON it. Expand the group(s)
      holding the current selection so the reveal has a row to land on, then put
@@ -1056,26 +1044,6 @@ export function SearchMenu({
         visibility: pos.ready ? 'visible' : 'hidden',
       }}
     >
-      {panelSearch && (
-        <div className="shrink-0 px-2 pb-1 pt-2">
-          <div className="relative">
-            <Search size={iconBtn.icon} className="ui-icon absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              ref={inputRef}
-              value={query}
-              data-search-input
-              role="combobox"
-              aria-expanded={open}
-              aria-controls="search-menu-panel"
-              aria-autocomplete="list"
-              onChange={e => onChange(e.target.value)}
-              onKeyDown={onKeyDown}
-              placeholder={placeholder}
-              className={`${inputCls('sm')} w-full pl-8`}
-            />
-          </div>
-        </div>
-      )}
       {showLeading && (
         <div className="shrink-0 pb-1">
           {leadingRows.map((row, index) => renderActionRow(row, index))}
