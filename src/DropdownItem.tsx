@@ -126,7 +126,7 @@ export default function DropdownItem({
                 aria-label={`Select all ${groupLabel}`}
                 onMouseDown={e => e.preventDefault()}
                 onClick={() => selection.toggleGroup(groupSelectable)}
-                className="flex shrink-0 items-center justify-center rounded pointer-events-auto"
+                className="flex shrink-0 cursor-pointer items-center justify-center rounded pointer-events-auto"
               >
                 <SelectionCheck
                   checked={groupState === 'all'}

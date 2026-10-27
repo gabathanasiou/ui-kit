@@ -130,6 +130,7 @@ export function SelectionFooter({
           size="minimal"
           theme={buttonTheme}
           cloud={buttonCloud}
+          onMouseDown={e => e.preventDefault()}
           onClick={onClear}
           disabled={count === 0}
           data-selection-clear
@@ -143,6 +144,7 @@ export function SelectionFooter({
           size="minimal"
           theme={buttonTheme}
           cloud={buttonCloud}
+          onMouseDown={e => e.preventDefault()}
           onClick={hero.onClick}
           disabled={hero.disabled ?? count === 0}
           data-selection-hero

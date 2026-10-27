@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, ChevronDown, Plus, Search, X } from 'lucide-react';
 import { getDropdownClasses, useItemSize, useMenuGroupSize, type DropdownTheme } from './DropdownMenu';
@@ -43,6 +43,18 @@ import { SelectionCheck, SelectionFooter } from './SelectionControls';
  */
 
 export type SearchMenuMode = 'expandable' | 'inline';
+
+/** Imperative panel controls for a caller that owns the field (PickerField):
+ *  the panel has no input of its own, so the field's keys drive it. */
+export interface SearchMenuHandle {
+  moveHighlight: (dir: 1 | -1) => void;
+  /** Activate the lit row; false when nothing is lit (the field then commits). */
+  activateHighlighted: () => boolean;
+  close: () => void;
+  selectAll: () => void;
+  /** Replace the multi-select draft (a live field syncing its edited text). */
+  setSelection: (ids: string[]) => void;
+}
 
 export interface SearchMenuEmptyAction {
   /** Row label; a function receives the current query. */
@@ -128,10 +140,28 @@ export interface SearchMenuProps {
    *  separate. */
   fieldActions?: MorphFieldAction[];
   /** Multiple-selection mode: records toggle and the panel stays open; the
-   *  footer hero commits the draft. Escape / click-away / trigger close
-   *  cancel. Categories still only expand — their row gains the select-all
-   *  check. */
+   *  footer hero commits the draft. `mode: 'live'` is the value-field variant
+   *  (no hero — the caller commits on close). */
   multiple?: MultipleSelectionProps;
+  /** Controlled panel state. When provided the caller owns open/close and the
+   *  query is NOT cleared on close (the caller's field owns the text). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Render ONLY the panel (no field/trigger). Pass `anchorRef` for placement
+   *  and outside-click containment. */
+  hideTrigger?: boolean;
+  /** Panel anchor + outside-click containment (defaults to the trigger). */
+  anchorRef?: React.RefObject<HTMLElement | null>;
+  /** Expandable mode: replace the collapsed trigger button. */
+  renderTrigger?: (ctx: { open: boolean; expanded: boolean; toggle: () => void }) => React.ReactNode;
+  /** Custom record row content — replaces the default icon/label/detail face.
+   *  The row chrome, selection check and disabled state stay. */
+  renderItem?: (item: SearchMenuItem, state: { checked: boolean; disabled: boolean }) => React.ReactNode;
+  /** Value fields: open with NO row lit (Enter then commits the typed text);
+   *  typing still lights the first match. Default true. */
+  highlightOnOpen?: boolean;
+  /** Imperative panel controls for a caller that owns the field. */
+  ref?: React.Ref<SearchMenuHandle>;
 }
 
 export function SearchMenu({
@@ -169,6 +199,14 @@ export function SearchMenu({
   footerActions,
   fieldActions,
   multiple,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
+  anchorRef,
+  renderTrigger,
+  renderItem: renderItemProp,
+  highlightOnOpen = true,
+  ref,
 }: SearchMenuProps) {
   const isControlled = controlledQuery !== undefined;
   const [innerQuery, setInnerQuery] = useState('');
@@ -178,7 +216,13 @@ export function SearchMenu({
     onQueryChange?.(next);
   }, [isControlled, onQueryChange]);
 
-  const [open, setOpen] = useState(false);
+  const isOpenControlled = controlledOpen !== undefined;
+  const [openState, setOpenState] = useState(false);
+  const open = isOpenControlled ? controlledOpen : openState;
+  const setOpen = useCallback((next: boolean) => {
+    if (!isOpenControlled) setOpenState(next);
+    onOpenChange?.(next);
+  }, [isOpenControlled, onOpenChange]);
   const [expanded, setExpanded] = useState(mode === 'inline');
   const groupKeySig = useMemo(() => groups.map(g => g.key).join('\u0000'), [groups]);
   const allGroups = useMemo(() => new Set(groupKeySig ? groupKeySig.split('\u0000') : []), [groupKeySig]);
@@ -214,7 +258,7 @@ export function SearchMenu({
   const [pos, setPos] = useState({ top: 0, left: 0, maxH: 288, ready: false });
   const [anchorWidth, setAnchorWidth] = useState(0);
   useDropdownPosition({
-    anchorRef: rootRef,
+    anchorRef: anchorRef ?? rootRef,
     panelRef,
     open,
     maxHeight: maxMenuHeight,
@@ -222,13 +266,14 @@ export function SearchMenu({
     onPosition: next => setPos({ top: next.top, left: next.left, maxH: next.maxH, ready: next.ready }),
   });
   useEffect(() => {
-    if (!open || !rootRef.current) return;
-    setAnchorWidth(rootRef.current.getBoundingClientRect().width);
-  }, [open, expanded]);
+    const anchorEl = anchorRef?.current ?? rootRef.current;
+    if (!open || !anchorEl) return;
+    setAnchorWidth(anchorEl.getBoundingClientRect().width);
+  }, [open, expanded, anchorRef]);
   const setPanelRef = useOverlayMorph<HTMLDivElement>({
     visible: open,
     morph,
-    anchor: () => rootRef.current?.getBoundingClientRect() ?? null,
+    anchor: () => (anchorRef?.current ?? rootRef.current)?.getBoundingClientRect() ?? null,
     ref: panelRef,
     cloneOnUnmount: true,
   });
@@ -241,13 +286,13 @@ export function SearchMenu({
       items,
       groups,
       query,
-      browseGroups: openOnFocus || browseExpanded,
+      browseGroups: openOnFocus || browseExpanded || expandableGroups,
       browseAll,
       expandedGroups,
       emptyActionLabels,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items, groups, query, openOnFocus, browseExpanded, browseAll, expandedGroups, emptyActionLabels.join('\u0000')],
+    [items, groups, query, openOnFocus, browseExpanded, expandableGroups, browseAll, expandedGroups, emptyActionLabels.join('\u0000')],
   );
 
   const leadingRows = useMemo<Extract<SearchMenuRow, { kind: 'action' }>[]>(
@@ -311,7 +356,7 @@ export function SearchMenu({
   }, [items, groups, query, allItemIds]);
   const visibleIdSet = useMemo(() => new Set(visibleItemIds), [visibleItemIds]);
   const selection = useSelection({
-    mode: 'draft',
+    mode: multiple?.mode ?? 'draft',
     selectedIds: multiple?.selectedIds ?? NO_SELECTION_IDS,
     itemIds: allItemIds,
     visibleIds: visibleItemIds,
@@ -319,6 +364,7 @@ export function SearchMenu({
     disabledIds: multiple?.disabledIds,
     indicator: multiple?.indicator,
     onCommit: multiple?.onCommit,
+    onDraftChange: multiple?.onDraftChange,
   });
   const resetSelectionRef = useRef(selection.reset);
   resetSelectionRef.current = selection.reset;
@@ -335,11 +381,13 @@ export function SearchMenu({
       setExpanded(false);
       requestAnimationFrame(() => triggerRef.current?.focus());
     }
-    setQuery('');
+    /* A controlled-open caller (PickerField) owns the field text — never
+       clear it on close. Uncontrolled surfaces keep the legacy clear. */
+    if (!isOpenControlled) setQuery('');
     setHighlighted(0);
     setExpandedGroups(browseExpanded ? allGroups : new Set());
     onClose?.();
-  }, [mode, onClose, setQuery, browseExpanded, allGroups]);
+  }, [mode, onClose, setQuery, browseExpanded, allGroups, isOpenControlled, setOpen]);
 
   // A query collapses the browse tree; clearing it restores the browse default
   // (every group open when `browseExpanded`, otherwise all collapsed).
@@ -408,8 +456,8 @@ export function SearchMenu({
     const current = selectedId
       ? rows.findIndex(row => row.kind === 'item' && row.hit.item.id === selectedId)
       : -1;
-    setHighlighted(current >= 0 ? leadingOffset + current : leadingOffset);
-  }, [open, mode, expanded, expandedWidth, leadingOffset, rows, selectedId]);
+    setHighlighted(current >= 0 ? leadingOffset + current : highlightOnOpen ? leadingOffset : -1);
+  }, [open, mode, expanded, expandedWidth, leadingOffset, rows, selectedId, highlightOnOpen]);
 
   useEffect(() => () => {
     window.clearTimeout(anchorRectTimerRef.current);
@@ -431,12 +479,12 @@ export function SearchMenu({
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node | null;
       if (!target) return;
-      if (rootRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      if (rootRef.current?.contains(target) || panelRef.current?.contains(target) || anchorRef?.current?.contains(target)) return;
       close();
     };
     doc.addEventListener('pointerdown', onPointerDown, true);
     return () => doc.removeEventListener('pointerdown', onPointerDown, true);
-  }, [open, close, currentDocument]);
+  }, [open, close, currentDocument, anchorRef]);
 
   const activate = useCallback((row: SearchMenuRow) => {
     if (row.kind === 'group') {
@@ -478,6 +526,21 @@ export function SearchMenu({
       : (current + dir + navigateRows.length) % navigateRows.length;
     setHighlighted(navigateRows[next].index);
   };
+
+  /* External-field controls (PickerField): the panel owns the highlight, the
+     caller's field owns the keyboard. */
+  useImperativeHandle(ref, () => ({
+    moveHighlight,
+    activateHighlighted: () => {
+      const row = highlighted >= 0 ? allRows[highlighted] : undefined;
+      if (!row) return false;
+      activate(row);
+      return true;
+    },
+    close,
+    selectAll: () => { if (multipleActive) selection.setAll(true); },
+    setSelection: (ids: string[]) => { selection.reset(ids); },
+  }), [allRows, highlighted, activate, close, multipleActive, selection]);
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (multipleActive && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a') {
@@ -539,6 +602,29 @@ export function SearchMenu({
     // the group row lit so Right-Right can collapse it again.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
+
+  /* Controlled-open value fields: the caller opens the panel without going
+     through `openPanel`, so seed the highlight here. Declared AFTER the query
+     effect so a mount with `defaultOpen` honours `highlightOnOpen`. */
+  useEffect(() => {
+    if (!open) return;
+    const current = selectedId
+      ? rows.findIndex(row => row.kind === 'item' && row.hit.item.id === selectedId)
+      : -1;
+    setHighlighted(current >= 0 ? leadingOffset + current : highlightOnOpen ? leadingOffset : -1);
+    // Only on the open edge — the query effect owns later changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  /* Re-seed the multi-select draft on EVERY open edge — a controlled caller
+     (PickerField) closes with Escape (draft dropped) and reopens with the
+     committed value; a stale internal selection would toggle the wrong rows.
+     Layout phase so the panel never flashes the previous session's ticks. */
+  useLayoutEffect(() => {
+    if (!open) return;
+    resetSelectionRef.current();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const fieldActionButtons = (onClear: () => void) => (
     <span className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
@@ -688,12 +774,20 @@ export function SearchMenu({
         className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${singleSelected ? 'ui-item-selected' : ''} ${active ? 'ui-item-highlighted' : ''} ${rowDisabled ? 'opacity-30 pointer-events-none' : ''}`}
       >
         {multipleActive && <SelectionCheck checked={checked} disabled={rowDisabled} indicator={multiple?.indicator} />}
-        {row.hit.item.icon && <span className={`${d.icon} shrink-0`}>{row.hit.item.icon}</span>}
-        <span className="flex-1 truncate">{row.hit.item.label}</span>
-        {(row.hit.detail || row.hit.item.detail) && (
-          <span className="shrink-0 max-w-[55%] truncate text-[10px] text-zinc-400">{row.hit.detail || row.hit.item.detail}</span>
+        {renderItemProp ? (
+          <span className="flex min-w-0 flex-1 items-center gap-2">
+            {renderItemProp(row.hit.item, { checked, disabled: rowDisabled })}
+          </span>
+        ) : (
+          <>
+            {row.hit.item.icon && <span className={`${d.icon} shrink-0`}>{row.hit.item.icon}</span>}
+            <span className="flex-1 truncate">{row.hit.item.label}</span>
+            {(row.hit.detail || row.hit.item.detail) && (
+              <span className="shrink-0 max-w-[55%] truncate text-[10px] text-zinc-400">{row.hit.detail || row.hit.item.detail}</span>
+            )}
+            {singleSelected && <Check className="ui-icon w-3.5 h-3.5 shrink-0" aria-hidden />}
+          </>
         )}
-        {singleSelected && <Check className="ui-icon w-3.5 h-3.5 shrink-0" aria-hidden />}
       </button>
     );
   };
@@ -721,7 +815,7 @@ export function SearchMenu({
           e.stopPropagation();
           if (groupSelectable.length) selection.toggleGroup(groupSelectable);
         }}
-        className="shrink-0 flex items-center justify-center rounded"
+        className={`shrink-0 flex items-center justify-center rounded ${groupSelectable.length ? 'cursor-pointer' : 'cursor-not-allowed'}`}
       >
         <SelectionCheck
           checked={groupChecked === 'all'}
@@ -777,7 +871,7 @@ export function SearchMenu({
           tabIndex={-1}
           onMouseDown={e => e.preventDefault()}
           onClick={() => activate(row)}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
         >
           {row.group.icon && <span className={`${d.icon} shrink-0`}>{row.group.icon}</span>}
           <span className="flex-1 truncate">{row.group.label}</span>
@@ -792,7 +886,7 @@ export function SearchMenu({
             onMouseDown={e => e.preventDefault()}
             onClick={e => { e.stopPropagation(); toggleGroup(row.group.key); }}
             style={{ width: iconBtn.box, height: iconBtn.box }}
-            className="shrink-0 flex items-center justify-center rounded text-zinc-400 hover:text-zinc-700"
+            className="shrink-0 flex cursor-pointer items-center justify-center rounded text-zinc-400 hover:text-zinc-700"
           >
             <ChevronDown
               size={iconBtn.icon}
@@ -820,6 +914,7 @@ export function SearchMenu({
         tabIndex={-1}
         data-search-action={row.source || 'empty'}
         data-search-row={rowIndex}
+        onMouseDown={e => e.preventDefault()}
         onMouseEnter={() => setHighlighted(rowIndex, 'pointer')}
         onClick={() => activate(row)}
         style={itemSize}
@@ -947,7 +1042,7 @@ export function SearchMenu({
           clear={multiple?.clear !== false}
           theme={theme}
           onClear={selection.clear}
-          hero={{
+          hero={multiple?.mode === 'live' ? undefined : {
             label: heroLabel,
             onClick: () => { selection.commit(); close(); },
             disabled: selection.count === 0,
@@ -957,6 +1052,15 @@ export function SearchMenu({
     </div>,
     portalTarget ?? currentDocument?.body ?? document.body,
   ) : null;
+
+  if (hideTrigger) {
+    return (
+      <>
+        <div ref={rootRef} data-search-menu data-mode="hidden" className="hidden" aria-hidden />
+        {panel}
+      </>
+    );
+  }
 
   if (mode === 'inline') {
     return (
@@ -975,7 +1079,7 @@ export function SearchMenu({
       rootRef={rootRef}
       data-search-menu
       data-mode={mode}
-      trigger={(
+      trigger={renderTrigger ? renderTrigger({ open, expanded, toggle: openPanel }) : (
         <Button
           ref={triggerRef}
           type="button"

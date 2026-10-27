@@ -45,11 +45,20 @@ export interface SelectionProps {
   onCommit?: (ids: string[]) => void;
   /** Optional per-toggle observer (peer feedback, analytics). */
   onToggle?: (id: string, selected: boolean) => void;
+  /** Called SYNCHRONOUSLY after every user mutation (toggle / group / all /
+   *  clear) with the next ordered draft. Value fields mirror this into their
+   *  field text so a fast Tab never commits a stale list. */
+  onDraftChange?: (ids: string[]) => void;
 }
 
 /** What a menu's `multiple` prop accepts (`DropdownMenu` + `SearchMenu`). */
 export interface MultipleSelectionProps {
   selectedIds: readonly string[];
+  /** `draft` (default) = the footer hero commits; `live` = every toggle emits
+   *  `onDraftChange` and the CALLER commits on close (value fields). */
+  mode?: 'draft' | 'live';
+  /** Live fields: the ordered draft after every toggle / clear / reset. */
+  onDraftChange?: (ids: string[]) => void;
   /** Footer hero: one call, catalogue order, one undo entry app-side. */
   onCommit: (ids: string[]) => void;
   /** Hero label — receives the draft count (`Add 6 roles`). */
@@ -195,6 +204,7 @@ export function useSelection(props: SelectionProps): SelectionApi {
     onChange,
     onCommit,
     onToggle,
+    onDraftChange,
   } = props;
   const [draft, setDraft] = useState<string[]>(() => orderByCatalogue(selectedIds, itemIds));
   const disabled = useMemo(() => new Set(disabledIds ?? []), [disabledIds]);
@@ -208,22 +218,31 @@ export function useSelection(props: SelectionProps): SelectionApi {
     const next = toggleSelected(draft, id, itemIds, { max, disabledIds });
     if (sameSelection(next, draft)) return;
     setDraft(next);
+    onDraftChange?.(next);
     onToggle?.(id, !was);
-  }, [draft, draftSet, disabled, itemIds, max, disabledIds, onToggle]);
+  }, [draft, draftSet, disabled, itemIds, max, disabledIds, onToggle, onDraftChange]);
 
   const toggleGroup = useCallback((ids: readonly string[]) => {
-    setDraft(prev => {
-      const selectable = ids.filter(id => !disabled.has(id));
-      const state = groupSelectionState(prev, selectable);
-      return setSelected(prev, selectable, state !== 'all', itemIds, { max, disabledIds });
-    });
-  }, [disabled, itemIds, max, disabledIds]);
+    const selectable = ids.filter(id => !disabled.has(id));
+    const state = groupSelectionState(draft, selectable);
+    const next = setSelected(draft, selectable, state !== 'all', itemIds, { max, disabledIds });
+    if (sameSelection(next, draft)) return;
+    setDraft(next);
+    onDraftChange?.(next);
+  }, [draft, disabled, itemIds, max, disabledIds, onDraftChange]);
 
   const setAll = useCallback((on: boolean, ids: readonly string[] = visibleIds ?? itemIds) => {
-    setDraft(prev => setSelected(prev, ids, on, itemIds, { max, disabledIds }));
-  }, [visibleIds, itemIds, max, disabledIds]);
+    const next = setSelected(draft, ids, on, itemIds, { max, disabledIds });
+    if (sameSelection(next, draft)) return;
+    setDraft(next);
+    onDraftChange?.(next);
+  }, [draft, visibleIds, itemIds, max, disabledIds, onDraftChange]);
 
-  const clear = useCallback(() => setDraft([]), []);
+  const clear = useCallback(() => {
+    if (draft.length === 0) return;
+    setDraft([]);
+    onDraftChange?.([]);
+  }, [draft, onDraftChange]);
 
   const reset = useCallback((ids?: readonly string[]) => {
     setDraft(orderByCatalogue(ids ?? selectedIds, itemIds));
