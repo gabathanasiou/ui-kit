@@ -609,6 +609,10 @@ export function PickerField({
     />
   );
 
+  const chip = appearance === 'chip';
+  const wrap = appearance === 'wrap';
+  const inlineAutoGrow = !chip && !wrap && autoGrow;
+
   const empty = !open && !displayText;
   const overlayText = open ? text : displayText;
   const inputProps = {
@@ -674,9 +678,6 @@ export function PickerField({
     );
   }
 
-  const chip = appearance === 'chip';
-  const wrap = appearance === 'wrap';
-  const inlineAutoGrow = !chip && !wrap && autoGrow;
   const padY = chip ? coarsePx(5, 7, scale) : 0;
   const padX = chip ? coarsePx(9, 12, scale) : 0;
 
