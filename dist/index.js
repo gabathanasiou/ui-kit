@@ -1077,7 +1077,7 @@ function Lr({
     onCommit: x == null ? void 0 : x.onCommit
   }), te = S(Ce.reset);
   te.current = Ce.reset;
-  const Re = typeof (x == null ? void 0 : x.commitLabel) == "function" ? x.commitLabel(Ce.count) : (x == null ? void 0 : x.commitLabel) ?? `Select ${Ce.count}`;
+  const Ae = typeof (x == null ? void 0 : x.commitLabel) == "function" ? x.commitLabel(Ce.count) : (x == null ? void 0 : x.commitLabel) ?? `Select ${Ce.count}`;
   le(() => {
     if (n)
       return U(!0), F || v(""), X.setHighlighted(d ?? -1, "keyboard"), te.current(), Wo(() => {
@@ -1093,7 +1093,7 @@ function Lr({
     };
     return K.addEventListener("pointerdown", $, { capture: !0 }), () => K.removeEventListener("pointerdown", $, { capture: !0 });
   }, [n, K, t, e]);
-  const Ae = Q(() => {
+  const Re = Q(() => {
     const $ = M.current;
     if (!$) return null;
     const Y = $.getBoundingClientRect();
@@ -1101,7 +1101,7 @@ function Lr({
   }, []), Ie = Dr({
     visible: n,
     morph: c,
-    anchor: Ae,
+    anchor: Re,
     onClosed: () => U(!1)
   }), $e = S(() => {
   }), qe = S(() => {
@@ -1364,7 +1364,7 @@ function Lr({
               theme: N,
               onClear: Ce.clear,
               hero: {
-                label: Re,
+                label: Ae,
                 onClick: () => {
                   Ce.commit(), ot(!1);
                 },
@@ -1431,23 +1431,23 @@ function ch({
       if (ue.key === "ArrowDown" || ue.key === "ArrowUp") {
         ue.preventDefault(), ue.stopImmediatePropagation();
         const te = X.activeElement;
-        let Re = te ? ft.indexOf(te) : -1;
-        if (Re < 0 && te) {
+        let Ae = te ? ft.indexOf(te) : -1;
+        if (Ae < 0 && te) {
           const qe = te.closest("[data-im-row]"), Le = qe == null ? void 0 : qe.querySelector('[role="menuitem"]:first-child');
-          Le && (Re = Se.indexOf(Le));
+          Le && (Ae = Se.indexOf(Le));
         }
-        const Ae = ue.key === "ArrowDown" ? 1 : -1, Ie = Re < 0 ? Ae === 1 ? 0 : ft.length - 1 : (Re + Ae + ft.length) % ft.length, $e = ft[Ie];
+        const Re = ue.key === "ArrowDown" ? 1 : -1, Ie = Ae < 0 ? Re === 1 ? 0 : ft.length - 1 : (Ae + Re + ft.length) % ft.length, $e = ft[Ie];
         $e == null || $e.focus({ preventScroll: !0 }), ln(($e == null ? void 0 : $e.closest("[data-im-row]")) ?? $e, "nearest", v.current);
         return;
       }
       if (ue.key === "ArrowLeft" || ue.key === "ArrowRight") {
-        const te = X.activeElement, Re = te == null ? void 0 : te.closest("[data-im-row]");
-        if (!Re) return;
+        const te = X.activeElement, Ae = te == null ? void 0 : te.closest("[data-im-row]");
+        if (!Ae) return;
         ue.preventDefault(), ue.stopImmediatePropagation();
-        const Ae = [...Re.querySelectorAll('[role="menuitem"]')].slice(1);
-        if (Ae.length === 0) return;
-        const Ie = te && Re.contains(te) ? Ae.indexOf(te) : -1, $e = ue.key === "ArrowRight" ? 1 : -1, qe = Ie < 0 ? 0 : (Ie + $e + Ae.length) % Ae.length;
-        (Ce = Ae[qe]) == null || Ce.focus({ preventScroll: !0 });
+        const Re = [...Ae.querySelectorAll('[role="menuitem"]')].slice(1);
+        if (Re.length === 0) return;
+        const Ie = te && Ae.contains(te) ? Re.indexOf(te) : -1, $e = ue.key === "ArrowRight" ? 1 : -1, qe = Ie < 0 ? 0 : (Ie + $e + Re.length) % Re.length;
+        (Ce = Re[qe]) == null || Ce.focus({ preventScroll: !0 });
         return;
       }
     }, pe = (F == null ? void 0 : F.ownerDocument) ?? null;
@@ -2068,7 +2068,7 @@ function $c({
     N.current = w, he(w !== null);
   }, []), X = On(), Se = Qn(), xe = S(Se);
   xe.current = Se;
-  const [ft, ae] = oe(null), Ce = S(null), te = S(!1), Re = S(!1), Ae = S(0), Ie = S({ w: 0, h: 0 }), $e = S(!1), [qe, Le] = oe(!1), [Ct, At] = oe(!1), Ke = S(0), ze = S(!1), [St, It] = oe(!1), xt = S(c);
+  const [ft, ae] = oe(null), Ce = S(null), te = S(!1), Ae = S(!1), Re = S(0), Ie = S({ w: 0, h: 0 }), $e = S(!1), [qe, Le] = oe(!1), [Ct, At] = oe(!1), Ke = S(0), ze = S(!1), [St, It] = oe(!1), xt = S(c);
   xt.current = c;
   const $t = S(!1), ht = S(!1), ot = () => {
     ht.current = !0, Le(!0);
@@ -2155,7 +2155,7 @@ function $c({
       if (ht.current) return;
       const me = q;
       q = we, ot();
-      const Pe = w.getBoundingClientRect(), Be = nn(xe.current ?? null), Ze = !te.current && !Re.current, Ne = Ze ? Be.top + (Be.height - me) / 2 : Pe.top, st = Ze ? Be.top + (Be.height - we) / 2 : Pe.top;
+      const Pe = w.getBoundingClientRect(), Be = nn(xe.current ?? null), Ze = !te.current && !Ae.current, Ne = Ze ? Be.top + (Be.height - me) / 2 : Pe.top, st = Ze ? Be.top + (Be.height - we) / 2 : Pe.top;
       w.style.transition = "none", w.style.height = `${me}px`, Ze && (w.style.top = `${Ne}px`), k.current && (k.current.style.overflow = "hidden"), w.getBoundingClientRect(), requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           w.style.height === `${me}px` && (w.style.transition = `height ${Xt}ms ${Kn}${Ze ? `, top ${Xt}ms ${Kn}` : ""}`, w.style.height = `${we}px`, Ze && (w.style.top = `${st}px`), window.setTimeout(() => {
@@ -2168,7 +2168,7 @@ function $c({
   }, [ue]), le(() => {
     if (!ue || !N.current || c && !Nn()) return;
     const w = N.current, q = new ResizeObserver(() => {
-      if (!w.isConnected || Ce.current || ze.current || Re.current || or(w).length > 0) return;
+      if (!w.isConnected || Ce.current || ze.current || Ae.current || or(w).length > 0) return;
       const ie = xe.current ?? null, ye = nn(ie), we = (ie == null ? void 0 : ie.innerWidth) ?? 0, me = w.getBoundingClientRect(), Pe = Math.max(ye.top + Me, Math.min(me.top, ye.bottom - me.height - Me)), Be = Math.max(Me, Math.min(me.left, we - me.width - Me));
       (Math.abs(Pe - me.top) > 0.5 || Math.abs(Be - me.left) > 0.5) && ae({ left: Be, top: Pe });
     });
@@ -2191,14 +2191,14 @@ function $c({
     const w = xe.current ?? null, q = (w == null ? void 0 : w.visualViewport) ?? null;
     if (!w || !q) return;
     const ie = 120;
-    Re.current = !1, Ie.current = { w: w.innerWidth, h: w.innerHeight };
+    Ae.current = !1, Ie.current = { w: w.innerWidth, h: w.innerHeight };
     let ye = 0;
     const we = () => {
       if (ze.current || Ce.current) return;
       const Pe = (w == null ? void 0 : w.innerHeight) ?? 0, Be = (w == null ? void 0 : w.innerWidth) ?? 0, Ne = nn(w).height < Pe - ie, st = Pe < Ie.current.h - ie && Be === Ie.current.w;
-      Ne || st ? (Re.current = !0, Ae.current && (clearTimeout(Ae.current), Ae.current = 0)) : Ae.current || (Ae.current = (w == null ? void 0 : w.setTimeout(() => {
-        Re.current = !1, Ae.current = 0, At(!1);
-      }, 600)) ?? 0), At(Re.current), !ye && (ye = requestAnimationFrame(() => {
+      Ne || st ? (Ae.current = !0, Re.current && (clearTimeout(Re.current), Re.current = 0)) : Re.current || (Re.current = (w == null ? void 0 : w.setTimeout(() => {
+        Ae.current = !1, Re.current = 0, At(!1);
+      }, 600)) ?? 0), At(Ae.current), !ye && (ye = requestAnimationFrame(() => {
         var Yt;
         ye = 0;
         const an = N.current;
@@ -2220,7 +2220,7 @@ function $c({
           Jt();
           return;
         }
-        if (!Re.current) {
+        if (!Ae.current) {
           if (te.current) {
             lt || ae(Ue(rt.left, rt.top));
             return;
@@ -2247,7 +2247,7 @@ function $c({
       }));
     };
     return w.addEventListener("orientationchange", me), () => {
-      q.removeEventListener("resize", we), q.removeEventListener("scroll", we), w.removeEventListener("orientationchange", me), ye && cancelAnimationFrame(ye), Ae.current && clearTimeout(Ae.current);
+      q.removeEventListener("resize", we), q.removeEventListener("scroll", we), w.removeEventListener("orientationchange", me), ye && cancelAnimationFrame(ye), Re.current && clearTimeout(Re.current);
     };
   }, [n, Ue]);
   const pt = Q((w) => {
@@ -10991,7 +10991,7 @@ function Mf({
     pe || he(y), l == null || l(y);
   }, [pe, l]), Se = F !== void 0, [xe, ft] = oe(!1), ae = Se ? F : xe, Ce = Q((y) => {
     Se || ft(y), de == null || de(y);
-  }, [Se, de]), [te, Re] = oe(t === "inline"), Ae = Ve(() => e.map((y) => y.key).join("\0"), [e]), Ie = Ve(() => new Set(Ae ? Ae.split("\0") : []), [Ae]), [$e, qe] = oe(() => m ? Ie : /* @__PURE__ */ new Set()), [Le, Ct] = oe(0), At = S(!1), Ke = Q((y, B = "keyboard") => {
+  }, [Se, de]), [te, Ae] = oe(t === "inline"), Re = Ve(() => e.map((y) => y.key).join("\0"), [e]), Ie = Ve(() => new Set(Re ? Re.split("\0") : []), [Re]), [$e, qe] = oe(() => m ? Ie : /* @__PURE__ */ new Set()), [Le, Ct] = oe(0), At = S(!1), Ke = Q((y, B = "keyboard") => {
     At.current = B === "pointer", Ct(y);
   }, []), ze = S(null), St = S(null), It = S(null), xt = S(null), $t = S(null), ht = S(0), ot = gi(), at = On(), Je = Pr(), Qe = Ni(), Kt = Qo(), ke = Oo(), pt = 8 + (((T == null ? void 0 : T.length) || 0) + (A ? 1 : 0)) * (ke.box + 2), [Et, bt] = oe({ top: 0, left: 0, maxH: 288, ready: !1 }), [zt, vt] = oe(0);
   jo({
@@ -11068,7 +11068,7 @@ function Mf({
   st.current = Ne.reset;
   const an = typeof (v == null ? void 0 : v.commitLabel) == "function" ? v.commitLabel(Ne.count) : (v == null ? void 0 : v.commitLabel) ?? `Select ${Ne.count}`, _e = Q(() => {
     var y;
-    Ce(!1), t === "expandable" && ((y = St.current) == null || y.blur(), Re(!1), requestAnimationFrame(() => {
+    Ce(!1), t === "expandable" && ((y = St.current) == null || y.blur(), Ae(!1), requestAnimationFrame(() => {
       var B;
       return (B = It.current) == null ? void 0 : B.focus();
     })), Se || X(""), Ke(0), qe(m ? Ie : /* @__PURE__ */ new Set()), u == null || u();
@@ -11125,7 +11125,7 @@ function Mf({
         }, xn + 80);
       }
     }
-    Re(!0), Ce(!0);
+    Ae(!0), Ce(!0);
     const y = x ? G.findIndex((re) => re.kind === "item" && re.hit.item.id === x) : -1;
     Ke(y >= 0 ? w + y : ee ? w : -1);
   }, [ae, t, te, N, w, G, x, ee]);
@@ -11739,7 +11739,7 @@ function _h({
   browse: pe,
   groupToken: ue
 }) {
-  const he = Vt(), A = H ?? (he == null ? void 0 : he.mode) ?? "light", X = Fe(), Se = Q((_) => mn(_, i), [i]), xe = Ve(() => t.map(Se), [t, Se]), ft = Ve(() => new Map(t.map((_) => [Se(_), _])), [t, Se]), ae = Q((_) => vl(_, t, i), [t, i]), Ce = Ve(() => new Set([...p ?? []].map((_) => _.toLowerCase())), [p]), [te, Re] = oe(!1), [Ae, Ie] = oe(""), [$e, qe] = oe(""), [Le, Ct] = oe(() => [...n]), [At, Ke] = oe(null), [ze, St] = oe(!1), It = S(null), xt = S(null), $t = S(null), ht = S(null), ot = S(n.join("\0")), at = S(!1), Je = S(/* @__PURE__ */ new Set()), Qe = S(!1), Kt = S(!1), ke = S(0), Ue = S(""), pt = S([...n]), Et = n.join("\0"), bt = Ve(
+  const he = Vt(), A = H ?? (he == null ? void 0 : he.mode) ?? "light", X = Fe(), Se = Q((_) => mn(_, i), [i]), xe = Ve(() => t.map(Se), [t, Se]), ft = Ve(() => new Map(t.map((_) => [Se(_), _])), [t, Se]), ae = Q((_) => vl(_, t, i), [t, i]), Ce = Ve(() => new Set([...p ?? []].map((_) => _.toLowerCase())), [p]), [te, Ae] = oe(!1), [Re, Ie] = oe(""), [$e, qe] = oe(""), [Le, Ct] = oe(() => [...n]), [At, Ke] = oe(null), [ze, St] = oe(!1), It = S(null), xt = S(null), $t = S(null), ht = S(null), ot = S(n.join("\0")), at = S(!1), Je = S(/* @__PURE__ */ new Set()), Qe = S(!1), Kt = S(!1), ke = S(0), Ue = S(""), pt = S([...n]), Et = n.join("\0"), bt = Ve(
     () => Pf(n, t, i, l, c),
     [n, t, i, l, c]
   ), zt = Q((_) => {
@@ -11754,7 +11754,7 @@ function _h({
     if (te || b || x) return;
     at.current = !1, Qe.current = !0;
     const _ = zt(n);
-    Ue.current = _, pt.current = [...n], Ct([...n]), Ie(_), qe(""), Re(!0);
+    Ue.current = _, pt.current = [...n], Ct([...n]), Ie(_), qe(""), Ae(!0);
   }, [te, b, x, n, zt]);
   mt(() => {
     if (!te) return;
@@ -11765,10 +11765,10 @@ function _h({
     Kt.current = !1;
     const _ = It.current;
     _ && (_.focus(), _.setSelectionRange(_.value.length, _.value.length));
-  }, [Ae]), le(() => {
+  }, [Re]), le(() => {
     (z || D) && vt();
   }, []);
-  const $ = o === "single" ? $e : Af(Ae), Y = W ? At ?? [] : t, G = Ve(
+  const $ = o === "single" ? $e : Af(Re), Y = W ? At ?? [] : t, G = Ve(
     () => ce ? ce(Y, Le) : Y,
     [Y, ce, Le]
   ), Ee = $.trim(), He = !!F && R && !ze && !!Ee && !zf(Ee, Y, i);
@@ -11838,13 +11838,13 @@ function _h({
       If(fe, t, i).filter((Nt) => R || ve.has(Nt)),
       xe
     );
-    pt.current = ut, Ct(ut), qe(""), Re(!1), wt(ut), _ && (de == null || de());
+    pt.current = ut, Ct(ut), qe(""), Ae(!1), wt(ut), _ && (de == null || de());
   }, [b, x, o, t, i, xe, R, n, wt, de]), ie = Q((_) => {
-    Re(_), _ || q();
+    Ae(_), _ || q();
   }, [q]), ye = Q(() => {
     at.current = !0, Qe.current = !1;
     const _ = zt(n);
-    Ue.current = _, pt.current = [...n], Ct([...n]), Ie(_), qe(""), Re(!1), ge == null || ge();
+    Ue.current = _, pt.current = [...n], Ct([...n]), Ie(_), qe(""), Ae(!1), ge == null || ge();
   }, [n, zt, ge]), we = Q((_) => {
     const fe = Pt(_, xe), ve = fe.length ? `${fe.map(ae).join(", ")}, ` : "";
     pt.current = fe, Ue.current = ve, Ct(fe), Kt.current = !0, Ie(ve);
@@ -11852,7 +11852,7 @@ function _h({
     const fe = _.id;
     Qe.current = !1;
     const ve = ae(fe);
-    pt.current = [fe], Ue.current = ve, Ct([fe]), Ie(ve), qe(""), Re(!1), wt([fe]), de == null || de();
+    pt.current = [fe], Ue.current = ve, Ct([fe]), Ie(ve), qe(""), Ae(!1), wt([fe]), de == null || de();
   }, [ae, wt, de]), Pe = (_) => {
     var fe, ve, ut, Nt;
     if (_.key === "Escape") {
@@ -11876,11 +11876,11 @@ function _h({
       q();
       return;
     }
-    o === "multiple" && te && (_.metaKey || _.ctrlKey) && _.key.toLowerCase() === "a" && (_.preventDefault(), (Nt = ht.current) == null || Nt.selectAll());
+    o === "multiple" && te && (_.metaKey || _.ctrlKey) && _.key.toLowerCase() === "a" && !Re.trim() && (_.preventDefault(), (Nt = ht.current) == null || Nt.selectAll());
   }, Be = (_) => {
     var ve;
     const fe = k ? _.target.value.toUpperCase() : _.target.value;
-    if (Ue.current = fe, Ie(fe), o === "single" && qe(fe), te || Re(!0), o === "multiple") {
+    if (Ue.current = fe, Ie(fe), o === "single" && qe(fe), te || Ae(!0), o === "multiple") {
       const ut = Pt($f(fe, t, i), xe);
       pt.current = ut, Ct(ut), (ve = ht.current) == null || ve.setSelection(ut);
     }
@@ -11953,9 +11953,9 @@ function _h({
   );
   if (b)
     return /* @__PURE__ */ h("span", { className: P, style: E, children: bt || "?" });
-  const an = !te && !bt, _e = te ? Ae : bt, rt = {
+  const an = !te && !bt, _e = te ? Re : bt, rt = {
     ref: It,
-    value: te ? Ae : bt,
+    value: te ? Re : bt,
     disabled: x,
     readOnly: b,
     placeholder: "",

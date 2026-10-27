@@ -471,7 +471,10 @@ export function PickerField({
       commit();
       return;
     }
-    if (mode === 'multiple' && open && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a') {
+    if (mode === 'multiple' && open && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a' && !text.trim()) {
+      /* Select-all-items is the EMPTY-query shortcut. With text in the field
+         Cmd+A stays the native select-all — EntityDropdown's comma cell
+         contract ("select all, type to replace") depends on it. */
       event.preventDefault();
       searchRef.current?.selectAll();
     }
