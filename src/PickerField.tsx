@@ -471,16 +471,13 @@ export function PickerField({
     }
     if (event.key === 'Enter') {
       event.preventDefault();
+      /* The pick/commit is OURS: letting Enter reach the host (Glide's clip
+         region, a stripboard row) closes the editor on the row pick instead
+         of keeping the panel open for the next one. */
+      event.stopPropagation();
       if (open && searchRef.current?.activateHighlighted()) return;
       commit();
       return;
-    }
-    if (mode === 'multiple' && open && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a' && !text.trim()) {
-      /* Select-all-items is the EMPTY-query shortcut. With text in the field
-         Cmd+A stays the native select-all — EntityDropdown's comma cell
-         contract ("select all, type to replace") depends on it. */
-      event.preventDefault();
-      searchRef.current?.selectAll();
     }
   };
 

@@ -583,6 +583,9 @@ export function SearchMenu({
       const row = highlighted >= 0 ? allRows[highlighted] : undefined;
       if (!row) return false;
       activate(row);
+      /* EntityDropdown parity: the pick consumes the highlight, so the NEXT
+         Enter commits the draft instead of toggling the same row again. */
+      setHighlighted(-1, 'keyboard');
       return true;
     },
     close,
@@ -1044,6 +1047,10 @@ export function SearchMenu({
       onPointerDown={e => { e.stopPropagation(); reveal.engage(); }}
       onMouseDown={e => e.stopPropagation()}
       onClick={e => e.stopPropagation()}
+      /* A mouse hover lights a row; leaving the list must clear it, or Enter
+         (now back in the field) would re-toggle the row under the cursor
+         instead of committing the draft. */
+      onPointerLeave={() => { if (pointerDrivenRef.current) setHighlighted(-1, 'pointer'); }}
       className="ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none min-w-0 overflow-hidden"
       style={{
         position: 'fixed',
