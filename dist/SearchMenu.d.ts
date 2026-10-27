@@ -23,6 +23,17 @@ import type { MultipleSelectionProps } from './selection';
  * scrolls it into view — the "open where I am" behaviour a form field needs.
  */
 export type SearchMenuMode = 'expandable' | 'inline';
+/** Imperative panel controls for a caller that owns the field (PickerField):
+ *  the panel has no input of its own, so the field's keys drive it. */
+export interface SearchMenuHandle {
+    moveHighlight: (dir: 1 | -1) => void;
+    /** Activate the lit row; false when nothing is lit (the field then commits). */
+    activateHighlighted: () => boolean;
+    close: () => void;
+    selectAll: () => void;
+    /** Replace the multi-select draft (a live field syncing its edited text). */
+    setSelection: (ids: string[]) => void;
+}
 export interface SearchMenuEmptyAction {
     /** Row label; a function receives the current query. */
     label: string | ((query: string) => string);
@@ -109,10 +120,37 @@ export interface SearchMenuProps {
      *  separate. */
     fieldActions?: MorphFieldAction[];
     /** Multiple-selection mode: records toggle and the panel stays open; the
-     *  footer hero commits the draft. Escape / click-away / trigger close
-     *  cancel. Categories still only expand — their row gains the select-all
-     *  check. */
+     *  footer hero commits the draft. `mode: 'live'` is the value-field variant
+     *  (no hero — the caller commits on close). */
     multiple?: MultipleSelectionProps;
+    /** Controlled panel state. When provided the caller owns open/close and the
+     *  query is NOT cleared on close (the caller's field owns the text). */
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    /** Render ONLY the panel (no field/trigger). Pass `anchorRef` for placement
+     *  and outside-click containment. */
+    hideTrigger?: boolean;
+    /** Panel anchor + outside-click containment (defaults to the trigger). */
+    anchorRef?: React.RefObject<HTMLElement | null>;
+    /** Portal host for the panel (defaults to the popout target / body). */
+    portalTarget?: HTMLElement | null;
+    /** Expandable mode: replace the collapsed trigger button. */
+    renderTrigger?: (ctx: {
+        open: boolean;
+        expanded: boolean;
+        toggle: () => void;
+    }) => React.ReactNode;
+    /** Custom record row content — replaces the default icon/label/detail face.
+     *  The row chrome, selection check and disabled state stay. */
+    renderItem?: (item: SearchMenuItem, state: {
+        checked: boolean;
+        disabled: boolean;
+    }) => React.ReactNode;
+    /** Value fields: open with NO row lit (Enter then commits the typed text);
+     *  typing still lights the first match. Default true. */
+    highlightOnOpen?: boolean;
+    /** Imperative panel controls for a caller that owns the field. */
+    ref?: React.Ref<SearchMenuHandle>;
 }
-export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, browseAll, selectedId, autoFocus, collapsedWidth, expandedWidth, panelWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, leadingActions, hideLeadingOnEmpty, footerActions, fieldActions, multiple, }: SearchMenuProps): React.JSX.Element;
+export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, browseAll, selectedId, autoFocus, collapsedWidth, expandedWidth, panelWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, leadingActions, hideLeadingOnEmpty, footerActions, fieldActions, multiple, open: controlledOpen, onOpenChange, hideTrigger, anchorRef, portalTarget: portalTargetProp, renderTrigger, renderItem: renderItemProp, highlightOnOpen, ref, }: SearchMenuProps): React.JSX.Element;
 export default SearchMenu;

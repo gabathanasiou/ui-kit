@@ -92,6 +92,10 @@ export declare const useMenuSearch: () => {
     query: string;
     setQuery: (q: string) => void;
 };
+/** Per-menu id prefix: rows get `${menuId}-opt-<index>` so a trigger-as-search
+ *  field can name the highlighted row with `aria-activedescendant`. */
+export declare const MenuIdContext: React.Context<string | null>;
+export declare const useMenuId: () => string | null;
 export declare function useMenuHighlightState(filter?: (item: MenuHighlightItem) => boolean): MenuHighlightApi;
 /** Single-highlight row registration for a surface item — the SHARED contract
  *  behind both `DropdownItem` (Radix Item) and the rich-text `@` autocomplete

@@ -24,6 +24,19 @@ export interface SearchMenuItem {
     }[];
     /** Extra free text to match (keywords). */
     keywords?: string;
+    /** Multi-select: `false` = an action-style row (e.g. create-from-typed) —
+     *  no check affordance and excluded from ⌘A / select-all. Default true. */
+    checkable?: boolean;
+    /** Row tone: `create` renders the emerald add-new face (subtle green
+     *  background + green text) so a create row never reads as a record. */
+    tone?: 'create';
+    /** Pinned rows render FIRST — above the groups, in browse and query states.
+     *  Used by value fields for the "Add …" action row. */
+    pinned?: boolean;
+    /** Optional row chrome (e.g. the amber whole-department tag rows) — the
+     *  content renderer cannot paint the row background. */
+    rowClassName?: string;
+    rowStyle?: React.CSSProperties;
 }
 export interface SearchMenuGroup {
     key: string;

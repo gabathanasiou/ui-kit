@@ -21,9 +21,11 @@ export type RevealBlock = 'nearest' | 'center';
 /**
  * Bring `row` into view inside its own scroller.
  *
- * - `nearest` (default): only moves when the row is actually outside the
- *   visible band — the keyboard/arrow case, and the "correct once the panel
- *   reports its final height" pass. A visible row never moves.
+ * - `nearest` (default): only moves when the row is outside the visible band,
+ *   or closer to an edge than its own `scroll-margin-block` (`.ui-item` = 16px)
+ *   — the keyboard/arrow case, and the "correct once the panel reports its
+ *   final height" pass. A row already inside the band with breathing room
+ *   never moves.
  * - `center`: puts the row mid-list — the current-value anchor of a picker.
  *
  * Never scrolls the page or an enclosing modal: when no scroller is found the

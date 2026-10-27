@@ -41,10 +41,21 @@ export interface SelectionProps {
     onCommit?: (ids: string[]) => void;
     /** Optional per-toggle observer (peer feedback, analytics). */
     onToggle?: (id: string, selected: boolean) => void;
+    /** Called SYNCHRONOUSLY after every user mutation (toggle / group / all /
+     *  clear) with the next ordered draft. Value fields mirror this into their
+     *  field text so a fast Tab never commits a stale list. */
+    onDraftChange?: (ids: string[]) => void;
 }
 /** What a menu's `multiple` prop accepts (`DropdownMenu` + `SearchMenu`). */
 export interface MultipleSelectionProps {
     selectedIds: readonly string[];
+    /** `draft` (default) = the footer hero commits; `live` = every toggle emits
+     *  `onDraftChange` and the CALLER commits on close (value fields). */
+    mode?: 'draft' | 'live';
+    /** Live fields: the ordered draft after every toggle / clear / reset. */
+    onDraftChange?: (ids: string[]) => void;
+    /** Optional per-toggle observer (a create row can react immediately). */
+    onToggle?: (id: string, selected: boolean) => void;
     /** Footer hero: one call, catalogue order, one undo entry app-side. */
     onCommit: (ids: string[]) => void;
     /** Hero label — receives the draft count (`Add 6 roles`). */
