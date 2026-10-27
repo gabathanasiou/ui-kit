@@ -216,6 +216,9 @@ export function PickerField({
      (open → false) BEFORE the input's blur event, so gating on `open` dropped
      every click-away commit. */
   const editingRef = useRef(false);
+  /** Tab must hand off to the host's NEXT-FIELD hook without also running its
+   *  close path (Glide would finish editing twice). */
+  const suppressExitRef = useRef(false);
   const caretEndRef = useRef(false);
   const asyncSeq = useRef(0);
   /* Synchronous mirrors — a row toggle and the following Tab/Enter can land
@@ -406,7 +409,7 @@ export function PickerField({
     setSingleQuery('');
     setOpen(false);
     commitValues(next);
-    if (exit) onExit?.();
+    if (exit && !suppressExitRef.current) onExit?.();
   }, [readOnly, disabled, mode, items, resolveBy, itemKeys, allowFreeText, values, commitValues, onExit]);
 
   /* Outside clicks close through SearchMenu's controlled-open callback — that
@@ -472,7 +475,7 @@ export function PickerField({
     setSingleQuery('');
     setOpen(false);
     commitValues([key]);
-    onExit?.();
+    if (!suppressExitRef.current) onExit?.();
   }, [labelOf, commitValues, onExit]);
 
   const onKeyDown = (event: React.KeyboardEvent) => {
@@ -483,9 +486,18 @@ export function PickerField({
     }
     if (event.key === 'Tab') {
       event.preventDefault();
-      /* Tab hands off to the host's next-field hook INSTEAD of `onExit` —
-         calling both would run the host's close path twice (Glide finished
-         editing twice, navigating two columns). */
+      /* Single-value fields complete to the arrow-lit match on Tab (type "i",
+         Tab → INT) — the old autocomplete contract. Multi keeps the draft
+         commit; then the host's next-field hand-off runs once. */
+      if (mode === 'single' && open) {
+        suppressExitRef.current = true;
+        const picked = searchRef.current?.activateHighlighted();
+        suppressExitRef.current = false;
+        if (picked) {
+          (onTabExit ?? onExit)?.(inputRef.current ?? undefined);
+          return;
+        }
+      }
       if (open) commit(false);
       (onTabExit ?? onExit)?.(inputRef.current ?? undefined);
       return;

@@ -671,8 +671,8 @@ export function SearchMenu({
   // Light the first RECORD when the query changes (the category row above it
   // is a jump target, not the default Enter action). A value field whose text
   // EXACTLY names a record lights NOTHING: Enter commits the typed text there
-  // (EntityDropdown's contract), while a non-matching query lights the create
-  // row so Enter adds it.
+  // (EntityDropdown's contract). A SINGLE-value field lights its first match,
+  // so typing a prefix + Enter/Tab completes to the option ("i" → INT).
   useEffect(() => {
     if (isOpenControlled) {
       const typed = query.trim().toLowerCase();
@@ -681,6 +681,13 @@ export function SearchMenu({
       if (exact) {
         setHighlighted(-1);
         return;
+      }
+      if (!multipleActive) {
+        const firstRecord = rows.findIndex(row => row.kind === 'item' && row.hit.item.tone !== 'create');
+        if (firstRecord >= 0) {
+          setHighlighted(leadingOffset + firstRecord);
+          return;
+        }
       }
     }
     const firstItem = rows.findIndex(row => row.kind === 'item');
@@ -824,15 +831,26 @@ export function SearchMenu({
   rowsRef.current = rows;
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
+  /** Multi: the panel opens ON the first selected record (catalogue order). */
+  const selectedIdsRef = useRef(multiple?.selectedIds);
+  selectedIdsRef.current = multiple?.selectedIds;
   const reveal = useRevealRowOnOpen({
     open,
     block: 'center',
     ready: pos.ready,
     scroller: () => panelRef.current?.querySelector<HTMLElement>('[data-search-scroller]') ?? null,
     row: () => {
-      const id = selectedIdRef.current;
-      if (!id) return null;
-      const index = rowsRef.current.findIndex(row => row.kind === 'item' && row.hit.item.id === id);
+      let index = -1;
+      const single = selectedIdRef.current;
+      if (single) {
+        index = rowsRef.current.findIndex(row => row.kind === 'item' && row.hit.item.id === single);
+      } else {
+        const chosen = selectedIdsRef.current;
+        if (chosen && chosen.length) {
+          const set = new Set(chosen);
+          index = rowsRef.current.findIndex(row => row.kind === 'item' && set.has(row.hit.item.id));
+        }
+      }
       if (index < 0) return null;
       return panelRef.current?.querySelector<HTMLElement>(`[data-search-row="${index}"]`) ?? null;
     },
@@ -842,6 +860,11 @@ export function SearchMenu({
     const active = highlighted === rowIndex;
     const singleSelected = !multipleActive && selectedId !== undefined && row.hit.item.id === selectedId;
     const checked = multipleActive ? selection.isSelected(row.hit.item.id) : singleSelected;
+    /* Single-value fields: the CURSOR row is the blue one (mouse or arrows) —
+       the old autocomplete's one-highlight model. The current value keeps just
+       its trailing check when the cursor is elsewhere. Multi keeps the
+       checked-row wash + the neutral cursor. */
+    const selectedFace = multipleActive ? (checked ? 'ui-item-selected' : '') : (active ? 'ui-item-selected' : '');
     /* At `max`, unchecked rows are disabled (checked rows stay clickable to
        uncheck) — the shared selection contract. */
     const rowDisabled = !!row.hit.item.disabled || (multipleActive && !selection.canToggle(row.hit.item.id));
@@ -866,7 +889,7 @@ export function SearchMenu({
         onMouseEnter={() => setHighlighted(rowIndex, 'pointer')}
         onClick={() => activate(row)}
         style={{ ...itemSize, ...row.hit.item.rowStyle, ...toneStyle }}
-        className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${row.hit.item.rowClassName ?? ''} ${singleSelected ? 'ui-item-selected' : ''} ${active ? 'ui-item-highlighted' : ''} ${rowDisabled ? 'opacity-30 pointer-events-none' : ''}`}
+        className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${row.hit.item.rowClassName ?? ''} ${selectedFace} ${active ? 'ui-item-highlighted' : ''} ${rowDisabled ? 'opacity-30 pointer-events-none' : ''}`}
       >
         {multipleActive && row.hit.item.checkable !== false && (
           <SelectionCheck checked={checked} disabled={rowDisabled} indicator={multiple?.indicator} />
