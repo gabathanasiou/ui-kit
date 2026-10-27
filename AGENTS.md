@@ -85,11 +85,11 @@ a committed `dist/`; consumers pin a github tag (`github:gabathanasiou/ui-kit#v0
 - The playground has a sticky **coarse-scale controller** (Off/50%/Full +
   slider + number + Reset) to verify every surface at any %.
 
-## Multiple selection (roadmap 322)
-`src/selection.ts` is the ONE model (draft, catalogue order, visible-set
-select-all, max/disabled). `DropdownMenu`/`SearchMenu` `multiple` + the shared
-`SelectionFooter`/`SelectionCheck` are its only panels — never add a second
-toggle/commit path.
+## Selection + PickerField (roadmap 322)
+`src/selection.ts` is the ONE selection model; `src/PickerField.tsx` the ONE
+value picker (panel = SearchMenu). `DropdownMenu`/`SearchMenu` `multiple` +
+`SelectionFooter`/`SelectionCheck` are the only select panels — never add a
+second toggle/commit path or picker panel. Manual: `docs/PICKER-FIELD.md`.
 
 ## The Playground (debug everything here, not in the app)
 

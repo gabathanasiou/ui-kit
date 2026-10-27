@@ -84,7 +84,9 @@ Consequences (learned the hard way):
   `morph-dept-row` / `morph-add-row` (+ `morph-empty-toggle`, `morph-status`),
   `morph-action-role` / `morph-action-location` / `morph-action-plain`;
   multiple selection `multi-search-accordion` / `multi-search-browse` /
-  `multi-search-status`.
+  `multi-search-status`; PickerField `picker-field-demo` / `picker-commits`,
+  `picker-cast` (+ `-status`), `picker-props`, `picker-location`, `picker-roles`,
+  `picker-inline`, `picker-wrap`, `picker-async` (+ `-status`).
 - Modals: `modal-open`, `stacked-open` → "Open Modal 2",
   `menu-modal-open` → `inmodal-menu-trigger` / `inmodal-long-trigger` /
   `inmodal-search-pick`, `kb-modal-open` (visualViewport readout),
