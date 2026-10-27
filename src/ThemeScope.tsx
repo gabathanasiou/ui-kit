@@ -137,7 +137,20 @@ export function menuAttributesOf(explicit: KitMenuTheme | undefined, theme: KitT
   theme: KitMenuTheme;
   attrs: Record<string, string>;
 } {
-  if (explicit) return { theme: explicit, attrs: { 'data-theme': explicit } };
+  if (explicit) {
+    /* Light/dark are SURFACES, not accents: inherit the resolved accent axis
+       so a light menu in an emerald/zinc project keeps project-coloured
+       checks, selected rows and hover states. `data-mode` is the MENU's own
+       mode (a light menu on a dark page needs light-mode check marks). The
+       blue/emerald palettes are explicit accents and stay self-contained. */
+    if ((explicit === 'light' || explicit === 'dark') && theme) {
+      return {
+        theme: explicit,
+        attrs: { 'data-theme': explicit, 'data-mode': explicit, 'data-accent': theme.accent },
+      };
+    }
+    return { theme: explicit, attrs: { 'data-theme': explicit } };
+  }
   if (!theme) return { theme: 'dark', attrs: { 'data-theme': 'dark' } };
   if (theme.context === 'chrome') {
     const preset = menuThemeOf(theme);
