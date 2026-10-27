@@ -7,6 +7,12 @@ import React from 'react';
  *  - `subtle`      — quiet toolbar button (menu triggers, secondary actions)
  *  - `primary`     — solid call-to-action (Save, Add, Print); light theme
  *                    supports cloud-project coloring via the `cloud` prop
+ *  - `outline`     — the quiet button WITH a visible outline: same box and
+ *                    text weight as `subtle`, a 1px border painted as an inset
+ *                    shadow (so it never changes the button's size), and the
+ *                    same hover fill. Use it for a secondary action that must
+ *                    read as a button at rest (empty states, side-by-side
+ *                    choices, file dialogs).
  *  - `danger-ghost` — destructive action in text+ghost form
  *  - `tab`         — the mini-tab recipe (PageToolbar sub-tabs): solid dark
  *                    pill when `active`, quiet hover otherwise
@@ -31,7 +37,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     /** React 19 ref-as-prop: the ref lands on the underlying `<button>` (tab
      *  rows measure their buttons for the sliding pill). */
     ref?: React.Ref<HTMLButtonElement>;
-    variant?: 'subtle' | 'primary' | 'danger-ghost' | 'tab' | 'tab-header';
+    variant?: 'subtle' | 'primary' | 'outline' | 'danger-ghost' | 'tab' | 'tab-header';
     theme?: 'light' | 'dark';
     /** Colored project-chrome accent: `true` = blue (Drive/cloud projects),
      *  `'emerald'` = the shared/collaborative green. Affects the light

@@ -64,3 +64,7 @@ export { SearchMenu } from './SearchMenu';
 export type { SearchMenuProps, SearchMenuMode, SearchMenuEmptyAction } from './SearchMenu';
 export { parseSearchTags, matchSearchItem, searchMenuContent, buildSearchMenuRows } from './searchMenuModel';
 export type { SearchMenuItem, SearchMenuGroup, SearchMenuHit, SearchMenuRow } from './searchMenuModel';
+export { useSelection, SelectionContext, useSelectionContext, NO_SELECTION_IDS, orderByCatalogue, sameSelection, toggleSelected, setSelected, groupSelectionState, countHidden, } from './selection';
+export type { SelectionMode, SelectionGroupState, SelectionProps, MultipleSelectionProps, SelectionApi, } from './selection';
+export { SelectionCheck, SelectionFooter } from './SelectionControls';
+export type { SelectionCheckProps, SelectionFooterProps, SelectionFooterHero } from './SelectionControls';

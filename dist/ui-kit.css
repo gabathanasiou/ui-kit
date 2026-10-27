@@ -1013,34 +1013,64 @@
 
 /* ── Inputs ───────────────────────────────────────────────────────────── */
 
-.ui-input {
-  touch-action: manipulation;
-  background: transparent;
-  border: 1px solid var(--ui-input-border);
-  color: var(--ui-input-text);
-  /* The text caret follows the field's text colour — without this it inherits
-     the page colour and disappears on light inputs (the white "|" bug). */
-  caret-color: var(--ui-input-text);
-  border-radius: var(--ui-radius-input);
-  outline: none;
-  transition: background-color 120ms ease, border-color 120ms ease;
+/* The field recipe lives in Tailwind's `components` layer so a consumer's
+   utility ALWAYS wins: `.ui-input` + `text-zinc-300` on a hardcoded dark
+   toolbar field used to paint the page's text colour onto it (comfortably
+   invisible typing). The field's own token is the fallback when no utility is
+   present. */
+@layer components {
+  .ui-input {
+    touch-action: manipulation;
+    background: transparent;
+    border: 1px solid var(--ui-input-border);
+    border-radius: var(--ui-radius-input);
+    outline: none;
+    transition: background-color 120ms ease, border-color 120ms ease;
+  }
+
+  /* The field's text colour is a FALLBACK, not an override (`:where` keeps
+     specificity at zero as well, for unlayered consumer CSS). */
+  :where(.ui-input) {
+    color: var(--ui-input-text);
+    /* The caret follows the field's text colour — without this it inherits the
+       page colour and disappears on the field (the white "|" bug). */
+    caret-color: var(--ui-input-text);
+  }
+
+  /* A field with an EXPLICIT theme is self-contained: `theme="light|dark"`
+     promises the same look on any parent, so it paints its own field surface.
+     Text and background then always come from the same scope — no more
+     light-mode text on a dark card (or the reverse). Fields without a theme
+     stay transparent (the app's border-only rest language). */
+  .ui-input[data-theme],
+  [data-morph-search][data-theme] :where(.ui-input) {
+    background: var(--ui-input-bg);
+  }
+
+  /* Subtle fill while the pointer is over the field OR it's being edited
+     (focused) — the checkbox-pill hover feel; the field stays border-only
+     otherwise. */
+  .ui-input:hover {
+    background: var(--ui-input-hover-bg);
+    border-color: var(--ui-input-hover-border);
+  }
+
+  .ui-input::placeholder {
+    /* One step stronger than --ui-text-faint: placeholders are instructions you
+       have to be able to read (faint was ~2.6:1 on the field fill). */
+    color: var(--ui-text-muted);
+  }
+
+  .ui-input:focus {
+    background: var(--ui-input-focus-bg);
+    border-color: var(--ui-input-focus-border);
+  }
 }
 
-/* Subtle fill while the pointer is over the field OR it's being edited
-   (focused) — the checkbox-pill hover feel; the field stays border-only
-   otherwise. */
-.ui-input:hover {
-  background: var(--ui-input-hover-bg);
-  border-color: var(--ui-input-hover-border);
-}
-
-.ui-input::placeholder {
-  color: var(--ui-text-faint);
-}
-
-.ui-input:focus {
-  background: var(--ui-input-focus-bg);
-  border-color: var(--ui-input-focus-border);
+/* The number box's own unlayered rule sets `background: transparent`, so its
+   themed fill must sit unlayered too (same specificity, later declaration). */
+.ui-number-box[data-theme] {
+  background: var(--ui-input-bg);
 }
 
 /* ── Number input (compound numeric box) ──────────────────────────────── */
@@ -1663,14 +1693,20 @@
    so the pair reads as the previous combined chip while staying TWO atoms —
    delete either on its own. A third token typed after the pair stays a normal,
    separate chip. `!important` because the chip's pill styles are inline
-   (dynamic colors, original look). */
-.richtext-editor .react-renderer.node-token + .react-renderer.node-token .rt-token:has(.rt-token-nested) {
+   (dynamic colors, original look).
+
+   TipTap inserts `<img class="ProseMirror-separator">` between adjacent atom
+   nodes (caret affordance), so each rule covers both the direct-adjacent and
+   the separator-in-between DOM. */
+.richtext-editor .react-renderer.node-token + .react-renderer.node-token .rt-token:has(.rt-token-nested),
+.richtext-editor .react-renderer.node-token + .ProseMirror-separator + .react-renderer.node-token .rt-token:has(.rt-token-nested) {
   margin-left: -2px !important;
   border-top-left-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
 }
 
-.richtext-editor .react-renderer.node-token:has(+ .react-renderer.node-token .rt-token-nested) .rt-token {
+.richtext-editor .react-renderer.node-token:has(+ .react-renderer.node-token .rt-token-nested) .rt-token,
+.richtext-editor .react-renderer.node-token:has(+ .ProseMirror-separator + .react-renderer.node-token .rt-token-nested) .rt-token {
   border-top-right-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
 }

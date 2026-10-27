@@ -2,6 +2,7 @@ import React from 'react';
 import { type DropdownTheme } from './DropdownMenu';
 import type { MorphFieldAction } from './morphFieldTypes';
 import { type SearchMenuGroup, type SearchMenuItem } from './searchMenuModel';
+import type { MultipleSelectionProps } from './selection';
 /**
  * SearchMenu — the shared "deep search" surface (roadmap 172, ui-kit).
  *
@@ -107,6 +108,11 @@ export interface SearchMenuProps {
      *  panel actions (`emptyActions`/`leadingActions`/`footerActions`) stay
      *  separate. */
     fieldActions?: MorphFieldAction[];
+    /** Multiple-selection mode: records toggle and the panel stays open; the
+     *  footer hero commits the draft. Escape / click-away / trigger close
+     *  cancel. Categories still only expand — their row gains the select-all
+     *  check. */
+    multiple?: MultipleSelectionProps;
 }
-export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, browseAll, selectedId, autoFocus, collapsedWidth, expandedWidth, panelWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, leadingActions, hideLeadingOnEmpty, footerActions, fieldActions, }: SearchMenuProps): React.JSX.Element;
+export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, browseAll, selectedId, autoFocus, collapsedWidth, expandedWidth, panelWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, leadingActions, hideLeadingOnEmpty, footerActions, fieldActions, multiple, }: SearchMenuProps): React.JSX.Element;
 export default SearchMenu;

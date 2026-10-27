@@ -18,10 +18,11 @@ import React from 'react';
  *  square that fills with the tone color + white check when checked (outline
  *  at rest). Used by `Checkbox` (`pill` variant) AND `Checklist` so every
  *  multi-select checkbox looks identical. Colorable via `tone` (accent/danger). */
-export declare function CheckMark({ checked, size, tone }: {
+export declare function CheckMark({ checked, size, tone, indeterminate }: {
     checked: boolean;
     size: number;
     tone?: 'accent' | 'danger';
+    indeterminate?: boolean;
 }): React.JSX.Element;
 export interface CheckboxProps {
     checked: boolean;

@@ -1,4 +1,5 @@
 import React from 'react';
+import type { MultipleSelectionProps } from './selection';
 export type DropdownTheme = 'light' | 'dark' | 'blue' | 'emerald';
 export declare const DropdownThemeContext: React.Context<DropdownTheme>;
 export declare const useDropdownTheme: () => DropdownTheme;
@@ -63,9 +64,15 @@ export interface MenuHighlightItem {
     /** Optional category label. Grouped menus render a header when this changes
      *  between VISIBLE rows; the searchable filter also matches it. */
     group?: string;
+    /** Stable id for multi-select mode (`DropdownItem itemId`). Rows without an
+     *  id stay plain commands. */
+    itemId?: string;
 }
 export interface MenuHighlightApi {
     items: MenuHighlightItem[];
+    /** Every registered item in registration (catalogue) order — the unfiltered
+     *  set multi-select orders commits by. */
+    allItems: MenuHighlightItem[];
     highlightedIndex: number;
     pointerDriven: boolean;
     register: (item: MenuHighlightItem) => () => void;
@@ -98,6 +105,7 @@ export declare function useHighlightRow(opts: {
     activate: () => void;
     disabled?: boolean;
     group?: string;
+    itemId?: string;
 }): {
     api: MenuHighlightApi | null;
     myIndex: number;
@@ -116,6 +124,7 @@ export declare function useHighlightRow(opts: {
 export declare function useMenuKeys(active: boolean, api: MenuHighlightApi, handlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>, opts?: {
     onCloseSub?: () => void;
     onFieldKey?: (e: KeyboardEvent) => boolean;
+    onSelectAll?: () => void;
 }): void;
 /** Mini-modal keyboard lock: while a surface is open, the MENU keys
  *  (arrows / Enter / Space / typeahead letters) are captured at the DOCUMENT
@@ -129,6 +138,7 @@ export declare function useMenuKeys(active: boolean, api: MenuHighlightApi, hand
  *  reason useMenuKeys/useMenuWheel attach there). */
 export declare function useMenuKeyLock(active: boolean, api: MenuHighlightApi, keysHandlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>, contentRef: React.RefObject<HTMLElement | null>, standDown: boolean, lockHandlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>, opts?: {
     ignoreFields?: boolean;
+    selectAll?: boolean;
 }): void;
 /** Manual wheel scrolling for portaled menu content (a Modal's scroll lock
  *  preventDefaults wheels outside the dialog; the v0.1.52 capture interceptor
@@ -179,8 +189,12 @@ export interface DropdownMenuProps {
      *           onChange={e => { setQ(e.target.value); setOpen(true); }} /> */
     searchValue?: string;
     onSearchValueChange?: (q: string) => void;
+    /** Multiple-selection mode: rows toggle and the panel stays open; the footer
+     *  hero commits the draft. Closing any other way — Escape, click-away, a
+     *  trigger click — cancels. Rows opt in with `DropdownItem itemId`. */
+    multiple?: MultipleSelectionProps;
 }
-export default function DropdownMenu({ open, onClose, onOpenChange, trigger, align, width, theme: themeProp, children, morph, contentClassName, maxMenuHeight, initialHighlightIndex, searchable, searchPlaceholder, searchFilter, searchValue, onSearchValueChange, }: DropdownMenuProps): React.JSX.Element;
+export default function DropdownMenu({ open, onClose, onOpenChange, trigger, align, width, theme: themeProp, children, morph, contentClassName, maxMenuHeight, initialHighlightIndex, searchable, searchPlaceholder, searchFilter, searchValue, onSearchValueChange, multiple, }: DropdownMenuProps): React.JSX.Element;
 export interface ItemManagerDropdownProps {
     open: boolean;
     onClose: (open: boolean) => void;
