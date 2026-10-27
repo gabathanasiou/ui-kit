@@ -636,8 +636,10 @@
 /* ── Accent surface ladder (roadmap 302) ────────────────────────────────
    `surface="accent"` opts a container (a Drive/shared modal) into the project
    colour: header = THE app-header step (accent-950), body = pale accent,
-   wells/footer = accent-100. Hairlines stay neutral. Local/zinc keeps the
-   neutral light/dark modal. */
+   wells = accent-100. The FOOTER band stays the neutral mode band (only its
+   buttons take the accent) — a tinted footer read as part of the body, not as
+   chrome. Hairlines stay neutral. Local/zinc keeps the neutral light/dark
+   modal. */
 [data-surface="accent"][data-mode="light"] {
   --ui-modal-header-base: var(--ui-accent-950);
   --ui-modal-header-bg: var(--ui-accent-950);
@@ -652,7 +654,8 @@
   --ui-modal-border: var(--ui-border);
   --ui-modal-body-bg: #ffffff;
   --ui-modal-body-text: #18181b;
-  --ui-modal-footer-bg: var(--ui-accent-50);
+  /* Neutral footer band (the light mode default) — NOT accent-50. */
+  --ui-modal-footer-bg: #fafafa;
   --ui-text: #27272a;
   --ui-text-strong: #09090b;
   --ui-text-muted: #3f3f46;
@@ -703,7 +706,10 @@
   --ui-modal-border: var(--ui-border);
   --ui-modal-body-bg: #18181b;
   --ui-modal-body-text: #f4f4f5;
-  --ui-modal-footer-bg: color-mix(in oklab, var(--ui-accent-950) 40%, #18181b);
+  /* Neutral footer tray, a barely-darker step from the body (the light band's
+     subtlety in reverse) — the full #09090b band reads as a black slab under
+     the painted inner header card. */
+  --ui-modal-footer-bg: color-mix(in oklab, #09090b 30%, #18181b);
   --ui-text: #f4f4f5;
   --ui-text-strong: #ffffff;
   --ui-text-muted: #d4d4d8;
@@ -738,6 +744,16 @@
   --ui-footer-hero-border: var(--ui-accent-action);
   --ui-footer-hero-hover-border: var(--ui-accent-action-hover);
   --ui-footer-ghost-hover-bg: var(--ui-accent-hover-bg);
+}
+
+/* Accent surface: the project colour is an INNER painted card, not a
+   full-bleed band. The neutral shell frames it (6px gutter + rounded card),
+   so the header reads as "painted inside" and the header/body hairline goes
+   away. Body + footer stay neutral; the accent lives on the controls. */
+.ui-modal[data-surface="accent"] > .ui-modal-header {
+  margin: 6px 6px 6px;
+  border-radius: var(--ui-radius-btn);
+  border-bottom-color: transparent;
 }
 
 /* ── Shared interaction rules ─────────────────────────────────────────── */
@@ -816,9 +832,9 @@
   transition: background-color 150ms ease, color 150ms ease;
   user-select: none;
   -webkit-user-select: none;
-  /* Open-scroll breathing room: `scrollIntoView({block:'nearest'})` (highlight /
-     selected / active row) keeps a gap at the panel edge, so the row is never
-     flush — you can see the items around it. */
+  /* Reveal breathing room: the shared revealInScroller honours this, keeping
+     the highlighted/selected row off the panel edge — a row flush against the
+     clip reads as cut off, with the next row as a sliver under it. */
   scroll-margin-block: 16px;
 }
 

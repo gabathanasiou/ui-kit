@@ -103,3 +103,31 @@ test('a dot after a chip with no attributes lists nothing', async ({ page }) => 
   await expect(output(page)).toContainText('{{cast.lead}}.');
   await expect(options(page)).toHaveCount(0);
 });
+
+test('the token popup scrolls to keep the keyboard highlight in view', async ({ page }) => {
+  await page.goto('/');
+  await editor(page).click();
+  await page.keyboard.type('@');
+  const popup = page.locator('[data-token-popup]');
+  await expect(popup).toBeVisible();
+  await expect(options(page)).toHaveCount(9);
+  // Taller than its max height: it MUST scroll, and starts at the top.
+  await expect.poll(() => popup.evaluate(el => el.scrollHeight > el.clientHeight)).toBe(true);
+  await expect.poll(() => popup.evaluate(el => el.scrollTop)).toBe(0);
+
+  // The reveal used to target the row WRAPPER (never a scroller), so ArrowDown
+  // walked the highlight below the fold and the list never moved.
+  for (let i = 0; i < 8; i++) await page.keyboard.press('ArrowDown');
+  await expect.poll(() => popup.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+  expect(await popup.evaluate(el => {
+    const row = el.querySelector('.ui-item-highlighted');
+    if (!row) return false;
+    const r = row.getBoundingClientRect();
+    const box = el.getBoundingClientRect();
+    return r.top >= box.top - 1 && r.bottom <= box.bottom + 1;
+  })).toBe(true);
+
+  // …and back up to the first row.
+  for (let i = 0; i < 8; i++) await page.keyboard.press('ArrowUp');
+  await expect.poll(() => popup.evaluate(el => el.scrollTop)).toBeLessThan(30);
+});

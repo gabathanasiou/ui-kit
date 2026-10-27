@@ -101,7 +101,10 @@ Consequences (learned the hard way):
   `seg-dense`, `seg-icons`, `floating-toggle-demo`, `checklist-trailing`.
 - Rich text: `rt-demo`, `rt-editor`, `rt-output`, `rt-print`,
   `rt-style-heading|clear|state`, `rt-insert`.
-- Misc: `ctx-target` (+ fixed `ctx-right-edge`), `lp-target`, tooltips.
+- Misc: `ctx-target` (+ fixed `ctx-right-edge`), `ctx-long-target` (30 rows —
+  the keyboard reveal in a tall menu), `lp-target`, tooltips.
+- The item manager demo holds 30 rows so its list overflows: the keyboard has
+  to walk (and reveal) rows, not just the active one + the footer.
 - Header tabs: `header-tabs-row` (LAST in DOM order — layout-sensitive specs
   assume the surfaces above it keep their positions),
   `header-tabs-collapse-toggle` / `header-tabs-iconmode-toggle`.

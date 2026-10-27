@@ -40,9 +40,11 @@ function scrollParentOf(el: HTMLElement): HTMLElement | null {
 /**
  * Bring `row` into view inside its own scroller.
  *
- * - `nearest` (default): only moves when the row is actually outside the
- *   visible band — the keyboard/arrow case, and the "correct once the panel
- *   reports its final height" pass. A visible row never moves.
+ * - `nearest` (default): only moves when the row is outside the visible band,
+ *   or closer to an edge than its own `scroll-margin-block` (`.ui-item` = 16px)
+ *   — the keyboard/arrow case, and the "correct once the panel reports its
+ *   final height" pass. A row already inside the band with breathing room
+ *   never moves.
  * - `center`: puts the row mid-list — the current-value anchor of a picker.
  *
  * Never scrolls the page or an enclosing modal: when no scroller is found the
@@ -63,8 +65,15 @@ export function revealRowInScroller(
     box.scrollTop += (r.top + r.height / 2) - (s.top + s.height / 2);
     return;
   }
-  if (r.top < s.top) box.scrollTop -= s.top - r.top;
-  else if (r.bottom > s.bottom) box.scrollTop += r.bottom - s.bottom;
+  /* Honour the row's `scroll-margin-block` (`.ui-item` = 16px): a row revealed
+     FLUSH against the panel edge reads as clipped, and the next row becomes a
+     sliver under it. The margin is the same breathing room `scrollIntoView`
+     gave us for free — this manual path has to add it. */
+  const cs = getComputedStyle(row);
+  const marginTop = parseFloat(cs.scrollMarginBlockStart || cs.scrollMarginTop || '0') || 0;
+  const marginBottom = parseFloat(cs.scrollMarginBlockEnd || cs.scrollMarginBottom || '0') || 0;
+  if (r.top - marginTop < s.top) box.scrollTop -= s.top - (r.top - marginTop);
+  else if (r.bottom + marginBottom > s.bottom) box.scrollTop += (r.bottom + marginBottom) - s.bottom;
 }
 
 export interface RevealRowOnOpenOptions {

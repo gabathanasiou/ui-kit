@@ -1,7 +1,7 @@
 "use client";
 import React, { useRef } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useDropdownTheme, getDropdownClasses, useHighlightRow, useMenuSearch, useItemSize, useMenuGroupSize } from './DropdownMenu';
+import { useDropdownTheme, getDropdownClasses, useHighlightRow, useMenuSearch, useItemSize, useMenuGroupSize, useMenuId } from './DropdownMenu';
 import { useSelectionContext } from './selection';
 import { SelectionCheck } from './SelectionControls';
 
@@ -92,6 +92,9 @@ export default function DropdownItem({
      clears. */
   const { query } = useMenuSearch();
   const hidden = query.trim() !== '' && myIndex < 0;
+  /* Rows carry a stable id so a trigger-as-search field can point
+     `aria-activedescendant` at the highlighted one (index = the VISIBLE row). */
+  const menuId = useMenuId();
 
   /* Group header: shown by the FIRST VISIBLE row of a category. `api.items` is
      the visible set, so a category whose rows are all filtered out drops its
@@ -141,6 +144,7 @@ export default function DropdownItem({
       )}
       <RadixDropdownMenu.Item
         ref={itemRef}
+        id={menuId && myIndex >= 0 ? `${menuId}-opt-${myIndex}` : undefined}
         data-ei={myIndex >= 0 ? myIndex : undefined}
         {...(inSelection ? { role: 'menuitemcheckbox', 'aria-checked': checked } : {})}
         style={{ ...itemSize, display: hidden ? 'none' : undefined }} className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${variantStyles} ${inSelection ? '' : (selected ? 'ui-item-selected' : '')} ${highlighted ? 'ui-item-highlighted' : ''} ${rowDisabled ? 'opacity-30 pointer-events-none' : ''} ${className}`}

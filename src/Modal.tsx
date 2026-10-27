@@ -834,14 +834,14 @@ export default function Modal({
                 {title}
               </RadixDialog.Title>
               {closable && (
-                <RadixDialog.Close data-modal-close className="text-[color:var(--ui-modal-muted)] hover:text-[color:var(--ui-modal-title)] transition-colors shrink-0">
+                <RadixDialog.Close data-modal-close className="cursor-pointer text-[color:var(--ui-modal-muted)] hover:text-[color:var(--ui-modal-title)] transition-colors shrink-0">
                   <X style={{ width: flatCloseDim, height: flatCloseDim }} />
                 </RadixDialog.Close>
               )}
             </div>
           ) : (
           <div
-            style={HEADER_STYLE} className={`flex items-center justify-between border-b border-[color:var(--ui-modal-header-border)] shrink-0 bg-[var(--ui-modal-header-bg)] ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            style={HEADER_STYLE} className={`ui-modal-header flex items-center justify-between border-b border-[color:var(--ui-modal-header-border)] shrink-0 bg-[var(--ui-modal-header-bg)] ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
             data-testid="modal-header"
             onPointerDown={(e) => { if (!morphing) onPointerDown(e); }}
             onPointerMove={onPointerMove}
@@ -856,13 +856,13 @@ export default function Modal({
             </div>
             <div className="flex items-center gap-2">
               {onReset && (
-                <button onClick={onReset} style={RESET_STYLE} className="flex items-center gap-1 text-[color:var(--ui-modal-muted)] hover:text-[color:var(--ui-modal-muted-hover)] transition-colors bg-[var(--ui-modal-control-bg)] hover:bg-[var(--ui-modal-control-hover-bg)] rounded shrink-0">
+                <button onClick={onReset} style={RESET_STYLE} className="cursor-pointer flex items-center gap-1 text-[color:var(--ui-modal-muted)] hover:text-[color:var(--ui-modal-muted-hover)] transition-colors bg-[var(--ui-modal-control-bg)] hover:bg-[var(--ui-modal-control-hover-bg)] rounded shrink-0">
                   <RotateCcw style={{ width: resetDim, height: resetDim }} />
                   Reset
                 </button>
               )}
               {closable && (
-                <RadixDialog.Close data-modal-close className="text-[color:var(--ui-modal-muted)] hover:text-[color:var(--ui-modal-title)] transition-colors shrink-0">
+                <RadixDialog.Close data-modal-close className="cursor-pointer text-[color:var(--ui-modal-muted)] hover:text-[color:var(--ui-modal-title)] transition-colors shrink-0">
                   <X style={{ width: closeDim, height: closeDim }} />
                 </RadixDialog.Close>
               )}

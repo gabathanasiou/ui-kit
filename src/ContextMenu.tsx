@@ -7,6 +7,7 @@ import { useOverlayMorph } from './overlayMorph';
 import { registerOverlayClose } from './overlayRegistry';
 import DropdownSubmenu from './DropdownSubmenu';
 import { useKitTheme, menuAttributesOf } from './ThemeScope';
+import { revealRowInScroller } from './revealInScroller';
 import {
   DropdownThemeContext, SubmenuContext, MenuHighlightContext, useMenuHighlight,
   useMenuHighlightState, useMenuKeys, useMenuKeyLock, useMenuWheel, menuItemLabel,
@@ -103,6 +104,19 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
   const wheelHandlerRef = useRef<(e: WheelEvent) => void>(() => {});
   const lockHandlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
   useMenuKeys(open, highlight, keysHandlerRef);
+  /* Keep the lit row inside the panel's own scroller. The highlight is
+     DETACHED from focus (the key lock routes arrows from anywhere), so no
+     browser behaviour scrolls it — a long menu (scene right-click) used to
+     walk the highlight off the bottom edge. */
+  useLayoutEffect(() => {
+    if (!open || highlight.highlightedIndex < 0 || highlight.pointerDriven) return;
+    const content = contentElRef.current;
+    revealRowInScroller(
+      content?.querySelector<HTMLElement>(`[data-ei="${highlight.highlightedIndex}"]`),
+      'nearest',
+      content,
+    );
+  }, [open, highlight.highlightedIndex, highlight.pointerDriven]);
   useMenuWheel(open, wheelHandlerRef);
   useMenuKeyLock(open, highlight, keysHandlerRef, contentElRef, subChain.length > 0, lockHandlerRef);
   const lockDocRef = useRef<Document | null>(null);

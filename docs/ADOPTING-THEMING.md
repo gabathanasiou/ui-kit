@@ -99,7 +99,7 @@ than hand-writing the rules.
 
 | Element | Behaviour inside a modal |
 | --- | --- |
-| Modal shell | `surface="accent"`: A950 header, neutral body, A100 footer + accent states. `neutral`: normally themed light/dark shell with **no accent inside**. |
+| Modal shell | `surface="accent"`: A950 header painted as an **inner rounded card** (6px neutral gutter, no header/body hairline), neutral body **and footer band**; accent stays on the buttons/states. `neutral`: normally themed light/dark shell with **no accent inside**. |
 | Dropdown / ContextMenu | Neutral panel; items use the **soft button hover**, selected uses the selected role, selected+hover lifts. On a neutral surface all of it is neutral; on an accent surface, accent states. **Do not pass `theme`** unless forcing a preset. |
 | Tooltip | Carries mode + effective accent itself (portal). |
 | Inputs / NumberInput | Transparent; inherit the surface. Hover = neutral lift; focus = neutral border. Never accent-filled. |

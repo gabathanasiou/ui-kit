@@ -116,3 +116,30 @@ test('context menu: reopening without moving the cursor does not keep the previo
   await expect(page.getByRole('menuitem', { name: /Plain item/ })).toBeVisible();
   await expect(litRows(page)).toHaveCount(0);
 });
+
+test('long menu: arrows keep the highlighted row in view', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('ctx-long-target').click();
+  const menu = page.locator('.ui-menu.fixed').filter({ hasText: 'Item 1' });
+  await expect(menu).toBeVisible();
+  // 30 rows overflow the 85vh cap.
+  await expect.poll(() => menu.evaluate(el => el.scrollHeight > el.clientHeight)).toBe(true);
+  // The 30-row panel flips above the trigger and opens UNDER the cursor —
+  // park the pointer so the hover highlight cannot seed the index.
+  await page.mouse.move(700, 100);
+  await page.evaluate(() => document.activeElement && document.activeElement.blur());
+  await expect(litRows(page)).toHaveCount(0);
+
+  // The highlight is detached from focus (the key lock routes arrows from
+  // anywhere) — the panel itself has to reveal it.
+  // Far enough to REQUIRE a scroll at both row heights (desktop ~34px,
+  // iPad coarse ~40px): the panel's 85vh cap is ~807/1015px.
+  for (let i = 0; i < 29; i++) await page.keyboard.press('ArrowDown');
+  await expect(litRows(page)).toContainText('Item 29');
+  await expect.poll(() => menu.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+  const lit = await litRows(page).first().boundingBox();
+  const box = await menu.boundingBox();
+  expect(lit!.y).toBeGreaterThanOrEqual(box!.y);
+  expect(lit!.y + lit!.height).toBeLessThanOrEqual(box!.y + box!.height + 1);
+  expect(box!.y + box!.height - (lit!.y + lit!.height)).toBeGreaterThanOrEqual(10);
+});

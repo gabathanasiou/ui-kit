@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useCallback, useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
+import React, { createContext, useContext, useCallback, useState, useRef, useEffect, useLayoutEffect, useMemo, useId } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Pencil, Copy, Trash2, Plus, Check, X, RotateCcw, Search } from 'lucide-react';
 import { usePortalTarget, useCurrentDocument } from './popout';
@@ -173,6 +173,11 @@ export const useMenuHighlight = () => useContext(MenuHighlightContext);
  *  the kit's DropdownMenu). */
 export const MenuSearchContext = createContext<{ query: string; setQuery: (q: string) => void }>({ query: '', setQuery: () => {} });
 export const useMenuSearch = () => useContext(MenuSearchContext);
+
+/** Per-menu id prefix: rows get `${menuId}-opt-<index>` so a trigger-as-search
+ *  field can name the highlighted row with `aria-activedescendant`. */
+export const MenuIdContext = createContext<string | null>(null);
+export const useMenuId = () => useContext(MenuIdContext);
 
 const ALWAYS_VISIBLE = () => true;
 
@@ -556,12 +561,19 @@ export default function DropdownMenu({
   const externalSearch = searchable && searchValue !== undefined;
   const query = externalSearch ? searchValue : internalQuery;
   const setQuery = externalSearch ? (onSearchValueChange ?? (() => {})) : setInternalQuery;
-  /* External (trigger-as-search): until the user actually TYPES, the filter is
-     a no-op so clicking a filled field shows the WHOLE list (the value is just
-     the field's committed text, not a query). The injected trigger onKeyDown
-     flips this on the first printable key; it resets on open/close/select. */
-  const [typedSinceOpen, setTypedSinceOpen] = useState(false);
-  const filterQuery = externalSearch && !typedSinceOpen ? '' : query;
+  /* External (trigger-as-search): the field's text is a COMMITTED VALUE until
+     it changes — clicking a filled field opens the WHOLE list (the text is a
+     selection, not a query). Arm the filter on the VALUE changing, never on a
+     keydown: paste, IME composition, dictation, a clear button and drag-drop
+     all change the text without a printable key, and a keydown flag left every
+     one of those showing an unfiltered list. A session that ends (Escape,
+     outside click, selection) commits whatever the field now holds. */
+  const valueOnOpenRef = useRef(searchValue ?? '');
+  useEffect(() => {
+    if (!open) valueOnOpenRef.current = searchValue ?? '';
+  }, [open, searchValue]);
+  const filterQuery = externalSearch && query === valueOnOpenRef.current ? '' : query;
+  const menuId = useId();
   const searchInputRef = useRef<HTMLInputElement>(null);
   /* Subscribe to the global coarse knob so a LIVE scale change re-derives the
      search box's item-sized padding/font (same recipe as DropdownItem). */
@@ -636,7 +648,6 @@ export default function DropdownMenu({
     if (open) {
       setPersisted(true);
       if (!externalSearch) setInternalQuery('');
-      setTypedSinceOpen(false);
       highlight.setHighlighted(initialHighlightIndex ?? -1, 'keyboard');
       resetSelectionRef.current();
       /* One open overlay at a time: opening this menu closes any other
@@ -646,7 +657,6 @@ export default function DropdownMenu({
     // The parent is closing — collapse any open submenu so it morphs
     // closed alongside this menu instead of staying open mid-morph.
     setSubChain([]);
-    setTypedSinceOpen(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialHighlightIndex, onOpenChange, onClose]);
 
@@ -809,7 +819,11 @@ export default function DropdownMenu({
   useLayoutEffect(() => {
     if (!open || highlight.highlightedIndex < 0 || highlight.pointerDriven) return;
     const row = contentElRef.current?.querySelector<HTMLElement>(`[data-ei="${highlight.highlightedIndex}"]`);
-    revealRowInScroller(row, 'nearest', contentElRef.current);
+    /* No explicit scroller: in INTERNAL-search mode the content is
+       `overflow-hidden` and the rows scroll in `[data-menu-items]`; passing the
+       content made every keyboard reveal a no-op (the highlighted row walked
+       below the fold). The helper finds the row's real scroll parent. */
+    revealRowInScroller(row, 'nearest');
   }, [open, highlight.highlightedIndex, highlight.pointerDriven]);
 
   const handleOpenChange = useCallback((o: boolean) => {
@@ -821,7 +835,14 @@ export default function DropdownMenu({
     // content). The trigger's own click-phase must then NOT reopen it (see
     // triggerOnClick) — otherwise one dismiss click closes AND reopens the
     // menu, interleaving close+open morphs and leaving it stuck.
-    if (!o && triggerPointerDownRef.current) closeFromTriggerPointerDownRef.current = true;
+    if (!o && triggerPointerDownRef.current) {
+      /* …except for a trigger-as-search FIELD: a click on the text box is
+         caret placement, never "dismiss the list" (Radix toggles on the
+         pointerdown, so this arrives before our bubble handler can prevent
+         the native default). */
+      if (externalSearch) return;
+      closeFromTriggerPointerDownRef.current = true;
+    }
     if (onOpenChange) onOpenChange(o);
     else if (!o) onClose?.();
   }, [onOpenChange, onClose]);
@@ -849,46 +870,123 @@ export default function DropdownMenu({
     }
   }, [onOpenChange]);
 
-  const triggerEl = React.isValidElement(trigger) ? (trigger as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void; onKeyDown?: (e: React.KeyboardEvent) => void; onKeyDownCapture?: (e: React.KeyboardEvent) => void }>) : null;
+  const triggerEl = React.isValidElement(trigger) ? (trigger as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void; onKeyDown?: (e: React.KeyboardEvent) => void; onKeyDownCapture?: (e: React.KeyboardEvent) => void; onPointerDown?: (e: React.PointerEvent) => void; onPointerDownCapture?: (e: React.PointerEvent) => void; onFocus?: (e: React.FocusEvent) => void; onBlur?: (e: React.FocusEvent) => void; ref?: React.Ref<HTMLElement>; type?: string }>) : null;
+  /* Focus we restore ourselves (after a commit/Escape) must not look like the
+     USER focusing the field: a consumer's `onFocus={() => setOpen(true)}` would
+     instantly reopen the menu we just closed (the "click a row and it pops
+     straight back open" loop). */
+  const restoringFocusRef = useRef(false);
+  /* Focus the combobox field as a KIT action (close, panel focus steal) — the
+     consumer's onFocus must not read it as the user re-entering the control
+     and reopen what we just closed. */
+  const restoreFocusToTrigger = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    restoringFocusRef.current = true;
+    trigger.focus();
+    /* The focus event can reach React after this call returns — hold the
+       flag for the rest of the tick. */
+    setTimeout(() => { restoringFocusRef.current = false; }, 0);
+  }, []);
   const triggerNode = triggerEl
-    ? React.cloneElement(triggerEl as React.ReactElement<{ ref?: React.Ref<HTMLElement>; type?: string; onClick?: (e: React.MouseEvent) => void; onPointerDown?: (e: React.PointerEvent) => void; onKeyDown?: (e: React.KeyboardEvent) => void; onKeyDownCapture?: (e: React.KeyboardEvent) => void }>, {
-        ref: (node: HTMLElement | null) => { triggerRef.current = node; },
+    ? React.cloneElement(triggerEl, {
+        ref: (node: HTMLElement | null) => {
+          triggerRef.current = node;
+          /* Clone-based trigger: keep the consumer's ref alive too. */
+          const consumerRef = triggerEl.props.ref;
+          if (typeof consumerRef === 'function') consumerRef(node);
+          else if (consumerRef) (consumerRef as React.MutableRefObject<HTMLElement | null>).current = node;
+        },
         /* Radix's trigger primitive merges `type="button"` onto the child; a
            text field trigger-as-search must stay a text field. */
-        ...(externalSearch ? { type: (triggerEl.props as { type?: string }).type ?? 'text' } : {}),
-        onPointerDown: (e: React.PointerEvent) => {
+        ...(externalSearch ? { type: triggerEl.props.type ?? 'text' } : {}),
+        ...(externalSearch ? {
+          /* A text field that opens a list IS a combobox, and the highlighted
+             row must be announced — the field is outside the popup, so the
+             only link screen readers get is `aria-activedescendant`. */
+          role: 'combobox',
+          'aria-autocomplete': 'list',
+          'aria-controls': open ? `${menuId}-content` : undefined,
+          'aria-activedescendant': open && highlight.highlightedIndex >= 0
+            ? `${menuId}-opt-${highlight.highlightedIndex}`
+            : undefined,
+        } : {}),
+        onPointerDownCapture: (e: React.PointerEvent) => {
+          triggerEl.props.onPointerDownCapture?.(e);
+          /* Radix's trigger toggle runs on the CHILD's bubble handler, before
+             ours — mark the pointer interaction in the capture phase so
+             `handleOpenChange` can tell a toggle-click from a real dismissal. */
           triggerPointerDownRef.current = true;
           closeFromTriggerPointerDownRef.current = false;
+          setTimeout(() => { triggerPointerDownRef.current = false; }, 0);
+        },
+        onPointerDown: (e: React.PointerEvent) => {
+          triggerEl.props.onPointerDown?.(e);
           /* Trigger-as-search: the field IS the search box. Radix's trigger
              toggles on pointerdown and prevents the field's focus default —
              both would make it untypable. Open it ourselves and keep the
              caret in the field; the controlled query drives the filter. */
           if (externalSearch) {
             e.preventDefault();
-            if (!openRef.current) onOpenChange?.(true);
-            triggerRef.current?.focus();
+            const wasOpen = openRef.current;
+            if (!wasOpen) onOpenChange?.(true);
+            const el = triggerRef.current;
+            el?.focus();
+            /* Opening on a committed value puts the caret WHERE YOU CLICKED by
+               default — the next keystroke would append to "Asia/Tokyo" and
+               match nothing. Select it so typing starts a new search (the
+               native combobox model). Never on an already-open field: there
+               the click is caret placement. */
+            if (!wasOpen && el instanceof HTMLInputElement) el.select();
           }
         },
         /* Space is a printable search character, but Radix treats it as the
            trigger's open/close key. Keep it in the field. */
         onKeyDownCapture: (e: React.KeyboardEvent) => {
+          triggerEl.props.onKeyDownCapture?.(e);
           if (externalSearch && e.key === ' ') e.stopPropagation();
         },
         onClick: (e: React.MouseEvent) => {
           triggerEl.props.onClick?.(e);
           triggerOnClick();
         },
+        /* A kit-driven focus restore is not a user focus (see above). */
+        onFocus: (e: React.FocusEvent) => {
+          if (restoringFocusRef.current) {
+            restoringFocusRef.current = false;
+            return;
+          }
+          triggerEl.props.onFocus?.(e);
+        },
+        /* Focus leaving the field ends the search session: Tab (or any focus
+           move that does not land in the panel) must close the list, not leave
+           an orphan panel floating with the keyboard elsewhere. The panel's
+           own focused row is legitimate — keep it open for the pending click. */
+        onBlur: (e: React.FocusEvent) => {
+          triggerEl.props.onBlur?.(e);
+          if (!externalSearch || !openRef.current) return;
+          const next = e.relatedTarget as Node | null;
+          if (next && (contentElRef.current?.contains(next) || triggerRef.current?.contains(next))) return;
+          /* relatedTarget is unreliable for non-focusable menu rows — decide
+             once focus has actually settled. */
+          setTimeout(() => {
+            const el = triggerRef.current;
+            if (!el || !openRef.current) return;
+            const active = el.ownerDocument.activeElement;
+            if (active && (el.contains(active) || contentElRef.current?.contains(active))) return;
+            onOpenChange?.(false);
+            onClose?.();
+          }, 0);
+        },
         /* Combobox mode (externalSearch): the trigger field IS the search box,
            so it also drives the menu's keyboard — arrows move the single
-           highlight, Enter activates the highlighted (or first visible) row,
-           and a printable key flips the filter live (the committed value was
-           just showing the full list until the first keystroke). */
+           highlight and Enter activates the highlighted (or first visible)
+           row. Filtering itself follows the VALUE (see filterQuery), so no
+           input method is special-cased here. */
         onKeyDown: (e: React.KeyboardEvent) => {
           triggerEl.props.onKeyDown?.(e);
           if (!externalSearch || !openRef.current) return;
-          if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            setTypedSinceOpen(true);
-          } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
             e.preventDefault();
             const items = highlight.items;
             if (items.length === 0) return;
@@ -926,8 +1024,17 @@ export default function DropdownMenu({
             <MenuHighlightContext.Provider value={highlight}>
               <MenuSearchContext.Provider value={{ query, setQuery }}>
                 <SelectionContext.Provider value={selectionActive ? selection : null}>
+                <MenuIdContext.Provider value={menuId}>
                 <RadixDropdownMenu.Content
+                  id={`${menuId}-content`}
                   ref={setComposedRef}
+                  /* Trigger-as-search: the FIELD keeps the keyboard (the ARIA
+                     combobox model) — a focusable panel lets Radix's open
+                     autofocus grab it, which swallowed the first keystroke
+                     when the list opened BY typing, and re-focused the first
+                     row on the way back. Without a tabindex the panel cannot
+                     be focused; rows stay clickable/focusable as usual. */
+                  tabIndex={externalSearch ? undefined : -1}
                   {...menu.attrs}
                   data-ui-fixed
                   className={`${contentClasses} ${width || ''} ${contentClassName || ''}`}
@@ -947,19 +1054,33 @@ export default function DropdownMenu({
                   /* Trigger-as-search: the field owns the keyboard. Anything
                      that focuses the menu (Radix's open autofocus, a stray
                      click) hands it straight back, so typing never dies. */
-                  onFocus={externalSearch ? e => {
-                    /* Only the panel itself stealing focus is a problem. Row
-                       focus is legitimate (a click/keyboard activation) — the
-                       earlier blanket guard detached rows mid-click. */
+                  /* Trigger-as-search: the panel itself must never keep the
+                     keyboard (a scrollable div is implicitly focusable in
+                     Chromium, so Radix's open autofocus can land on it). Hand
+                     focus straight back — in the CAPTURE phase, before Radix's
+                     roving group moves it on to the first ROW. */
+                  onFocusCapture={externalSearch ? e => {
                     if (e.target !== e.currentTarget) return;
-                    const trigger = triggerRef.current;
-                    if (trigger && trigger.ownerDocument.activeElement !== trigger) trigger.focus();
+                    e.stopPropagation();
+                    restoreFocusToTrigger();
+                  } : undefined}
+                  /* The trigger FIELD is outside the popup — but it is the
+                     combobox's own text box, not "the page". Radix dismisses
+                     on any focus outside the content, so reopening a picker
+                     (our open effect focuses the field) closed itself again a
+                     tick later. Focus landing back in the field is part of
+                     the control, never a dismissal. */
+                  onFocusOutside={externalSearch ? e => {
+                    const target = e.target as Node | null;
+                    if (target && (target === triggerRef.current || triggerRef.current?.contains(target))) {
+                      e.preventDefault();
+                    }
                   } : undefined}
                   /* Trigger-as-search: after a selection/close the keyboard
                      belongs back in the field, not on the body. */
                   onCloseAutoFocus={externalSearch ? e => {
                     e.preventDefault();
-                    triggerRef.current?.focus();
+                    restoreFocusToTrigger();
                   } : undefined}
                 >
                   {internalSearch && (
@@ -1017,6 +1138,7 @@ export default function DropdownMenu({
                     />
                   )}
                 </RadixDropdownMenu.Content>
+                </MenuIdContext.Provider>
                 </SelectionContext.Provider>
               </MenuSearchContext.Provider>
             </MenuHighlightContext.Provider>
@@ -1099,6 +1221,15 @@ export function ItemManagerDropdown({
   editValueRef.current = editValue;
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  /* The list mounts in Radix's PORTAL a commit AFTER `open` flips — an effect
+     keyed on `[open]` read `listRef.current === null` and never attached the
+     keyboard listener (the manager's bespoke arrows were dead until a
+     rename). Track the node so the listener attaches when it exists. */
+  const [listEl, setListEl] = useState<HTMLDivElement | null>(null);
+  const setListNode = useCallback((node: HTMLDivElement | null) => {
+    listRef.current = node;
+    setListEl(node);
+  }, []);
 
   // A manager list opens with its ACTIVE item already in view — the shared
   // preselected-surface contract (pre-paint reveal, then frozen once the
@@ -1132,8 +1263,13 @@ export function ItemManagerDropdown({
       const menu = listRef.current?.closest('.ui-menu');
       if (!menu || !menu.contains(e.target as Node)) return;
       const doc = menu.ownerDocument;
-      const rowNames = [...menu.querySelectorAll<HTMLElement>('[data-active] > [role="menuitem"]:first-child')];
-      const footerItems = [...menu.querySelectorAll<HTMLElement>('div:last-child > [role="menuitem"]')];
+      /* EVERY row's name item — `data-active` marks only the selected row, so
+         selecting on it walked the active row + the footer and skipped every
+         other item (the second arrow landed on "Reset"/"New"). */
+      const rowNames = [...menu.querySelectorAll<HTMLElement>('[data-im-row] > [role="menuitem"]:first-child')];
+      /* Scope to the footer CONTAINER: the loose `div:last-child` selector also
+         matched the last ROW's wrapper and duplicated its item at the end. */
+      const footerItems = [...menu.querySelectorAll<HTMLElement>(':scope > div:last-child > [role="menuitem"]')];
       const vertical = [...rowNames, ...footerItems];
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
@@ -1141,18 +1277,22 @@ export function ItemManagerDropdown({
         const a = doc.activeElement as HTMLElement | null;
         let cur = a ? vertical.indexOf(a) : -1;
         if (cur < 0 && a) {
-          const row = a.closest('[data-active]');
+          const row = a.closest('[data-im-row]');
           const nameItem = row?.querySelector<HTMLElement>('[role="menuitem"]:first-child');
           if (nameItem) cur = rowNames.indexOf(nameItem);
         }
         const dir = e.key === 'ArrowDown' ? 1 : -1;
         const next = cur < 0 ? (dir === 1 ? 0 : vertical.length - 1) : (cur + dir + vertical.length) % vertical.length;
-        vertical[next]?.focus({ preventScroll: true });
+        const nextEl = vertical[next];
+        nextEl?.focus({ preventScroll: true });
+        /* focus({preventScroll}) deliberately leaves the page alone — the row
+           must still be revealed inside the manager's own list. */
+        revealRowInScroller(nextEl?.closest<HTMLElement>('[data-im-row]') ?? nextEl, 'nearest', listRef.current);
         return;
       }
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         const a = doc.activeElement as HTMLElement | null;
-        const row = a?.closest('[data-active]') as HTMLElement | null;
+        const row = a?.closest('[data-im-row]') as HTMLElement | null;
         if (!row) return; // footer actions have no buttons to move into
         e.preventDefault();
         e.stopImmediatePropagation();
@@ -1165,10 +1305,10 @@ export function ItemManagerDropdown({
         return;
       }
     };
-    const doc = listRef.current?.ownerDocument ?? null;
+    const doc = listEl?.ownerDocument ?? null;
     doc?.addEventListener('keydown', onKey, { capture: true });
     return () => doc?.removeEventListener('keydown', onKey, { capture: true });
-  }, [open, editingId]);
+  }, [open, editingId, listEl]);
 
   useEffect(() => {
     if (!editingId) return;
@@ -1238,12 +1378,12 @@ export function ItemManagerDropdown({
       <div className={`shrink-0 ${d.headerText}`}>
         {header}
       </div>
-      <div ref={listRef} onPointerEnter={reveal.engage} onPointerDown={reveal.engage} className="flex-1 min-h-0 overflow-y-auto scrollbar-custom flex flex-col">
+      <div ref={setListNode} data-im-list onPointerEnter={reveal.engage} onPointerDown={reveal.engage} className="flex-1 min-h-0 overflow-y-auto scrollbar-custom flex flex-col">
       {items.map(item => {
         const isActive = item.id === activeId;
         const isEditing = editingId === item.id;
         return (
-          <div key={item.id} data-active={isActive ? '1' : undefined} className={`scroll-my-4 flex items-center gap-1 rounded ${isActive || isEditing ? d.rowActiveBg : d.rowHoverBg} ${editingId && !isEditing ? 'opacity-40 pointer-events-none' : ''}`}>
+          <div key={item.id} data-im-row={item.id} data-active={isActive ? '1' : undefined} className={`scroll-my-4 flex items-center gap-1 rounded ${isActive || isEditing ? d.rowActiveBg : d.rowHoverBg} ${editingId && !isEditing ? 'opacity-40 pointer-events-none' : ''}`}>
             {isEditing ? (
               <>
                 <div className="flex-1 min-w-0 flex items-center">

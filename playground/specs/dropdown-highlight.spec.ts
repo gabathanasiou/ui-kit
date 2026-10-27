@@ -288,3 +288,43 @@ test('the open menu follows the trigger when the page scrolls', async ({ page })
   await page.getByRole('menuitem', { name: 'Travel' }).hover();
   await expect(litRows(page)).toContainText('Travel');
 });
+
+test('searchable menu: arrows keep the highlighted row in view in the items scroller', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('searchable-trigger').click();
+  await expect(menu(page)).toBeVisible();
+  const scroller = page.locator('[data-menu-items]');
+  await expect.poll(() => scroller.evaluate(el => el.scrollHeight > el.clientHeight)).toBe(true);
+  expect(await scroller.evaluate(el => el.scrollTop)).toBe(0);
+
+  // The reveal used to target the CONTENT (overflow-hidden in internal-search
+  // mode), so the highlight walked below the fold and the list never moved.
+  for (let i = 0; i < 15; i++) await page.keyboard.press('ArrowDown');
+  await expect.poll(() => scroller.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+  const lit = await litRows(page).first().boundingBox();
+  const box = await scroller.boundingBox();
+  expect(lit!.y).toBeGreaterThanOrEqual(box!.y);
+  expect(lit!.y + lit!.height).toBeLessThanOrEqual(box!.y + box!.height + 1);
+  // …with the row's scroll-margin breathing room under it.
+  expect(box!.y + box!.height - (lit!.y + lit!.height)).toBeGreaterThanOrEqual(10);
+});
+
+test('item manager: arrows keep the focused row in view in its list', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('itemmanager-trigger').click();
+  await expect(menu(page)).toBeVisible();
+  const list = page.locator('[data-im-list]');
+  await expect.poll(() => list.evaluate(el => el.scrollHeight > el.clientHeight)).toBe(true);
+  expect(await list.evaluate(el => el.scrollTop)).toBe(0); // opens on the active (first) row
+
+  // The manager moves real DOM focus with preventScroll — nothing scrolls the
+  // row into view for free, so the list stayed parked at the top.
+  for (let i = 0; i < 20; i++) await page.keyboard.press('ArrowDown');
+  await expect.poll(() => list.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+  const row = page.locator('[data-im-row]:focus-within');
+  await expect(row).toHaveCount(1);
+  const r = await row.boundingBox();
+  const box = await list.boundingBox();
+  expect(r!.y).toBeGreaterThanOrEqual(box!.y);
+  expect(r!.y + r!.height).toBeLessThanOrEqual(box!.y + box!.height + 1);
+});

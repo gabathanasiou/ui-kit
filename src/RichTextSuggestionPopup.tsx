@@ -46,14 +46,13 @@ const TokenPopup: React.FC<{
   const listRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     // Keyboard-driven highlights scroll into view; pointer hover must not
-    // move the row under the cursor (roadmap 187). Scoped to the popup's own
-    // list — never the editor/page behind it.
+    // move the row under the cursor (roadmap 187). The SCROLLER is the outer
+    // .ui-menu (it carries maxHeight + overflow-y-auto); `listRef` is just the
+    // row wrapper and never overflows itself — passing it made every reveal a
+    // no-op, so ArrowDown could walk the highlight below the fold. Let the
+    // shared helper find the real scroll parent (it never touches the page).
     if (api.pointerDriven) return;
-    revealRowInScroller(
-      listRef.current?.querySelector<HTMLElement>('.ui-item-highlighted'),
-      'nearest',
-      listRef.current,
-    );
+    revealRowInScroller(listRef.current?.querySelector<HTMLElement>('.ui-item-highlighted'));
   }, [api.highlightedIndex, api.pointerDriven]);
   /* Seed the FIRST row highlighted on open (and when a filter empties the
      highlight), so typing `@` shows a lit default like the old popup. */
@@ -66,6 +65,8 @@ const TokenPopup: React.FC<{
   return (
     <MenuHighlightContext.Provider value={api}>
       <div
+        role="listbox"
+        data-token-popup
         className="ui-menu rounded-lg shadow-xl p-1 flex flex-col min-w-[220px] overflow-y-auto"
         style={{ width: W, maxHeight: MAX_H }}
         onMouseDown={e => e.preventDefault()}
@@ -95,6 +96,7 @@ const AutocompleteRow: React.FC<{ item: TokenItem; d: ReturnType<typeof getDropd
   return (
     <div
       role="option"
+      aria-selected={highlighted}
       style={rowStyle}
       className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${highlighted ? 'ui-item-highlighted' : ''}`}
       onPointerEnter={() => setPointer(myIndex)}

@@ -15,10 +15,8 @@ a committed `dist/`; consumers pin a github tag (`github:gabathanasiou/ui-kit#v0
 - `npm run test:smart` — only the specs your diff can touch (+ canaries and last
   failures); `--list` previews. `npm run test:baseline -- <spec>` answers "was it
   me?" on a clean HEAD worktree.
-- `npm run lint` — typecheck + test/doc hygiene ratchets (waitForTimeout count,
-  orphan specs, suite caps, AGENTS.md budget).
-- `npm run build` — lib build (vite es/cjs + tsc types + css copy). Run before
-  committing a version bump.
+- `npm run lint` — typecheck + hygiene ratchets (waits, orphans, caps, AGENTS.md).
+- `npm run build` — lib build (vite es/cjs + tsc types + css copy); before a bump.
 
 ## Core Rules (read first — these override convenience)
 
@@ -43,10 +41,9 @@ a committed `dist/`; consumers pin a github tag (`github:gabathanasiou/ui-kit#v0
 
 ## Explaining to the User (plain language)
 
-- Talk about surfaces in real terms: "the Danger confirm + DNWA dialog", "the
-  keyboard-test modal", "the stuck-menu reopen" — not file names or option types.
-- Ground it in behavior: "first tap on the backdrop dismisses the keyboard, the
-  second tap closes the modal."
+- Talk about surfaces in real terms ("the Danger confirm + DNWA dialog", "the
+  stuck-menu reopen") — not file names or option types — and ground it in
+  behavior ("the second tap closes the modal").
 
 ## Stack & peer deps
 
@@ -163,6 +160,12 @@ stays mounted while the close morph plays; `onClosed` drops persisted):
 - The trigger gets `data-state="open"` from Radix; the kit `Button` keeps its
   hover look while open (the `open` variant classes, `!`-important so they
   beat the base background).
+- **Trigger-as-search (`searchable` + `searchValue`) is a combobox, not a
+  menu**: the FIELD owns the keyboard (panel non-focusable, focus-outside
+  dismissal vetoed for the field), a trigger pointerdown never dismisses,
+  opening selects the text, and the filter arms on the VALUE changing (not a
+  keydown — paste/IME/dictation have none). Restores into the field are
+  flagged so a consumer's `onFocus` cannot reopen a closing menu.
 
 ## Modal internals
 
@@ -193,7 +196,5 @@ stays mounted while the close morph plays; `onClosed` drops persisted):
 2. `npm run build`, bump `package.json` version, commit, tag `v0.1.x`, push.
 3. In lemon_schedule: bump `"@gabriel/ui-kit": "github:gabathanasiou/ui-kit#v0.1.x"`,
    `npm install`, clear `node_modules/.vite-*` if Vite errors, run the app e2e.
-
-## Doc budget
 
 `AGENTS.md` stays ≤ 200 lines (enforced by `npm run lint`) — move detail to `docs/*.md`.
