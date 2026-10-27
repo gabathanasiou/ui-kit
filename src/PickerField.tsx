@@ -609,15 +609,14 @@ export function PickerField({
     />
   );
 
-  if (readOnly) {
-    return <span className={className} style={style}>{displayText || '?'}</span>;
-  }
-
   const empty = !open && !displayText;
   const overlayText = open ? text : displayText;
   const inputProps = {
     ref: inputRef as React.Ref<HTMLInputElement & HTMLTextAreaElement>,
-    value: open ? text : displayText,
+    /* Chip: the INPUT holds the committed keys (cast reads "1") while the
+       overlay renders the resolved face ("1. GEORGE") — the old
+       EntityDropdown's transparent-input contract. */
+    value: open ? text : (chip ? values.join(', ') : displayText),
     disabled,
     readOnly,
     placeholder: '',
@@ -680,6 +679,31 @@ export function PickerField({
   const inlineAutoGrow = !chip && !wrap && autoGrow;
   const padY = chip ? coarsePx(5, 7, scale) : 0;
   const padX = chip ? coarsePx(9, 12, scale) : 0;
+
+  if (readOnly) {
+    /* Read-only fields still render an INPUT (keyboard-off Glide cells show a
+       read-only picker; hosts assert that no editable input appeared). */
+    return (
+      <div
+        ref={rootRef}
+        data-picker-field
+        className={`relative ${chip
+          ? 'flex w-full items-center gap-1.5 rounded border border-[color:var(--ui-border-strong)] bg-[var(--ui-panel-bg)] text-left'
+          : (wrap ? 'min-h-[1lh] w-full pb-[1lh]' : 'h-[1lh] w-full')} ${className}`}
+        style={chip ? { padding: `${padY}px ${padX}px`, fontSize: coarsePx(12, 14, scale), ...style } : style}
+      >
+        <input
+          readOnly
+          tabIndex={-1}
+          value={displayText}
+          className={chip
+            ? 'w-full min-w-0 bg-transparent outline-none'
+            : 'absolute inset-0 h-full w-full bg-transparent text-inherit outline-none'}
+          style={{ color: 'inherit', caretColor: 'transparent' }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
