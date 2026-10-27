@@ -561,6 +561,10 @@ export default function DropdownMenu({
   }, [filterQuery, searchable, searchFilter]);
 
   const highlight = useMenuHighlightState(filter);
+  /* A search that matches nothing must SAY so — a blank panel reads as a
+     broken menu (roadmap 318: the trigger-as-search field is a picker, so it
+     needs the same "No matches" body SearchMenu has). */
+  const searchEmpty = searchable && filterQuery.trim() !== '' && highlight.items.length === 0;
 
   useEffect(() => {
     if (open) {
@@ -828,6 +832,13 @@ export default function DropdownMenu({
       })
     : trigger;
 
+  const searchEmptyBlock = (
+    <div data-menu-search-empty className="px-3 py-3 text-center">
+      <div className="text-xs font-medium text-[color:var(--ui-text-muted)]">No matches for “{filterQuery.trim()}”</div>
+      <div className="mt-0.5 text-[10px] text-[color:var(--ui-text-faint)]">Try a different search.</div>
+    </div>
+  );
+
   const contentClasses = `ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none max-h-[min(60vh,24rem)] min-w-0 ${internalSearch ? 'overflow-hidden' : 'overflow-y-auto scrollbar-custom'}`;
 
   return (
@@ -907,9 +918,13 @@ export default function DropdownMenu({
                   {internalSearch ? (
                     <div data-menu-items className="flex-1 min-h-0 overflow-y-auto scrollbar-custom flex flex-col">
                       {children}
+                      {searchEmpty && searchEmptyBlock}
                     </div>
                   ) : (
-                    children
+                    <>
+                      {children}
+                      {searchEmpty && searchEmptyBlock}
+                    </>
                   )}
                 </RadixDropdownMenu.Content>
               </MenuSearchContext.Provider>

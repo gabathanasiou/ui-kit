@@ -205,6 +205,15 @@ test('trigger-as-search: the trigger field keeps focus and filters while typing'
   await input.press('Backspace');
   await expect(input).toHaveValue('tokyo');
   await expect(visibleItems(page)).toHaveCount(1);
+  // A query with no matches must SAY so — a blank panel reads as broken.
+  await input.press('ControlOrMeta+a');
+  await input.pressSequentially('zzz');
+  await expect(visibleItems(page)).toHaveCount(0);
+  await expect(menu(page).locator('[data-menu-search-empty]')).toContainText('No matches for “zzz”');
+  await input.press('ControlOrMeta+a');
+  await input.press('Backspace');
+  await expect(visibleItems(page)).toHaveCount(COUNT);
+  await expect(menu(page).locator('[data-menu-search-empty]')).toHaveCount(0);
 });
 
 test('trigger-as-search: focus that lands in the menu returns to the field', async ({ page }) => {
@@ -313,6 +322,22 @@ test('SearchMenu expandable: button morphs into the field and back', async ({ pa
   await expect(page.locator('[data-search-item="bob"]')).toHaveCount(0);
   await browseInput.fill('');
   await expect(page.locator('[data-search-item="bob"]')).toBeVisible();
+
+  // `browseAll` + `selectedId`: a flat value picker for ONE kind of record —
+  // no category rows, every record on open, the current value checked, and a
+  // pick closes the panel.
+  const flat = page.getByTestId('search-menu-flat-picker');
+  await flat.getByRole('button', { name: /Region/ }).click();
+  await expect(searchPanel(page)).toBeVisible();
+  await expect(page.locator('[data-search-group]')).toHaveCount(0);
+  await expect(page.locator('#search-menu-panel [data-search-item]')).toHaveCount(60);
+  const current = page.locator('#search-menu-panel [data-search-item="tz-40"]');
+  await expect(current).toHaveAttribute('aria-selected', 'true');
+  await expect(current.locator('svg.lucide-check')).toHaveCount(1);
+  await page.locator('#search-menu-panel [data-search-item="tz-42"]').click();
+  await expect(searchPanel(page)).toHaveCount(0);
+  await expect(page.getByTestId('flat-picker-status')).toHaveText('flat pick: tz-42');
+  await expect(flat.getByRole('button', { name: /City 42/ })).toBeVisible();
 });
 
 test('MorphSearchField: button morphs into a filter field and keeps the term', async ({ page }) => {

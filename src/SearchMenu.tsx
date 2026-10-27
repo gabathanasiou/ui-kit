@@ -500,24 +500,47 @@ export function SearchMenu({
     </div>
   );
 
+  /** Bring a row into the panel's own scroller. `scrollIntoView` would also
+   *  scroll the PAGE / modal (Safari especially) — moving the list under the
+   *  pointer right as the user clicks. Adjust the inner scroller's scrollTop
+   *  instead, so nothing outside the panel ever moves. */
+  const scrollRowIntoView = useCallback((index: number, block: 'center' | 'nearest') => {
+    const panel = panelRef.current;
+    const scroller = panel?.querySelector<HTMLElement>('[data-search-scroller]');
+    const row = panel?.querySelector<HTMLElement>(`[data-search-row="${index}"]`);
+    if (!scroller || !row) return;
+    const r = row.getBoundingClientRect();
+    const sRect = scroller.getBoundingClientRect();
+    if (block === 'center') {
+      scroller.scrollTop += (r.top + r.height / 2) - (sRect.top + sRect.height / 2);
+      return;
+    }
+    if (r.top < sRect.top) scroller.scrollTop -= sRect.top - r.top;
+    else if (r.bottom > sRect.bottom) scroller.scrollTop += r.bottom - sRect.bottom;
+  }, []);
+
   /** Arrow keys walk the rows; keep the highlighted one in view. */
   useEffect(() => {
     if (!open || pointerDrivenRef.current) return;
-    const el = panelRef.current?.querySelector<HTMLElement>(`[data-search-row="${highlighted}"]`);
-    el?.scrollIntoView({ block: 'nearest' });
-  }, [open, highlighted]);
+    scrollRowIntoView(highlighted, 'nearest');
+  }, [open, highlighted, scrollRowIntoView]);
 
   /** Current-value anchor: opening a picker lands on the value it holds
-   *  (a long catalogue would otherwise start at the top and hide it). */
+   *  (a long catalogue would otherwise start at the top and hide it). Runs on
+   *  OPEN only — a select already closes the panel, and scrolling while it
+   *  animates out reads as "it didn't take". */
+  const openRaised = useRef(false);
   useEffect(() => {
-    if (!open || !selectedId) return;
+    if (!open) { openRaised.current = false; return; }
+    if (openRaised.current) return;
+    openRaised.current = true;
+    if (!selectedId) return;
     const raf = requestAnimationFrame(() => {
-      const el = Array.from(panelRef.current?.querySelectorAll<HTMLElement>('[data-search-item]') ?? [])
-        .find(node => node.getAttribute('data-search-item') === selectedId);
-      el?.scrollIntoView({ block: 'center' });
+      const index = rows.findIndex(row => row.kind === 'item' && row.hit.item.id === selectedId);
+      if (index >= 0) scrollRowIntoView(index, 'center');
     });
     return () => cancelAnimationFrame(raf);
-  }, [open, selectedId]);
+  }, [open, selectedId, rows, scrollRowIntoView]);
 
   const renderItemRow = (row: Extract<SearchMenuRow, { kind: 'item' }>, rowIndex: number) => {
     const active = highlighted === rowIndex;
@@ -696,7 +719,7 @@ export function SearchMenu({
           {rows.length > 0 && <div className={d.separator} />}
         </div>
       )}
-      <div className="overflow-y-auto scrollbar-custom flex flex-col min-h-0">
+      <div data-search-scroller className="overflow-y-auto scrollbar-custom flex flex-col min-h-0">
         {rows.length === 0 && (
           <div className="px-3 py-3 text-xs text-zinc-400" data-search-empty>
             {renderEmpty ? renderEmpty({ query, close }) : <>Type to search…</>}

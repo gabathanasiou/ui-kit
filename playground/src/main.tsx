@@ -922,6 +922,10 @@ function MenuInsideModal() {
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [longMenuOpen, setLongMenuOpen] = useState(false);
+  /* Roadmap 318: the app's real case — a SearchMenu (button→field morph) whose
+     panel portals OUTSIDE the modal's dialog. Selecting a row must close the
+     panel and update the field; the modal's focus trap must not eat the click. */
+  const [searchPick, setSearchPick] = useState(FLAT_ITEMS[2].id);
   return (
     <div className="row" data-testid="menu-in-modal">
       <Button data-testid="menu-modal-open" onClick={() => setOpen(true)}>Open modal with menu</Button>
@@ -952,6 +956,21 @@ function MenuInsideModal() {
                 <DropdownItem key={i} onClick={() => setLongMenuOpen(false)}>Item {i + 1}</DropdownItem>
               ))}
             </DropdownMenu>
+            <p>SearchMenu over the modal (select a row → panel closes, value updates):</p>
+            <SearchMenu
+              items={FLAT_ITEMS}
+              browseAll
+              selectedId={searchPick}
+              onSelect={(item: SearchMenuItem) => setSearchPick(item.id)}
+              triggerLabel={FLAT_ITEMS.find(i => i.id === searchPick)?.label || 'Choose…'}
+              theme="dark"
+              placeholder="Search rows…"
+              collapsedWidth={220}
+              expandedWidth={240}
+              panelWidth={300}
+              maxMenuHeight={240}
+            />
+            <span className="label" data-testid="inmodal-search-pick">pick: {searchPick}</span>
             <p>
               Escape while the menu is open must dismiss ONLY the menu — the
               modal stays. Escape with the menu closed closes the modal.

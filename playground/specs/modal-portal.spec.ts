@@ -64,7 +64,20 @@ test('dropdown inside a modal: Escape dismisses only the dropdown', async ({ pag
   await expect(menu).toHaveCount(0, { timeout: 5000 });
   await expect(modal).toBeVisible();
 
-  // Escape again closes the MODAL
+  // Roadmap 318 — a SearchMenu inside the modal: its panel portals OUTSIDE the
+  // dialog, so the modal's focus trap must not eat the row click. Selecting a
+  // record closes the panel and updates the field; the modal stays.
+  const searchTrigger = modal.getByRole('button', { name: /Region/ });
+  await searchTrigger.click();
+  const panel = page.locator('[role="listbox"]');
+  await expect(panel).toBeVisible();
+  await page.locator('#search-menu-panel [data-search-item="tz-4"]').click();
+  await expect(panel).toHaveCount(0, { timeout: 5000 });
+  await expect(modal.getByTestId('inmodal-search-pick')).toHaveText('pick: tz-4');
+  await expect(modal.getByRole('button', { name: /City 4/ })).toBeVisible();
+  await expect(modal).toBeVisible();
+
+  // Escape (panel closed) closes the MODAL
   await page.keyboard.press('Escape');
   await expect(modal).toHaveCount(0, { timeout: 5000 });
 });
