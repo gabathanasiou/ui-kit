@@ -46,8 +46,10 @@ const WAIT_BASELINE = 9;
 // 99 = 98 + the dark/zinc checked control colors (black fill + white mark).
 // 102 = 99 + roadmap 322's four multiple-mode wiring cases (menu toggle/commit,
 // the cancel paths, max + Cmd/Ctrl+A, SearchMenu group select-all/commit).
+// 104 = 102 + the two PickerField wiring cases (multi commit/create, single +
+// morph + async).
 const SPEC_CAP = 18;
-const TEST_CAP = 102;
+const TEST_CAP = 104;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

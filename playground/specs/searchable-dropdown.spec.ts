@@ -433,6 +433,84 @@ test('SearchMenu multiple: categories expand, group select-all, hidden-by-filter
   await expect(status).toContainText('commits: 1');
 });
 
+test('PickerField multiple: toggle, Escape cancels, Tab commits, typed create', async ({ page }) => {
+  await page.goto('/');
+  const cast = page.getByTestId('picker-cast');
+  await cast.scrollIntoViewIfNeeded();
+  const input = cast.locator('input');
+  const panel = page.locator('#search-menu-panel');
+  const status = page.getByTestId('picker-cast-status');
+  const commits = page.getByTestId('picker-commits');
+
+  await input.click();
+  await expect(panel).toBeVisible();
+  await panel.locator('[data-search-item="3"]').click();
+  await expect(panel.locator('[data-selection-footer]')).toContainText('3 selected');
+  // The field text/draft changes, the COMMITTED value does not until close.
+  await expect(status).toHaveText('cast: 1, 2');
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
+  await expect(status).toHaveText('cast: 1, 2');
+
+  // Tab commits the draft (one change).
+  await input.click();
+  await panel.locator('[data-search-item="3"]').click();
+  await page.keyboard.press('Tab');
+  await expect(panel).toHaveCount(0);
+  await expect(status).toHaveText('cast: 1, 2, 3');
+  await expect(commits).toHaveText('commits: 1');
+
+  // Typed create is a REAL row: append after the trailing comma, then commit.
+  await input.click();
+  const current = await input.inputValue();
+  await input.fill(`${current}NEWBIE`);
+  const create = panel.locator('[data-search-item="NEWBIE"]');
+  await expect(create).toContainText('Add “NEWBIE” to cast…');
+  await create.click();
+  await expect(panel.locator('[data-selection-footer]')).toContainText('4 selected');
+  await page.keyboard.press('Tab');
+  await expect(status).toHaveText('cast: 1, 2, 3, NEWBIE');
+  await expect(commits).toHaveText('commits: 2');
+
+  // Deleting text unchecks its row LIVE (the text IS the value).
+  await input.click();
+  await input.fill('GEORGE, ');
+  await expect(panel.locator('[data-selection-footer]')).toContainText('1 selected');
+  await expect(panel.locator('[data-search-item="2"]')).toHaveAttribute('aria-selected', 'false');
+  await page.keyboard.press('Tab');
+  await expect(status).toHaveText('cast: 1');
+});
+
+test('PickerField: single grouped commit, morph face and async source', async ({ page }) => {
+  await page.goto('/');
+  const panel = page.locator('#search-menu-panel');
+
+  // Single grouped catalogue: plain headers, pick commits + closes.
+  const loc = page.getByTestId('picker-location');
+  await loc.locator('input').click();
+  await expect(panel.locator('[data-search-group]')).toHaveCount(3);
+  await panel.locator('[data-search-item="loc-house"]').click();
+  await expect(panel).toHaveCount(0);
+  await expect(page.getByTestId('picker-location-status')).toHaveText('location: Riverside House');
+
+  // Morph face: button → field, accordion categories, Tab commits.
+  const roles = page.getByTestId('picker-roles');
+  await roles.getByRole('button').first().click();
+  await expect(panel).toBeVisible();
+  await panel.locator('[aria-label="Expand Electric"]').click();
+  await panel.locator('[data-search-item="electric-gaffer"]').click();
+  await page.keyboard.press('Tab');
+  await expect(page.getByTestId('picker-roles-status')).toHaveText('roles: Camera Operator, Gaffer');
+
+  // Async: debounced results, then a normal pick.
+  const tz = page.getByTestId('picker-async');
+  await tz.locator('input').click();
+  await tz.locator('input').fill('tok');
+  await expect(panel.locator('[data-search-item="Asia/Tokyo"]')).toBeVisible({ timeout: 5000 });
+  await panel.locator('[data-search-item="Asia/Tokyo"]').click();
+  await expect(page.getByTestId('picker-async-status')).toHaveText('tz: Asia/Tokyo');
+});
+
 test('MorphSearchField: button morphs into a filter field and keeps the term', async ({ page }) => {
   await page.goto('/');
   const wrap = page.getByTestId('morph-search-field');

@@ -1,11 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
-  Button, DropdownMenu, DropdownItem, SearchMenu, MorphSearchField, MorphActionField, Seg, Checkbox, useInputSize,
+  Button, DropdownMenu, DropdownItem, SearchMenu, PickerField, MorphSearchField, MorphActionField, Seg, Checkbox, useInputSize,
 } from '../../../src/index';
 import type { SearchMenuItem, MorphFieldAction } from '../../../src/index';
 import { Filter, MapPin, Plus, Search } from 'lucide-react';
 import {
   DEEP_CATEGORIES, DEEP_RECORDS, FLAT_ITEMS, LOCATIONS, MORPH_GROUPS, MORPH_ITEMS, MULTI_ROLES, TIMEZONES,
+  PICKER_CAST, PICKER_LOCATIONS, PICKER_LOCATION_GROUPS, PICKER_PROPS, PICKER_PROP_GROUPS, PICKER_ROLE_GROUPS,
 } from '../demoData';
 import { DemoCard } from '../shell/chrome';
 
@@ -301,6 +302,190 @@ function MultipleSearchDemo() {
   );
 }
 
+/* ── PickerField — the value layer (roadmap 322, phase 5) ─────────────────── */
+
+function PickerFieldDemo() {
+  const [castItems, setCastItems] = useState(PICKER_CAST);
+  const [propItems, setPropItems] = useState(PICKER_PROPS);
+  const [cast, setCast] = useState<string[]>(['1', '2']);
+  const [props, setProps] = useState<string[]>(['Mug']);
+  const [wrapProps, setWrapProps] = useState<string[]>(['Desk lamp', 'Family portrait']);
+  const [inlineProp, setInlineProp] = useState<string[]>(['Prop Gun']);
+  const [location, setLocation] = useState<string[]>([]);
+  const [roles, setRoles] = useState<string[]>(['camera-op']);
+  const [asyncTz, setAsyncTz] = useState<string[]>([]);
+  const [display, setDisplay] = useState<'names' | 'chips' | 'count'>('names');
+  const [indicator, setIndicator] = useState<'box' | 'check'>('box');
+  const [commits, setCommits] = useState(0);
+  const bump = () => setCommits(n => n + 1);
+
+  const loadTzs = useCallback(async (query: string) => {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return TIMEZONES
+      .filter(tz => tz.toLowerCase().includes(query.toLowerCase()))
+      .slice(0, 12)
+      .map(tz => ({ id: tz, label: tz }));
+  }, []);
+
+  const locationLabel = PICKER_LOCATIONS.find(l => l.id === location[0])?.label;
+  const roleLabels = roles.map(key => MULTI_ROLES.find(r => r.id === key)?.label || key);
+
+  return (
+    <div className="pg-stack" data-testid="picker-field-demo" style={{ maxWidth: 860 }}>
+      <div className="row" style={{ margin: 0, flexWrap: 'wrap' }}>
+        <span className="label">Display</span>
+        <Seg
+          value={display}
+          options={[{ v: 'names', l: 'Names' }, { v: 'chips', l: 'Chips' }, { v: 'count', l: 'Count' }]}
+          onChange={v => setDisplay(v as 'names' | 'chips' | 'count')}
+          variant="track"
+        />
+        <span className="label">Check</span>
+        <Seg
+          value={indicator}
+          options={[{ v: 'box', l: 'Checkbox' }, { v: 'check', l: 'Check icon' }]}
+          onChange={v => setIndicator(v as 'box' | 'check')}
+          variant="track"
+        />
+        <span className="label" data-testid="picker-commits">commits: {commits}</span>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div data-testid="picker-cast">
+          <span className="label">Cast — ids stored, names shown, badge + anchor, typed create</span>
+          <PickerField
+            appearance="chip"
+            mode="multiple"
+            values={cast}
+            onChange={values => { setCast(values); bump(); }}
+            items={castItems}
+            display={display}
+            indicator={indicator}
+            anchoredKeys={new Set(['2'])}
+            createLabel={q => `Add “${q.trim()}” to cast…`}
+            onCreateItem={value => setCastItems(prev => (
+              prev.some(i => i.id === value || i.label.toLowerCase() === value.toLowerCase())
+                ? prev
+                : [...prev, { id: value, label: value }]
+            ))}
+            placeholder="Add cast…"
+            panelWidth={300}
+          />
+          <span className="label" data-testid="picker-cast-status">cast: {cast.join(', ') || '—'}</span>
+        </div>
+
+        <div data-testid="picker-props">
+          <span className="label">Props — name-keyed, grouped, create from typed</span>
+          <PickerField
+            appearance="chip"
+            mode="multiple"
+            values={props}
+            onChange={values => { setProps(values); bump(); }}
+            items={propItems}
+            groups={PICKER_PROP_GROUPS}
+            resolveBy="label"
+            display={display}
+            indicator={indicator}
+            createLabel={q => `Add “${q.trim()}” prop…`}
+            onCreateItem={value => setPropItems(prev => (
+              prev.some(i => i.label === value) ? prev : [...prev, { id: value, label: value, group: 'Hand props' }]
+            ))}
+            placeholder="Add props…"
+            panelWidth={300}
+          />
+          <span className="label" data-testid="picker-props-status">props: {props.join(', ') || '—'}</span>
+        </div>
+
+        <div data-testid="picker-location">
+          <span className="label">Location — single, id-keyed, accordion categories</span>
+          <PickerField
+            appearance="chip"
+            mode="single"
+            values={location}
+            onChange={values => { setLocation(values); bump(); }}
+            items={PICKER_LOCATIONS}
+            groups={PICKER_LOCATION_GROUPS}
+            browse="open"
+            placeholder="Choose location…"
+            panelWidth={300}
+          />
+          <span className="label" data-testid="picker-location-status">location: {locationLabel || '—'}</span>
+        </div>
+
+        <div data-testid="picker-roles">
+          <span className="label">Crew roles — morph face, grouped, count display</span>
+          <PickerField
+            appearance="morph"
+            mode="multiple"
+            values={roles}
+            onChange={values => { setRoles(values); bump(); }}
+            items={MULTI_ROLES}
+            groups={PICKER_ROLE_GROUPS}
+            browse="accordion"
+            display="count"
+            indicator={indicator}
+            collapsedWidth={150}
+            expandedWidth={280}
+            panelWidth={300}
+            placeholder="Add roles…"
+          />
+          <span className="label" data-testid="picker-roles-status">roles: {roleLabels.join(', ') || '—'}</span>
+        </div>
+
+        <div data-testid="picker-inline" className="rounded border border-zinc-700 px-2 py-1.5">
+          <span className="label">Inline cell — single, name-keyed</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs">Prop</span>
+            <div className="min-w-0 flex-1">
+              <PickerField
+                appearance="inline"
+                mode="single"
+                values={inlineProp}
+                onChange={values => { setInlineProp(values); bump(); }}
+                items={propItems}
+                resolveBy="label"
+                placeholder="Type a prop…"
+                panelWidth={260}
+              />
+            </div>
+          </div>
+          <span className="label" data-testid="picker-inline-status">inline: {inlineProp[0] || '—'}</span>
+        </div>
+
+        <div data-testid="picker-wrap">
+          <span className="label">Wrap — multiple, multi-line cell</span>
+          <PickerField
+            appearance="wrap"
+            mode="multiple"
+            values={wrapProps}
+            onChange={values => { setWrapProps(values); bump(); }}
+            items={propItems}
+            resolveBy="label"
+            placeholder="Type props…"
+            panelWidth={300}
+          />
+          <span className="label" data-testid="picker-wrap-status">wrap: {wrapProps.join(', ') || '—'}</span>
+        </div>
+
+        <div data-testid="picker-async">
+          <span className="label">Async source — debounced typeahead</span>
+          <PickerField
+            appearance="chip"
+            mode="single"
+            values={asyncTz}
+            onChange={values => { setAsyncTz(values); bump(); }}
+            items={[]}
+            loadItems={loadTzs}
+            placeholder="Type to search timezones…"
+            panelWidth={320}
+          />
+          <span className="label" data-testid="picker-async-status">tz: {asyncTz[0] || '—'}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Morph fields ─────────────────────────────────────────────────────────── */
 
 /** Morph-anchor repro: the three app layouts that move the trigger's left
@@ -453,6 +638,13 @@ export function SearchSection() {
         hint="Records toggle and the panel stays open; categories still expand and their check selects the group's visible rows. The footer hero commits; search to see the hidden-by-filter note. Toggle Checkbox / Check icon to compare the row indicator."
       >
         <MultipleSearchDemo />
+      </DemoCard>
+      <DemoCard
+        wide
+        label="PickerField — the value picker"
+        hint="The EntityDropdown replacement: chip / inline / wrap / morph faces; cast ids → names, name-keyed props, grouped locations; typed create; async; names/chips/count triggers. Escape cancels, blur/Tab commits."
+      >
+        <PickerFieldDemo />
       </DemoCard>
       <DemoCard label="Trigger-as-search" hint="The trigger field itself is the search box (combobox); focus stays in the field.">
         <SearchableTriggerDemo />

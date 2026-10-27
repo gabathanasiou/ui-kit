@@ -71,6 +71,51 @@ export const MULTI_ROLES = [
   { id: 'sound-mixer', label: 'Sound Mixer', group: 'Sound' },
 ];
 
+/* ── PickerField fixtures (roadmap 322, phase 5) ─────────────────────────── */
+
+/** Cast is ID-keyed: values are numeric ids, the face is the name. */
+export const PICKER_CAST = [
+  { id: '1', label: 'GEORGE', badge: '12 scenes' },
+  { id: '2', label: 'MARY', badge: '8 scenes' },
+  { id: '3', label: 'CLARENCE', badge: '5 scenes' },
+  { id: '4', label: 'UNCLE BILLY', badge: '3 scenes' },
+];
+
+/** Props are name-keyed (resolveBy="label"), grouped by breakdown category. */
+export const PICKER_PROPS = [
+  { id: 'Mug', label: 'Mug', group: 'Hand props' },
+  { id: 'Prop Gun', label: 'Prop Gun', group: 'Hand props' },
+  { id: 'Thermometer', label: 'Thermometer', group: 'Hand props' },
+  { id: 'Desk lamp', label: 'Desk lamp', group: 'Set dressing' },
+  { id: 'Family portrait', label: 'Family portrait', group: 'Set dressing' },
+];
+
+/** Locations are id-keyed, grouped by location type. */
+export const PICKER_LOCATIONS = [
+  { id: 'loc-house', label: 'Riverside House', group: 'Set', detail: '1 Main St' },
+  { id: 'loc-diner', label: 'Riverside Diner', group: 'Set', detail: '4 Main St' },
+  { id: 'loc-base', label: 'Unit base — Lot 4', group: 'Unit base' },
+  { id: 'loc-hospital', label: 'St. Mary’s Hospital', group: 'Hospital' },
+];
+
+export const PICKER_ROLE_GROUPS = ['Camera', 'Grip', 'Electric', 'Sound'].map(dept => ({
+  key: dept,
+  label: dept,
+  count: MULTI_ROLES.filter(role => role.group === dept).length,
+}));
+
+export const PICKER_PROP_GROUPS = ['Hand props', 'Set dressing'].map(group => ({
+  key: group,
+  label: group,
+  count: PICKER_PROPS.filter(item => item.group === group).length,
+}));
+
+export const PICKER_LOCATION_GROUPS = ['Set', 'Unit base', 'Hospital'].map(group => ({
+  key: group,
+  label: group,
+  count: PICKER_LOCATIONS.filter(item => item.group === group).length,
+}));
+
 /* ── Header tabs (roadmap 258) ────────────────────────────────────────────── */
 
 export const HEADER_TAB_IDS = ['breakdown', 'schedule', 'calendar', 'design', 'rules', 'production', 'reports'] as const;
