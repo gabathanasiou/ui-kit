@@ -100,4 +100,19 @@ describe('buildSearchMenuRows', () => {
     const rows = buildSearchMenuRows({ items, groups, query: 'roy', browseAll: true });
     expect(rows.map(r => r.kind)).toEqual(['group', 'item']);
   });
+
+  it('pinned rows lead the browse state, above the groups', () => {
+    const create: SearchMenuItem = { id: 'NEW', label: 'Add “NEW”', pinned: true };
+    const rows = buildSearchMenuRows({ items: [...items, create], groups, query: '' });
+    expect(rows[0]).toMatchObject({ kind: 'item', hit: { item: { id: 'NEW' } } });
+    expect(rows[1]).toMatchObject({ kind: 'group', group: { key: 'cast' } });
+  });
+
+  it('pinned rows lead the query hits, above the matching groups', () => {
+    const create: SearchMenuItem = { id: 'NEW', label: 'Add “ANNA”', pinned: true, keywords: 'anna' };
+    const rows = buildSearchMenuRows({ items: [...items, create], groups, query: 'anna' });
+    expect(rows.map(r => r.kind)).toEqual(['item', 'group', 'item']);
+    expect(rows[0]).toMatchObject({ kind: 'item', hit: { item: { id: 'NEW' } } });
+    expect(rows[2]).toMatchObject({ kind: 'item', hit: { item: { id: 'anna' } } });
+  });
 });

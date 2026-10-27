@@ -23,6 +23,19 @@ export interface SearchMenuItem {
   fields?: { label: string; value: string }[];
   /** Extra free text to match (keywords). */
   keywords?: string;
+  /** Multi-select: `false` = an action-style row (e.g. create-from-typed) —
+   *  no check affordance and excluded from ⌘A / select-all. Default true. */
+  checkable?: boolean;
+  /** Row tone: `create` renders the emerald add-new face (subtle green
+   *  background + green text) so a create row never reads as a record. */
+  tone?: 'create';
+  /** Pinned rows render FIRST — above the groups, in browse and query states.
+   *  Used by value fields for the "Add …" action row. */
+  pinned?: boolean;
+  /** Optional row chrome (e.g. the amber whole-department tag rows) — the
+   *  content renderer cannot paint the row background. */
+  rowClassName?: string;
+  rowStyle?: React.CSSProperties;
 }
 
 export interface SearchMenuGroup {
@@ -127,9 +140,15 @@ export function buildSearchMenuRows(params: {
   const { hits, visibleGroups, hasQuery } = searchMenuContent(params.items, params.groups, params.query);
   const rows: SearchMenuRow[] = [];
   const query = params.query.trim();
+  const pinned = params.items.filter(item => item.pinned);
+  const rest = params.items.filter(item => !item.pinned);
+  const pinnedHits = hits.filter(hit => hit.item.pinned);
+  const restHits = hits.filter(hit => !hit.item.pinned);
   if (!hasQuery) {
+    /* Pinned rows (the value field's "Add …" action) always lead. */
+    for (const item of pinned) rows.push({ kind: 'item', hit: { item } });
     if (params.browseAll) {
-      for (const item of params.items) rows.push({ kind: 'item', hit: { item } });
+      for (const item of rest) rows.push({ kind: 'item', hit: { item } });
       return rows;
     }
     if (params.browseGroups !== false) {
@@ -137,11 +156,11 @@ export function buildSearchMenuRows(params: {
         rows.push({ kind: 'group', group });
         const expanded = params.expandedGroups?.has(group.key) ?? false;
         if (params.includeGroupItems) {
-          for (const item of params.items) {
+          for (const item of rest) {
             if (item.group === group.key) rows.push({ kind: 'item', hit: { item }, hidden: !expanded });
           }
         } else if (expanded) {
-          for (const item of params.items) {
+          for (const item of rest) {
             if (item.group === group.key) rows.push({ kind: 'item', hit: { item } });
           }
         }
@@ -149,16 +168,18 @@ export function buildSearchMenuRows(params: {
     }
     return rows;
   }
+  /* Pinned matches lead; groups and ungrouped records follow. */
+  for (const hit of pinnedHits) rows.push({ kind: 'item', hit });
   const seen = new Set<string>();
   for (const group of visibleGroups) {
     rows.push({ kind: 'group', group });
     seen.add(group.key);
-    for (const hit of hits) {
+    for (const hit of restHits) {
       if (hit.item.group === group.key) rows.push({ kind: 'item', hit });
     }
   }
   // Records without a group (or a group not in the registry) render last.
-  for (const hit of hits) {
+  for (const hit of restHits) {
     if (!hit.item.group || !seen.has(hit.item.group)) rows.push({ kind: 'item', hit });
   }
   if (rows.length === 0) {

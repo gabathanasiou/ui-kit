@@ -59,6 +59,8 @@ export interface MultipleSelectionProps {
   mode?: 'draft' | 'live';
   /** Live fields: the ordered draft after every toggle / clear / reset. */
   onDraftChange?: (ids: string[]) => void;
+  /** Optional per-toggle observer (a create row can react immediately). */
+  onToggle?: (id: string, selected: boolean) => void;
   /** Footer hero: one call, catalogue order, one undo entry app-side. */
   onCommit: (ids: string[]) => void;
   /** Hero label — receives the draft count (`Add 6 roles`). */

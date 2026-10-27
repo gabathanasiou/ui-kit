@@ -152,6 +152,8 @@ export interface SearchMenuProps {
   hideTrigger?: boolean;
   /** Panel anchor + outside-click containment (defaults to the trigger). */
   anchorRef?: React.RefObject<HTMLElement | null>;
+  /** Portal host for the panel (defaults to the popout target / body). */
+  portalTarget?: HTMLElement | null;
   /** Expandable mode: replace the collapsed trigger button. */
   renderTrigger?: (ctx: { open: boolean; expanded: boolean; toggle: () => void }) => React.ReactNode;
   /** Custom record row content — replaces the default icon/label/detail face.
@@ -203,6 +205,7 @@ export function SearchMenu({
   onOpenChange,
   hideTrigger = false,
   anchorRef,
+  portalTarget: portalTargetProp,
   renderTrigger,
   renderItem: renderItemProp,
   highlightOnOpen = true,
@@ -247,7 +250,7 @@ export function SearchMenu({
   const pendingAnchorRectRef = useRef<{ left: number; top: number; width: number; height: number } | null>(null);
   const anchorRectTimerRef = useRef(0);
   const currentDocument = useCurrentDocument();
-  const portalTarget = usePortalTarget();
+  const popoutPortalTarget = usePortalTarget();
   const d = getDropdownClasses(theme);
   const itemSize = useItemSize();
   const groupSize = useMenuGroupSize();
@@ -349,10 +352,15 @@ export function SearchMenu({
      The accordion still expands categories; record rows toggle. The footer
      hero is the only commit; every other close drops the draft. */
   const multipleActive = !!multiple;
-  const allItemIds = useMemo(() => items.map(item => item.id), [items]);
+  const allItemIds = useMemo(
+    () => items.filter(item => item.checkable !== false).map(item => item.id),
+    [items],
+  );
   const visibleItemIds = useMemo(() => {
     if (!query.trim()) return allItemIds;
-    return searchMenuContent(items, groups, query).hits.map(hit => hit.item.id);
+    return searchMenuContent(items, groups, query).hits
+      .filter(hit => hit.item.checkable !== false)
+      .map(hit => hit.item.id);
   }, [items, groups, query, allItemIds]);
   const visibleIdSet = useMemo(() => new Set(visibleItemIds), [visibleItemIds]);
   const selection = useSelection({
@@ -365,6 +373,7 @@ export function SearchMenu({
     indicator: multiple?.indicator,
     onCommit: multiple?.onCommit,
     onDraftChange: multiple?.onDraftChange,
+    onToggle: multiple?.onToggle,
   });
   const resetSelectionRef = useRef(selection.reset);
   resetSelectionRef.current = selection.reset;
@@ -758,6 +767,13 @@ export function SearchMenu({
     /* At `max`, unchecked rows are disabled (checked rows stay clickable to
        uncheck) — the shared selection contract. */
     const rowDisabled = !!row.hit.item.disabled || (multipleActive && !selection.canToggle(row.hit.item.id));
+    /* Create rows wear the emerald add-new face (inline styles so the row's
+       hover/highlight tokens cannot paint over them). */
+    const toneStyle = row.hit.item.tone === 'create'
+      ? (theme === 'light'
+        ? { background: active ? '#d1fae5' : '#ecfdf5', color: active ? '#065f46' : '#047857' }
+        : { background: active ? 'rgba(6, 95, 70, 0.7)' : 'rgba(6, 78, 59, 0.4)', color: active ? '#d1fae5' : '#6ee7b7' })
+      : undefined;
     return (
       <button
         key={`item:${row.hit.item.id}`}
@@ -767,13 +783,16 @@ export function SearchMenu({
         tabIndex={-1}
         data-search-item={row.hit.item.id}
         data-search-row={rowIndex}
+        data-search-create={row.hit.item.tone === 'create' ? '' : undefined}
         onMouseDown={e => e.preventDefault()}
         onMouseEnter={() => setHighlighted(rowIndex, 'pointer')}
         onClick={() => activate(row)}
-        style={itemSize}
-        className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${singleSelected ? 'ui-item-selected' : ''} ${active ? 'ui-item-highlighted' : ''} ${rowDisabled ? 'opacity-30 pointer-events-none' : ''}`}
+        style={{ ...itemSize, ...row.hit.item.rowStyle, ...toneStyle }}
+        className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${row.hit.item.rowClassName ?? ''} ${singleSelected ? 'ui-item-selected' : ''} ${active ? 'ui-item-highlighted' : ''} ${rowDisabled ? 'opacity-30 pointer-events-none' : ''}`}
       >
-        {multipleActive && <SelectionCheck checked={checked} disabled={rowDisabled} indicator={multiple?.indicator} />}
+        {multipleActive && row.hit.item.checkable !== false && (
+          <SelectionCheck checked={checked} disabled={rowDisabled} indicator={multiple?.indicator} />
+        )}
         {renderItemProp ? (
           <span className="flex min-w-0 flex-1 items-center gap-2">
             {renderItemProp(row.hit.item, { checked, disabled: rowDisabled })}
@@ -800,7 +819,7 @@ export function SearchMenu({
     /* Multi-select: the group's VISIBLE rows drive the select-all + x/y
        readout. Categories still expand — the check is the only new action. */
     const groupItems = multipleActive
-      ? items.filter(item => item.group === row.group.key && visibleIdSet.has(item.id))
+      ? items.filter(item => item.group === row.group.key && visibleIdSet.has(item.id) && item.checkable !== false)
       : [];
     const groupSelectable = groupItems.filter(item => !selection.isDisabled(item.id)).map(item => item.id);
     const groupChecked = groupSelectable.length > 0 ? selection.groupState(groupSelectable) : 'none';
@@ -1050,7 +1069,7 @@ export function SearchMenu({
         />
       )}
     </div>,
-    portalTarget ?? currentDocument?.body ?? document.body,
+    portalTargetProp ?? popoutPortalTarget ?? currentDocument?.body ?? document.body,
   ) : null;
 
   if (hideTrigger) {
