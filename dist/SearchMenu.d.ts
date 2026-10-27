@@ -95,6 +95,9 @@ export interface SearchMenuProps {
     /** Never render narrower than this (px) — cell editors and chips whose
      *  anchor is a thin box still need a readable panel. */
     panelMinWidth?: number;
+    /** Keep every row rendered while a query is typed; the query only moves the
+     *  highlight (old I/E + D/N autocomplete). */
+    keepAllRows?: boolean;
     maxMenuHeight?: number;
     theme?: DropdownTheme;
     /** Panel morph (default true). */
@@ -155,5 +158,5 @@ export interface SearchMenuProps {
     /** Imperative panel controls for a caller that owns the field. */
     ref?: React.Ref<SearchMenuHandle>;
 }
-export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, browseAll, selectedId, autoFocus, collapsedWidth, expandedWidth, panelWidth, panelMinWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, leadingActions, hideLeadingOnEmpty, footerActions, fieldActions, multiple, open: controlledOpen, onOpenChange, hideTrigger, anchorRef, portalTarget: portalTargetProp, renderTrigger, renderItem: renderItemProp, highlightOnOpen, ref, }: SearchMenuProps): React.JSX.Element;
+export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, browseAll, selectedId, autoFocus, collapsedWidth, expandedWidth, panelWidth, panelMinWidth, keepAllRows, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, leadingActions, hideLeadingOnEmpty, footerActions, fieldActions, multiple, open: controlledOpen, onOpenChange, hideTrigger, anchorRef, portalTarget: portalTargetProp, renderTrigger, renderItem: renderItemProp, highlightOnOpen, ref, }: SearchMenuProps): React.JSX.Element;
 export default SearchMenu;

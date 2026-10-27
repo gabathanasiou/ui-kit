@@ -103,6 +103,11 @@ export interface PickerFieldProps {
   /** Never render the panel narrower than this (px) — cell editors anchor to
    *  a thin box but still need a readable list. */
   panelMinWidth?: number;
+  /** Keep the FULL catalogue rendered while typing (the query only moves the
+   *  highlight). The old I/E + D/N autocompletes worked this way: every option
+   *  stays visible so a single letter lights its match without hiding the
+   *  rest. */
+  keepAllRows?: boolean;
   maxMenuHeight?: number;
   /** Portal host for the panel (Glide cells / modal hosts). */
   portalTarget?: HTMLElement | null;
@@ -166,6 +171,7 @@ export function PickerField({
   style,
   panelWidth,
   panelMinWidth,
+  keepAllRows = false,
   maxMenuHeight,
   portalTarget,
   autoGrow = false,
@@ -621,6 +627,7 @@ export function PickerField({
       theme={theme}
       panelWidth={panelWidth}
       panelMinWidth={panelMinWidth}
+      keepAllRows={keepAllRows}
       maxMenuHeight={maxMenuHeight}
       portalTarget={portalTarget}
     />

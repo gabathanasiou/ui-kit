@@ -118,6 +118,9 @@ export interface SearchMenuProps {
   /** Never render narrower than this (px) — cell editors and chips whose
    *  anchor is a thin box still need a readable panel. */
   panelMinWidth?: number;
+  /** Keep every row rendered while a query is typed; the query only moves the
+   *  highlight (old I/E + D/N autocomplete). */
+  keepAllRows?: boolean;
   maxMenuHeight?: number;
   theme?: DropdownTheme;
   /** Panel morph (default true). */
@@ -193,6 +196,7 @@ export function SearchMenu({
   expandedWidth = 288,
   panelWidth,
   panelMinWidth,
+  keepAllRows = false,
   maxMenuHeight = 420,
   theme = 'light',
   morph = true,
@@ -266,8 +270,7 @@ export function SearchMenu({
   const fieldActionCount = (fieldActions?.length || 0) + (query ? 1 : 0);
   const fieldRightPad = 8 + fieldActionCount * (iconBtn.box + 2);
 
-  const [pos, setPos] = useState({ top: 0, left: 0, maxH: 288, ready: false });
-  const [anchorWidth, setAnchorWidth] = useState(0);
+  const [pos, setPos] = useState({ top: 0, left: 0, maxH: 288, ready: false });  const [anchorWidth, setAnchorWidth] = useState(0);
   useDropdownPosition({
     anchorRef: anchorRef ?? rootRef,
     panelRef,
@@ -296,14 +299,16 @@ export function SearchMenu({
     () => buildSearchMenuRows({
       items,
       groups,
-      query,
+      /* show-all mode: the query only moves the highlight, every option stays
+         in the list (the old I/E + D/N autocomplete contract). */
+      query: keepAllRows ? '' : query,
       browseGroups: openOnFocus || browseExpanded || expandableGroups,
       browseAll,
       expandedGroups,
       emptyActionLabels,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items, groups, query, openOnFocus, browseExpanded, expandableGroups, browseAll, expandedGroups, emptyActionLabels.join('\u0000')],
+    [items, groups, query, keepAllRows, openOnFocus, browseExpanded, expandableGroups, browseAll, expandedGroups, emptyActionLabels.join('\u0000')],
   );
 
   const leadingRows = useMemo<Extract<SearchMenuRow, { kind: 'action' }>[]>(
@@ -674,6 +679,22 @@ export function SearchMenu({
   // (EntityDropdown's contract). A SINGLE-value field lights its first match,
   // so typing a prefix + Enter/Tab completes to the option ("i" → INT).
   useEffect(() => {
+    if (keepAllRows) {
+      /* Show-all option lists: the list never filters — the typed prefix just
+         lights its first match (and the highlight effect scrolls it in). */
+      const typed = query.trim().toLowerCase();
+      if (!typed) {
+        const sel = selectedId
+          ? rows.findIndex(row => row.kind === 'item' && row.hit.item.id === selectedId)
+          : -1;
+        setHighlighted(sel >= 0 ? leadingOffset + sel : -1);
+        return;
+      }
+      const index = rows.findIndex(row =>
+        row.kind === 'item' && row.hit.item.label.toLowerCase().includes(typed));
+      setHighlighted(index >= 0 ? leadingOffset + index : -1);
+      return;
+    }
     if (isOpenControlled) {
       const typed = query.trim().toLowerCase();
       const exact = !!typed && items.some(item =>
