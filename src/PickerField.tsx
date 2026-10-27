@@ -425,6 +425,23 @@ export function PickerField({
     onEscape?.();
   }, [values, editingText, onEscape]);
 
+  /* Escape closes ONLY this picker — never the enclosing modal/dialog. The
+     listener runs at DOCUMENT capture and stops the event there (the app's
+     own dropdowns do the same via useEscapeCapture), so the dialog's Escape
+     handler never sees it. */
+  useEffect(() => {
+    if (!open) return;
+    const doc = rootRef.current?.ownerDocument ?? document;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      cancel();
+    };
+    doc.addEventListener('keydown', onKey, true);
+    return () => doc.removeEventListener('keydown', onKey, true);
+  }, [open, cancel]);
+
   const onDraftChange = useCallback((keys: string[]) => {
     /* Keep the field text in catalogue order (unknown/create values last) so
        editing and the committed value read the same. */
