@@ -12,6 +12,12 @@ import { useKitTheme, buttonCloudOf } from './ThemeScope';
  *  - `subtle`      — quiet toolbar button (menu triggers, secondary actions)
  *  - `primary`     — solid call-to-action (Save, Add, Print); light theme
  *                    supports cloud-project coloring via the `cloud` prop
+ *  - `outline`     — the quiet button WITH a visible outline: same box and
+ *                    text weight as `subtle`, a 1px border painted as an inset
+ *                    shadow (so it never changes the button's size), and the
+ *                    same hover fill. Use it for a secondary action that must
+ *                    read as a button at rest (empty states, side-by-side
+ *                    choices, file dialogs).
  *  - `danger-ghost` — destructive action in text+ghost form
  *  - `tab`         — the mini-tab recipe (PageToolbar sub-tabs): solid dark
  *                    pill when `active`, quiet hover otherwise
@@ -36,7 +42,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   /** React 19 ref-as-prop: the ref lands on the underlying `<button>` (tab
    *  rows measure their buttons for the sliding pill). */
   ref?: React.Ref<HTMLButtonElement>;
-  variant?: 'subtle' | 'primary' | 'danger-ghost' | 'tab' | 'tab-header';
+  variant?: 'subtle' | 'primary' | 'outline' | 'danger-ghost' | 'tab' | 'tab-header';
   theme?: 'light' | 'dark';
   /** Colored project-chrome accent: `true` = blue (Drive/cloud projects),
    *  `'emerald'` = the shared/collaborative green. Affects the light
@@ -164,16 +170,27 @@ export default function Button({
     },
   };
 
-  type BaseVariant = 'subtle' | 'primary' | 'danger-ghost';
+  type BaseVariant = 'subtle' | 'primary' | 'outline' | 'danger-ghost';
   const VARIANTS: Record<'light' | 'dark', Record<BaseVariant, { base: string; open: string }>> = {
     light: {
       subtle: { base: `${PAD} text-zinc-600 hover:bg-[var(--ui-btn-hover-bg)]`, open: 'bg-[var(--ui-btn-hover-bg)]! text-zinc-900' },
       primary: { base: `${PAD_PRIMARY} bg-zinc-900 hover:bg-zinc-800 text-white`, open: 'bg-zinc-800!' },
+      /* The outline is painted as an INSET SHADOW, not a border: the button
+         keeps `subtle`'s exact box (same padding + height), so the two can sit
+         side by side in a toolbar without a 2px step. */
+      outline: {
+        base: `${PAD} text-zinc-700 shadow-[inset_0_0_0_1px_var(--ui-border-strong)] hover:bg-[var(--ui-btn-hover-bg)] hover:text-zinc-900`,
+        open: 'bg-[var(--ui-btn-hover-bg)]! text-zinc-900',
+      },
       'danger-ghost': { base: `${PAD} text-rose-600 hover:bg-rose-50`, open: 'bg-rose-50!' },
     },
     dark: {
       subtle: { base: `${PAD} text-zinc-400 hover:text-zinc-200 hover:bg-[var(--ui-btn-hover-bg)]`, open: 'bg-[var(--ui-btn-hover-bg)]! text-zinc-200' },
       primary: { base: `${PAD_PRIMARY} bg-zinc-800 hover:bg-zinc-700 text-white`, open: 'bg-zinc-700!' },
+      outline: {
+        base: `${PAD} text-zinc-300 shadow-[inset_0_0_0_1px_var(--ui-border-strong)] hover:bg-[var(--ui-btn-hover-bg)] hover:text-zinc-100`,
+        open: 'bg-[var(--ui-btn-hover-bg)]! text-zinc-100',
+      },
       'danger-ghost': { base: `${PAD} text-red-400 hover:bg-rose-950/40`, open: 'bg-rose-950/40!' },
     },
   };
