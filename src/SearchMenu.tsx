@@ -315,10 +315,15 @@ export function SearchMenu({
   const openPanel = useCallback(() => {
     setExpanded(true);
     setOpen(true);
-    // Start on the first list row, not the pinned New action — Enter on an
-    // untouched picker must never create a record by accident.
-    setHighlighted(leadingOffset);
-  }, [leadingOffset]);
+    // A picker that holds a value starts ON it (the keyboard must not jump
+    // back to the top while the panel is scrolled to the current record);
+    // otherwise start on the first list row, not the pinned New action —
+    // Enter on an untouched picker must never create a record by accident.
+    const current = selectedId
+      ? rows.findIndex(row => row.kind === 'item' && row.hit.item.id === selectedId)
+      : -1;
+    setHighlighted(current >= 0 ? current : leadingOffset);
+  }, [leadingOffset, rows, selectedId]);
 
   // Expandable: focus the field once it mounts.
   useEffect(() => {
@@ -527,20 +532,25 @@ export function SearchMenu({
 
   /** Current-value anchor: opening a picker lands on the value it holds
    *  (a long catalogue would otherwise start at the top and hide it). Runs on
-   *  OPEN only — a select already closes the panel, and scrolling while it
-   *  animates out reads as "it didn't take". */
-  const openRaised = useRef(false);
+   *  the OPEN edge only — a select closes the panel, and scrolling while it
+   *  animates out reads as "it didn't take". Refs keep the scheduled scroll
+   *  alive across the re-renders that follow opening (deps stay stable). */
+  const rowsRef = useRef(rows);
+  rowsRef.current = rows;
+  const selectedIdRef = useRef(selectedId);
+  selectedIdRef.current = selectedId;
+  const anchorDoneRef = useRef(false);
   useEffect(() => {
-    if (!open) { openRaised.current = false; return; }
-    if (openRaised.current) return;
-    openRaised.current = true;
-    if (!selectedId) return;
-    const raf = requestAnimationFrame(() => {
-      const index = rows.findIndex(row => row.kind === 'item' && row.hit.item.id === selectedId);
+    if (!open) { anchorDoneRef.current = false; return; }
+    if (anchorDoneRef.current) return;
+    anchorDoneRef.current = true;
+    if (!selectedIdRef.current) return;
+    requestAnimationFrame(() => {
+      if (!open) return;
+      const index = rowsRef.current.findIndex(row => row.kind === 'item' && row.hit.item.id === selectedIdRef.current);
       if (index >= 0) scrollRowIntoView(index, 'center');
     });
-    return () => cancelAnimationFrame(raf);
-  }, [open, selectedId, rows, scrollRowIntoView]);
+  }, [open, scrollRowIntoView]);
 
   const renderItemRow = (row: Extract<SearchMenuRow, { kind: 'item' }>, rowIndex: number) => {
     const active = highlighted === rowIndex;
