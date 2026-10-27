@@ -114,6 +114,7 @@
   --ui-check-border: #52525b;
   --ui-check-hover-border: #71717a;
   --ui-check-accent: #3b82f6;
+  --ui-check-ring: var(--ui-check-accent);
   --ui-check-check: #ffffff;
   --ui-check-pill-bg: rgba(39, 39, 42, 0.5);
   --ui-check-pill-hover-bg: rgba(39, 39, 42, 0.75);
@@ -271,6 +272,7 @@
   --ui-check-border: #a1a1aa;
   --ui-check-hover-border: #71717a;
   --ui-check-accent: #2563eb;
+  --ui-check-ring: var(--ui-check-accent);
   --ui-check-check: #ffffff;
   --ui-check-pill-bg: rgba(0, 0, 0, 0.04);
   --ui-check-pill-hover-bg: rgba(0, 0, 0, 0.08);
@@ -378,6 +380,7 @@
   --ui-check-border: rgba(255, 255, 255, 0.35);
   --ui-check-hover-border: rgba(255, 255, 255, 0.5);
   --ui-check-accent: #3b82f6;
+  --ui-check-ring: var(--ui-check-accent);
   --ui-check-check: #ffffff;
   --ui-check-pill-bg: rgba(255, 255, 255, 0.08);
   --ui-check-pill-hover-bg: rgba(255, 255, 255, 0.14);
@@ -453,6 +456,7 @@
   --ui-check-border: rgba(255, 255, 255, 0.35);
   --ui-check-hover-border: rgba(255, 255, 255, 0.5);
   --ui-check-accent: #10b981;
+  --ui-check-ring: var(--ui-check-accent);
   --ui-check-check: #ffffff;
   --ui-check-pill-bg: rgba(255, 255, 255, 0.08);
   --ui-check-pill-hover-bg: rgba(255, 255, 255, 0.14);
@@ -551,6 +555,7 @@
   --ui-check-row-hover-bg: var(--ui-accent-hover-bg);
   --ui-check-row-selected-hover-bg: var(--ui-accent-selected-hover-bg);
   --ui-check-accent: var(--ui-accent-check-bg);
+  --ui-check-ring: var(--ui-accent-check-bg);
   --ui-check-check: var(--ui-accent-check-mark);
   --ui-check-pill-hover-bg: var(--ui-accent-hover-bg);
   --ui-icon-btn-active-hover-bg: var(--ui-accent-hover-bg);
@@ -614,8 +619,9 @@
 }
 
 [data-accent="zinc"][data-mode="dark"] {
-  --ui-accent-check-bg: #e4e4e7;
-  --ui-accent-check-mark: #18181b;
+  --ui-accent-check-bg: #000000;
+  --ui-accent-check-mark: #ffffff;
+  --ui-check-ring: #ffffff;
   --ui-accent-soft-text: #d4d4d8;
 }
 
@@ -1163,7 +1169,7 @@
 
 .ui-checkbox input:checked + .ui-checkbox-box {
   background: var(--ui-check-accent);
-  border-color: var(--ui-check-accent);
+  border-color: var(--ui-check-ring, var(--ui-check-accent));
 }
 
 .ui-checkbox:hover .ui-checkbox-box {
@@ -1536,7 +1542,8 @@
 }
 
 .ui-checklist-item-checked .ui-radio-circle {
-  border-color: var(--ui-check-accent);
+  border-color: var(--ui-check-ring, var(--ui-check-accent));
+  border-width: 1px;
   background: var(--ui-check-accent);
 }
 

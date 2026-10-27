@@ -1,5 +1,6 @@
 import React from 'react';
 import { type DropdownTheme } from './DropdownMenu';
+import type { MorphFieldAction } from './morphFieldTypes';
 import { type SearchMenuGroup, type SearchMenuItem } from './searchMenuModel';
 /**
  * SearchMenu — the shared "deep search" surface (roadmap 172, ui-kit).
@@ -101,6 +102,11 @@ export interface SearchMenuProps {
     /** Standing actions pinned below the list (always visible — e.g. a
      *  persistent "Add …" or management action); receives the current query. */
     footerActions?: SearchMenuEmptyAction[];
+    /** Icon actions INSIDE the expanded text field, right edge (e.g. a plus that
+     *  creates from the typed query). They receive the query + `{ close }`;
+     *  panel actions (`emptyActions`/`leadingActions`/`footerActions`) stay
+     *  separate. */
+    fieldActions?: MorphFieldAction[];
 }
-export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, browseAll, selectedId, autoFocus, collapsedWidth, expandedWidth, panelWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, leadingActions, hideLeadingOnEmpty, footerActions, }: SearchMenuProps): React.JSX.Element;
+export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, browseAll, selectedId, autoFocus, collapsedWidth, expandedWidth, panelWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, leadingActions, hideLeadingOnEmpty, footerActions, fieldActions, }: SearchMenuProps): React.JSX.Element;
 export default SearchMenu;

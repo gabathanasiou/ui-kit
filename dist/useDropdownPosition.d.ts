@@ -39,6 +39,16 @@ export interface UseDropdownPositionOptions {
      *  not the scroller (DropdownPanel wraps one). Natural height is measured
      *  from here. Defaults to the panel. */
     contentRef?: RefObject<HTMLElement | null>;
+    /** A one-shot anchor rectangle override (left/top/width/height). SearchMenu
+     *  measures its FINAL expanded box before the width morph starts and keeps
+     *  this set for the morph duration; the panel then sits at the destination
+     *  while the trigger animates. Null/absent = use the live anchor rect. */
+    anchorRectRef?: RefObject<{
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+    } | null>;
     /** Distance between the anchor and the panel. Default 4. */
     gap?: number;
     /** Viewport padding kept clear around the panel. Default 8. */
@@ -52,4 +62,4 @@ export interface UseDropdownPositionOptions {
     onPosition: (pos: DropdownPanelPos) => void;
 }
 export declare const DROPDOWN_MAX_HEIGHT = 384;
-export declare function useDropdownPosition({ anchorRef, panelRef, open, contentRef, gap, padding, maxHeight, minHeight, onPosition, }: UseDropdownPositionOptions): void;
+export declare function useDropdownPosition({ anchorRef, panelRef, open, contentRef, anchorRectRef, gap, padding, maxHeight, minHeight, onPosition, }: UseDropdownPositionOptions): void;

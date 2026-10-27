@@ -1,4 +1,6 @@
 import React from 'react';
+import type { MorphFieldAction } from './morphFieldTypes';
+export type { MorphFieldAction } from './morphFieldTypes';
 /**
  * MorphSearchField — a toolbar search/filter trigger that MORPHS into a text
  * field (search menu, roadmap 172). The collapsed state is a kit Button; on
@@ -11,15 +13,16 @@ import React from 'react';
  * clears and collapses; clicking away / tabbing out collapses but keeps the
  * term; the clear button empties the field without collapsing.
  *
- * For a record SEARCH with a results panel use `SearchMenu` instead.
+ * The `actions` prop / `MorphActionField` wrapper turn the field into an inline
+ * CREATE surface: action buttons live inside the right edge. The shared
+ * `MorphFieldShell` owns the button→field cross-fade; no third copy.
  */
 export interface MorphSearchFieldProps {
     value: string;
     onChange: (value: string) => void;
     /** Collapsed button label. Default: "Filter". */
     triggerLabel?: string;
-    /** Trigger + field leading icon (default: a magnifier). Pass a funnel while
-     *  a filter is applied so the collapsed control says WHAT is filtered. */
+    /** Trigger leading icon (default: a magnifier). */
     triggerIcon?: React.ReactNode;
     placeholder?: string;
     /** Collapsed button width in px. Default 88. */
@@ -34,8 +37,23 @@ export interface MorphSearchFieldProps {
     autoFocus?: boolean;
     /** Notified when the field expands/collapses (never on value changes). */
     onExpandedChange?: (expanded: boolean) => void;
+    /** Action buttons inside the field's right edge. */
+    actions?: MorphFieldAction[];
+    /** Leading icon inside the expanded field. Defaults to `triggerIcon`; pass
+     *  `null` for a plain text box. */
+    leadingIcon?: React.ReactNode | null;
+    /** Show the filter clear button (default true). */
+    showClear?: boolean;
+    /** Enter submits the draft and collapses. */
+    onSubmit?: (value: string) => void;
+    /** Cancel handler for Escape / outside click when those cancel. */
+    onCancel?: () => void;
+    /** Escape cancels (instead of the filter default: clear). */
+    cancelOnEscape?: boolean;
+    /** Outside click cancels (instead of collapsing and keeping the value). */
+    cancelOnOutside?: boolean;
     className?: string;
     "aria-label"?: string;
 }
-export declare function MorphSearchField({ value, onChange, triggerLabel, triggerIcon, placeholder, collapsedWidth, expandedWidth, variant, theme, active, autoFocus, onExpandedChange, className, 'aria-label': ariaLabel, }: MorphSearchFieldProps): React.JSX.Element;
+export declare function MorphSearchField({ value, onChange, triggerLabel, triggerIcon, placeholder, collapsedWidth, expandedWidth, variant, theme, active, autoFocus, onExpandedChange, actions, leadingIcon, showClear, onSubmit, onCancel, cancelOnEscape, cancelOnOutside, className, 'aria-label': ariaLabel, }: MorphSearchFieldProps): React.JSX.Element;
 export default MorphSearchField;

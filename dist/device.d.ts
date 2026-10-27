@@ -26,6 +26,12 @@ export declare function useCoarseSize(desktop: {
     padding: string;
     fontSize: string;
 };
+/** The small icon-button recipe used inside fields/menus (clear, submit,
+ *  chevrons): a square hit target + the glyph size, coarse-interpolated. */
+export declare function useIconButtonSize(): {
+    box: number;
+    icon: number;
+};
 /** Apple Pencil events report pointerType 'pen' but must behave exactly like a finger. */
 export declare function isTouchLike(pointerType?: string | null): boolean;
 export declare function getLastPointerType(): string | null;
