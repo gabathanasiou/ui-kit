@@ -94,6 +94,9 @@ export interface SearchMenuProps {
   /** Standing actions pinned above the list (always visible — e.g.
    *  "New location…"); the callback receives the current query. */
   leadingActions?: SearchMenuEmptyAction[];
+  /** Hide the leading actions in the no-results state, where `emptyActions`
+   *  already offer the query-aware create path (avoids two "add" rows). */
+  hideLeadingOnEmpty?: boolean;
   /** Standing actions pinned below the list (always visible — e.g. a
    *  persistent "Add …" or management action); receives the current query. */
   footerActions?: SearchMenuEmptyAction[];
@@ -128,6 +131,7 @@ export function SearchMenu({
   renderEmpty,
   emptyActions,
   leadingActions,
+  hideLeadingOnEmpty = false,
   footerActions,
 }: SearchMenuProps) {
   const isControlled = controlledQuery !== undefined;
@@ -210,8 +214,15 @@ export function SearchMenu({
     [footerActions, query],
   );
   /** Everything the keyboard can reach: the pinned leading actions, the list
-   *  rows, then the pinned footer actions. */
-  const allRows = useMemo(() => [...leadingRows, ...rows, ...footerRows], [leadingRows, rows, footerRows]);
+   *  rows, then the pinned footer actions. Leading actions drop out in the
+   *  no-results state when `hideLeadingOnEmpty` is set. */
+  const isEmptyState = rows.some(row => row.kind === 'empty');
+  const showLeading = leadingRows.length > 0 && !(hideLeadingOnEmpty && isEmptyState);
+  const leadingOffset = showLeading ? leadingRows.length : 0;
+  const allRows = useMemo(
+    () => [...(showLeading ? leadingRows : []), ...rows, ...footerRows],
+    [showLeading, leadingRows, rows, footerRows],
+  );
 
   // A category is only actionable when clicking it does something: a real
   // `onSelectGroup`, or the accordion browse state. During a query — and in
@@ -280,8 +291,8 @@ export function SearchMenu({
     setOpen(true);
     // Start on the first list row, not the pinned New action — Enter on an
     // untouched picker must never create a record by accident.
-    setHighlighted(leadingRows.length);
-  }, [leadingRows.length]);
+    setHighlighted(leadingOffset);
+  }, [leadingOffset]);
 
   // Expandable: focus the field once it mounts.
   useEffect(() => {
@@ -390,7 +401,7 @@ export function SearchMenu({
   // is a jump target, not the default Enter action).
   useEffect(() => {
     const firstItem = rows.findIndex(row => row.kind === 'item');
-    setHighlighted(firstItem >= 0 ? leadingRows.length + firstItem : leadingRows.length);
+    setHighlighted(firstItem >= 0 ? leadingOffset + firstItem : leadingOffset);
     // Only a QUERY change resets the highlight; expanding a group must keep
     // the group row lit so Right-Right can collapse it again.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -629,7 +640,7 @@ export function SearchMenu({
         visibility: pos.ready ? 'visible' : 'hidden',
       }}
     >
-      {leadingRows.length > 0 && (
+      {showLeading && (
         <div className="shrink-0 pb-1">
           {leadingRows.map((row, index) => renderActionRow(row, index))}
           {rows.length > 0 && <div className={d.separator} />}
@@ -647,7 +658,7 @@ export function SearchMenu({
             const items = block.items || [];
             return (
               <React.Fragment key={`group:${block.group.group.key}`}>
-                {renderGroupRow(block.group, leadingRows.length + (block.index as number))}
+                {renderGroupRow(block.group, leadingOffset + (block.index as number))}
                 {browseTree && (
                   <div
                     data-search-group-items={block.group.group.key}
@@ -661,16 +672,16 @@ export function SearchMenu({
                     }}
                   >
                     <div className="overflow-hidden flex flex-col">
-                      {items.map(item => renderItemRow(item.row, leadingRows.length + item.index))}
+                      {items.map(item => renderItemRow(item.row, leadingOffset + item.index))}
                     </div>
                   </div>
                 )}
-                {!browseTree && items.map(item => renderItemRow(item.row, leadingRows.length + item.index))}
+                {!browseTree && items.map(item => renderItemRow(item.row, leadingOffset + item.index))}
               </React.Fragment>
             );
           }
           const row = block.row as SearchMenuRow;
-          const rowIndex = leadingRows.length + (block.index as number);
+          const rowIndex = leadingOffset + (block.index as number);
           if (row.kind === 'empty') return renderEmptyRow();
           if (row.kind === 'action') return renderActionRow(row, rowIndex);
           if (row.kind === 'item') return renderItemRow(row, rowIndex);
@@ -680,7 +691,7 @@ export function SearchMenu({
       {footerRows.length > 0 && (
         <div className="shrink-0">
           <div className={d.separator} />
-          {footerRows.map((row, index) => renderActionRow(row, leadingRows.length + rows.length + index))}
+          {footerRows.map((row, index) => renderActionRow(row, leadingOffset + rows.length + index))}
         </div>
       )}
     </div>,
