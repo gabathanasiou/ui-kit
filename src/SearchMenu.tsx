@@ -177,6 +177,11 @@ export function SearchMenu({
   const inputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  /** Final anchor rectangle measured BEFORE the width morph starts. The
+   *  positioner uses it for the first frames so the panel is already at its
+   *  destination while the button is still growing into the field. */
+  const pendingAnchorRectRef = useRef<{ left: number; top: number; width: number; height: number } | null>(null);
+  const anchorRectTimerRef = useRef(0);
   const currentDocument = useCurrentDocument();
   const portalTarget = usePortalTarget();
   const d = getDropdownClasses(theme);
@@ -190,6 +195,7 @@ export function SearchMenu({
     panelRef,
     open,
     maxHeight: maxMenuHeight,
+    anchorRectRef: pendingAnchorRectRef,
     onPosition: next => setPos({ top: next.top, left: next.left, maxH: next.maxH, ready: next.ready }),
   });
   useEffect(() => {
@@ -313,6 +319,29 @@ export function SearchMenu({
   }, [groupExpandMode]);
 
   const openPanel = useCallback(() => {
+    // Preserve the button→field width morph, but give the positioner the
+    // FINAL rectangle now: a throwaway width flip (no transition) measures the
+    // expanded layout before paint, then the normal transition runs. The panel
+    // snaps to the destination while the trigger animates; it never follows
+    // the moving left edge.
+    if (mode === 'expandable' && !expanded) {
+      const el = rootRef.current;
+      if (el) {
+        const prevTransition = el.style.transition;
+        const prevWidth = el.style.width;
+        el.style.transition = 'none';
+        el.style.width = `${expandedWidth}px`;
+        const r = el.getBoundingClientRect();
+        pendingAnchorRectRef.current = { left: r.left, top: r.top, width: r.width, height: r.height };
+        el.style.width = prevWidth;
+        void el.offsetWidth;
+        el.style.transition = prevTransition;
+        window.clearTimeout(anchorRectTimerRef.current);
+        anchorRectTimerRef.current = window.setTimeout(() => {
+          pendingAnchorRectRef.current = null;
+        }, MORPH_MS + 80);
+      }
+    }
     setExpanded(true);
     setOpen(true);
     // A picker that holds a value starts ON it (the keyboard must not jump
@@ -322,8 +351,13 @@ export function SearchMenu({
     const current = selectedId
       ? rows.findIndex(row => row.kind === 'item' && row.hit.item.id === selectedId)
       : -1;
-    setHighlighted(current >= 0 ? current : leadingOffset);
-  }, [leadingOffset, rows, selectedId]);
+    setHighlighted(current >= 0 ? leadingOffset + current : leadingOffset);
+  }, [mode, expanded, expandedWidth, leadingOffset, rows, selectedId]);
+
+  useEffect(() => () => {
+    window.clearTimeout(anchorRectTimerRef.current);
+    pendingAnchorRectRef.current = null;
+  }, []);
 
   // Expandable: focus the field once it mounts.
   useEffect(() => {

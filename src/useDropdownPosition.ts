@@ -45,6 +45,11 @@ export interface UseDropdownPositionOptions {
    *  not the scroller (DropdownPanel wraps one). Natural height is measured
    *  from here. Defaults to the panel. */
   contentRef?: RefObject<HTMLElement | null>;
+  /** A one-shot anchor rectangle override (left/top/width/height). SearchMenu
+   *  measures its FINAL expanded box before the width morph starts and keeps
+   *  this set for the morph duration; the panel then sits at the destination
+   *  while the trigger animates. Null/absent = use the live anchor rect. */
+  anchorRectRef?: RefObject<{ left: number; top: number; width: number; height: number } | null>;
   /** Distance between the anchor and the panel. Default 4. */
   gap?: number;
   /** Viewport padding kept clear around the panel. Default 8. */
@@ -72,6 +77,7 @@ export function useDropdownPosition({
   panelRef,
   open,
   contentRef,
+  anchorRectRef,
   gap = 4,
   padding = 8,
   maxHeight,
@@ -116,7 +122,23 @@ export function useDropdownPosition({
       panel.style.maxHeight = `${needed}px`;
 
       let finalH = needed;
-      computePosition(anchor, panel, {
+      const override = anchorRectRef?.current;
+      const reference = override
+        ? {
+            getBoundingClientRect: () => ({
+              left: override.left,
+              top: override.top,
+              width: override.width,
+              height: override.height,
+              right: override.left + override.width,
+              bottom: override.top + override.height,
+              x: override.left,
+              y: override.top,
+              toJSON: () => {},
+            } as DOMRect),
+          }
+        : anchor;
+      computePosition(reference, panel, {
         strategy: 'fixed',
         placement: 'bottom-start',
         middleware: [
@@ -157,10 +179,6 @@ export function useDropdownPosition({
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(onViewportChange);
-      // The ANCHOR resizes too: SearchMenu's button→field morph animates its
-      // width, and any trigger that grows/shrinks changes the panel's left
-      // edge. Position from the live rect, never the pre-morph one.
-      if (anchorRef.current) ro.observe(anchorRef.current);
       if (panelRef.current) ro.observe(panelRef.current);
       if (contentRef?.current) ro.observe(contentRef.current);
     }
@@ -173,5 +191,5 @@ export function useDropdownPosition({
       doc?.removeEventListener('scroll', onViewportChange, { capture: true });
       ro?.disconnect();
     };
-  }, [open, anchorRef, panelRef, contentRef, gap, padding, maxHeight, minHeight]);
+  }, [open, anchorRef, panelRef, contentRef, anchorRectRef, gap, padding, maxHeight, minHeight]);
 }

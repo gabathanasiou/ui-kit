@@ -762,6 +762,69 @@ function DeepSearchDemo() {
   );
 }
 
+const MORPH_GROUPS = [
+  { key: 'set', label: 'Set', count: 2 },
+  { key: 'unitBase', label: 'Unit Base', count: 1 },
+];
+const MORPH_ITEMS: SearchMenuItem[] = [
+  { id: 'm-loc-1', label: 'Bedford Falls Main Street', group: 'set' },
+  { id: 'm-loc-2', label: 'Riverside Diner', group: 'set' },
+  { id: 'm-loc-3', label: 'Unit Base North', group: 'unitBase' },
+];
+
+/** Morph-anchor repro: the three app layouts that move the trigger's left
+ *  edge (right-aligned master row, right-aligned dept group, justify-between
+ *  empty-state row). Toggle the empty catalogue to match the reported case. */
+function SearchMenuMorphDemo() {
+  const [empty, setEmpty] = useState(true);
+  const [pick, setPick] = useState('—');
+  const items = empty ? [] : MORPH_ITEMS;
+  const groups = empty ? [] : MORPH_GROUPS;
+  const common = {
+    items,
+    groups,
+    onSelect: (item: SearchMenuItem) => setPick(item.label),
+    expandableGroups: true as const,
+    groupExpandMode: 'single' as const,
+    panelWidth: 320,
+    placeholder: 'Search locations…',
+    emptyHint: 'Try a name, type, address, contact or phone.',
+    emptyActions: [{
+      label: 'Add new location…',
+      icon: <Plus className="w-3.5 h-3.5" />,
+      onClick: () => {},
+    }],
+  };
+  return (
+    <div className="col" data-testid="search-menu-morph-demo" style={{ width: 720 }}>
+      <div className="label">SearchMenu morph anchor — empty catalogue toggle</div>
+      <label className="row" data-testid="morph-empty-toggle">
+        <Checkbox checked={empty} onChange={setEmpty} /> Empty catalogue
+      </label>
+      <div className="flex items-center gap-2 rounded border border-zinc-700 p-2" data-testid="morph-master-row">
+        <span className="text-xs">Report to</span>
+        <span className="text-[10px] uppercase tracking-wider">All crew</span>
+        <div className="ml-auto" data-testid="morph-master-menu">
+          <SearchMenu {...common} triggerLabel={pick} triggerIcon={<MapPin className="w-3.5 h-3.5" />} collapsedWidth={224} expandedWidth={280} />
+        </div>
+      </div>
+      <div className="flex items-center gap-2 rounded border border-zinc-700 p-2" data-testid="morph-dept-row">
+        <span className="text-xs">Report to</span>
+        <div className="ml-auto flex items-center gap-1.5" data-testid="morph-dept-menu">
+          <SearchMenu {...common} triggerLabel={pick} triggerIcon={<MapPin className="w-3.5 h-3.5" />} collapsedWidth={176} expandedWidth={240} />
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-2 rounded border border-zinc-700 p-2" data-testid="morph-add-row">
+        <span className="text-xs">No locations on this day.</span>
+        <div data-testid="morph-add-menu">
+          <SearchMenu {...common} triggerLabel="Add location" triggerIcon={<Plus className="w-3.5 h-3.5" />} collapsedWidth={140} expandedWidth={280} />
+        </div>
+      </div>
+      <span className="label" data-testid="morph-status">pick: {pick} · {empty ? 'empty' : `${MORPH_ITEMS.length} records`}</span>
+    </div>
+  );
+}
+
 const DEEP_CATEGORIES = [
   { key: 'cast', label: 'Cast', icon: <Users className="w-3.5 h-3.5" />, count: 2 },
   { key: 'sets', label: 'Sets', icon: <Building2 className="w-3.5 h-3.5" />, count: 1 },
@@ -1798,6 +1861,7 @@ function App() {
         <SearchableMenuDemo />
         <GroupedSearchableMenuDemo />
         <SearchableTriggerDemo />\n        <DeepSearchDemo />
+        <SearchMenuMorphDemo />
         <LongMenuDemo />
         <RightEdgeMenu />
         <SubmenuDemo />
