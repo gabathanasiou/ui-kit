@@ -679,6 +679,7 @@ function DeepSearchDemo() {
   const [pick, setPick] = useState<string | null>(null);
   const [groupMode, setGroupMode] = useState<'multiple' | 'single'>('multiple');
   const [filter, setFilter] = useState('');
+  const [flatPick, setFlatPick] = useState(FLAT_ITEMS[40].id);
   const groups = DEEP_CATEGORIES.map(c => ({ ...c, count: records.filter(r => r.group === c.key).length }));
   const common = {
     items: records,
@@ -717,6 +718,25 @@ function DeepSearchDemo() {
       <div data-testid="search-menu-browse-expanded">
         <SearchMenu {...common} expandableGroups={false} browseExpanded triggerLabel="Browse all" placeholder="Browse records…" />
       </div>
+      <div data-testid="search-menu-flat-picker">
+        {/* Flat value picker: browseAll = no category rows (one-kind catalogue),
+            selectedId = the current value is checked + scrolled into view on
+            open. Arrow keys walk all 60 rows and keep the highlight in view. */}
+        <SearchMenu
+          items={FLAT_ITEMS}
+          browseAll
+          selectedId={flatPick}
+          onSelect={(item: SearchMenuItem) => setFlatPick(item.id)}
+          triggerLabel={FLAT_ITEMS.find(i => i.id === flatPick)?.label || 'Choose…'}
+          triggerIcon={<MapPin className="w-3.5 h-3.5" />}
+          placeholder="Search 60 rows…"
+          collapsedWidth={190}
+          expandedWidth={240}
+          panelWidth={300}
+          maxMenuHeight={260}
+        />
+      </div>
+      <span className="label" data-testid="flat-picker-status">flat pick: {flatPick}</span>
       <div data-testid="morph-search-field">
         <MorphSearchField
           value={filter}
@@ -748,6 +768,13 @@ const DEEP_CATEGORIES = [
   { key: 'crew', label: 'Crew', icon: <UserRound className="w-3.5 h-3.5" />, count: 1 },
   { key: 'locations', label: 'Locations', icon: <MapPin className="w-3.5 h-3.5" />, count: 1 },
 ];
+/** Long single-kind catalogue — exercises browseAll + selectedId + keyboard
+ *  scrolling (a short list never has anything to scroll). */
+const FLAT_ITEMS: SearchMenuItem[] = Array.from({ length: 60 }, (_, i) => ({
+  id: `tz-${i}`,
+  label: `Region ${Math.floor(i / 10)} / City ${i}`,
+}));
+
 const DEEP_RECORDS: SearchMenuItem[] = [
   { id: 'anna', group: 'cast', label: 'ANNA', detail: 'Artiste: Roy Smith', fields: [{ label: 'Artiste', value: 'Roy Smith' }] },
   { id: 'bob', group: 'cast', label: 'BOB', detail: 'Artiste: James Dean', fields: [{ label: 'Artiste', value: 'James Dean' }] },
