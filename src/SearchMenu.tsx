@@ -152,6 +152,9 @@ export interface SearchMenuProps {
   hideTrigger?: boolean;
   /** Panel anchor + outside-click containment (defaults to the trigger). */
   anchorRef?: React.RefObject<HTMLElement | null>;
+  /** Render a search field INSIDE the panel (a button-trigger picker, where the
+   *  trigger is not an editable field). Focus moves there when the panel opens. */
+  panelSearch?: boolean;
   /** Portal host for the panel (defaults to the popout target / body). */
   portalTarget?: HTMLElement | null;
   /** Expandable mode: replace the collapsed trigger button. */
@@ -205,6 +208,7 @@ export function SearchMenu({
   onOpenChange,
   hideTrigger = false,
   anchorRef,
+  panelSearch = false,
   portalTarget: portalTargetProp,
   renderTrigger,
   renderItem: renderItemProp,
@@ -410,6 +414,14 @@ export function SearchMenu({
       return allGroups;
     });
   }, [query, browseExpanded, allGroups]);
+
+  /* Button-trigger pickers own no field: the panel's search input takes the
+     keyboard when the panel opens. */
+  useEffect(() => {
+    if (!panelSearch || !open) return;
+    const raf = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(raf);
+  }, [panelSearch, open]);
 
   /* Accordion: a picker that HOLDS a value opens ON it. Expand the group(s)
      holding the current selection so the reveal has a row to land on, then put
@@ -857,8 +869,17 @@ export function SearchMenu({
       ? items.filter(item => item.group === row.group.key && visibleIdSet.has(item.id) && item.checkable !== false)
       : [];
     const groupSelectable = groupItems.filter(item => !selection.isDisabled(item.id)).map(item => item.id);
-    const groupChecked = groupSelectable.length > 0 ? selection.groupState(groupSelectable) : 'none';
-    const selectedInGroup = groupItems.reduce((n, item) => n + (selection.isSelected(item.id) ? 1 : 0), 0);
+    /* A group may carry a virtual value (the stored whole-department tag): its
+       tick toggles that one key instead of every person, and reads checked while
+       the key is selected. */
+    const groupToken = multipleActive ? multiple?.groupToken?.(row.group.key) : undefined;
+    const tokenSelected = !!groupToken && selection.isSelected(groupToken);
+    const groupChecked = tokenSelected
+      ? 'all' as const
+      : groupSelectable.length > 0 ? selection.groupState(groupSelectable) : 'none' as const;
+    const selectedInGroup = tokenSelected
+      ? groupItems.length
+      : groupItems.reduce((n, item) => n + (selection.isSelected(item.id) ? 1 : 0), 0);
     const selectAllControl = multipleActive && (
       <button
         type="button"
@@ -867,14 +888,15 @@ export function SearchMenu({
         onMouseDown={e => e.preventDefault()}
         onClick={e => {
           e.stopPropagation();
-          if (groupSelectable.length) selection.toggleGroup(groupSelectable);
+          if (groupToken) selection.toggle(groupToken);
+          else if (groupSelectable.length) selection.toggleGroup(groupSelectable);
         }}
-        className={`shrink-0 flex items-center justify-center rounded ${groupSelectable.length ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+        className={`shrink-0 flex items-center justify-center rounded ${groupToken || groupSelectable.length ? 'cursor-pointer' : 'cursor-not-allowed'}`}
       >
         <SelectionCheck
           checked={groupChecked === 'all'}
           indeterminate={groupChecked === 'some'}
-          disabled={groupSelectable.length === 0}
+          disabled={!groupToken && groupSelectable.length === 0}
           indicator={multiple?.indicator}
         />
       </button>
@@ -1034,6 +1056,26 @@ export function SearchMenu({
         visibility: pos.ready ? 'visible' : 'hidden',
       }}
     >
+      {panelSearch && (
+        <div className="shrink-0 px-2 pb-1 pt-2">
+          <div className="relative">
+            <Search size={iconBtn.icon} className="ui-icon absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              ref={inputRef}
+              value={query}
+              data-search-input
+              role="combobox"
+              aria-expanded={open}
+              aria-controls="search-menu-panel"
+              aria-autocomplete="list"
+              onChange={e => onChange(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder={placeholder}
+              className={`${inputCls('sm')} w-full pl-8`}
+            />
+          </div>
+        </div>
+      )}
       {showLeading && (
         <div className="shrink-0 pb-1">
           {leadingRows.map((row, index) => renderActionRow(row, index))}

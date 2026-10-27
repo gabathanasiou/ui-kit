@@ -70,6 +70,10 @@ export interface MultipleSelectionProps {
     clear?: boolean;
     /** Show the `N hidden by filter` note. Default true. */
     hiddenNote?: boolean;
+    /** Virtual key per group: the header tick toggles this value instead of every
+     *  item (a stored "whole department" tag) and reads checked when it is in the
+     *  selection. Resolution/display of the key is the caller's catalogue. */
+    groupToken?: (groupKey: string) => string | undefined;
 }
 export interface SelectionApi {
     mode: SelectionMode;

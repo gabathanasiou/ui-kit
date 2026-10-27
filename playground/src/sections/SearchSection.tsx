@@ -314,6 +314,7 @@ function PickerFieldDemo() {
   const [location, setLocation] = useState<string[]>([]);
   const [accordionLoc, setAccordionLoc] = useState<string[]>(['loc-hospital']);
   const [roles, setRoles] = useState<string[]>(['camera-op']);
+  const [buttonRoles, setButtonRoles] = useState<string[]>([]);
   const [asyncTz, setAsyncTz] = useState<string[]>([]);
   const [longTz, setLongTz] = useState<string[]>(['Pacific/Auckland']);
   const [display, setDisplay] = useState<'names' | 'chips' | 'count'>('names');
@@ -450,6 +451,28 @@ function PickerFieldDemo() {
             placeholder="Add roles…"
           />
           <span className="label" data-testid="picker-roles-status">roles: {roleLabels.join(', ') || '—'}</span>
+        </div>
+
+        <div data-testid="picker-button">
+          <span className="label">Button — count face, panel search, whole-group tag</span>
+          <PickerField
+            appearance="button"
+            mode="multiple"
+            display="count"
+            values={buttonRoles}
+            onChange={values => { setButtonRoles(values); bump(); }}
+            items={[
+              ...MULTI_ROLES,
+              ...PICKER_ROLE_GROUPS.map(g => ({ id: `all:${g.key}`, label: `All ${g.label}`, group: g.key, hidden: true })),
+            ]}
+            groups={PICKER_ROLE_GROUPS}
+            groupToken={group => `all:${group}`}
+            browse="accordion"
+            searchPlaceholder="Search roles…"
+            placeholder="No roles"
+            panelWidth={300}
+          />
+          <span className="label" data-testid="picker-button-status">button: {buttonRoles.join(', ') || '—'}</span>
         </div>
 
         <div data-testid="picker-inline" className="rounded border border-zinc-700 px-2 py-1.5">

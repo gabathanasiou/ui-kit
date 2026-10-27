@@ -32,6 +32,9 @@ export interface PickerItem {
     /** Optional row chrome (GroupedSelect's tag rows paint the whole row). */
     rowClassName?: string;
     rowStyle?: CSSProperties;
+    /** Value-only entry: it resolves labels/keys (a stored "whole department"
+     *  tag) but never renders as a row and is never searchable. */
+    hidden?: boolean;
 }
 export declare function pickerItemKey(item: PickerItem, resolveBy?: PickerResolveBy): string;
 export declare function pickerItemLabel(value: string, items: readonly PickerItem[], resolveBy?: PickerResolveBy): string;

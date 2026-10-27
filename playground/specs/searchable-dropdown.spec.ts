@@ -582,6 +582,21 @@ test('PickerField: single grouped commit, morph face and async source', async ({
   await page.keyboard.press('Tab');
   await expect(page.getByTestId('picker-roles-status')).toHaveText('roles: Camera Operator, Gaffer');
 
+  // Button face: "N selected", the search lives INSIDE the panel, and the group
+  // tick stores the whole-group tag instead of every member.
+  const btn = page.getByTestId('picker-button');
+  await btn.getByRole('button').click();
+  const panelSearch = panel.locator('[data-search-input]');
+  await expect(panelSearch).toBeFocused();
+  await panelSearch.fill('Gaffer');
+  await expect(panel.locator('[data-search-item="electric-gaffer"]')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('picker-button-status')).toHaveText('button: —');
+  await btn.getByRole('button').click();
+  await panel.getByRole('button', { name: 'Select all Electric' }).click();
+  await btn.getByRole('button').click();
+  await expect(page.getByTestId('picker-button-status')).toHaveText('button: all:Electric');
+
   // Long single: opens scrolled ON the current value (last timezone).
   const longTz = page.getByTestId('picker-long-single');
   await longTz.locator('input').click();
