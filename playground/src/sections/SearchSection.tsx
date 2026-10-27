@@ -314,6 +314,7 @@ function PickerFieldDemo() {
   const [location, setLocation] = useState<string[]>([]);
   const [roles, setRoles] = useState<string[]>(['camera-op']);
   const [asyncTz, setAsyncTz] = useState<string[]>([]);
+  const [longTz, setLongTz] = useState<string[]>(['Pacific/Auckland']);
   const [display, setDisplay] = useState<'names' | 'chips' | 'count'>('names');
   const [indicator, setIndicator] = useState<'box' | 'check'>('box');
   const [commits, setCommits] = useState(0);
@@ -480,6 +481,22 @@ function PickerFieldDemo() {
             panelWidth={320}
           />
           <span className="label" data-testid="picker-async-status">tz: {asyncTz[0] || '—'}</span>
+        </div>
+
+        <div data-testid="picker-long-single">
+          <span className="label">Long single — opens ON the current value, scrolled</span>
+          <PickerField
+            appearance="chip"
+            mode="single"
+            values={longTz}
+            onChange={values => { setLongTz(values); bump(); }}
+            items={TIMEZONES.map(tz => ({ id: tz, label: tz }))}
+            browseAll
+            placeholder="Choose timezone…"
+            panelWidth={320}
+            maxMenuHeight={220}
+          />
+          <span className="label" data-testid="picker-long-status">tz: {longTz[0] || '—'}</span>
         </div>
       </div>
     </div>

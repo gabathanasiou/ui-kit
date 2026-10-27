@@ -466,7 +466,11 @@ test('PickerField multiple: toggle, Escape cancels, Tab commits, typed create', 
   await input.fill(`${current}NEWBIE`);
   const create = panel.locator('[data-search-item="NEWBIE"]');
   await expect(create).toContainText('Add “NEWBIE” to cast…');
+  // An action-style row: plus icon, NO selection checkbox.
+  await expect(create.locator('[data-selection-check]')).toHaveCount(0);
   await create.click();
+  // The host adds the record immediately: the same row is now a real item.
+  await expect(create).not.toContainText('Add ');
   await expect(panel.locator('[data-selection-footer]')).toContainText('4 selected');
   await page.keyboard.press('Tab');
   await expect(status).toHaveText('cast: 1, 2, 3, NEWBIE');
@@ -479,6 +483,15 @@ test('PickerField multiple: toggle, Escape cancels, Tab commits, typed create', 
   await expect(panel.locator('[data-search-item="2"]')).toHaveAttribute('aria-selected', 'false');
   await page.keyboard.press('Tab');
   await expect(status).toHaveText('cast: 1');
+
+  // Grouped catalogue: the create row is PINNED above the groups.
+  const propInput = page.getByTestId('picker-props').locator('input');
+  await propInput.click();
+  const propText = await propInput.inputValue();
+  await propInput.fill(`${propText}NEW PROP`);
+  await expect(panel.locator('[data-search-item]').first()).toHaveAttribute('data-search-item', 'NEW PROP');
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
 });
 
 test('PickerField: single grouped commit, morph face and async source', async ({ page }) => {
@@ -489,6 +502,8 @@ test('PickerField: single grouped commit, morph face and async source', async ({
   const loc = page.getByTestId('picker-location');
   await loc.locator('input').click();
   await expect(panel.locator('[data-search-group]')).toHaveCount(3);
+  // Single select opens with EVERY option (the current one is only highlighted).
+  await expect(panel.locator('[data-search-item]')).toHaveCount(4);
   await panel.locator('[data-search-item="loc-house"]').click();
   await expect(panel).toHaveCount(0);
   await expect(page.getByTestId('picker-location-status')).toHaveText('location: Riverside House');
@@ -501,6 +516,17 @@ test('PickerField: single grouped commit, morph face and async source', async ({
   await panel.locator('[data-search-item="electric-gaffer"]').click();
   await page.keyboard.press('Tab');
   await expect(page.getByTestId('picker-roles-status')).toHaveText('roles: Camera Operator, Gaffer');
+
+  // Long single: opens scrolled ON the current value (last timezone).
+  const longTz = page.getByTestId('picker-long-single');
+  await longTz.locator('input').click();
+  const current = panel.locator('[data-search-item="Pacific/Auckland"]');
+  await expect(current).toBeVisible();
+  await expect(current).toHaveAttribute('aria-selected', 'true');
+  const scrollTop = await panel.locator('[data-search-scroller]').evaluate(el => el.scrollTop);
+  expect(scrollTop).toBeGreaterThan(0);
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
 
   // Async: debounced results, then a normal pick.
   const tz = page.getByTestId('picker-async');
