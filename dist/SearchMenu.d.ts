@@ -78,6 +78,12 @@ export interface SearchMenuProps {
     }) => React.ReactNode;
     /** Zero or more actions for the no-results state (fully caller-defined). */
     emptyActions?: SearchMenuEmptyAction[];
+    /** Standing actions pinned above the list (always visible — e.g.
+     *  "New location…"); the callback receives the current query. */
+    leadingActions?: SearchMenuEmptyAction[];
+    /** Standing actions pinned below the list (always visible — e.g. a
+     *  persistent "Add …" or management action); receives the current query. */
+    footerActions?: SearchMenuEmptyAction[];
 }
-export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, autoFocus, collapsedWidth, expandedWidth, panelWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, }: SearchMenuProps): React.JSX.Element;
+export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, autoFocus, collapsedWidth, expandedWidth, panelWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, leadingActions, footerActions, }: SearchMenuProps): React.JSX.Element;
 export default SearchMenu;

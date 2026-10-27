@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Plus, Search, X } from 'lucide-react';
-import { getDropdownClasses, useItemSize, type DropdownTheme } from './DropdownMenu';
+import { getDropdownClasses, useItemSize, useMenuGroupSize, type DropdownTheme } from './DropdownMenu';
 import { useDropdownPosition } from './useDropdownPosition';
 import { useCurrentDocument, usePortalTarget } from './popout';
 import { useOverlayMorph } from './overlayMorph';
@@ -91,6 +91,12 @@ export interface SearchMenuProps {
   renderEmpty?: (ctx: { query: string; close: () => void }) => React.ReactNode;
   /** Zero or more actions for the no-results state (fully caller-defined). */
   emptyActions?: SearchMenuEmptyAction[];
+  /** Standing actions pinned above the list (always visible — e.g.
+   *  "New location…"); the callback receives the current query. */
+  leadingActions?: SearchMenuEmptyAction[];
+  /** Standing actions pinned below the list (always visible — e.g. a
+   *  persistent "Add …" or management action); receives the current query. */
+  footerActions?: SearchMenuEmptyAction[];
 }
 
 export function SearchMenu({
@@ -121,6 +127,8 @@ export function SearchMenu({
   emptyHint,
   renderEmpty,
   emptyActions,
+  leadingActions,
+  footerActions,
 }: SearchMenuProps) {
   const isControlled = controlledQuery !== undefined;
   const [innerQuery, setInnerQuery] = useState('');
@@ -144,6 +152,7 @@ export function SearchMenu({
   const portalTarget = usePortalTarget();
   const d = getDropdownClasses(theme);
   const itemSize = useItemSize();
+  const groupSize = useMenuGroupSize();
 
   const [pos, setPos] = useState({ top: 0, left: 0, maxH: 288, ready: false });
   const [anchorWidth, setAnchorWidth] = useState(0);
@@ -182,18 +191,46 @@ export function SearchMenu({
     [items, groups, query, openOnFocus, browseExpanded, expandedGroups, emptyActionLabels.join('\u0000')],
   );
 
+  const leadingRows = useMemo<Extract<SearchMenuRow, { kind: 'action' }>[]>(
+    () => (leadingActions || []).map((action, actionIndex) => ({
+      kind: 'action',
+      label: typeof action.label === 'function' ? action.label(query) : action.label,
+      actionIndex,
+      source: 'leading',
+    })),
+    [leadingActions, query],
+  );
+  const footerRows = useMemo<Extract<SearchMenuRow, { kind: 'action' }>[]>(
+    () => (footerActions || []).map((action, actionIndex) => ({
+      kind: 'action',
+      label: typeof action.label === 'function' ? action.label(query) : action.label,
+      actionIndex,
+      source: 'footer',
+    })),
+    [footerActions, query],
+  );
+  /** Everything the keyboard can reach: the pinned leading actions, the list
+   *  rows, then the pinned footer actions. */
+  const allRows = useMemo(() => [...leadingRows, ...rows, ...footerRows], [leadingRows, rows, footerRows]);
+
+  // A category is only actionable when clicking it does something: a real
+  // `onSelectGroup`, or the accordion browse state. During a query — and in
+  // `browseExpanded` — group rows are plain, non-interactive headers.
+  const groupsActionable = !!onSelectGroup || (expandableGroups && !query.trim());
+
   const navigateRows = useMemo(
-    () => rows
+    () => allRows
       .map((row, index) => ({ row, index }))
       .filter(x => {
         if (x.row.kind === 'empty') return false;
         if (x.row.kind === 'item' && x.row.hidden) return false;
-        // Plain group headers (browseExpanded without expandableGroups) are
-        // not actionable — keep the arrows on the records.
-        if (x.row.kind === 'group' && !onSelectGroup && !expandableGroups) return false;
+        // Plain group headers (browseExpanded without expandableGroups, or any
+        // category during a query) are not actionable — keep the arrows on the
+        // records.
+        if (x.row.kind === 'group' && !groupsActionable) return false;
         return true;
       }),
-    [rows, onSelectGroup, expandableGroups],
+    [allRows, groupsActionable],
   );
   const browseTree = (expandableGroups || browseExpanded) && !query.trim();
 
@@ -241,8 +278,10 @@ export function SearchMenu({
   const openPanel = useCallback(() => {
     setExpanded(true);
     setOpen(true);
-    setHighlighted(0);
-  }, []);
+    // Start on the first list row, not the pinned New action — Enter on an
+    // untouched picker must never create a record by accident.
+    setHighlighted(leadingRows.length);
+  }, [leadingRows.length]);
 
   // Expandable: focus the field once it mounts.
   useEffect(() => {
@@ -271,7 +310,7 @@ export function SearchMenu({
       if (onSelectGroup) {
         onSelectGroup(row.group);
         if (closeOnSelect) close();
-      } else if (expandableGroups) {
+      } else if (groupsActionable) {
         toggleGroup(row.group.key);
       }
       return;
@@ -282,11 +321,16 @@ export function SearchMenu({
       return;
     }
     if (row.kind === 'action') {
-      const action = emptyActions?.[row.actionIndex];
+      const actions = row.source === 'leading'
+        ? leadingActions
+        : row.source === 'footer'
+          ? footerActions
+          : emptyActions;
+      const action = actions?.[row.actionIndex];
       if (action) action.onClick(query);
       if (closeOnSelect) close();
     }
-  }, [close, closeOnSelect, emptyActions, expandableGroups, onSelect, onSelectGroup, query, toggleGroup]);
+  }, [close, closeOnSelect, emptyActions, footerActions, groupsActionable, leadingActions, onSelect, onSelectGroup, query, toggleGroup]);
 
   const moveHighlight = (dir: 1 | -1) => {
     if (navigateRows.length === 0) return;
@@ -307,7 +351,7 @@ export function SearchMenu({
       moveHighlight(-1);
     } else if ((event.key === 'ArrowRight' || event.key === 'ArrowLeft')
       && expandableGroups && open && !query.trim()) {
-      const row = rows[highlighted];
+      const row = allRows[highlighted];
       if (row?.kind === 'group') {
         const groupExpanded = expandedGroups.has(row.group.key);
         if (event.key === 'ArrowRight') {
@@ -323,12 +367,12 @@ export function SearchMenu({
         event.preventDefault();
         const groupKey = row.hit.item.group;
         if (expandedGroups.has(groupKey)) toggleGroup(groupKey);
-        const groupIndex = rows.findIndex(r => r.kind === 'group' && r.group.key === groupKey);
+        const groupIndex = allRows.findIndex(r => r.kind === 'group' && r.group.key === groupKey);
         if (groupIndex >= 0) setHighlighted(groupIndex);
       }
     } else if (event.key === 'Enter') {
       event.preventDefault();
-      const row = rows[highlighted] ?? rows[0];
+      const row = allRows[highlighted] ?? allRows[0];
       if (row) activate(row);
     } else if (event.key === 'Escape') {
       event.preventDefault();
@@ -346,7 +390,7 @@ export function SearchMenu({
   // is a jump target, not the default Enter action).
   useEffect(() => {
     const firstItem = rows.findIndex(row => row.kind === 'item');
-    setHighlighted(firstItem >= 0 ? firstItem : 0);
+    setHighlighted(firstItem >= 0 ? leadingRows.length + firstItem : leadingRows.length);
     // Only a QUERY change resets the highlight; expanding a group must keep
     // the group row lit so Right-Right can collapse it again.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -446,17 +490,29 @@ export function SearchMenu({
   const renderGroupRow = (row: Extract<SearchMenuRow, { kind: 'group' }>, rowIndex: number) => {
     const groupExpanded = expandedGroups.has(row.group.key);
     const showChevron = expandableGroups && !query.trim();
-    const actionable = !!onSelectGroup || expandableGroups;
-    const active = highlighted === rowIndex;
-    const face = (
-      <>
-        {row.group.icon && <span className={`${d.icon} shrink-0`}>{row.group.icon}</span>}
-        <span className="flex-1 truncate">{row.group.label}</span>
-        {row.group.count !== undefined && (
-          <span className="shrink-0 text-[10px] tabular-nums text-zinc-400">{row.group.count}</span>
-        )}
-      </>
+    const actionable = groupsActionable;
+    const active = actionable && highlighted === rowIndex;
+    const count = row.group.count !== undefined && (
+      <span className={`shrink-0 tabular-nums ${actionable ? 'text-[10px] text-zinc-400' : 'opacity-70'}`}>{row.group.count}</span>
     );
+    // Plain header (browseExpanded, or any category during a query): the
+    // dropdown group-label face — never an item, never hoverable, never a
+    // keyboard stop. Clicking it must not look like it selects anything.
+    if (!actionable) {
+      return (
+        <div
+          key={`group:${row.group.key}`}
+          role="presentation"
+          data-search-group={row.group.key}
+          style={groupSize}
+          className="w-full flex items-center gap-2 select-none font-semibold uppercase tracking-wider ui-label"
+        >
+          {row.group.icon && <span className={`${d.icon} shrink-0`}>{row.group.icon}</span>}
+          <span className="flex-1 truncate">{row.group.label}</span>
+          {count}
+        </div>
+      );
+    }
     return (
       <div
         key={`group:${row.group.key}`}
@@ -468,18 +524,16 @@ export function SearchMenu({
         style={itemSize}
         className={`w-full rounded flex items-center gap-1 outline-none select-none font-medium ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''}`}
       >
-        {actionable ? (
-          <button
-            type="button"
-            tabIndex={-1}
-            onClick={() => activate(row)}
-            className="flex min-w-0 flex-1 items-center gap-2 text-left"
-          >
-            {face}
-          </button>
-        ) : (
-          <span className="flex min-w-0 flex-1 items-center gap-2">{face}</span>
-        )}
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => activate(row)}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        >
+          {row.group.icon && <span className={`${d.icon} shrink-0`}>{row.group.icon}</span>}
+          <span className="flex-1 truncate">{row.group.label}</span>
+          {count}
+        </button>
         {showChevron && (
           <button
             type="button"
@@ -498,20 +552,25 @@ export function SearchMenu({
 
   const renderActionRow = (row: Extract<SearchMenuRow, { kind: 'action' }>, rowIndex: number) => {
     const active = highlighted === rowIndex;
+    const actions = row.source === 'leading'
+      ? leadingActions
+      : row.source === 'footer'
+        ? footerActions
+        : emptyActions;
     return (
       <button
-        key={`action:${row.actionIndex}`}
+        key={`${row.source || 'empty'}:${row.actionIndex}`}
         type="button"
         role="option"
         aria-selected={false}
         tabIndex={-1}
-        data-search-action
+        data-search-action={row.source || 'empty'}
         onMouseEnter={() => setHighlighted(rowIndex)}
         onClick={() => activate(row)}
         style={itemSize}
         className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''}`}
       >
-        <span className={`${d.icon} shrink-0`}>{emptyActions?.[row.actionIndex]?.icon || <Plus className="w-3.5 h-3.5" />}</span>
+        <span className={`${d.icon} shrink-0`}>{actions?.[row.actionIndex]?.icon || <Plus className="w-3.5 h-3.5" />}</span>
         <span className="flex-1 truncate">{row.label}</span>
       </button>
     );
@@ -568,7 +627,13 @@ export function SearchMenu({
         visibility: pos.ready ? 'visible' : 'hidden',
       }}
     >
-      <div className="overflow-y-auto scrollbar-custom flex flex-col">
+      {leadingRows.length > 0 && (
+        <div className="shrink-0 pb-1">
+          {leadingRows.map((row, index) => renderActionRow(row, index))}
+          {rows.length > 0 && <div className={d.separator} />}
+        </div>
+      )}
+      <div className="overflow-y-auto scrollbar-custom flex flex-col min-h-0">
         {rows.length === 0 && (
           <div className="px-3 py-3 text-xs text-zinc-400" data-search-empty>
             {renderEmpty ? renderEmpty({ query, close }) : <>Type to search…</>}
@@ -580,7 +645,7 @@ export function SearchMenu({
             const items = block.items || [];
             return (
               <React.Fragment key={`group:${block.group.group.key}`}>
-                {renderGroupRow(block.group, block.index as number)}
+                {renderGroupRow(block.group, leadingRows.length + (block.index as number))}
                 {browseTree && (
                   <div
                     data-search-group-items={block.group.group.key}
@@ -594,22 +659,28 @@ export function SearchMenu({
                     }}
                   >
                     <div className="overflow-hidden flex flex-col">
-                      {items.map(item => renderItemRow(item.row, item.index))}
+                      {items.map(item => renderItemRow(item.row, leadingRows.length + item.index))}
                     </div>
                   </div>
                 )}
-                {!browseTree && items.map(item => renderItemRow(item.row, item.index))}
+                {!browseTree && items.map(item => renderItemRow(item.row, leadingRows.length + item.index))}
               </React.Fragment>
             );
           }
           const row = block.row as SearchMenuRow;
-          const rowIndex = block.index as number;
+          const rowIndex = leadingRows.length + (block.index as number);
           if (row.kind === 'empty') return renderEmptyRow();
           if (row.kind === 'action') return renderActionRow(row, rowIndex);
           if (row.kind === 'item') return renderItemRow(row, rowIndex);
           return null;
         })}
       </div>
+      {footerRows.length > 0 && (
+        <div className="shrink-0">
+          <div className={d.separator} />
+          {footerRows.map((row, index) => renderActionRow(row, leadingRows.length + rows.length + index))}
+        </div>
+      )}
     </div>,
     portalTarget ?? currentDocument?.body ?? document.body,
   ) : null;

@@ -43,7 +43,7 @@ export type SearchMenuRow =
   | { kind: 'group'; group: SearchMenuGroup }
   | { kind: 'item'; hit: SearchMenuHit; hidden?: boolean }
   | { kind: 'empty' }
-  | { kind: 'action'; label: string; actionIndex: number };
+  | { kind: 'action'; label: string; actionIndex: number; source?: 'empty' | 'leading' | 'footer' };
 
 /** Comma-separated tags, trimmed and lowercased; empty segments dropped. */
 export function parseSearchTags(query: string): string[] {

@@ -50,6 +50,7 @@ export type SearchMenuRow = {
     kind: 'action';
     label: string;
     actionIndex: number;
+    source?: 'empty' | 'leading' | 'footer';
 };
 /** Comma-separated tags, trimmed and lowercased; empty segments dropped. */
 export declare function parseSearchTags(query: string): string[];
