@@ -85,12 +85,21 @@ export interface PickerFieldProps {
   /** Single mode: select the current text on open so typing replaces it. */
   selectAllOnOpen?: boolean;
   uppercase?: boolean;
+  /** Strict option lists (day/night, INT/EXT, a set picker): ignore typed
+   *  text that matches no item instead of storing it. Default true. */
+  allowFreeText?: boolean;
   /** Dropdown palette (defaults to the ambient kit mode). */
   theme?: DropdownTheme;
   className?: string;
   style?: React.CSSProperties;
   panelWidth?: number | string;
   maxMenuHeight?: number;
+  /** Portal host for the panel (Glide cells / modal hosts). */
+  portalTarget?: HTMLElement | null;
+  /** Inline cells: grow with the content (`field-sizing: content`). */
+  autoGrow?: boolean;
+  /** Multi: open WITHOUT the trailing ", " (a typed-key cell open). */
+  skipComma?: boolean;
   collapsedWidth?: number;
   expandedWidth?: number;
   /** Create-from-typed: label for the leading action + the hand-off. */
@@ -135,11 +144,15 @@ export function PickerField({
   defaultOpen = false,
   selectAllOnOpen = true,
   uppercase = false,
+  allowFreeText = true,
   theme: themeProp,
   className = '',
   style,
   panelWidth,
   maxMenuHeight,
+  portalTarget,
+  autoGrow = false,
+  skipComma = false,
   collapsedWidth = 140,
   expandedWidth = 280,
   createLabel,
@@ -165,6 +178,10 @@ export function PickerField({
 
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
+  /** Single mode: the live QUERY is separate from the field text. Opening
+   *  shows the current value in the field but lists EVERY option (the current
+   *  one highlighted) — EntityDropdown's single-select behaviour. */
+  const [singleQuery, setSingleQuery] = useState('');
   const [draft, setDraft] = useState<string[]>(() => [...values]);
   const [asyncItems, setAsyncItems] = useState<PickerItem[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -174,6 +191,14 @@ export function PickerField({
   const searchRef = useRef<SearchMenuHandle>(null);
   const lastCommittedRef = useRef(values.join('\u0000'));
   const cancelledRef = useRef(false);
+  /** Values already handed to `onCreateItem` (the create row is immediate; the
+   *  commit-time pass must not fire the host twice). */
+  const createdRef = useRef(new Set<string>());
+  /* An editing session starts on open and ends on commit/cancel. The blur
+     handler must NOT depend on `open`: an outside click closes the panel
+     (open → false) BEFORE the input's blur event, so gating on `open` dropped
+     every click-away commit. */
+  const editingRef = useRef(false);
   const caretEndRef = useRef(false);
   const asyncSeq = useRef(0);
   /* Synchronous mirrors — a row toggle and the following Tab/Enter can land
@@ -189,8 +214,9 @@ export function PickerField({
   );
   const editingText = useCallback((next: readonly string[]) => {
     if (mode === 'single') return next[0] ? labelOf(next[0]) : '';
-    return next.length ? `${next.map(labelOf).join(', ')}, ` : '';
-  }, [mode, labelOf]);
+    const joined = next.map(labelOf).join(', ');
+    return skipComma ? joined : (next.length ? `${joined}, ` : '');
+  }, [mode, labelOf, skipComma]);
 
   /** Keep the closed field in sync with the committed value. */
   useEffect(() => {
@@ -204,11 +230,13 @@ export function PickerField({
   const openPicker = useCallback(() => {
     if (open || readOnly || disabled) return;
     cancelledRef.current = false;
+    editingRef.current = true;
     const nextText = editingText(values);
     textRef.current = nextText;
     draftRef.current = [...values];
     setDraft([...values]);
     setText(nextText);
+    setSingleQuery('');
     setOpen(true);
   }, [open, readOnly, disabled, values, editingText]);
 
@@ -240,14 +268,14 @@ export function PickerField({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const searchQuery = mode === 'single' ? text.trim() : lastPickerSegment(text);
+  const searchQuery = mode === 'single' ? singleQuery : lastPickerSegment(text);
   const baseItems = loadItems ? (asyncItems ?? []) : items;
   const orderedBase = useMemo(
     () => (sortItems ? sortItems(baseItems, draft) : baseItems),
     [baseItems, sortItems, draft],
   );
   const createSegment = searchQuery.trim();
-  const showCreate = !!onCreateItem && !loading && !!createSegment && !hasPickerMatch(createSegment, baseItems, resolveBy);
+  const showCreate = !!onCreateItem && allowFreeText && !loading && !!createSegment && !hasPickerMatch(createSegment, baseItems, resolveBy);
 
   /* Async source: debounce 400ms + sequence guard. */
   useEffect(() => {
@@ -286,6 +314,8 @@ export function PickerField({
       disabled: !!item.disabled || !!disabledIds?.includes(keyOf(item)),
       fields: item.fields,
       keywords: item.keywords,
+      rowClassName: item.rowClassName,
+      rowStyle: item.rowStyle,
     }));
     if (showCreate) {
       /* The create affordance is a REAL row so it toggles through the same
@@ -294,6 +324,9 @@ export function PickerField({
         id: createSegment,
         label: createLabel ? createLabel(createSegment) : `Add “${createSegment}”…`,
         keywords: createSegment,
+        checkable: false,
+        tone: 'create',
+        pinned: true,
       });
     }
     return list;
@@ -308,36 +341,73 @@ export function PickerField({
     }
     lastCommittedRef.current = sig;
     onChange(next);
-    for (const value of unknownPickerValues(next, items, resolveBy)) onCreateItem?.(value);
+    if (onCreateItem) {
+      for (const value of unknownPickerValues(next, items, resolveBy)) {
+        if (createdRef.current.has(value)) continue;
+        createdRef.current.add(value);
+        onCreateItem(value);
+      }
+    }
   }, [values, onChange, onCreateItem, items, resolveBy]);
 
+  /* The create row is a catalogue action: hand the typed value to the host the
+     moment it is ticked, so the new record appears in the list immediately
+     (the commit pass then skips it). */
+  const onCreateRowToggle = useCallback((id: string, selected: boolean) => {
+    if (!selected || !onCreateItem || !allowFreeText) return;
+    if (items.some(item => keyOf(item) === id)) return;
+    if (createdRef.current.has(id)) return;
+    createdRef.current.add(id);
+    onCreateItem(id);
+  }, [onCreateItem, allowFreeText, items, keyOf]);
+
   const commit = useCallback(() => {
+    if (!editingRef.current) return;
+    editingRef.current = false;
     if (readOnly || disabled) return;
     if (cancelledRef.current) {
       cancelledRef.current = false;
       return;
     }
     const currentText = textRef.current;
+    const known = new Set(itemKeys);
     const next = mode === 'single'
       ? (() => {
           const segment = currentText.trim();
-          return segment ? [resolvePickerSegment(segment, items, resolveBy)] : [];
+          if (!segment) return allowFreeText ? [] : values;
+          const key = resolvePickerSegment(segment, items, resolveBy);
+          if (!allowFreeText && !known.has(key)) return values;
+          return [key];
         })()
-      : orderByCatalogue(resolvePickerText(currentText, items, resolveBy), itemKeys);
+      : orderByCatalogue(
+          resolvePickerText(currentText, items, resolveBy).filter(key => allowFreeText || known.has(key)),
+          itemKeys,
+        );
     draftRef.current = next;
     setDraft(next);
+    setSingleQuery('');
     setOpen(false);
     commitValues(next);
     onExit?.();
-  }, [readOnly, disabled, mode, items, resolveBy, itemKeys, commitValues, onExit]);
+  }, [readOnly, disabled, mode, items, resolveBy, itemKeys, allowFreeText, values, commitValues, onExit]);
+
+  /* Outside clicks close through SearchMenu's controlled-open callback — that
+     is the COMMIT edge for a value field (the panel can close before the
+     input's blur, so blur alone is not enough). */
+  const handlePanelOpenChange = useCallback((next: boolean) => {
+    setOpen(next);
+    if (!next) commit();
+  }, [commit]);
 
   const cancel = useCallback(() => {
     cancelledRef.current = true;
+    editingRef.current = false;
     const nextText = editingText(values);
     textRef.current = nextText;
     draftRef.current = [...values];
     setDraft([...values]);
     setText(nextText);
+    setSingleQuery('');
     setOpen(false);
     onEscape?.();
   }, [values, editingText, onEscape]);
@@ -356,11 +426,13 @@ export function PickerField({
 
   const onSelect = useCallback((item: SearchMenuItem) => {
     const key = item.id;
+    editingRef.current = false;
     const nextText = labelOf(key);
     draftRef.current = [key];
     textRef.current = nextText;
     setDraft([key]);
     setText(nextText);
+    setSingleQuery('');
     setOpen(false);
     commitValues([key]);
     onExit?.();
@@ -403,6 +475,7 @@ export function PickerField({
     const next = uppercase ? event.target.value.toUpperCase() : event.target.value;
     textRef.current = next;
     setText(next);
+    if (mode === 'single') setSingleQuery(next);
     if (!open) setOpen(true);
     if (mode === 'multiple') {
       /* EntityDropdown parity: the text IS the value, so deleting a segment
@@ -416,7 +489,7 @@ export function PickerField({
   };
 
   const onInputBlur = () => {
-    if (!open) return;
+    if (!editingRef.current) return;
     if (cancelledRef.current) {
       cancelledRef.current = false;
       return;
@@ -464,7 +537,7 @@ export function PickerField({
       mode="inline"
       hideTrigger
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={handlePanelOpenChange}
       anchorRef={appearance === 'morph' ? morphFieldRef : rootRef}
       items={panelItems}
       groups={groups}
@@ -476,6 +549,7 @@ export function PickerField({
         selectedIds: draft,
         mode: 'live',
         onDraftChange,
+        onToggle: onCreateRowToggle,
         onCommit: NO_COMMIT,
         max,
         disabledIds,
@@ -494,6 +568,7 @@ export function PickerField({
       theme={theme}
       panelWidth={panelWidth}
       maxMenuHeight={maxMenuHeight}
+      portalTarget={portalTarget}
     />
   );
 
@@ -556,6 +631,7 @@ export function PickerField({
 
   const chip = appearance === 'chip';
   const wrap = appearance === 'wrap';
+  const inlineAutoGrow = !chip && !wrap && autoGrow;
   const padY = chip ? coarsePx(5, 7, scale) : 0;
   const padX = chip ? coarsePx(9, 12, scale) : 0;
   const chipFont = coarsePx(12, 14, scale);
@@ -566,7 +642,7 @@ export function PickerField({
       data-picker-field
       className={`relative ${chip
         ? 'flex w-full items-center gap-1.5 rounded border border-[color:var(--ui-border-strong)] bg-[var(--ui-panel-bg)] text-left outline-none focus-within:border-[color:var(--ui-input-focus-border)]'
-        : (wrap ? 'min-h-[1lh] w-full pb-[1lh]' : 'h-[1lh] w-full')} ${className}`}
+        : (wrap ? 'min-h-[1lh] w-full pb-[1lh]' : (inlineAutoGrow ? 'w-max max-w-[400px] min-w-[72px]' : 'h-[1lh] w-full'))} ${className}`}
       style={chip
         ? { padding: `${padY}px ${padX}px`, fontSize: chipFont, ...style }
         : style}
@@ -609,12 +685,14 @@ export function PickerField({
       ) : (
         <input
           {...inputProps}
-          className={chip
-            ? 'absolute inset-0 h-full w-full bg-transparent text-transparent outline-none'
+          className={inlineAutoGrow
+            ? 'block w-full bg-transparent text-transparent outline-none'
             : 'absolute inset-0 h-full w-full bg-transparent text-transparent outline-none'}
-          style={chip
-            ? { caretColor: '#2563eb', color: 'transparent', paddingLeft: padX, paddingRight: padX + 16 }
-            : { caretColor: '#2563eb', color: 'transparent' }}
+          style={inlineAutoGrow
+            ? ({ fieldSizing: 'content', width: 'auto', minWidth: 72, maxWidth: 400, caretColor: '#2563eb', color: 'transparent' } as React.CSSProperties)
+            : (chip
+              ? { caretColor: '#2563eb', color: 'transparent', paddingLeft: padX, paddingRight: padX + 16 }
+              : { caretColor: '#2563eb', color: 'transparent' })}
         />
       )}
       {chip && (

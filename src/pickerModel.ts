@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 /**
  * The value model behind `PickerField` (roadmap 322, phase 5).
@@ -29,6 +29,9 @@ export interface PickerItem {
   keywords?: string;
   /** Optional trailing badge rendered by the default row. */
   badge?: string;
+  /** Optional row chrome (GroupedSelect's tag rows paint the whole row). */
+  rowClassName?: string;
+  rowStyle?: CSSProperties;
 }
 
 export function pickerItemKey(item: PickerItem, resolveBy: PickerResolveBy = 'id'): string {
