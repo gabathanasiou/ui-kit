@@ -22,13 +22,18 @@ import { useCoarseScale, coarsePx } from './device';
  *  square that fills with the tone color + white check when checked (outline
  *  at rest). Used by `Checkbox` (`pill` variant) AND `Checklist` so every
  *  multi-select checkbox looks identical. Colorable via `tone` (accent/danger). */
-export function CheckMark({ checked, size, tone = 'accent' }: { checked: boolean; size: number; tone?: 'accent' | 'danger' }) {
+export function CheckMark({ checked, size, tone = 'accent', indeterminate = false }: { checked: boolean; size: number; tone?: 'accent' | 'danger'; indeterminate?: boolean }) {
   return (
     <span
-      className={`ui-check-indicator ${checked ? 'ui-check-indicator-checked' : ''} ${tone === 'danger' ? 'ui-check-tone-danger' : ''}`}
+      className={`ui-check-indicator ${checked || indeterminate ? 'ui-check-indicator-checked' : ''} ${tone === 'danger' ? 'ui-check-tone-danger' : ''}`}
       aria-hidden
     >
-      {checked ? (
+      {indeterminate ? (
+        <svg viewBox="0 0 16 16" style={{ width: size, height: size }} aria-hidden>
+          <rect x="1" y="1" width="14" height="14" rx="3.5" fill="currentColor" stroke="var(--ui-check-ring)" strokeWidth={1} />
+          <path d="M4.5 8 H11.5" stroke="var(--ui-check-check)" strokeWidth={2} strokeLinecap="round" fill="none" />
+        </svg>
+      ) : checked ? (
         <svg viewBox="0 0 16 16" style={{ width: size, height: size }} aria-hidden>
           <rect x="1" y="1" width="14" height="14" rx="3.5" fill="currentColor" stroke="var(--ui-check-ring)" strokeWidth={1} />
           <path d="M4.5 8.2 L7 10.7 L11.5 5.8" stroke="var(--ui-check-check)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
