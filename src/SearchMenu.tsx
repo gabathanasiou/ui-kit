@@ -541,7 +541,7 @@ export function SearchMenu({
         {(row.hit.detail || row.hit.item.detail) && (
           <span className="shrink-0 max-w-[55%] truncate text-[10px] text-zinc-400">{row.hit.detail || row.hit.item.detail}</span>
         )}
-        {selected && <Check className={`${d.icon} shrink-0`} aria-hidden />}
+        {selected && <Check className="ui-icon w-3.5 h-3.5 shrink-0" aria-hidden />}
       </button>
     );
   };
