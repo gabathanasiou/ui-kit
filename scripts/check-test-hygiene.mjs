@@ -44,8 +44,10 @@ const WAIT_BASELINE = 9;
 //      empty/full) + MorphActionField (create/rename field with inline actions).
 // 98 = 97 + SearchMenu field actions (buttons inside the expanded textbox).
 // 99 = 98 + the dark/zinc checked control colors (black fill + white mark).
+// 101 = 99 + the trigger-as-search regressions (reopen/select-all/Tab, a
+//       paste without a keydown + click-commit — browser-only wiring).
 const SPEC_CAP = 18;
-const TEST_CAP = 99;
+const TEST_CAP = 101;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

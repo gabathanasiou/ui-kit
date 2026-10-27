@@ -216,6 +216,59 @@ test('trigger-as-search: the trigger field keeps focus and filters while typing'
   await expect(menu(page).locator('[data-menu-search-empty]')).toHaveCount(0);
 });
 
+test('trigger-as-search: reopening a committed value stays open and typing replaces it', async ({ page }) => {
+  await page.goto('/');
+  const input = page.getByTestId('searchable-trigger-input');
+  await input.click();
+  await expect(menu(page)).toBeVisible();
+  await input.pressSequentially('tok');
+  await expect(visibleItems(page)).toHaveCount(1);
+  await input.press('Enter');
+  await expect(menu(page)).toHaveCount(0, { timeout: 5000 });
+  await expect(input).toHaveValue('Asia/Tokyo');
+  await expect(input).toBeFocused();
+
+  // Reopening: the committed text is NOT a query, so the whole list shows…
+  // (and the field keeps the keyboard — the panel never takes it, and the
+  // close-restore must not look like the USER focusing the field and reopen).
+  await input.click();
+  await expect(menu(page)).toBeVisible();
+  await expect(visibleItems(page)).toHaveCount(COUNT);
+  await expect(input).toBeFocused();
+  // …and opening selected the text, so typing starts a NEW search instead of
+  // appending to "Asia/Tokyo" (which matches nothing).
+  await input.pressSequentially('berlin');
+  await expect(input).toHaveValue('berlin');
+  await expect(visibleItems(page)).toHaveCount(1);
+  await expect(visibleItems(page)).toContainText('Europe/Berlin');
+
+  // Leaving the field ends the session.
+  await input.press('Tab');
+  await expect(menu(page)).toHaveCount(0, { timeout: 5000 });
+});
+
+test('trigger-as-search: non-keyboard text changes filter and a row click never reopens', async ({ page }) => {
+  await page.goto('/');
+  const input = page.getByTestId('searchable-trigger-input');
+  await input.click();
+  await expect(menu(page)).toBeVisible();
+  // Paste / IME / dictation / autofill all change the value through an
+  // `input` event with NO printable keydown. The old keystroke flag left
+  // every one of them showing the unfiltered list (and Enter then committed
+  // the first row, not the searched one).
+  await page.keyboard.insertText('berlin');
+  await expect(input).toHaveValue('berlin');
+  await expect(visibleItems(page)).toHaveCount(1);
+  await expect(visibleItems(page)).toContainText('Europe/Berlin');
+
+  // Mouse selection commits, the list stays CLOSED (the focus restore used to
+  // re-fire the consumer's open-on-focus), and the keyboard returns to the field.
+  await visibleItems(page).first().click();
+  await expect(menu(page)).toHaveCount(0, { timeout: 5000 });
+  await expect(input).toHaveValue('Europe/Berlin');
+  await expect(input).toBeFocused();
+});
+
 test('trigger-as-search: focus that lands in the menu returns to the field', async ({ page }) => {
   await page.goto('/');
   const input = page.getByTestId('searchable-trigger-input');

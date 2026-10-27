@@ -157,6 +157,12 @@ stays mounted while the close morph plays; `onClosed` drops persisted):
 - The trigger gets `data-state="open"` from Radix; the kit `Button` keeps its
   hover look while open (the `open` variant classes, `!`-important so they
   beat the base background).
+- **Trigger-as-search (`searchable` + `searchValue`) is a combobox, not a
+  menu**: the FIELD owns the keyboard (panel non-focusable, focus-outside
+  dismissal vetoed for the field), a trigger pointerdown never dismisses,
+  opening selects the text, and the filter arms on the VALUE changing (not a
+  keydown — paste/IME/dictation have none). Restores into the field are
+  flagged so a consumer's `onFocus` cannot reopen a closing menu.
 
 ## Modal internals
 
