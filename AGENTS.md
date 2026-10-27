@@ -87,22 +87,15 @@ a committed `dist/`; consumers pin a github tag (`github:gabathanasiou/ui-kit#v0
 
 ## The Playground (debug everything here, not in the app)
 
-`playground/src/main.tsx` is the component zoo — every surface, with testids.
-Runs under `<StrictMode>` (dev-only bugs reproduce — see the morph section).
-
-Surfaces (section → testids):
-- Buttons: every variant × theme (`btn-*`).
-- DropdownMenus: controlled (`ctrl-menu-trigger`, the app's exact
-  DayEventsModal pattern), uncontrolled, light theme, submenu, ItemManager.
-- Modals: basic (`modal-open`), stacked (`stacked-open` → "Open Modal 2"),
-  menu-inside-modal (`menu-modal-open` → `inmodal-menu-trigger`),
-  keyboard-test (`kb-modal-open` — modal with input/textarea + a live
-  `visualViewport` readout, for iPad keyboard behavior).
-- Dialogs: confirm (`dlg-confirm`), danger+DNWA (`dlg-danger` → `dnwa-reset`
-  clears the 24h suppression), prompt, alert, over-host (`dlg-over-host`).
-- `useOverlayMorph` clone panels (`panel-trigger` / `panel` — the app's
-  DropdownPanel pattern with `cloneOnUnmount`).
-- Inputs, tooltips, context menu.
+`npm run playground` → `:5183` (kit SOURCE, HMR, no build). `playground/src/
+main.tsx` holds the `SECTIONS` registry (nav + rendering, one source of
+truth); each surface lives in `playground/src/sections/*.tsx`, shared fixtures
+in `demoData.tsx` / `richTextDemo.ts`, page chrome in `shell/chrome.tsx`.
+Every surface keeps its testids. The Theme lab's mode/accent theme the WHOLE
+page (body attrs too, so portals + overscroll match); surface stays a modal
+property. Runs under `<StrictMode>` (dev-only bugs reproduce — see the morph
+section). **Read `docs/PLAYGROUND.md` before adding/moving a demo or a spec**
+— section map, testids, theme/contrast rules and the CSS gotchas live there.
 
 Playground CSS gotchas (both REQUIRED for correct rendering — the kit ships
 Tailwind classes the consumer provides):

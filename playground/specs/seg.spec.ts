@@ -32,7 +32,10 @@ test('track variant: light toolbar palette + pressed state', async ({ page }) =>
   await events.click();
   await expect(events).toHaveAttribute('aria-pressed', 'true');
   await expect(seg.getByRole('button', { name: 'Strips' })).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.getByTestId('seg-light-toggle')).toHaveCSS('background-color', 'rgb(239, 246, 255)');
+  /* The pressed mirror follows the PAGE's project accent (the playground runs
+     emerald by default): in light mode `--ui-btn-active-bg` resolves to the
+     accent's 200 tint, not the legacy scope-less blue-50. */
+  await expect(page.getByTestId('seg-light-toggle')).toHaveCSS('background-color', 'rgb(167, 243, 208)');
 });
 
 test('track variant: blue + emerald project-chrome palettes', async ({ page }) => {

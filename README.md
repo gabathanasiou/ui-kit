@@ -167,7 +167,9 @@ Semver: patch/minor = safe to bump; major = breaking changes, migrate apps delib
 ## Playground & debugging
 
 `npm run playground` serves the component zoo at `:5183` (kit SOURCE, HMR, no
-build) — every button, dropdown, modal and morph surface with testids, for
-reproducing bugs without the app. `npm run test:playground` runs the Playwright
-debug specs (dropdown dismiss, morph clones, modal portals). See `AGENTS.md`
-for the full debugging guide (morph internals, known gotchas, release flow).
+build) — grouped sections with a section rail, every button, dropdown, modal
+and morph surface with testids, for reproducing bugs without the app. The
+Theme lab at the top recolours the whole page (mode × accent). `npm run
+test:playground` runs the Playwright debug specs (dropdown dismiss, morph
+clones, modal portals). See `AGENTS.md` for the full debugging guide (morph
+internals, known gotchas, release flow).
