@@ -533,8 +533,12 @@ export function SearchMenu({
     const doc = rootRef.current?.ownerDocument ?? currentDocument;
     if (!doc) return;
     const onPointerDown = (event: PointerEvent) => {
-      const target = event.target as Node | null;
-      if (!target) return;
+      /* `composedPath()[0]` is the REAL target inside a shadow root — Glide
+         renders its overlay editor in one, and document-level listeners see
+         the retargeted host, which made clicks on the picker's own field look
+         like outside clicks. */
+      const target = (event.composedPath?.()[0] ?? event.target) as Node | null;
+      if (!target || typeof (target as Node).nodeType !== 'number') return;
       if (rootRef.current?.contains(target) || panelRef.current?.contains(target) || anchorRef?.current?.contains(target)) return;
       close();
     };
@@ -662,8 +666,20 @@ export function SearchMenu({
   };
 
   // Light the first RECORD when the query changes (the category row above it
-  // is a jump target, not the default Enter action).
+  // is a jump target, not the default Enter action). A value field whose text
+  // EXACTLY names a record lights NOTHING: Enter commits the typed text there
+  // (EntityDropdown's contract), while a non-matching query lights the create
+  // row so Enter adds it.
   useEffect(() => {
+    if (isOpenControlled) {
+      const typed = query.trim().toLowerCase();
+      const exact = !!typed && items.some(item =>
+        item.id.toLowerCase() === typed || item.label.toLowerCase() === typed);
+      if (exact) {
+        setHighlighted(-1);
+        return;
+      }
+    }
     const firstItem = rows.findIndex(row => row.kind === 'item');
     setHighlighted(firstItem >= 0 ? leadingOffset + firstItem : leadingOffset);
     // Only a QUERY change resets the highlight; expanding a group must keep
