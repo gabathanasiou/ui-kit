@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, Plus, Search, X } from 'lucide-react';
+import { Check, ChevronDown, Plus, Search, X } from 'lucide-react';
 import { getDropdownClasses, useItemSize, useMenuGroupSize, type DropdownTheme } from './DropdownMenu';
 import { useDropdownPosition } from './useDropdownPosition';
 import { useCurrentDocument, usePortalTarget } from './popout';
@@ -28,6 +28,10 @@ import {
  * state/action ("No matches" + "Add …"). No Radix menu — a search field must
  * keep focus, so the panel is positioned by the shared dropdown engine and the
  * input owns the keyboard.
+ *
+ * Value-field pickers: `browseAll` lists a single-kind catalogue flat on open
+ * (no category rows) and `selectedId` marks the current value with a check and
+ * scrolls it into view — the "open where I am" behaviour a form field needs.
  */
 
 export type SearchMenuMode = 'expandable' | 'inline';
@@ -75,6 +79,16 @@ export interface SearchMenuProps {
   /** `multiple` = several categories can be open; `single` = opening one
    *  collapses the others (accordion). All-collapsed is always allowed. */
   groupExpandMode?: 'multiple' | 'single';
+  /** Flat picker: the empty query lists every record with NO category rows.
+   *  Use for a single-kind catalogue (timezones, one element category) where
+   *  a group header would only repeat the trigger — pairs with `selectedId` so
+   *  opening the menu shows the whole list at the current value. */
+  browseAll?: boolean;
+  /** The current value of a picker: that record renders selected (tint + check)
+   *  and the panel scrolls it into view when it opens — the "we are here"
+   *  anchor for a value field. Purely visual; selection still comes from
+   *  `onSelect`. */
+  selectedId?: string;
   autoFocus?: boolean;
   /** Expandable mode widths (px). */
   collapsedWidth?: number;
@@ -119,6 +133,8 @@ export function SearchMenu({
   expandableGroups = false,
   browseExpanded = false,
   groupExpandMode = 'multiple',
+  browseAll = false,
+  selectedId,
   autoFocus = true,
   collapsedWidth = 128,
   expandedWidth = 288,
@@ -191,11 +207,12 @@ export function SearchMenu({
       groups,
       query,
       browseGroups: openOnFocus || browseExpanded,
+      browseAll,
       expandedGroups,
       emptyActionLabels,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items, groups, query, openOnFocus, browseExpanded, expandedGroups, emptyActionLabels.join('\u0000')],
+    [items, groups, query, openOnFocus, browseExpanded, browseAll, expandedGroups, emptyActionLabels.join('\u0000')],
   );
 
   const leadingRows = useMemo<Extract<SearchMenuRow, { kind: 'action' }>[]>(
@@ -497,26 +514,40 @@ export function SearchMenu({
     </div>
   );
 
+  /** Current-value anchor: opening a picker lands on the value it holds
+   *  (a long catalogue would otherwise start at the top and hide it). */
+  useEffect(() => {
+    if (!open || !selectedId) return;
+    const raf = requestAnimationFrame(() => {
+      const el = Array.from(panelRef.current?.querySelectorAll<HTMLElement>('[data-search-item]') ?? [])
+        .find(node => node.getAttribute('data-search-item') === selectedId);
+      el?.scrollIntoView({ block: 'center' });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [open, selectedId]);
+
   const renderItemRow = (row: Extract<SearchMenuRow, { kind: 'item' }>, rowIndex: number) => {
     const active = highlighted === rowIndex;
+    const selected = selectedId !== undefined && row.hit.item.id === selectedId;
     return (
       <button
         key={`item:${row.hit.item.id}`}
         type="button"
         role="option"
-        aria-selected={false}
+        aria-selected={selected}
         tabIndex={-1}
         data-search-item={row.hit.item.id}
         onMouseEnter={() => setHighlighted(rowIndex)}
         onClick={() => activate(row)}
         style={itemSize}
-        className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''} ${row.hit.item.disabled ? 'opacity-30 pointer-events-none' : ''}`}
+        className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${d.itemDefault} ${selected ? 'ui-item-selected' : ''} ${active ? 'ui-item-highlighted' : ''} ${row.hit.item.disabled ? 'opacity-30 pointer-events-none' : ''}`}
       >
         {row.hit.item.icon && <span className={`${d.icon} shrink-0`}>{row.hit.item.icon}</span>}
         <span className="flex-1 truncate">{row.hit.item.label}</span>
         {(row.hit.detail || row.hit.item.detail) && (
           <span className="shrink-0 max-w-[55%] truncate text-[10px] text-zinc-400">{row.hit.detail || row.hit.item.detail}</span>
         )}
+        {selected && <Check className={`${d.icon} shrink-0`} aria-hidden />}
       </button>
     );
   };

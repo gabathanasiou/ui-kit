@@ -15,6 +15,10 @@ import { type SearchMenuGroup, type SearchMenuItem } from './searchMenuModel';
  * state/action ("No matches" + "Add …"). No Radix menu — a search field must
  * keep focus, so the panel is positioned by the shared dropdown engine and the
  * input owns the keyboard.
+ *
+ * Value-field pickers: `browseAll` lists a single-kind catalogue flat on open
+ * (no category rows) and `selectedId` marks the current value with a check and
+ * scrolls it into view — the "open where I am" behaviour a form field needs.
  */
 export type SearchMenuMode = 'expandable' | 'inline';
 export interface SearchMenuEmptyAction {
@@ -59,6 +63,16 @@ export interface SearchMenuProps {
     /** `multiple` = several categories can be open; `single` = opening one
      *  collapses the others (accordion). All-collapsed is always allowed. */
     groupExpandMode?: 'multiple' | 'single';
+    /** Flat picker: the empty query lists every record with NO category rows.
+     *  Use for a single-kind catalogue (timezones, one element category) where
+     *  a group header would only repeat the trigger — pairs with `selectedId` so
+     *  opening the menu shows the whole list at the current value. */
+    browseAll?: boolean;
+    /** The current value of a picker: that record renders selected (tint + check)
+     *  and the panel scrolls it into view when it opens — the "we are here"
+     *  anchor for a value field. Purely visual; selection still comes from
+     *  `onSelect`. */
+    selectedId?: string;
     autoFocus?: boolean;
     /** Expandable mode widths (px). */
     collapsedWidth?: number;
@@ -88,5 +102,5 @@ export interface SearchMenuProps {
      *  persistent "Add …" or management action); receives the current query. */
     footerActions?: SearchMenuEmptyAction[];
 }
-export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, autoFocus, collapsedWidth, expandedWidth, panelWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, leadingActions, hideLeadingOnEmpty, footerActions, }: SearchMenuProps): React.JSX.Element;
+export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, browseAll, selectedId, autoFocus, collapsedWidth, expandedWidth, panelWidth, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, leadingActions, hideLeadingOnEmpty, footerActions, }: SearchMenuProps): React.JSX.Element;
 export default SearchMenu;

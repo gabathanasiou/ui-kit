@@ -113,6 +113,10 @@ export function buildSearchMenuRows(params: {
   query: string;
   /** Render only category rows when the query is empty (browse state). */
   browseGroups?: boolean;
+  /** Flat picker: an empty query lists EVERY record with no category rows
+   *  (a catalogue of one kind — e.g. timezones, one element category — where
+   *  a group header would only repeat the trigger). Overrides `browseGroups`. */
+  browseAll?: boolean;
   /** Groups the user expanded with the chevron (browse state only). */
   expandedGroups?: ReadonlySet<string>;
   /** Keep every group's item rows mounted (collapsed groups marked `hidden`)
@@ -124,6 +128,10 @@ export function buildSearchMenuRows(params: {
   const rows: SearchMenuRow[] = [];
   const query = params.query.trim();
   if (!hasQuery) {
+    if (params.browseAll) {
+      for (const item of params.items) rows.push({ kind: 'item', hit: { item } });
+      return rows;
+    }
     if (params.browseGroups !== false) {
       for (const group of visibleGroups) {
         rows.push({ kind: 'group', group });

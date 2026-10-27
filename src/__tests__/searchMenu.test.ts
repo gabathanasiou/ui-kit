@@ -85,4 +85,19 @@ describe('buildSearchMenuRows', () => {
     const rows = buildSearchMenuRows({ items, groups, query: '', expandedGroups: new Set(['cast']) });
     expect(rows.map(r => r.kind)).toEqual(['group', 'item', 'item', 'group', 'group']);
   });
+
+  it('browseAll lists every record flat when the query is empty', () => {
+    const flat: SearchMenuItem[] = [
+      { id: 'tz1', label: 'Europe/London' },
+      { id: 'tz2', label: 'America/New_York' },
+    ];
+    const rows = buildSearchMenuRows({ items: flat, groups: [], query: '', browseAll: true });
+    expect(rows.map(r => r.kind)).toEqual(['item', 'item']);
+    expect(rows.map(r => (r.kind === 'item' ? r.hit.item.id : ''))).toEqual(['tz1', 'tz2']);
+  });
+
+  it('browseAll still renders grouped hits for a query', () => {
+    const rows = buildSearchMenuRows({ items, groups, query: 'roy', browseAll: true });
+    expect(rows.map(r => r.kind)).toEqual(['group', 'item']);
+  });
 });
