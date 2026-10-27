@@ -9,6 +9,9 @@ import { useDropdownPosition, DROPDOWN_MAX_HEIGHT } from './useDropdownPosition'
 import { registerOverlayClose } from './overlayRegistry';
 import { useKitTheme, menuAttributesOf } from './ThemeScope';
 import { revealRowInScroller, useRevealRowOnOpen } from './revealInScroller';
+import { useSelection, SelectionContext, NO_SELECTION_IDS } from './selection';
+import type { MultipleSelectionProps } from './selection';
+import { SelectionFooter } from './SelectionControls';
 
 export type DropdownTheme = 'light' | 'dark' | 'blue' | 'emerald';
 
@@ -145,10 +148,16 @@ export interface MenuHighlightItem {
   /** Optional category label. Grouped menus render a header when this changes
    *  between VISIBLE rows; the searchable filter also matches it. */
   group?: string;
+  /** Stable id for multi-select mode (`DropdownItem itemId`). Rows without an
+   *  id stay plain commands. */
+  itemId?: string;
 }
 
 export interface MenuHighlightApi {
   items: MenuHighlightItem[];
+  /** Every registered item in registration (catalogue) order — the unfiltered
+   *  set multi-select orders commits by. */
+  allItems: MenuHighlightItem[];
   highlightedIndex: number;
   pointerDriven: boolean;
   register: (item: MenuHighlightItem) => () => void;
@@ -202,6 +211,9 @@ export function useMenuHighlightState(filter?: (item: MenuHighlightItem) => bool
        rows drop out of indexing entirely, so the single highlight, the
        arrows and the typeahead all operate on the VISIBLE set only. */
     items: filter ? itemsRef.current.filter(filter) : itemsRef.current,
+    /* The unfiltered registration order — multi-select commits in catalogue
+       order even when the query hides some selected rows. */
+    allItems: itemsRef.current,
     highlightedIndex,
     pointerDriven,
     register,
@@ -218,14 +230,14 @@ export function useMenuHighlightState(filter?: (item: MenuHighlightItem) => bool
  *  returns the row's index + whether it is the lit row + a pointer-hover
  *  setter. Menus without a provider get `api: null` → unlit, unregistered
  *  rows (bespoke surfaces keep their own behavior). */
-export function useHighlightRow(opts: { label: () => string; activate: () => void; disabled?: boolean; group?: string }) {
+export function useHighlightRow(opts: { label: () => string; activate: () => void; disabled?: boolean; group?: string; itemId?: string }) {
   const api = useMenuHighlight();
   const apiRef = useRef(api);
   apiRef.current = api;
   const selfRef = useRef<MenuHighlightItem | null>(null);
 
   useEffect(() => {
-    const self: MenuHighlightItem = { label: opts.label(), activate: opts.activate, group: opts.group?.trim() || undefined };
+    const self: MenuHighlightItem = { label: opts.label(), activate: opts.activate, group: opts.group?.trim() || undefined, itemId: opts.itemId };
     selfRef.current = self;
     return apiRef.current?.register(self);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -252,7 +264,7 @@ export function useMenuKeys(
   active: boolean,
   api: MenuHighlightApi,
   handlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>,
-  opts?: { onCloseSub?: () => void; onFieldKey?: (e: KeyboardEvent) => boolean },
+  opts?: { onCloseSub?: () => void; onFieldKey?: (e: KeyboardEvent) => boolean; onSelectAll?: () => void },
 ) {
   const highlightedRef = useRef(-1);
   highlightedRef.current = api.highlightedIndex;
@@ -273,6 +285,16 @@ export function useMenuKeys(
     keysCreatedRef.current = true;
     handlerRef.current = (e: KeyboardEvent) => {
       if (!activeRef.current) return;
+      /* Multi-select: Cmd/Ctrl+A selects the VISIBLE set. Handled before the
+         field branch so it works with the search box focused (the browser's
+         select-all-text is not what the panel means). */
+      const selectAll = optsRef.current?.onSelectAll;
+      if (selectAll && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        selectAll();
+        return;
+      }
       /* A focused field inside the menu (the searchable input) owns its keys:
          printable chars + Enter + Escape are swallowed AT CAPTURE
          (stopImmediatePropagation) so Radix's own roving focus/typeahead never
@@ -359,7 +381,7 @@ export function useMenuKeyLock(
   contentRef: React.RefObject<HTMLElement | null>,
   standDown: boolean,
   lockHandlerRef: React.MutableRefObject<(e: KeyboardEvent) => void>,
-  opts?: { ignoreFields?: boolean },
+  opts?: { ignoreFields?: boolean; selectAll?: boolean },
 ) {
   const apiRef = useRef(api);
   apiRef.current = api;
@@ -369,6 +391,8 @@ export function useMenuKeyLock(
   standDownRef.current = standDown;
   const ignoreFieldsRef = useRef(opts?.ignoreFields);
   ignoreFieldsRef.current = opts?.ignoreFields;
+  const selectAllRef = useRef(opts?.selectAll);
+  selectAllRef.current = opts?.selectAll;
   /* Stable handler — created ONCE, reads everything via refs. The composed
      ref's cleanup removes THIS exact function; a per-render reassignment
      would leak the attached closure on the DOCUMENT after unmount (the
@@ -382,6 +406,15 @@ export function useMenuKeyLock(
       if (!activeRef.current || standDownRef.current) return;
       const el = contentRef.current;
       if (el && el.contains(e.target as Node)) return;
+      /* Multi-select: Cmd/Ctrl+A belongs to the panel even when the keyboard
+         sits in the external trigger field (trigger-as-search). The content's
+         own listener handles it when focus is inside the panel. */
+      if (selectAllRef.current && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        keysHandlerRef.current(e);
+        return;
+      }
       /* Trigger-as-search (external mode): the trigger field lives OUTSIDE the
          content — its keystrokes (letters/space/Enter) belong to the field,
          so the lock must not hijack them. Everything else still locks. */
@@ -470,6 +503,10 @@ export interface DropdownMenuProps {
    *           onChange={e => { setQ(e.target.value); setOpen(true); }} /> */
   searchValue?: string;
   onSearchValueChange?: (q: string) => void;
+  /** Multiple-selection mode: rows toggle and the panel stays open; the footer
+   *  hero commits the draft. Closing any other way — Escape, click-away, a
+   *  trigger click — cancels. Rows opt in with `DropdownItem itemId`. */
+  multiple?: MultipleSelectionProps;
 }
 
 export default function DropdownMenu({
@@ -490,6 +527,7 @@ export default function DropdownMenu({
   searchFilter,
   searchValue,
   onSearchValueChange,
+  multiple,
 }: DropdownMenuProps) {
   const kit = useKitTheme();
   const menu = menuAttributesOf(themeProp, kit);
@@ -567,12 +605,40 @@ export default function DropdownMenu({
      needs the same "No matches" body SearchMenu has). */
   const searchEmpty = searchable && filterQuery.trim() !== '' && highlight.items.length === 0;
 
+  /* Multi-select (roadmap 322): the panel owns a DRAFT seeded from
+     `multiple.selectedIds`. Rows toggle through SelectionContext and the
+     pinned footer's hero is the ONLY commit — Escape, click-away and a trigger
+     close all drop the draft (the next open re-seeds it). */
+  const selectionActive = !!multiple;
+  const selectionItems = highlight.allItems
+    .map(item => item.itemId)
+    .filter((id): id is string => !!id);
+  const visibleSelectionItems = highlight.items
+    .map(item => item.itemId)
+    .filter((id): id is string => !!id);
+  const selection = useSelection({
+    mode: 'draft',
+    selectedIds: multiple?.selectedIds ?? NO_SELECTION_IDS,
+    itemIds: selectionItems,
+    visibleIds: visibleSelectionItems,
+    max: multiple?.max,
+    disabledIds: multiple?.disabledIds,
+    indicator: multiple?.indicator,
+    onCommit: multiple?.onCommit,
+  });
+  const resetSelectionRef = useRef(selection.reset);
+  resetSelectionRef.current = selection.reset;
+  const heroLabel = typeof multiple?.commitLabel === 'function'
+    ? multiple.commitLabel(selection.count)
+    : multiple?.commitLabel ?? `Select ${selection.count}`;
+
   useEffect(() => {
     if (open) {
       setPersisted(true);
       if (!externalSearch) setInternalQuery('');
       setTypedSinceOpen(false);
       highlight.setHighlighted(initialHighlightIndex ?? -1, 'keyboard');
+      resetSelectionRef.current();
       /* One open overlay at a time: opening this menu closes any other
          (context menu) first. */
       return registerOverlayClose(() => { onOpenChange?.(false); onClose?.(); });
@@ -653,9 +719,15 @@ export default function DropdownMenu({
   }, [highlight, onOpenChange, onClose]);
   /* Keys/lock target only the TOPMOST open surface: the root navigates only
      while no sub is open (the open sub owns the keyboard). */
-  useMenuKeys(open && subChain.length === 0, highlight, keysHandlerRef, { onFieldKey });
+  useMenuKeys(open && subChain.length === 0, highlight, keysHandlerRef, {
+    onFieldKey,
+    onSelectAll: selectionActive ? () => selection.setAll(true) : undefined,
+  });
   useMenuWheel(open, wheelHandlerRef);
-  useMenuKeyLock(open, highlight, keysHandlerRef, contentElRef, subChain.length > 0, lockHandlerRef, { ignoreFields: externalSearch });
+  useMenuKeyLock(open, highlight, keysHandlerRef, contentElRef, subChain.length > 0, lockHandlerRef, {
+    ignoreFields: externalSearch,
+    selectAll: selectionActive,
+  });
   const lockDocRef = useRef<Document | null>(null);
   const setComposedRef = useCallback((node: HTMLDivElement | null) => {
     if (node) {
@@ -840,7 +912,8 @@ export default function DropdownMenu({
     </div>
   );
 
-  const contentClasses = `ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none max-h-[min(60vh,24rem)] min-w-0 ${internalSearch ? 'overflow-hidden' : 'overflow-y-auto scrollbar-custom'}`;
+  const scrollable = internalSearch || selectionActive;
+  const contentClasses = `ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none max-h-[min(60vh,24rem)] min-w-0 ${scrollable ? 'overflow-hidden' : 'overflow-y-auto scrollbar-custom'}`;
 
   return (
     <RadixDropdownMenu.Root open={open || persisted} onOpenChange={handleOpenChange} modal={false}>
@@ -852,6 +925,7 @@ export default function DropdownMenu({
           <SubmenuContext.Provider value={{ chain: subChain, setChain: setSubChain, morph, keyboardOpened: keyboardOpenedSub, setKeyboardOpened: setKeyboardOpenedSub }}>
             <MenuHighlightContext.Provider value={highlight}>
               <MenuSearchContext.Provider value={{ query, setQuery }}>
+                <SelectionContext.Provider value={selectionActive ? selection : null}>
                 <RadixDropdownMenu.Content
                   ref={setComposedRef}
                   {...menu.attrs}
@@ -916,7 +990,7 @@ export default function DropdownMenu({
                       </div>
                     </div>
                   )}
-                  {internalSearch ? (
+                  {scrollable ? (
                     <div data-menu-items className="flex-1 min-h-0 overflow-y-auto scrollbar-custom flex flex-col">
                       {children}
                       {searchEmpty && searchEmptyBlock}
@@ -927,7 +1001,23 @@ export default function DropdownMenu({
                       {searchEmpty && searchEmptyBlock}
                     </>
                   )}
+                  {selectionActive && multiple?.footer !== false && (
+                    <SelectionFooter
+                      count={selection.count}
+                      max={multiple?.max}
+                      hiddenCount={multiple?.hiddenNote === false ? 0 : selection.hiddenCount}
+                      clear={multiple?.clear !== false}
+                      theme={theme}
+                      onClear={selection.clear}
+                      hero={{
+                        label: heroLabel,
+                        onClick: () => { selection.commit(); handleOpenChange(false); },
+                        disabled: selection.count === 0,
+                      }}
+                    />
+                  )}
                 </RadixDropdownMenu.Content>
+                </SelectionContext.Provider>
               </MenuSearchContext.Provider>
             </MenuHighlightContext.Provider>
           </SubmenuContext.Provider>
