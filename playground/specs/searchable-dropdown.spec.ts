@@ -561,6 +561,18 @@ test('PickerField: single grouped commit, morph face and async source', async ({
   await expect(panel).toHaveCount(0);
   await expect(page.getByTestId('picker-location-status')).toHaveText('location: Riverside House');
 
+  // Accordion single: opens ON the current value — its group expands (others
+  // stay collapsed) and the row is the highlight anchor.
+  const acc = page.getByTestId('picker-accordion-single');
+  await acc.locator('input').click();
+  await expect(panel.locator('[data-search-group]')).toHaveCount(3);
+  await expect(panel.locator('[data-search-item]')).toHaveCount(1);
+  const accCurrent = panel.locator('[data-search-item="loc-hospital"]');
+  await expect(accCurrent).toBeVisible();
+  await expect(accCurrent).toHaveAttribute('aria-selected', 'true');
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
+
   // Morph face: button → field, accordion categories, Tab commits.
   const roles = page.getByTestId('picker-roles');
   await roles.getByRole('button').first().click();

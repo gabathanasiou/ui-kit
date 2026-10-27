@@ -411,6 +411,41 @@ export function SearchMenu({
     });
   }, [query, browseExpanded, allGroups]);
 
+  /* Accordion: a picker that HOLDS a value opens ON it. Expand the group(s)
+     holding the current selection so the reveal has a row to land on, then put
+     the keyboard highlight on the current row (single). Without this an
+     accordion always opened collapsed and the current value was invisible.
+     Runs once per open — a later query or a manual toggle is left alone. */
+  const openedOnValueRef = useRef(false);
+  useEffect(() => {
+    if (!open) {
+      openedOnValueRef.current = false;
+      return;
+    }
+    if (openedOnValueRef.current || !expandableGroups || query.trim()) return;
+    const current = selectedId ? [selectedId] : [...(multiple?.selectedIds ?? [])];
+    const wanted = new Set(current);
+    const groupKeys = wanted.size
+      ? groups
+        .filter(group => items.some(item => item.group === group.key && wanted.has(item.id)))
+        .map(group => group.key)
+      : [];
+    if (groupKeys.length === 0) {
+      openedOnValueRef.current = true;
+      return;
+    }
+    const expand = groupExpandMode === 'single' ? groupKeys.slice(0, 1) : groupKeys;
+    if (!expand.every(key => expandedGroups.has(key))) {
+      setExpandedGroups(new Set(expand));
+      return;
+    }
+    if (highlightOnOpen && selectedId) {
+      const index = allRows.findIndex(row => row.kind === 'item' && row.hit.item.id === selectedId);
+      if (index >= 0) setHighlighted(index);
+    }
+    openedOnValueRef.current = true;
+  }, [open, expandableGroups, query, groups, items, selectedId, multiple?.selectedIds, groupExpandMode, expandedGroups, allRows, highlightOnOpen, setHighlighted]);
+
   const toggleGroup = useCallback((key: string) => {
     setExpandedGroups(prev => {
       const next = new Set(prev);

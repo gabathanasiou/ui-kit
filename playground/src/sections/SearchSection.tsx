@@ -312,6 +312,7 @@ function PickerFieldDemo() {
   const [wrapProps, setWrapProps] = useState<string[]>(['Desk lamp', 'Family portrait']);
   const [inlineProp, setInlineProp] = useState<string[]>(['Prop Gun']);
   const [location, setLocation] = useState<string[]>([]);
+  const [accordionLoc, setAccordionLoc] = useState<string[]>(['loc-hospital']);
   const [roles, setRoles] = useState<string[]>(['camera-op']);
   const [asyncTz, setAsyncTz] = useState<string[]>([]);
   const [longTz, setLongTz] = useState<string[]>(['Pacific/Auckland']);
@@ -329,6 +330,7 @@ function PickerFieldDemo() {
   }, []);
 
   const locationLabel = PICKER_LOCATIONS.find(l => l.id === location[0])?.label;
+  const accordionLabel = PICKER_LOCATIONS.find(l => l.id === accordionLoc[0])?.label;
   const roleLabels = roles.map(key => MULTI_ROLES.find(r => r.id === key)?.label || key);
 
   return (
@@ -411,6 +413,23 @@ function PickerFieldDemo() {
             panelWidth={300}
           />
           <span className="label" data-testid="picker-location-status">location: {locationLabel || '—'}</span>
+        </div>
+
+        <div data-testid="picker-accordion-single">
+          <span className="label">Accordion single — opens ON the current value</span>
+          <PickerField
+            appearance="chip"
+            mode="single"
+            values={accordionLoc}
+            onChange={values => { setAccordionLoc(values); bump(); }}
+            items={PICKER_LOCATIONS}
+            groups={PICKER_LOCATION_GROUPS}
+            browse="accordion"
+            placeholder="Choose location…"
+            panelWidth={300}
+            maxMenuHeight={220}
+          />
+          <span className="label" data-testid="picker-accordion-status">accordion: {accordionLabel || '—'}</span>
         </div>
 
         <div data-testid="picker-roles">
