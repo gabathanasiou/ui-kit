@@ -1033,7 +1033,13 @@ export function SearchMenu({
       aria-label={placeholder}
       aria-multiselectable={multipleActive ? true : undefined}
       onPointerEnter={reveal.engage}
-      onPointerDown={reveal.engage}
+      /* The panel is portaled but React events still bubble through the
+         component tree to the host (a stripboard cell, a Scene Sheet row, a
+         Glide overlay). A pick must never leak into those handlers — the
+         app's old DropdownPanel isolated its root for exactly this reason. */
+      onPointerDown={e => { e.stopPropagation(); reveal.engage(); }}
+      onMouseDown={e => e.stopPropagation()}
+      onClick={e => e.stopPropagation()}
       className="ui-menu rounded-lg shadow-xl z-[200] p-1 flex flex-col select-none min-w-0 overflow-hidden"
       style={{
         position: 'fixed',

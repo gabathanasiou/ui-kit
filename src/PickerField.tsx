@@ -364,7 +364,7 @@ export function PickerField({
     onCreateItem(id);
   }, [onCreateItem, allowFreeText, items, keyOf]);
 
-  const commit = useCallback(() => {
+  const commit = useCallback((exit = true) => {
     if (!editingRef.current) return;
     editingRef.current = false;
     if (readOnly || disabled) return;
@@ -391,7 +391,7 @@ export function PickerField({
     setSingleQuery('');
     setOpen(false);
     commitValues(next);
-    onExit?.();
+    if (exit) onExit?.();
   }, [readOnly, disabled, mode, items, resolveBy, itemKeys, allowFreeText, values, commitValues, onExit]);
 
   /* Outside clicks close through SearchMenu's controlled-open callback — that
@@ -449,7 +449,10 @@ export function PickerField({
     }
     if (event.key === 'Tab') {
       event.preventDefault();
-      if (open) commit();
+      /* Tab hands off to the host's next-field hook INSTEAD of `onExit` —
+         calling both would run the host's close path twice (Glide finished
+         editing twice, navigating two columns). */
+      if (open) commit(false);
       (onTabExit ?? onExit)?.(inputRef.current ?? undefined);
       return;
     }
