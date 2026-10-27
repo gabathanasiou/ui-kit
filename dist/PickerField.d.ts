@@ -79,6 +79,12 @@ export interface PickerFieldProps {
     /** Never render the panel narrower than this (px) — cell editors anchor to
      *  a thin box but still need a readable list. */
     panelMinWidth?: number;
+    /** Single mode: the search text to open the FIRST panel with. A host that
+     *  starts editing from a typed character (Glide's overlay editor passes it as
+     *  `initialValue` and never delivers an input event) hands it here, so the
+     *  first letter lights its option instead of the list falling back to the
+     *  first row. Later opens start from an empty query. */
+    initialQuery?: string;
     /** Keep the FULL catalogue rendered while typing (the query only moves the
      *  highlight). The old I/E + D/N autocompletes worked this way: every option
      *  stays visible so a single letter lights its match without hiding the
@@ -113,5 +119,5 @@ export interface PickerFieldProps {
      *  it is selected. The key must resolve to a `hidden` PickerItem. */
     groupToken?: (groupKey: string) => string | undefined;
 }
-export declare function PickerField({ values, onChange, items, groups, resolveBy, mode, appearance, display, formatDisplay, formatEditing, renderTrigger, renderItem, badge, trailing, anchoredKeys, anchoredLabel, placeholder, readOnly, inputReadOnly, disabled, autoFocus, defaultOpen, selectAllOnOpen, uppercase, allowFreeText, theme: themeProp, className, style, panelWidth, panelMinWidth, keepAllRows, maxMenuHeight, portalTarget, autoGrow, skipComma, collapsedWidth, expandedWidth, createLabel, onCreateItem, onExit, onEscape, onTabExit, loadItems, sortItems, max, disabledIds, indicator, browse, groupToken, }: PickerFieldProps): React.JSX.Element;
+export declare function PickerField({ values, onChange, items, groups, resolveBy, mode, appearance, display, formatDisplay, formatEditing, renderTrigger, renderItem, badge, trailing, anchoredKeys, anchoredLabel, placeholder, readOnly, inputReadOnly, disabled, autoFocus, defaultOpen, selectAllOnOpen, uppercase, allowFreeText, theme: themeProp, className, style, panelWidth, panelMinWidth, initialQuery, keepAllRows, maxMenuHeight, portalTarget, autoGrow, skipComma, collapsedWidth, expandedWidth, createLabel, onCreateItem, onExit, onEscape, onTabExit, loadItems, sortItems, max, disabledIds, indicator, browse, groupToken, }: PickerFieldProps): React.JSX.Element;
 export default PickerField;

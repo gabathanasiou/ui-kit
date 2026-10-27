@@ -723,6 +723,12 @@ export function SearchMenu({
      effect so a mount with `defaultOpen` honours `highlightOnOpen`. */
   useEffect(() => {
     if (!open) return;
+    /* Opened BY a typed character (Glide's overlay passes the first keystroke
+       as `initialValue`, which the picker hands in as the initial query): the
+       query effect above already lit that character's match. Re-seeding here
+       would yank the highlight back to the old value / first row — type "e"
+       and INT stays lit instead of EXT. */
+    if (query.trim()) return;
     const current = selectedId
       ? rows.findIndex(row => row.kind === 'item' && row.hit.item.id === selectedId)
       : -1;

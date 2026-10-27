@@ -103,6 +103,12 @@ export interface PickerFieldProps {
   /** Never render the panel narrower than this (px) — cell editors anchor to
    *  a thin box but still need a readable list. */
   panelMinWidth?: number;
+  /** Single mode: the search text to open the FIRST panel with. A host that
+   *  starts editing from a typed character (Glide's overlay editor passes it as
+   *  `initialValue` and never delivers an input event) hands it here, so the
+   *  first letter lights its option instead of the list falling back to the
+   *  first row. Later opens start from an empty query. */
+  initialQuery?: string;
   /** Keep the FULL catalogue rendered while typing (the query only moves the
    *  highlight). The old I/E + D/N autocompletes worked this way: every option
    *  stays visible so a single letter lights its match without hiding the
@@ -171,6 +177,7 @@ export function PickerField({
   style,
   panelWidth,
   panelMinWidth,
+  initialQuery,
   keepAllRows = false,
   maxMenuHeight,
   portalTarget,
@@ -202,10 +209,19 @@ export function PickerField({
 
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
+  /** Seed for the first open's query (a host's typed character). Held in
+   *  STATE, not a ref: React StrictMode mounts effects twice in dev, and a ref
+   *  cleared on the first run would leave the second with an empty query
+   *  (type "e" → first row lit again). */
+  const [seedQuery, setSeedQuery] = useState(() => {
+    const raw = initialQuery ?? '';
+    return uppercase ? raw.toUpperCase() : raw;
+  });
   /** Single mode: the live QUERY is separate from the field text. Opening
    *  shows the current value in the field but lists EVERY option (the current
    *  one highlighted) — EntityDropdown's single-select behaviour. */
-  const [singleQuery, setSingleQuery] = useState('');  const [draft, setDraft] = useState<string[]>(() => [...values]);
+  const [singleQuery, setSingleQuery] = useState(seedQuery);
+  const [draft, setDraft] = useState<string[]>(() => [...values]);
   const [asyncItems, setAsyncItems] = useState<PickerItem[] | null>(null);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
@@ -263,9 +279,10 @@ export function PickerField({
     draftRef.current = [...values];
     setDraft([...values]);
     setText(nextText);
-    setSingleQuery('');
+    setSingleQuery(seedQuery);
+    setSeedQuery('');
     setOpen(true);
-  }, [open, readOnly, disabled, values, editingText]);
+  }, [open, readOnly, disabled, values, editingText, seedQuery]);
 
   /* Focus + caret on the open edge; after a toggle, keep the caret at the end
      so typing appends the next segment. */
