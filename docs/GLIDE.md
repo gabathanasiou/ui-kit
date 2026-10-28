@@ -54,6 +54,31 @@ that file as `./glide.css` from the package.
   (the cell sets `activationBehaviorOverride: 'single-click'`).
 - **`domCells`** — see below.
 
+## Real DOM headers (`headerCells`)
+
+Glide paints headers on the canvas too. `headerCells` pins a real control over
+each named column's header (the fork's `getDomHeaderCell`, measured with
+`getBounds(col, -1)` — frozen and scrolled columns included):
+
+```tsx
+<GlideSheet
+  headerCells={{ pages: <SortHeader label="Pages" … /> }}
+/>
+```
+
+- The host node fills the header cell; `GlideSheet` publishes the canvas chrome
+  as CSS variables so it matches: `--glide-header-bg`, `--glide-header-fg`,
+  `--glide-header-hover-bg`, `--glide-header-focus-bg`.
+- Each header box carries `group` + `data-glide-header-focused` when the
+  selection covers its column (the whole RANGE, not just the current cell), so
+  `group-data-[glide-header-focused=true]:…` mirrors the canvas tint.
+- Columns without an entry keep Glide's painted header (the row-marker gutter
+  and the action lane in the Breakdown). A header control owns the click —
+  column selection/resize on those columns is replaced by the control.
+
+The Breakdown demo's headers are kit buttons that cycle
+none → ascending → descending with the kit's sort glyphs.
+
 ## Real DOM inside a cell (`domCells`)
 
 There is no DOM in a Glide cell, so real controls are **pinned over** the cell by
@@ -174,11 +199,21 @@ them. The opt-ins, all on `GlideSheet`:
   follows the data. It counts as an extra row in the content height, and the
   fork hides DOM boxes the sticky row paints over (`domCellBottomInset`) —
   otherwise a trash button would float on the add row.
+- **`smoothScroll`** — Glide's `smoothScrollX/Y`: the grid translates in pixels
+  instead of snapping to cell edges. The Breakdown uses it.
+- **`overscrollY`** — extra scrollable space past the last row (Glide's
+  `overscrollY`). The fork flattens that band to the cell background: stock
+  paints full-height grid lines there, which reads as phantom empty rows.
+  `addRowSticky` (default false) pins the trailing add-row to the viewport
+  bottom instead of leaving it at the end of the scroll.
 
-The page-scale recreation is the playground's `#breakdown` (`BreakdownDemo`):
-row markers, `Scene #` / `Pages` / `I/E` / `Set` frozen (a Seg switches the
-count), real kit editors for the entity columns, a trash DOM cell in the
-scrollable Actions column, and the trailing add row.
+The page-scale recreation is the playground's `#breakdown` page
+(`BreakdownPage` — a full-window app tab, not a section card): row markers,
+`Scene #` / `Pages` / `Script Day` / `I/E` / `Set` frozen (a Seg switches the
+count), smooth scrolling, real kit editors for the entity columns, a trash DOM
+cell in the scrollable Actions column, and the trailing add row. The grid's
+height is measured from the flex remainder, so a wrapped toolbar shrinks the
+grid instead of pushing it off-screen.
 
 ## The fork (we own the code now)
 
@@ -214,9 +249,10 @@ Sections under "Data grid":
   picker on Report To, trash/undo), `glide-gallery-demo` (every cell kind),
   `glide-layouts-demo` (arranged DOM cells), `glide-buttons-demo` (drawn
   buttons + in-cell morph fields), `glide-notes`.
-- `#breakdown` — `glide-breakdown-demo`: the Breakdown tab at page scale
-  (`breakdown-freeze` Seg, `-scene-count`, `-add-scene`, `-undo`, `-status`,
-  `-commits`; row-marker gutter + frozen columns + trailing add row).
+- `#breakdown` (full page) — `glide-breakdown-demo`: the Breakdown tab at page
+  scale (`breakdown-freeze` Seg, `-scene-count`, `-add-scene`, `-undo`,
+  `-status`, `-commits`, `-back`; row-marker gutter + frozen columns + trailing
+  add row, smooth scrolling, no showroom chrome).
 
 Spec: `playground/specs/glide.spec.ts`; pure math:
 `src/__tests__/glideGridModel.test.ts`.

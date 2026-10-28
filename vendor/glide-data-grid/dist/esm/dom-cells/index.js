@@ -4,16 +4,30 @@
    absolutely-positioned box per requested cell, measured with the editor's own
    getBounds() and re-pinned from the library's visible-region stream.
 
-   API: pass `getDomCell(col, row) -> ReactNode | null`. The node is rendered
-   during React render (never cached), so host state updates flow through.
-   Assumes no row-marker column (column indices are data columns).
+   API: pass `getDomCell(col, row) -> ReactNode | null` and
+   `getDomHeaderCell(col) -> ReactNode | null` (data-column indices; the
+   row-marker gutter is excluded). Nodes are rendered during React render
+   (never cached), so host state updates flow through.
 --------------------------------------------------------------------------- */
 import * as React from "react";
 import { DataEditorAll } from "../data-editor-all.js";
 
 export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDomCells(props, ref) {
-    const { getDomCell, onVisibleRegionChanged, onCellActivated, domCellClassName, gridSelection, freezeColumns = 0, domCellBottomInset = 0, ...rest } = props;
+    const { getDomCell, getDomHeaderCell, onVisibleRegionChanged, onCellActivated, domCellClassName, gridSelection, freezeColumns = 0, domCellBottomInset = 0, ...rest } = props;
     const focusedCell = gridSelection?.current?.cell;
+    const hasHeadersRef = React.useRef(false);
+    hasHeadersRef.current = getDomHeaderCell != null;
+    const freezeRef = React.useRef(freezeColumns);
+    freezeRef.current = freezeColumns;
+    /* A header is "focused" when the selection covers its column — the same
+       rule the canvas header tint uses (every column of a range, not just the
+       current cell's). */
+    const headerFocused = col => {
+        const cur = gridSelection?.current;
+        if (cur == null) return false;
+        const inRange = r => r != null && col >= r.x && col < r.x + r.width;
+        return cur.cell?.[0] === col || inRange(cur.range) || (cur.rangeStack ?? []).some(inRange);
+    };
     const innerRef = React.useRef(null);
     React.useImperativeHandle(ref, () => innerRef.current, []);
     const wrapRef = React.useRef(null);
@@ -33,12 +47,31 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
             const x1 = Math.ceil(vis.x + vis.width);
             const y0 = Math.max(0, Math.floor(vis.y));
             const y1 = Math.ceil(vis.y + vis.height);
+            /* Headers first: they are always on screen, so they are measured
+               across the visible columns (frozen included) even while the
+               body scrolls vertically. */
+            if (hasHeadersRef.current) {
+                for (let col = 0; col < x1; col++) {
+                    if (col >= freezeRef.current && col < x0) continue;
+                    const b = grid.getBounds(col, -1);
+                    if (b == null || b.width <= 0) continue;
+                    next.push({
+                        col,
+                        row: -1,
+                        header: true,
+                        left: Math.round(b.x - wr.left),
+                        top: Math.round(b.y - wr.top),
+                        width: Math.round(b.width),
+                        height: Math.round(b.height),
+                    });
+                }
+            }
             for (let row = y0; row < y1; row++) {
                 for (let col = 0; col < x1; col++) {
                     /* Frozen columns never enter the visible range (it starts
                        at the first SCROLLED column), but their cells are on
                        screen — always measure them. */
-                    if (col >= freezeColumns && col < x0) continue;
+                    if (col >= freezeRef.current && col < x0) continue;
                     const b = grid.getBounds(col, row);
                     if (b == null) continue;
                     if (b.y + b.height < wr.top || b.y > wr.bottom) continue;
@@ -125,6 +158,29 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
             "div",
             { ref: layerRef, style: { position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1 }, "data-glide-dom-layer": "" },
             boxes.map(b => {
+                if (b.header) {
+                    const headerNode = getDomHeaderCell?.(b.col);
+                    if (headerNode == null || headerNode === false) return null;
+                    return React.createElement(
+                        "div",
+                        {
+                            key: "h:" + b.col,
+                            className: "group" + (domCellClassName ? " " + domCellClassName : ""),
+                            "data-glide-dom-header": String(b.col),
+                            "data-glide-header-focused": headerFocused(b.col) ? "true" : undefined,
+                            style: {
+                                position: "absolute",
+                                left: b.left,
+                                top: b.top,
+                                width: b.width,
+                                height: b.height,
+                                boxSizing: "border-box",
+                                pointerEvents: "auto",
+                            },
+                        },
+                        headerNode
+                    );
+                }
                 const entry = getDomCell?.(b.col, b.row);
                 if (entry == null || entry === false) return null;
                 // A spec may opt into a click-through box: only its own

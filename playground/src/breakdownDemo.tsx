@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, Trash2, Undo2 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Plus, Trash2, Undo2 } from 'lucide-react';
 import {
   Button,
   GlideSheet,
@@ -197,10 +197,61 @@ const INITIAL_SCENES: SceneRow[] = [
     description: 'George runs through the snow, calling for Clarence.',
     cast: '1. GEORGE', notes: 'Handheld, snow.', props: '—', wardrobe: 'Torn overcoat', vehicles: '—',
   },
+  {
+    id: 'sc-21', sceneNumber: '21', pages: '1 2/8', scriptDay: '11', intExt: 'INT',
+    set: 'SAVINGS & LOAN — LOBBY', dayNight: 'DAY',
+    description: 'The townsfolk empty their pockets onto the desk.',
+    cast: '5. TOWNSPERSON, 1. GEORGE, 2. MARY', notes: 'Crowd of 25.', props: 'Cash basket, coins', wardrobe: 'Winter coats', vehicles: '—',
+  },
+  {
+    id: 'sc-22', sceneNumber: '22', pages: '0 4/8', scriptDay: '11', intExt: 'EXT',
+    set: 'BEDFORD FALLS — MAIN STREET', dayNight: 'DAY',
+    description: 'The street fills with neighbours carrying parcels.',
+    cast: '5. TOWNSPERSON', notes: 'Process shot.', props: 'Parcels, wreaths', wardrobe: 'Christmas coats', vehicles: 'Delivery truck',
+  },
+  {
+    id: 'sc-23', sceneNumber: '23', pages: '2 3/8', scriptDay: '12', intExt: 'INT',
+    set: "GEORGE BAILEY'S HOUSE — DINING ROOM", dayNight: 'NIGHT',
+    description: 'The table is laid; Harry proposes the toast.',
+    cast: '1. GEORGE, 2. MARY, 11. HARRY', notes: 'Feast setup.', props: 'Turkey, candles', wardrobe: 'Party suits', vehicles: '—',
+  },
+  {
+    id: 'sc-24', sceneNumber: '24', pages: '0 6/8', scriptDay: '12', intExt: 'INT',
+    set: "MARTINI'S BAR", dayNight: 'NIGHT',
+    description: 'Clarence gets his wings; the bell rings.',
+    cast: '6. CLARENCE', notes: 'Insert: bell.', props: 'Bell', wardrobe: 'Angel coat', vehicles: '—',
+  },
+  {
+    id: 'sc-25', sceneNumber: '25', pages: '1 5/8', scriptDay: '13', intExt: 'EXT',
+    set: 'BEDFORD FALLS — BRIDGE', dayNight: 'NIGHT',
+    description: 'Snow falls on the bridge as the town sings.',
+    cast: '1. GEORGE, 2. MARY, 5. TOWNSPERSON', notes: 'Snow towers.', props: 'Lanterns', wardrobe: 'Winter coats', vehicles: 'Police car',
+  },
+  {
+    id: 'sc-26', sceneNumber: '26', pages: '0 2/8', scriptDay: '13', intExt: 'INT',
+    set: 'BAILEY BUILDING — OFFICE', dayNight: 'NIGHT',
+    description: 'Uncle Billy counts the rescue money twice.',
+    cast: '3. UNCLE BILLY', notes: '', props: 'Cash box, ledger', wardrobe: 'Office suit', vehicles: '—',
+  },
+  {
+    id: 'sc-27', sceneNumber: '27', pages: '1 0/8', scriptDay: '14', intExt: 'EXT',
+    set: 'GRANVILLE HOUSE — PARLOUR', dayNight: 'EVENING',
+    description: 'The reception spills into the garden one last time.',
+    cast: '2. MARY, 7. MA BAILEY', notes: '', props: 'Gramophone', wardrobe: 'Party dresses', vehicles: 'Taxi cab',
+  },
+  {
+    id: 'sc-28', sceneNumber: '28', pages: '0 1/8', scriptDay: '14', intExt: 'EXT',
+    set: "POTTER'S FIELD", dayNight: 'NIGHT',
+    description: 'The headstone reads: George Bailey, 1895–1946.',
+    cast: '1. GEORGE, 6. CLARENCE', notes: '', props: 'Headstone', wardrobe: 'Overcoats', vehicles: '—',
+  },
 ];
 
 const COLUMNS: GlideSheetColumn[] = [
-  { key: 'sceneNumber', label: 'Scene #', width: 68 },
+  // The app's first data column is the row-action lane (trash / add plus).
+  // The add-row hint sits on Scene # — a 36px lane only fits the plus.
+  { key: 'actions', label: '', width: 36, trailingRowOptions: { hint: '' } },
+  { key: 'sceneNumber', label: 'Scene #', width: 68, trailingRowOptions: { hint: 'Add scene' } },
   { key: 'pages', label: 'Pages', width: 78, align: 'center' },
   { key: 'scriptDay', label: 'Script Day', width: 84, align: 'center' },
   { key: 'intExt', label: 'I/E', width: 66, align: 'center' },
@@ -212,7 +263,6 @@ const COLUMNS: GlideSheetColumn[] = [
   { key: 'props', label: 'Props', width: 170 },
   { key: 'wardrobe', label: 'Wardrobe', width: 180 },
   { key: 'vehicles', label: 'Vehicles', width: 150 },
-  { key: 'actions', label: '', width: 44 },
 ];
 
 const EDITABLE = new Set(COLUMNS.map(c => c.key).filter(k => k !== 'actions'));
@@ -231,25 +281,13 @@ const EDITORS: Record<string, GlideColumnEditor> = {
 
 const FREEZE_OPTIONS = [
   { v: '0', l: 'Off' },
-  { v: '1', l: 'Scene #' },
-  { v: '2', l: '+ Pages' },
-  { v: '3', l: '+ Script' },
-  { v: '4', l: '+ I/E' },
-  { v: '5', l: '+ Set' },
+  { v: '1', l: 'Actions' },
+  { v: '2', l: '+ Scene #' },
+  { v: '3', l: '+ Pages' },
+  { v: '4', l: '+ Script' },
+  { v: '5', l: '+ I/E' },
+  { v: '6', l: '+ Set' },
 ];
-
-/** The tab fills the page: the grid takes the screen height the real tab gets
- *  (header + toolbar + a page of rows), clamped so it stays usable on an iPad. */
-function usePageGridHeight(): number {
-  const [height, setHeight] = useState(560);
-  useEffect(() => {
-    const measure = () => setHeight(Math.max(380, Math.min(720, Math.round(window.innerHeight - 340))));
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, []);
-  return height;
-}
 
 function toGridRows(scenes: SceneRow[]): Record<string, string>[] {
   return scenes.map(scene => ({ ...scene }));
@@ -257,18 +295,53 @@ function toGridRows(scenes: SceneRow[]): Record<string, string>[] {
 
 const nextId = () => `sc-${Math.random().toString(36).slice(2, 8)}`;
 
-export const BreakdownDemo: React.FC = () => {
+/** The next scene number after the last row (a typed add-row edit and the
+ *  toolbar button both use it). */
+function nextSceneNumber(scenes: SceneRow[]): string {
+  const last = scenes[scenes.length - 1];
+  return String((parseInt(last?.sceneNumber ?? '0', 10) || scenes.length) + 1);
+}
+
+export const BreakdownPage: React.FC<{ onExit: () => void }> = ({ onExit }) => {
   const kit = useKitTheme();
   const colors = useMemo(() => glideCellColors(kit?.mode ?? 'light'), [kit?.mode]);
-  const gridHeight = usePageGridHeight();
+
+  /* The grid owns every pixel the toolbar does not: measured from the flex
+     remainder, so a wrapped toolbar on an iPad shrinks the grid instead of
+     pushing it off-screen. */
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [gridHeight, setGridHeight] = useState(0);
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return undefined;
+    const update = () => setGridHeight(Math.max(160, Math.round(el.getBoundingClientRect().height)));
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const [scenes, setScenes] = useState<SceneRow[]>(INITIAL_SCENES);
   const [history, setHistory] = useState<SceneRow[][]>([]);
-  const [freeze, setFreeze] = useState(1);
+  // Actions + Scene # frozen, like the app's identity columns.
+  const [freeze, setFreeze] = useState(2);
   const [commits, setCommits] = useState(0);
   const [status, setStatus] = useState('no edits yet');
+  const [sort, setSort] = useState<{ key: string; dir: 'asc' | 'desc' } | null>(null);
 
-  const gridRows = useMemo(() => toGridRows(scenes), [scenes]);
+  /* Sorting is a VIEW: the display order changes, the row identity (id) does
+     not, so edits still commit to the scene the user sees. */
+  const sortedScenes = useMemo(() => {
+    if (sort === null) return scenes;
+    const dir = sort.dir === 'asc' ? 1 : -1;
+    return [...scenes].sort((a, b) => {
+      const av = String(a[sort.key as keyof SceneRow] ?? '');
+      const bv = String(b[sort.key as keyof SceneRow] ?? '');
+      return av.localeCompare(bv, undefined, { numeric: true, sensitivity: 'base' }) * dir;
+    });
+  }, [scenes, sort]);
+
+  const gridRows = useMemo(() => toGridRows(sortedScenes), [sortedScenes]);
 
   const commit = useCallback((next: SceneRow[], note: string) => {
     setHistory(h => [...h.slice(-19), scenes]);
@@ -296,8 +369,7 @@ export const BreakdownDemo: React.FC = () => {
   }, [scenes, gridRows, commit]);
 
   const addScene = useCallback(() => {
-    const last = scenes[scenes.length - 1];
-    const nextNumber = String((parseInt(last?.sceneNumber ?? '0', 10) || scenes.length) + 1);
+    const nextNumber = nextSceneNumber(scenes);
     const blank: SceneRow = {
       id: nextId(), sceneNumber: nextNumber, pages: '', scriptDay: '', intExt: 'INT',
       set: '', dayNight: 'DAY', description: '', cast: '', notes: '', props: '',
@@ -305,6 +377,11 @@ export const BreakdownDemo: React.FC = () => {
     };
     commit([...scenes, blank], `scene ${nextNumber} added`);
   }, [scenes, commit]);
+
+  /** none → ascending → descending → none. */
+  const toggleSort = useCallback((key: string) => {
+    setSort(prev => (prev?.key !== key ? { key, dir: 'asc' } : prev.dir === 'asc' ? { key, dir: 'desc' } : null));
+  }, []);
 
   const removeScene = useCallback((id: string) => {
     const scene = scenes.find(s => s.id === id);
@@ -330,7 +407,7 @@ export const BreakdownDemo: React.FC = () => {
     });
   }, [colors.muted]);
 
-  const domCells = useMemo<GlideDomCellSpec[]>(() => scenes.map((scene, index) => ({
+  const domCells = useMemo<GlideDomCellSpec[]>(() => sortedScenes.map((scene, index) => ({
     row: index,
     colKey: 'actions',
     // Full-bleed: the trash button IS the cell, exactly like the crew card.
@@ -347,18 +424,50 @@ export const BreakdownDemo: React.FC = () => {
         <Trash2 className="h-3.5 w-3.5" />
       </button>
     ),
-  })), [scenes, removeScene]);
+  })), [sortedScenes, removeScene]);
+
+  /* Every header is a real kit button (the fork's DOM header layer) with the
+     sort toggle: the icon names the state, clicking cycles asc → desc → off. */
+  const headerCells = useMemo(() => {
+    const out: Record<string, React.ReactNode> = {};
+    for (const col of COLUMNS) {
+      if (col.key === 'actions') continue;
+      const dir = sort?.key === col.key ? sort.dir : null;
+      const Icon = dir === 'asc' ? ArrowUp : dir === 'desc' ? ArrowDown : ArrowUpDown;
+      out[col.key] = (
+        <button
+          type="button"
+          data-testid={`breakdown-sort-${col.key}`}
+          data-sort={dir ?? 'none'}
+          aria-label={`Sort by ${col.label}${dir === 'asc' ? ' (ascending)' : dir === 'desc' ? ' (descending)' : ''}`}
+          title={`Sort by ${col.label}`}
+          onClick={() => toggleSort(col.key)}
+          className={`relative flex h-full w-full items-center pl-2 ${dir ? 'pr-6' : 'pr-2 hover:pr-6'} bg-[var(--glide-header-bg)] text-[10.5px] font-semibold uppercase text-[color:var(--glide-header-fg)] transition-colors hover:bg-[var(--glide-header-hover-bg)] group-data-[glide-header-focused=true]:bg-[var(--glide-header-focus-bg)]`}
+          style={{ justifyContent: col.align === 'center' ? 'center' : 'flex-start' }}
+        >
+          <span className="truncate">{col.label.toUpperCase()}</span>
+          {/* The sort face only takes space on hover / when active, so a
+              narrow header still shows its whole title at rest. */}
+          <Icon className={`pointer-events-none absolute right-1 h-3 w-3 ${dir ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+        </button>
+      );
+    }
+    return out;
+  }, [sort, toggleSort]);
 
   return (
-    <div className="pg-breakdown" data-testid="glide-breakdown-demo">
-      <div className="pg-breakdown-head">
-        <div className="pg-breakdown-title">IT&rsquo;S A WONDERFUL LIFE</div>
-        <span className="pg-breakdown-sub">Breakdown</span>
-        <span className="pg-breakdown-stats" data-testid="breakdown-scene-count">
+    <div className="pg-page" data-testid="glide-breakdown-demo">
+      <header className="pg-page-head">
+        <button type="button" className="pg-page-back" onClick={onExit} data-testid="breakdown-back">
+          ← Playground
+        </button>
+        <div className="pg-page-title">IT&rsquo;S A WONDERFUL LIFE</div>
+        <span className="pg-page-sub">Breakdown</span>
+        <span className="pg-page-stats" data-testid="breakdown-scene-count">
           {scenes.length} scenes
         </span>
-        <div className="pg-breakdown-tools">
-          <span className="pg-breakdown-tool-label">Frozen leading columns</span>
+        <div className="pg-page-tools">
+          <span className="pg-page-tool-label">Frozen leading columns</span>
           <span data-testid="breakdown-freeze">
             <Seg
               dense
@@ -373,9 +482,14 @@ export const BreakdownDemo: React.FC = () => {
           <Button variant="subtle" onClick={undo} disabled={history.length === 0} data-testid="breakdown-undo">
             <Undo2 className="w-3 h-3" /> Undo
           </Button>
+          <span className="pg-page-meta">
+            <span className="pg-page-status" data-testid="breakdown-status">{status}</span>
+            <span className="pg-page-status" data-testid="breakdown-commits">{commits} commit{commits === 1 ? '' : 's'}</span>
+          </span>
         </div>
-      </div>
+      </header>
 
+      <div ref={bodyRef} className="pg-page-body">
       <GlideSheet
         dataAttr="data-glide-breakdown-sheet"
         columns={COLUMNS}
@@ -385,22 +499,20 @@ export const BreakdownDemo: React.FC = () => {
         onCommit={onCommit}
         editableKeys={EDITABLE}
         domCells={domCells}
+        headerCells={headerCells}
         selectionKey="pg:breakdown"
         rowMarkers={{ kind: 'clickable-number', width: 44, startIndex: 1 }}
         freezeColumns={freeze}
         scrollable
         height={gridHeight}
+        overscrollY={5 * 34}
         onAddRow={addScene}
-        addRowHint="Add scene"
+        addRowHint=""
         baseRowHeight={34}
         baseHeaderHeight={34}
         fontSize={12.5}
+        smoothScroll
       />
-
-      <div className="pg-breakdown-foot">
-        <span data-testid="breakdown-status">{status}</span>
-        <span data-testid="breakdown-commits">{commits} commit{commits === 1 ? '' : 's'}</span>
-        <span className="ml-auto">Row markers + frozen leading columns · scroll sideways to check</span>
       </div>
     </div>
   );

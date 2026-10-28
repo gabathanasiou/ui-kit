@@ -102,7 +102,7 @@ export function CoarseScaleControl() {
 
 /* ── Top bar ──────────────────────────────────────────────────────────────── */
 
-export function TopBar({ sections }: { sections: NavSection[] }) {
+export function TopBar({ sections, pages }: { sections: NavSection[]; pages: NavSection[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <header className="pg-topbar">
@@ -133,6 +133,15 @@ export function TopBar({ sections }: { sections: NavSection[] }) {
                 {s.title}
               </DropdownItem>
             ))}
+            {pages.map(p => (
+              <DropdownItem
+                key={p.id}
+                group="Full pages"
+                onClick={() => { setMenuOpen(false); window.location.hash = p.id; }}
+              >
+                {p.title}
+              </DropdownItem>
+            ))}
           </DropdownMenu>
         </div>
         <CoarseScaleControl />
@@ -143,10 +152,10 @@ export function TopBar({ sections }: { sections: NavSection[] }) {
 
 /* ── Section rail ─────────────────────────────────────────────────────────── */
 
-export function SectionNav({ sections, activeId }: { sections: NavSection[]; activeId: string }) {
+export function SectionNav({ sections, pages, activeId }: { sections: NavSection[]; pages: NavSection[]; activeId: string }) {
   const [query, setQuery] = useState('');
+  const q = query.trim().toLowerCase();
   const groups = useMemo(() => {
-    const q = query.trim().toLowerCase();
     const shown = q
       ? sections.filter(s => `${s.group} ${s.title}`.toLowerCase().includes(q))
       : sections;
@@ -157,7 +166,11 @@ export function SectionNav({ sections, activeId }: { sections: NavSection[]; act
       else map.push({ group: s.group, items: [s] });
     }
     return map;
-  }, [sections, query]);
+  }, [sections, q]);
+  const shownPages = useMemo(
+    () => (q ? pages.filter(p => `${p.group} ${p.title}`.toLowerCase().includes(q)) : pages),
+    [pages, q],
+  );
 
   return (
     <nav className="pg-nav" aria-label="Playground sections">
@@ -172,7 +185,7 @@ export function SectionNav({ sections, activeId }: { sections: NavSection[]; act
             className="pg-nav-input"
           />
         </div>
-        {groups.length === 0 && <div className="pg-nav-empty">No sections match.</div>}
+        {groups.length === 0 && shownPages.length === 0 && <div className="pg-nav-empty">No sections match.</div>}
         {groups.map(g => (
           <div className="pg-nav-group" key={g.group}>
             <div className="pg-nav-group-label">{g.group}</div>
@@ -193,6 +206,25 @@ export function SectionNav({ sections, activeId }: { sections: NavSection[]; act
             </ul>
           </div>
         ))}
+        {shownPages.length > 0 && (
+          <div className="pg-nav-group">
+            <div className="pg-nav-group-label">Full pages</div>
+            <ul className="pg-nav-list">
+              {shownPages.map(p => (
+                <li key={p.id}>
+                  <a
+                    href={`#${p.id}`}
+                    className="pg-nav-item"
+                    data-testid={`nav-page-${p.id}`}
+                  >
+                    <span className="pg-nav-dot" aria-hidden />
+                    {p.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </nav>
   );

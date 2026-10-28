@@ -95,6 +95,12 @@ export interface GlideSheetProps {
     /** Real kit controls mounted over specific cells (see `GlideDomCellSpec`).
      *  The grid re-positions them on scroll, resize and re-render. */
     domCells?: GlideDomCellSpec[];
+    /** Real kit controls for the HEADER row, keyed by column key (a sort button,
+     *  a menu…). Headers without an entry keep Glide's painted header. */
+    headerCells?: Record<string, React.ReactNode>;
+    /** Extra scrollable space past the last row (Glide's overscrollY) — lets the
+     *  final rows scroll up off the bottom edge. */
+    overscrollY?: number;
     /** Receives the imperative API (open a cell editor). */
     apiRef?: React.RefObject<GlideSheetApi | null>;
     /** Fixed grid height in px — defaults to the content height. A smaller value
@@ -113,6 +119,11 @@ export interface GlideSheetProps {
     onAddRow?: () => void;
     /** Hover hint on the trailing add-row. */
     addRowHint?: string;
+    /** Keep the trailing add-row pinned to the bottom of the viewport (default
+     *  false: it sits at the end of the scroll, like any other row). */
+    addRowSticky?: boolean;
+    /** Animated (smooth) scrolling on both axes — Glide's smoothScrollX/Y. */
+    smoothScroll?: boolean;
 }
 export declare const GlideSheet: React.FC<GlideSheetProps>;
 export default GlideSheet;

@@ -59,9 +59,10 @@ const WAIT_BASELINE = 9;
 //      in-cell morph fields; canvas painting stays a manual check).
 const SPEC_CAP = 19;
 // 116 = 111 + the five glide grid cases (incl. Enter → button).
-// 118 = 116 + the breakdown page (the frozen Scene # edit after a sideways
-//       scroll, and the add-row/undo one-commit contract).
-const TEST_CAP = 118;
+// 120 = 116 + the breakdown page (the frozen Scene # edit after a sideways
+//       scroll, the add-row/undo one-commit contract, the full-page route, and
+//       the DOM header sort buttons).
+const TEST_CAP = 120;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

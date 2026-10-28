@@ -22,7 +22,7 @@ import { RichTextSection } from './sections/RichTextSection';
 import { HeaderTabsSection } from './sections/HeaderTabsSection';
 import { SizingSection } from './sections/SizingSection';
 import { GlideSection } from './sections/GlideSection';
-import { BreakdownDemo } from './breakdownDemo';
+import { BreakdownPage } from './breakdownDemo';
 
 /* ────────────────────────────────────────────────────────────────────────────
    ui-kit playground — the component zoo & debugging surfaces.
@@ -107,12 +107,28 @@ const SECTIONS: SectionDef[] = [
     blurb: 'A canvas spreadsheet recreated as the Day Manager crew card, plus every cell kind: locked, editable, toggle, one-click buttons, badges and kit pickers in cells.',
     render: () => <GlideSection />,
   },
-  {
-    id: 'breakdown', group: 'Data grid', title: 'Breakdown — the page-scale grid',
-    blurb: 'The Breakdown tab rebuilt as a real page: a row-marker gutter and up to five frozen leading columns (Scene #, Pages, Script Day, I/E, Set) that stay put while the sheet scrolls sideways, kit editors in the cells, a pinned header and a trailing add row.',
-    render: () => <BreakdownDemo />,
-  },
 ];
+
+/* Standalone pages: the showroom's rail entries that LEAVE the section list and
+   fill the window (an app tab, not a card). `#breakdown` is the route. */
+const PAGES: NavSection[] = [
+  { id: 'breakdown', group: 'Full pages', title: 'Breakdown' },
+];
+
+function pageFromHash(): string | null {
+  const id = location.hash.replace(/^#\/?/, '');
+  return PAGES.some(p => p.id === id) ? id : null;
+}
+
+function useHashPage(): string | null {
+  const [page, setPage] = useState<string | null>(pageFromHash);
+  useEffect(() => {
+    const onHash = () => setPage(pageFromHash());
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+  return page;
+}
 
 const SECTION_IDS = SECTIONS.map(s => s.id);
 
@@ -155,6 +171,7 @@ export function App() {
   const [surface, setSurface] = useState<KitSurface>('accent');
   const lab: LabState = { mode, accent, surface, setMode, setAccent, setSurface };
   const activeId = useActiveSection(SECTION_IDS);
+  const page = useHashPage();
 
   /* The page theme lives on <body> too, so overscroll and portaled surfaces
      (menus/tooltips/dialogs) inherit the same axes. */
@@ -170,20 +187,32 @@ export function App() {
     };
   }, [mode, accent]);
 
-  /* Deep links: #search etc. scrolls to the section once React has rendered. */
+  /* Deep links: #search etc. scrolls to the section once React has rendered.
+     Leaving a full page re-runs this, so Back lands on the section it named. */
   useEffect(() => {
-    if (!location.hash) return;
+    if (page) return undefined;
+    if (!location.hash) return undefined;
     const id = location.hash.slice(1);
     const raf = requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: 'start' }));
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [page]);
+
+  if (page !== null) {
+    return (
+      <ThemeScope mode={mode} accent={accent} surface="accent" className="pg-app" style={{ minHeight: '100vh' }}>
+        {page === 'breakdown' ? (
+          <BreakdownPage onExit={() => { window.location.hash = 'glide'; }} />
+        ) : null}
+      </ThemeScope>
+    );
+  }
 
   return (
     <ThemeScope mode={mode} accent={accent} surface="accent" className="pg-app" style={{ minHeight: '100vh' }}>
       <div id="top" />
-      <TopBar sections={SECTIONS} />
+      <TopBar sections={SECTIONS} pages={PAGES} />
       <div className="pg-layout">
-        <SectionNav sections={SECTIONS} activeId={activeId} />
+        <SectionNav sections={SECTIONS} pages={PAGES} activeId={activeId} />
         <main className="pg-main">
           <Intro count={SECTIONS.length} />
           {SECTIONS.map((s, i) => (

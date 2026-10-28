@@ -17,6 +17,9 @@ export type GetDomCell = (col: number, row: number) => DomCellEntry | React.Reac
 export interface DomCellEditorProps extends DataEditorAllProps {
     /** Real React control to mount over a cell; null/false = none. */
     getDomCell?: GetDomCell;
+    /** Real React control to mount over a column HEADER; null/false = none.
+     *  `col` is the data column (row-marker excluded). */
+    getDomHeaderCell?: (col: number) => React.ReactNode | null | false;
     /** Extra class on each pinned box. */
     domCellClassName?: string;
     /** Px at the bottom covered by a sticky row (the trailing add row): boxes

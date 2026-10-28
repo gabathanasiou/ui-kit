@@ -29,12 +29,19 @@ the npm package has no effect. CSS consumers import
    holds exactly one focusable element. Frozen columns are measured on every
    pass (the visible range starts at the first SCROLLED column) and
    `freezeColumns` is forwarded to the inner editor. `domCellBottomInset` hides
-   boxes covered by a sticky trailing row.
+   boxes covered by a sticky trailing row. `getDomHeaderCell` pins real controls
+   over column headers (frozen/scrolled aware); headers expose
+   `data-glide-header-focused` when the selection range covers their column.
+   The overscroll band past the last row is flattened to the cell background
+   (stock painted phantom row lines there).
 2. **Editor chrome** (`dist/index.css`, "fork: the overlay editor must look
    like the cell") — square corners, a crisp 1px inset accent rectangle, no
    drop shadow/fade, the cell's exact box/height/padding/font/line rhythm, and
    no inner scrollbar (stock's growing-entry top margin + sub-pixel rounding).
-3. **Source maps stripped** — `*.map` files and their `sourceMappingURL`
+3. **Header selection range** (`dist/esm/internal/data-grid/render/`) — stock
+   tinted only the focused cell's column header; every column covered by the
+   selection range now tints (`rangeStack` included), matching the range.
+4. **Source maps stripped** — `*.map` files and their `sourceMappingURL`
    comments are removed to keep the vendored tree small (Vite then logs no
    missing-map errors).
 

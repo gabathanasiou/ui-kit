@@ -44,7 +44,14 @@ export function drawGridHeaders(ctx, effectiveCols, enableGroups, hovered, width
         const hover = noHover
             ? 0
             : (hoverValues.find(s => s.item[0] === c.sourceIndex && s.item[1] === -1)?.hoverAmount ?? 0);
-        const hasSelectedCell = selection?.current !== undefined && selection.current.cell[0] === c.sourceIndex;
+        /* fork: stock lit ONLY the focused cell's column header, so dragging a
+           range across columns left every other selected header unlit. Every
+           column the range covers now tints (rangeStack included). */
+        const colInRange = r => r !== undefined && c.sourceIndex >= r.x && c.sourceIndex < r.x + r.width;
+        const hasSelectedCell = selection?.current !== undefined &&
+            (selection.current.cell[0] === c.sourceIndex ||
+                colInRange(selection.current.range) ||
+                (selection.current.rangeStack ?? []).some(colInRange));
         const bgFillStyle = selected ? theme.accentColor : hasSelectedCell ? theme.bgHeaderHasFocus : theme.bgHeader;
         const y = enableGroups ? groupHeaderHeight : 0;
         const xOffset = c.sourceIndex === 0 ? 0 : 1;

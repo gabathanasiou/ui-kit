@@ -129,6 +129,12 @@ export interface GlideSheetProps {
   /** Real kit controls mounted over specific cells (see `GlideDomCellSpec`).
    *  The grid re-positions them on scroll, resize and re-render. */
   domCells?: GlideDomCellSpec[];
+  /** Real kit controls for the HEADER row, keyed by column key (a sort button,
+   *  a menu…). Headers without an entry keep Glide's painted header. */
+  headerCells?: Record<string, React.ReactNode>;
+  /** Extra scrollable space past the last row (Glide's overscrollY) — lets the
+   *  final rows scroll up off the bottom edge. */
+  overscrollY?: number;
   /** Receives the imperative API (open a cell editor). */
   apiRef?: React.RefObject<GlideSheetApi | null>;
   /** Fixed grid height in px — defaults to the content height. A smaller value
@@ -147,6 +153,11 @@ export interface GlideSheetProps {
   onAddRow?: () => void;
   /** Hover hint on the trailing add-row. */
   addRowHint?: string;
+  /** Keep the trailing add-row pinned to the bottom of the viewport (default
+   *  false: it sits at the end of the scroll, like any other row). */
+  addRowSticky?: boolean;
+  /** Animated (smooth) scrolling on both axes — Glide's smoothScrollX/Y. */
+  smoothScroll?: boolean;
 }
 
 const DEFAULT_ROW_HEIGHT = 28;
@@ -254,6 +265,8 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
   fillHandle = true,
   disableClipboard,
   domCells,
+  headerCells,
+  overscrollY,
   apiRef,
   height,
   scrollable,
@@ -261,6 +274,8 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
   rowMarkers,
   onAddRow,
   addRowHint,
+  addRowSticky = false,
+  smoothScroll,
 }) => {
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
@@ -290,7 +305,11 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
   }, [columns, gridWidth, scrollable]);
 
   const glideColumns: GridColumn[] = useMemo(
-    () => COLUMNS.map(c => ({ title: c.label.toUpperCase(), width: c.width })),
+    () => COLUMNS.map(c => ({
+      title: c.label.toUpperCase(),
+      width: c.width,
+      ...(c.trailingRowOptions ? { trailingRowOptions: c.trailingRowOptions } : {}),
+    })),
     [COLUMNS],
   );
 
@@ -404,6 +423,19 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
     [domCellMap],
   );
 
+  const headerCellMap = useMemo(() => {
+    const map = new Map<number, React.ReactNode>();
+    for (const [key, node] of Object.entries(headerCells ?? {})) {
+      const col = COLUMNS.findIndex(c => c.key === key);
+      if (col >= 0) map.set(col, node);
+    }
+    return map;
+  }, [headerCells, COLUMNS]);
+  const getDomHeaderCell = useCallback(
+    (col: number) => headerCellMap.get(col) ?? null,
+    [headerCellMap],
+  );
+
   /** Repaint just the two rows affected by a hover change. */
   const onItemHovered = useCallback((args: any) => {
     const loc = args?.location;
@@ -450,8 +482,26 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
     const centered = (colDef.align ?? 'left') === 'center';
     if (!centered && !wrapHeaders) return;
     ctx.save();
+    /* Repaint the header's own background BEFORE the centred/wrapped title.
+       This must mirror Glide's selection tint — painting plain bgHeader here
+       used to wipe the highlight on every CENTERED column (Pages, Script Day,
+       I/E, D/N) while left-aligned columns kept it. */
     ctx.fillStyle = gridTheme.bgHeader;
     ctx.fillRect(rect.x + 1, rect.y, rect.width - 2, rect.height);
+    if (args.hasSelectedCell) {
+      ctx.fillStyle = gridTheme.bgHeaderHasFocus;
+      ctx.fillRect(rect.x + 1, rect.y, rect.width - 2, rect.height);
+    }
+    if (args.hoverAmount > 0) {
+      ctx.globalAlpha = args.hoverAmount;
+      ctx.fillStyle = gridTheme.bgHeaderHovered;
+      ctx.fillRect(rect.x + 1, rect.y, rect.width - 2, rect.height);
+      ctx.globalAlpha = 1;
+    }
+    if (args.isSelected) {
+      ctx.fillStyle = gridTheme.accentColor;
+      ctx.fillRect(rect.x + 1, rect.y, rect.width - 2, rect.height);
+    }
     ctx.fillStyle = gridTheme.textHeader;
     ctx.textAlign = centered ? 'center' : 'left';
     ctx.textBaseline = 'middle';
@@ -660,7 +710,15 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
       className={`relative ${className}`}
       {...(dataAttr ? { [dataAttr]: '' } : {})}
       data-glide-sheet={mode}
-      style={{ '--glide-dom-hover-bg': cellColors.readonlyHoverBg, '--glide-dom-accent': theme.accentColor } as React.CSSProperties}
+      style={{
+        '--glide-dom-hover-bg': cellColors.readonlyHoverBg,
+        '--glide-dom-accent': theme.accentColor,
+        // The header face, for real DOM header controls (they cover the canvas).
+        '--glide-header-bg': theme.bgHeader,
+        '--glide-header-fg': theme.textHeader,
+        '--glide-header-hover-bg': theme.bgHeaderHovered,
+        '--glide-header-focus-bg': theme.bgHeaderHasFocus,
+      } as React.CSSProperties}
       onPointerLeave={() => {
         const prev = hoveredRowRef.current;
         if (prev == null) return;
@@ -677,9 +735,10 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
           <DataEditorWithDomCells
             ref={gridRef}
             getDomCell={domCells && domCells.length > 0 ? getDomCell : undefined}
-            // The sticky trailing add-row paints over the rows behind it; hide
+            getDomHeaderCell={headerCells && Object.keys(headerCells).length > 0 ? getDomHeaderCell : undefined}
+            // A STICKY trailing add-row paints over the rows behind it; hide
             // the DOM boxes it covers (they live above the canvas).
-            domCellBottomInset={onAddRow ? rowH : 0}
+            domCellBottomInset={onAddRow && addRowSticky ? rowH : 0}
             width={Math.max(120, Math.floor(gridWidth) - 1)}
             height={gridHeight}
             columns={glideColumns}
@@ -707,10 +766,13 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
             portalElementRef={gridPortalRef as React.RefObject<HTMLElement>}
             minColumnWidth={1}
             maxColumnWidth={10000}
+            overscrollY={overscrollY}
             freezeColumns={freezeColumns}
+            smoothScrollX={smoothScroll}
+            smoothScrollY={smoothScroll}
             {...(rowMarkers ? { rowMarkers } : {})}
             {...(onAddRow ? {
-              trailingRowOptions: { hint: addRowHint ?? 'Add row', sticky: true },
+              trailingRowOptions: { hint: addRowHint ?? 'Add row', sticky: addRowSticky },
               onRowAppended: () => { onAddRow(); },
             } : {})}
           />

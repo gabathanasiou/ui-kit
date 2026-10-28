@@ -91,15 +91,43 @@ test.describe('Glide data grid', () => {
     if (!box) throw new Error('no breakdown canvas');
 
     // Scroll the sheet far enough that Scene # would be long gone if it were
-    // not frozen (marker gutter = 44px, then Scene # = 68px).
+    // not frozen (marker gutter 44 + actions 36, then Scene #).
     const scroller = page.locator('[data-glide-breakdown-sheet] .dvn-scroller');
     await scroller.evaluate(el => { el.scrollLeft = 600; });
     await expect.poll(() => scroller.evaluate(el => el.scrollLeft)).toBe(600);
 
-    await page.mouse.dblclick(box.x + 44 + 30, box.y + 34 + 17);
+    await page.mouse.dblclick(box.x + 44 + 36 + 30, box.y + 34 + 17);
     // The editor opens on the FROZEN cell: its value is the first scene number.
     await expect(page.locator('[data-glide-overlay-layer] textarea').first()).toHaveValue('1');
     await page.keyboard.press('Escape');
+  });
+
+  test('breakdown: header cells are real buttons and cycle the sort', async ({ page }) => {
+    await page.goto('/#breakdown');
+    const pages = page.getByTestId('breakdown-sort-pages');
+    await expect(pages).toHaveAttribute('data-sort', 'none');
+
+    await pages.click();
+    await expect(pages).toHaveAttribute('data-sort', 'asc');
+    await expect(pages).toHaveAttribute('aria-label', 'Sort by Pages (ascending)');
+
+    await pages.click();
+    await expect(pages).toHaveAttribute('data-sort', 'desc');
+
+    await pages.click();
+    await expect(pages).toHaveAttribute('data-sort', 'none');
+  });
+
+  test('breakdown: it is a full page, and Back returns to the showroom', async ({ page }) => {
+    await page.goto('/#breakdown');
+    await expect(page.getByTestId('glide-breakdown-demo')).toBeVisible();
+    // Full page = the showroom chrome is gone, not just scrolled away.
+    await expect(page.locator('.pg-topbar')).toHaveCount(0);
+    await expect(page.locator('.pg-nav')).toHaveCount(0);
+
+    await page.getByTestId('breakdown-back').click();
+    await expect(page.locator('.pg-topbar')).toBeVisible();
+    await expect(page).toHaveURL(/#glide$/);
   });
 
   test('breakdown: Add scene and Undo each land as ONE commit', async ({ page }) => {

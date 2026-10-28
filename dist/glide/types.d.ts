@@ -6,6 +6,11 @@ export interface GlideSheetColumn {
     /** Preferred width — scaled to fit the card by `GlideSheet`. */
     width: number;
     align?: 'left' | 'center' | 'right';
+    /** Per-column cell for Glide's trailing add-row: put the hint on a readable
+     *  column instead of the (often narrow) first actions lane. */
+    trailingRowOptions?: {
+        hint?: string;
+    };
 }
 /** One cell write produced by an edit, paste, fill or clear. */
 export interface GlideSheetEdit {

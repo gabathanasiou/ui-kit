@@ -101,7 +101,7 @@ section). **Read `docs/PLAYGROUND.md` before adding/moving a demo or a spec**
 — section map, testids, theme/contrast rules and the CSS gotchas live there.
 **Experimental data grid** (`src/glide/**`): a canvas spreadsheet on our vendored
 Glide fork (`vendor/glide-data-grid`, aliased by `scripts/glide-fork.mjs`) —
-read `docs/GLIDE.md` before touching it (fork wiring, CSS import, `domCells`).
+read `docs/GLIDE.md` before touching it (wiring, CSS, `domCells`/`headerCells`, frozen columns).
 
 Playground CSS gotchas (REQUIRED — the kit ships Tailwind classes the consumer
 provides): `playground.css` imports Tailwind v4 + `@source '../../src'` (without

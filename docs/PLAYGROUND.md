@@ -97,11 +97,6 @@ Consequences (learned the hard way):
   `picker-dropdown-single` (+ `-status`); morph search faces
   `morph-search-icon` / `morph-search-swap` / `morph-search-reveal`
   (+ `morph-search-icon-status`).
-- Breakdown page (`#breakdown`, experimental): `glide-breakdown-demo` — the
-  Breakdown tab at page scale (`breakdown-freeze` Seg for the frozen-column
-  count, `breakdown-scene-count`, `breakdown-add-scene`, `breakdown-undo`,
-  `breakdown-status`, `breakdown-commits`; row-marker gutter, frozen leading
-  columns, trailing add row, kit editors + a trash DOM cell per row).
 - Glide data grid (`#glide`, experimental): `glide-crew-demo` (the crew card —
   `glide-crew-status` / `-commits` / `-undo` / `-include` / `-report-to` /
   `-precall` / `-add-role`; Person/Report-To are native picker cells with a
@@ -143,6 +138,19 @@ Consequences (learned the hard way):
 - Header tabs: `header-tabs-row` (LAST in DOM order — layout-sensitive specs
   assume the surfaces above it keep their positions),
   `header-tabs-collapse-toggle` / `header-tabs-iconmode-toggle`.
+
+## Full pages
+
+`#breakdown` (experimental) LEAVES the showroom: the app tab fills the window
+(no rail/top bar), and `breakdown-back` returns to `#glide`. Testids:
+`glide-breakdown-demo` (the page surface), `breakdown-freeze` (frozen-column
+Seg: Off / Scene # / + Pages / + Script / + I/E / + Set), `breakdown-scene-count`,
+`breakdown-add-scene`, `breakdown-undo`, `breakdown-status`, `breakdown-commits`.
+Row-marker gutter, up to six frozen leading columns, smooth scrolling, a
+sticky header, kit editors in the cells, a trash DOM cell per row, and real DOM
+header buttons that sort (`breakdown-sort-<columnKey>`, `data-sort` =
+`none|asc|desc`). The grid has 5 rows of overscroll space past the trailing add
+row — blank space, not empty rows.
 
 ## Playground CSS gotchas (both REQUIRED for correct rendering)
 
