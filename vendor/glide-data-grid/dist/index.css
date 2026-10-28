@@ -42,6 +42,13 @@
 }
 /* Dropdown/entity editors (disablePadding) fill the cell box: the kit
    PickerField is height:100% of it, so the field is the cell's height. */
+/* fork: a DOM cell under the grid's selection rectangle shows the hover wash
+   (its controls are DOM, so the canvas hover tint would otherwise be hidden). */
+[data-glide-dom-cell][data-glide-dom-focused] {
+    /* The grid's OWN hover tint (set by GlideSheet), not a kit accent wash —
+       so it matches hovering the row with the mouse. */
+    background: var(--glide-dom-hover-bg, var(--gdg-bg-cell-medium));
+}
 .gdg-d19meir1:not(.gdg-pad) .gdg-clip-region {
     height: 100%;
     /* Same text origin as the painted cell (the stock card had none). */

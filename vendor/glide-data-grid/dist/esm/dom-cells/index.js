@@ -12,7 +12,8 @@ import * as React from "react";
 import { DataEditorAll } from "../data-editor-all.js";
 
 export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDomCells(props, ref) {
-    const { getDomCell, onVisibleRegionChanged, onCellActivated, domCellClassName, ...rest } = props;
+    const { getDomCell, onVisibleRegionChanged, onCellActivated, domCellClassName, gridSelection, ...rest } = props;
+    const focusedCell = gridSelection?.current?.cell;
     const innerRef = React.useRef(null);
     React.useImperativeHandle(ref, () => innerRef.current, []);
     const wrapRef = React.useRef(null);
@@ -111,7 +112,7 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
     return React.createElement(
         "div",
         { ref: wrapRef, style: { position: "relative", width: "100%" }, "data-glide-dom-wrap": "" },
-        React.createElement(DataEditorAll, Object.assign({}, rest, { ref: innerRef, onVisibleRegionChanged: handleVisible, onCellActivated: handleActivated })),
+        React.createElement(DataEditorAll, Object.assign({}, rest, { ref: innerRef, gridSelection: gridSelection, onVisibleRegionChanged: handleVisible, onCellActivated: handleActivated })),
         React.createElement(
             "div",
             { ref: layerRef, style: { position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1 }, "data-glide-dom-layer": "" },
@@ -129,6 +130,10 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
                         key: b.col + ":" + b.row,
                         className: domCellClassName,
                         "data-glide-dom-cell": b.col + ":" + b.row,
+                        /* The grid's selection rectangle is on this cell: paint
+                           the same hover wash the canvas rows use, so the DOM
+                           cell reads as hovered. */
+                        "data-glide-dom-focused": focusedCell != null && focusedCell[0] === b.col && focusedCell[1] === b.row ? "true" : undefined,
                         style: {
                             position: "absolute",
                             left: b.left,
