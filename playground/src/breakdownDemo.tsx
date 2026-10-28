@@ -249,9 +249,9 @@ const INITIAL_SCENES: SceneRow[] = [
 
 const COLUMNS: GlideSheetColumn[] = [
   // The app's first data column is the row-action lane (trash / add plus).
-  // The add-row hint sits on Scene # — a 36px lane only fits the plus.
+  // The trailing create row is glyph-only: no text label in any lane.
   { key: 'actions', label: '', width: 36, trailingRowOptions: { hint: '' } },
-  { key: 'sceneNumber', label: 'Scene #', width: 68, trailingRowOptions: { hint: 'Add scene' } },
+  { key: 'sceneNumber', label: 'Scene #', width: 68, trailingRowOptions: { hint: '' } },
   { key: 'pages', label: 'Pages', width: 78, align: 'center' },
   { key: 'scriptDay', label: 'Script Day', width: 84, align: 'center' },
   { key: 'intExt', label: 'I/E', width: 66, align: 'center' },

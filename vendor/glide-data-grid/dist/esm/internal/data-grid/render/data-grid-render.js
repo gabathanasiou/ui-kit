@@ -273,8 +273,12 @@ export function drawGrid(arg, lastArg) {
         let bandTop = totalHeaderHeight + translateY;
         for (let r = cellYOffset; r <= lastRow; r++)
             bandTop += getRowHeight(r);
+        if (typeof window !== "undefined" && window.__glideBandDebug) console.log("band", { rows, cellYOffset, translateY, lastRow, bandTop, height, rowHeight });
         if (bandTop < height) {
             const y = Math.max(totalHeaderHeight, bandTop);
+            // Close the last row: a real bottom border, then the flat band.
+            targetCtx.fillStyle = theme.horizontalBorderColor ?? theme.borderColor;
+            targetCtx.fillRect(0, Math.round(y) - 1, width, 1);
             targetCtx.fillStyle = theme.bgCell;
             targetCtx.fillRect(0, y, width, height - y);
         }
