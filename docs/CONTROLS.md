@@ -165,6 +165,12 @@ the outgoing glyph scrolls up and out, the incoming one scrolls up into place
 (200ms; `iconRoll="down"` reverses it). Reduced motion drops the animation.
 Applies to buttons, tabs and Segs — no per-component wiring.
 
+The roll box exists **only while a change is in flight**. At every other
+moment the icon keeps its plain node, so the collapsing icon → label face
+(§3) squishes the glyph away with the width track; an always-mounted wrapper
+is a flex item with a min-content width and would instead clip the glyph into
+a sliver mid-transition.
+
 ## 6. Morph triggers (button → field)
 
 `MorphSearchField` / `MorphActionField` (and the SearchMenu expandable field)

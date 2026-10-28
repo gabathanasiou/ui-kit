@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 /**
  * The icon ↔ label face of a tab (roadmap 258) — the collapsing mechanics,
@@ -61,32 +61,39 @@ export function TabFace({ icon, collapse = false, iconWithLabel = true, active =
   const swap = collapsible && !iconWithLabel;
   const showIcon = !!icon && (iconWithLabel || collapsible);
 
-  /* Icon swap animation: when the icon node MEANINGFULLY changes (Pencil →
-     Check) the old glyph scales/rotates out under the new one. The label
-     stays put. Reduced motion drops the animation. */
+  /* Icon-change animation: when the icon node MEANINGFULLY changes (Pencil →
+     Check) the old glyph rolls out and the new one rolls in. Driven from a
+     previous-render state (React's "adjust state when a prop changes"
+     pattern) so the animated face lands in the SAME commit as the new icon —
+     an effect would paint the new glyph once, then restart it from below.
+     The swapped face only exists while the roll is in flight. */
   const sig = iconSignature(icon);
+  const [prev, setPrev] = useState<{ sig: string; node: React.ReactNode }>({ sig, node: icon });
   const [outgoing, setOutgoing] = useState<React.ReactNode>(null);
-  const prevRef = useRef<{ sig: string; node: React.ReactNode }>({ sig, node: icon });
+  if (sig !== prev.sig) {
+    setPrev({ sig, node: icon });
+    setOutgoing(prev.node);
+  }
   useEffect(() => {
-    if (sig === prevRef.current.sig) { prevRef.current.node = icon; return; }
-    setOutgoing(prevRef.current.node);
-    prevRef.current = { sig, node: icon };
+    if (outgoing == null) return;
     const timer = window.setTimeout(() => setOutgoing(null), 200);
     return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sig]);
+  }, [outgoing]);
 
-  const iconFace = (
-    /* A vertical ROLL, not a cross-fade: the old glyph scrolls up out of the
-       clipped box while the new one scrolls up into place (the iOS/macOS
-       state-change feel). The incoming icon is in normal flow (it owns the
-       box size); the outgoing one overlays it and is clipped. */
+  /* A vertical ROLL, not a cross-fade: the old glyph scrolls up out of the
+     clipped box while the new one scrolls up into place (the iOS/macOS
+     state-change feel). The incoming icon is in normal flow (it owns the box
+     size); the outgoing one overlays it and is clipped.
+     ONLY rendered while a change is in flight: at every other moment the
+     icon keeps its plain node. An always-on wrapper is a flex item with a
+     14px min-content size, so a collapsing (icon → label) face CLIPPED the
+     glyph into a sliver instead of shrinking it away — the pre-roll squish
+     is the wanted motion. */
+  const iconFace = outgoing == null ? icon : (
     <span className="relative inline-flex items-center justify-center overflow-hidden">
-      {outgoing != null && (
-        <span key={`out:${prevRef.current.sig}`} aria-hidden className={`ui-icon-roll-out${roll === 'down' ? '-down' : ''} absolute inset-0 inline-flex items-center justify-center`}>
-          {outgoing}
-        </span>
-      )}
+      <span key={`out:${prev.sig}`} aria-hidden className={`ui-icon-roll-out${roll === 'down' ? '-down' : ''} absolute inset-0 inline-flex items-center justify-center`}>
+        {outgoing}
+      </span>
       <span key={`in:${sig}`} className={`ui-icon-roll-in${roll === 'down' ? '-down' : ''} inline-flex items-center justify-center`}>
         {icon}
       </span>
