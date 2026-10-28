@@ -22431,7 +22431,7 @@ function QA(t, e, n, r, i) {
     scrollRef: f
   };
 }
-const e_ = w.lazy(async () => await import("./data-grid-overlay-editor-DXGTORUb.js"));
+const e_ = w.lazy(async () => await import("./data-grid-overlay-editor-CDzP2QRb.js"));
 let t_ = 0;
 function n_(t) {
   return YE(o0(o0(t).filter((e) => e.span !== void 0).map((e) => {
@@ -24639,7 +24639,7 @@ function I_(t, e, n, r, i) {
     height: c - 1
   };
 }
-const A_ = w.lazy(async () => await import("./number-overlay-editor-Cxk8O6N7.js")), __ = {
+const A_ = w.lazy(async () => await import("./number-overlay-editor-DQ3E_eXk.js")), __ = {
   getAccessibilityString: (t) => {
     var e;
     return ((e = t.data) == null ? void 0 : e.toString()) ?? "";
@@ -25028,6 +25028,10 @@ const j_ = (t, e) => {
               padding: 4,
               boxSizing: "border-box",
               pointerEvents: C != null && C.passthrough === !0 ? "none" : "auto",
+              /* Controls are centred in the cell's content box —
+                 same gap above and below, whatever the row height. */
+              display: "flex",
+              alignItems: "center",
               /* The cell is a CONTAINER: the host arranges its own
                  buttons/fields inside (and may overflow the box
                  for a morph that expands). */

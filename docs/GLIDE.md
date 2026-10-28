@@ -71,7 +71,8 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
   the editor's own `getBounds`, re-measured from the library's visible-region
   stream (scroll), a `ResizeObserver` and every render.
 - **The box IS the container** — the cell's width/height minus Glide's 4px cell
-  inset (the same margin the drawn kit faces use), `overflow: visible`. Lay out
+  inset (the same margin the drawn kit faces use), `overflow: visible`, content
+  centred vertically (equal gap above and below at any row height). Lay out
   whatever fits: a row of buttons, a morph field beside an adder, a picker +
   Apply, a Seg. Inner gaps/padding are the host's.
 - Controls keep **native focus, hover, CSS animation and tab order**; a morph

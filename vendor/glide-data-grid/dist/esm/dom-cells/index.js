@@ -142,6 +142,10 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
                             padding: 4,
                             boxSizing: "border-box",
                             pointerEvents: spec != null && spec.passthrough === true ? "none" : "auto",
+                            /* Controls are centred in the cell's content box —
+                               same gap above and below, whatever the row height. */
+                            display: "flex",
+                            alignItems: "center",
                             /* The cell is a CONTAINER: the host arranges its own
                                buttons/fields inside (and may overflow the box
                                for a morph that expands). */
