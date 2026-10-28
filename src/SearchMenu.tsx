@@ -79,6 +79,8 @@ export interface SearchMenuProps {
    *  `primary`). Use `subtle` for an adder ("Add location", "Add role") and
    *  `outline` for a value field ("Report to") that must read as a field. */
   triggerVariant?: 'primary' | 'subtle' | 'outline';
+  /** Extra classes on the collapsed trigger (e.g. a custom-value tint). */
+  triggerClassName?: string;
   placeholder?: string;
   /** Controlled query (optional). */
   query?: string;
@@ -183,6 +185,7 @@ export function SearchMenu({
   triggerLabel = 'Search',
   triggerIcon,
   triggerVariant = 'primary',
+  triggerClassName,
   placeholder = 'Search…',
   query: controlledQuery,
   onQueryChange,
@@ -1292,7 +1295,7 @@ export function SearchMenu({
           theme={theme === 'dark' ? 'dark' : 'light'}
           icon={triggerIcon ?? <Search className="w-3.5 h-3.5" />}
           onClick={openPanel}
-          className={`w-full justify-start ${expanded ? 'pointer-events-none' : ''}`}
+          className={`w-full justify-start ${expanded ? 'pointer-events-none' : ''} ${triggerClassName ?? ''}`}
           tabIndex={expanded ? -1 : 0}
           data-search-trigger
         >

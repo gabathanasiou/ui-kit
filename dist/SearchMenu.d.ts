@@ -56,6 +56,8 @@ export interface SearchMenuProps {
      *  `primary`). Use `subtle` for an adder ("Add location", "Add role") and
      *  `outline` for a value field ("Report to") that must read as a field. */
     triggerVariant?: 'primary' | 'subtle' | 'outline';
+    /** Extra classes on the collapsed trigger (e.g. a custom-value tint). */
+    triggerClassName?: string;
     placeholder?: string;
     /** Controlled query (optional). */
     query?: string;
@@ -162,5 +164,5 @@ export interface SearchMenuProps {
     /** Imperative panel controls for a caller that owns the field. */
     ref?: React.Ref<SearchMenuHandle>;
 }
-export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, triggerVariant, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, browseAll, selectedId, autoFocus, collapsedWidth, expandedWidth, panelWidth, panelMinWidth, keepAllRows, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, leadingActions, hideLeadingOnEmpty, footerActions, fieldActions, multiple, open: controlledOpen, onOpenChange, hideTrigger, anchorRef, portalTarget: portalTargetProp, renderTrigger, renderItem: renderItemProp, highlightOnOpen, ref, }: SearchMenuProps): React.JSX.Element;
+export declare function SearchMenu({ items, groups, mode, triggerLabel, triggerIcon, triggerVariant, triggerClassName, placeholder, query: controlledQuery, onQueryChange, onSelect, onSelectGroup, onClose, closeOnSelect, openOnFocus, expandableGroups, browseExpanded, groupExpandMode, browseAll, selectedId, autoFocus, collapsedWidth, expandedWidth, panelWidth, panelMinWidth, keepAllRows, maxMenuHeight, theme, morph, emptyTitle, emptyHint, renderEmpty, emptyActions, leadingActions, hideLeadingOnEmpty, footerActions, fieldActions, multiple, open: controlledOpen, onOpenChange, hideTrigger, anchorRef, portalTarget: portalTargetProp, renderTrigger, renderItem: renderItemProp, highlightOnOpen, ref, }: SearchMenuProps): React.JSX.Element;
 export default SearchMenu;
