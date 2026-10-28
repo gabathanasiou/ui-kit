@@ -26,11 +26,14 @@ the npm package has no effect. CSS consumers import
    from `onVisibleRegionChanged`. Exported from `index.js` / `index.d.ts`.
    The kit maps `GlideSheet.domCells` onto it.
    Enter/Space on the selected cell activates its control when the DOM cell
-   holds exactly one focusable element.
+   holds exactly one focusable element. Frozen columns are measured on every
+   pass (the visible range starts at the first SCROLLED column) and
+   `freezeColumns` is forwarded to the inner editor. `domCellBottomInset` hides
+   boxes covered by a sticky trailing row.
 2. **Editor chrome** (`dist/index.css`, "fork: the overlay editor must look
-   like the cell") — square corners, a crisp 2px accent rectangle outline, no
-   drop shadow/fade, and the cell's own padding/font/line rhythm, so editing
-   reads as typing in the cell.
+   like the cell") — square corners, a crisp 1px inset accent rectangle, no
+   drop shadow/fade, the cell's exact box/height/padding/font/line rhythm, and
+   no inner scrollbar (stock's growing-entry top margin + sub-pixel rounding).
 3. **Source maps stripped** — `*.map` files and their `sourceMappingURL`
    comments are removed to keep the vendored tree small (Vite then logs no
    missing-map errors).

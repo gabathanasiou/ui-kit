@@ -74,6 +74,14 @@ export interface GlideDomCellSpec {
 }
 
 
+/** The numbered gutter at the grid's left edge (Glide's `rowMarkers`).
+ *  `clickable-number` selects the row when the number is clicked. */
+export interface GlideRowMarkers {
+  kind: 'number' | 'clickable-number' | 'both';
+  width?: number;
+  startIndex?: number;
+}
+
 /** Imperative surface for host controls (e.g. a DOM dropdown button that must
  *  behave exactly like double-clicking the cell). */
 export interface GlideSheetApi {
@@ -123,6 +131,22 @@ export interface GlideSheetProps {
   domCells?: GlideDomCellSpec[];
   /** Receives the imperative API (open a cell editor). */
   apiRef?: React.RefObject<GlideSheetApi | null>;
+  /** Fixed grid height in px — defaults to the content height. A smaller value
+   *  makes the grid scroll vertically (the header stays pinned). */
+  height?: number;
+  /** Keep the declared column widths and scroll horizontally instead of fitting
+   *  every column to the card. Pair with `freezeColumns`. */
+  scrollable?: boolean;
+  /** Leading DATA columns pinned while scrolling sideways; Glide adds the
+   *  row-marker column on top. 0 = none. */
+  freezeColumns?: number;
+  /** Numbered row-marker gutter at the left edge. */
+  rowMarkers?: GlideRowMarkers;
+  /** Enables Glide's trailing add-row; clicking it calls this (the host appends
+   *  one row and the trailing row follows the data). */
+  onAddRow?: () => void;
+  /** Hover hint on the trailing add-row. */
+  addRowHint?: string;
 }
 
 const DEFAULT_ROW_HEIGHT = 28;
@@ -231,6 +255,12 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
   disableClipboard,
   domCells,
   apiRef,
+  height,
+  scrollable,
+  freezeColumns = 0,
+  rowMarkers,
+  onAddRow,
+  addRowHint,
 }) => {
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
@@ -245,6 +275,8 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
   const { ref: sizeRef, width: gridWidth } = useMeasuredWidth();
 
   const COLUMNS = useMemo(() => {
+    // Scrollable grids keep their declared widths; the rest auto-fit the card.
+    if (scrollable) return columns.map(c => ({ ...c, width: Math.max(40, Math.round(c.width)) }));
     const total = columns.reduce((sum, c) => sum + c.width, 0);
     if (!gridWidth || gridWidth <= 0 || total <= 0) return columns;
     const target = Math.max(120, Math.floor(gridWidth) - 1);
@@ -255,14 +287,17 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
       widths[flexIdx] = Math.max(40, widths[flexIdx] + (target - sum));
     }
     return columns.map((c, i) => ({ ...c, width: widths[i] }));
-  }, [columns, gridWidth]);
+  }, [columns, gridWidth, scrollable]);
 
   const glideColumns: GridColumn[] = useMemo(
     () => COLUMNS.map(c => ({ title: c.label.toUpperCase(), width: c.width })),
     [COLUMNS],
   );
 
-  const contentHeight = headerH + Math.max(rows.length, 1) * rowH;
+  // The trailing add-row is drawn by Glide OUTSIDE `rows` — it needs its own
+  // row's height in the content measurement.
+  const contentHeight = headerH + Math.max(rows.length + (onAddRow ? 1 : 0), 1) * rowH;
+  const gridHeight = height ?? contentHeight;
 
   /* Glide caches painted cells: a data/column change only repaints after an
      explicit damage pass, or the grid looks stale until the next interaction. */
@@ -322,7 +357,9 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
     editors,
     getEditor,
     portalRef: gridPortalRef,
-    columnOffset: 0,
+    // `provideEditor` receives Glide's RAW column index; the row-marker gutter
+    // is column 0 when it exists (roadmap: the classic Glide offset trap).
+    columnOffset: rowMarkers ? 1 : 0,
   };
   const provideEditor = useMemo(() => createGlideCellEditor(() => editorOptsRef.current), []);
   const escapeCancel = useGlideEscapeCancel();
@@ -634,14 +671,17 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
       }}
     >
       <div ref={sizeRef} style={{ touchAction: 'none' }}>
-        {rows.length === 0 && emptyLabel ? (
+        {rows.length === 0 && emptyLabel && !onAddRow ? (
           <div className="px-2.5 py-6 text-center text-xs text-[color:var(--ui-text-faint)]">{emptyLabel}</div>
         ) : gridWidth > 0 ? (
           <DataEditorWithDomCells
             ref={gridRef}
             getDomCell={domCells && domCells.length > 0 ? getDomCell : undefined}
+            // The sticky trailing add-row paints over the rows behind it; hide
+            // the DOM boxes it covers (they live above the canvas).
+            domCellBottomInset={onAddRow ? rowH : 0}
             width={Math.max(120, Math.floor(gridWidth) - 1)}
-            height={contentHeight}
+            height={gridHeight}
             columns={glideColumns}
             rows={rows.length}
             getCellContent={getCell}
@@ -667,6 +707,12 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
             portalElementRef={gridPortalRef as React.RefObject<HTMLElement>}
             minColumnWidth={1}
             maxColumnWidth={10000}
+            freezeColumns={freezeColumns}
+            {...(rowMarkers ? { rowMarkers } : {})}
+            {...(onAddRow ? {
+              trailingRowOptions: { hint: addRowHint ?? 'Add row', sticky: true },
+              onRowAppended: () => { onAddRow(); },
+            } : {})}
           />
         ) : (
           <div style={{ height: contentHeight }} />

@@ -42,6 +42,13 @@ export interface GlideDomCellSpec {
      *  centring) — a full-cell button. */
     bleed?: boolean;
 }
+/** The numbered gutter at the grid's left edge (Glide's `rowMarkers`).
+ *  `clickable-number` selects the row when the number is clicked. */
+export interface GlideRowMarkers {
+    kind: 'number' | 'clickable-number' | 'both';
+    width?: number;
+    startIndex?: number;
+}
 /** Imperative surface for host controls (e.g. a DOM dropdown button that must
  *  behave exactly like double-clicking the cell). */
 export interface GlideSheetApi {
@@ -90,6 +97,22 @@ export interface GlideSheetProps {
     domCells?: GlideDomCellSpec[];
     /** Receives the imperative API (open a cell editor). */
     apiRef?: React.RefObject<GlideSheetApi | null>;
+    /** Fixed grid height in px — defaults to the content height. A smaller value
+     *  makes the grid scroll vertically (the header stays pinned). */
+    height?: number;
+    /** Keep the declared column widths and scroll horizontally instead of fitting
+     *  every column to the card. Pair with `freezeColumns`. */
+    scrollable?: boolean;
+    /** Leading DATA columns pinned while scrolling sideways; Glide adds the
+     *  row-marker column on top. 0 = none. */
+    freezeColumns?: number;
+    /** Numbered row-marker gutter at the left edge. */
+    rowMarkers?: GlideRowMarkers;
+    /** Enables Glide's trailing add-row; clicking it calls this (the host appends
+     *  one row and the trailing row follows the data). */
+    onAddRow?: () => void;
+    /** Hover hint on the trailing add-row. */
+    addRowHint?: string;
 }
 export declare const GlideSheet: React.FC<GlideSheetProps>;
 export default GlideSheet;

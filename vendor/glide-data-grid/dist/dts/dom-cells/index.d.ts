@@ -19,6 +19,9 @@ export interface DomCellEditorProps extends DataEditorAllProps {
     getDomCell?: GetDomCell;
     /** Extra class on each pinned box. */
     domCellClassName?: string;
+    /** Px at the bottom covered by a sticky row (the trailing add row): boxes
+     *  it paints over are hidden. */
+    domCellBottomInset?: number;
 }
 
 /** DataEditor + a real DOM layer pinned over requested cells. */

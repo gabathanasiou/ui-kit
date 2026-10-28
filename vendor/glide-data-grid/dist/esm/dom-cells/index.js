@@ -12,7 +12,7 @@ import * as React from "react";
 import { DataEditorAll } from "../data-editor-all.js";
 
 export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDomCells(props, ref) {
-    const { getDomCell, onVisibleRegionChanged, onCellActivated, domCellClassName, gridSelection, ...rest } = props;
+    const { getDomCell, onVisibleRegionChanged, onCellActivated, domCellClassName, gridSelection, freezeColumns = 0, domCellBottomInset = 0, ...rest } = props;
     const focusedCell = gridSelection?.current?.cell;
     const innerRef = React.useRef(null);
     React.useImperativeHandle(ref, () => innerRef.current, []);
@@ -34,10 +34,18 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
             const y0 = Math.max(0, Math.floor(vis.y));
             const y1 = Math.ceil(vis.y + vis.height);
             for (let row = y0; row < y1; row++) {
-                for (let col = x0; col < x1; col++) {
+                for (let col = 0; col < x1; col++) {
+                    /* Frozen columns never enter the visible range (it starts
+                       at the first SCROLLED column), but their cells are on
+                       screen — always measure them. */
+                    if (col >= freezeColumns && col < x0) continue;
                     const b = grid.getBounds(col, row);
                     if (b == null) continue;
                     if (b.y + b.height < wr.top || b.y > wr.bottom) continue;
+                    /* A sticky trailing row paints OVER the rows behind it, but
+                       this layer sits above the canvas — hide the boxes it
+                       covers instead of letting them float on the add row. */
+                    if (domCellBottomInset > 0 && b.y + b.height > wr.bottom - domCellBottomInset) continue;
                     if (b.x + b.width < wr.left || b.x > wr.right) continue;
                     next.push({
                         col,
@@ -112,7 +120,7 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
     return React.createElement(
         "div",
         { ref: wrapRef, style: { position: "relative", width: "100%" }, "data-glide-dom-wrap": "" },
-        React.createElement(DataEditorAll, Object.assign({}, rest, { ref: innerRef, gridSelection: gridSelection, onVisibleRegionChanged: handleVisible, onCellActivated: handleActivated })),
+        React.createElement(DataEditorAll, Object.assign({}, rest, { ref: innerRef, gridSelection: gridSelection, freezeColumns: freezeColumns, onVisibleRegionChanged: handleVisible, onCellActivated: handleActivated })),
         React.createElement(
             "div",
             { ref: layerRef, style: { position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1 }, "data-glide-dom-layer": "" },

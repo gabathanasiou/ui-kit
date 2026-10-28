@@ -22,6 +22,7 @@ import { RichTextSection } from './sections/RichTextSection';
 import { HeaderTabsSection } from './sections/HeaderTabsSection';
 import { SizingSection } from './sections/SizingSection';
 import { GlideSection } from './sections/GlideSection';
+import { BreakdownDemo } from './breakdownDemo';
 
 /* ────────────────────────────────────────────────────────────────────────────
    ui-kit playground — the component zoo & debugging surfaces.
@@ -105,6 +106,11 @@ const SECTIONS: SectionDef[] = [
     id: 'glide', group: 'Data grid', title: 'Glide data grid',
     blurb: 'A canvas spreadsheet recreated as the Day Manager crew card, plus every cell kind: locked, editable, toggle, one-click buttons, badges and kit pickers in cells.',
     render: () => <GlideSection />,
+  },
+  {
+    id: 'breakdown', group: 'Data grid', title: 'Breakdown — the page-scale grid',
+    blurb: 'The Breakdown tab rebuilt as a real page: a row-marker gutter and up to five frozen leading columns (Scene #, Pages, Script Day, I/E, Set) that stay put while the sheet scrolls sideways, kit editors in the cells, a pinned header and a trailing add row.',
+    render: () => <BreakdownDemo />,
   },
 ];
 

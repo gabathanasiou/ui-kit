@@ -83,6 +83,40 @@ test.describe('Glide data grid', () => {
     await expect(cell).toContainText('Search: diner');
   });
 
+  test('breakdown: the frozen Scene # still opens its editor after scrolling sideways', async ({ page }) => {
+    await page.goto('/#breakdown');
+    const canvas = page.locator('[data-glide-breakdown-sheet] canvas').first();
+    await canvas.scrollIntoViewIfNeeded();
+    const box = await canvas.boundingBox();
+    if (!box) throw new Error('no breakdown canvas');
+
+    // Scroll the sheet far enough that Scene # would be long gone if it were
+    // not frozen (marker gutter = 44px, then Scene # = 68px).
+    const scroller = page.locator('[data-glide-breakdown-sheet] .dvn-scroller');
+    await scroller.evaluate(el => { el.scrollLeft = 600; });
+    await expect.poll(() => scroller.evaluate(el => el.scrollLeft)).toBe(600);
+
+    await page.mouse.dblclick(box.x + 44 + 30, box.y + 34 + 17);
+    // The editor opens on the FROZEN cell: its value is the first scene number.
+    await expect(page.locator('[data-glide-overlay-layer] textarea').first()).toHaveValue('1');
+    await page.keyboard.press('Escape');
+  });
+
+  test('breakdown: Add scene and Undo each land as ONE commit', async ({ page }) => {
+    await page.goto('/#breakdown');
+    const count = page.getByTestId('breakdown-scene-count');
+    const start = Number((await count.textContent())?.match(/\d+/)?.[0]);
+    const add = page.getByTestId('breakdown-add-scene');
+    await add.scrollIntoViewIfNeeded();
+
+    await add.click();
+    await expect(count).toHaveText(`${start + 1} scenes`);
+    await expect(page.getByTestId('breakdown-commits')).toHaveText('1 commit');
+
+    await page.getByTestId('breakdown-undo').click();
+    await expect(count).toHaveText(`${start} scenes`);
+  });
+
   test('field cells: the create/text box lives in the cell and submits in place', async ({ page }) => {
     await page.goto('/#glide');
     const cell = buttonCell(page, 'add', 1);

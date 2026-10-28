@@ -29,7 +29,7 @@ that file as `./glide.css` from the package.
 
 | File | Owns |
 | --- | --- |
-| `GlideSheet.tsx` | the grid wrapper: auto-fit columns, content height, editable tint, selection/cache, fill/paste/copy/cut/clear, row actions, DOM cells |
+| `GlideSheet.tsx` | the grid wrapper: auto-fit OR scrollable columns, frozen columns + row markers, content/fixed height, trailing add row, editable tint, selection/cache, fill/paste/copy/cut/clear, DOM cells |
 | `cells.ts` | `textCell`, `seededTextCell`, `staticCell`, `actionGlyphCell`, `isSeededNoop`, copy/cut text |
 | `gridModel.ts` | pure geometry: selection → rect, range fill, paste, clear, clipboard parsing |
 | `customCells.tsx` | `kitButtonCell`, `kitBadgeCell`, `kitFieldCell` + renderers + the morph editor |
@@ -151,6 +151,35 @@ area, both of which surfaced as a tiny scrollbar inside the floating box.
   (switching page tabs).
 - `readOnly` is enforced per cell (Glide has no grid-level readonly).
 
+## Scrolling, frozen columns, page scale
+
+A card grid auto-fits its columns; a page-scale grid (the Breakdown tab) keeps
+them. The opt-ins, all on `GlideSheet`:
+
+- **`scrollable`** — keep each column's declared `width` and scroll sideways.
+  Without it the widths are ratios and are scaled to the card (no scrollbar).
+- **`freezeColumns={n}`** — pin the first **n DATA columns**. Glide counts the
+  row-marker gutter on its own (`freezeColumns + rowMarkerOffset`), so `1`
+  freezes `Scene #`, not the gutter. The fork's DOM layer always measures the
+  frozen cells too (the visible-range stream starts at the first SCROLLED
+  column, so they are added explicitly) and forwards `freezeColumns` to the
+  inner editor.
+- **`rowMarkers={{ kind: 'clickable-number', width: 44, startIndex: 1 }}`** —
+  the numbered gutter. Glide hands `provideEditor` the RAW column index, so the
+  wrapper sets `columnOffset: 1` automatically — never hand-offset editors.
+- **`height={px}`** — a fixed viewport: the header stays pinned and rows scroll
+  vertically. Omit it for the content-height card grids.
+- **`onAddRow` / `addRowHint`** — Glide's trailing add-row (sticky at the
+  bottom, labelled by the hint); the host appends the row and the trailing row
+  follows the data. It counts as an extra row in the content height, and the
+  fork hides DOM boxes the sticky row paints over (`domCellBottomInset`) —
+  otherwise a trash button would float on the add row.
+
+The page-scale recreation is the playground's `#breakdown` (`BreakdownDemo`):
+row markers, `Scene #` / `Pages` / `I/E` / `Set` frozen (a Seg switches the
+count), real kit editors for the entity columns, a trash DOM cell in the
+scrollable Actions column, and the trailing add row.
+
 ## The fork (we own the code now)
 
 - **Upstream fork:** https://github.com/gabathanasiou/glide-data-grid (real
@@ -179,8 +208,15 @@ area, both of which surfaced as a tiny scrollbar inside the floating box.
 
 ## Playground
 
-Section `glide` ("Data grid", `#glide`): `glide-crew-demo` (crew card: real
-`PickerField` cells, overlay picker on Report To, trash/undo), `glide-gallery-demo`
-(every cell kind), `glide-buttons-demo` (drawn buttons + in-cell morph fields),
-`glide-notes`. Spec: `playground/specs/glide.spec.ts`; pure math:
+Sections under "Data grid":
+
+- `#glide` — `glide-crew-demo` (crew card: real `PickerField` cells, overlay
+  picker on Report To, trash/undo), `glide-gallery-demo` (every cell kind),
+  `glide-layouts-demo` (arranged DOM cells), `glide-buttons-demo` (drawn
+  buttons + in-cell morph fields), `glide-notes`.
+- `#breakdown` — `glide-breakdown-demo`: the Breakdown tab at page scale
+  (`breakdown-freeze` Seg, `-scene-count`, `-add-scene`, `-undo`, `-status`,
+  `-commits`; row-marker gutter + frozen columns + trailing add row).
+
+Spec: `playground/specs/glide.spec.ts`; pure math:
 `src/__tests__/glideGridModel.test.ts`.
