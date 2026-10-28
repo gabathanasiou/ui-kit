@@ -190,9 +190,10 @@ export function MorphSearchField({
     collapse(true);
   }, [onChange, collapse, cancelOnEscape, onCancel, onSubmit, value]);
 
-  const fieldLeadIcon = leadingIcon === undefined
-    ? (triggerIcon ?? <Search className="w-3.5 h-3.5" />)
-    : leadingIcon;
+  /* `undefined` = the built-in magnifier; `null` = deliberately no icon
+     (a rename/title field that has no glyph of its own). */
+  const triggerIconNode = triggerIcon === undefined ? <Search className="w-3.5 h-3.5" /> : triggerIcon;
+  const fieldLeadIcon = leadingIcon === undefined ? triggerIconNode : leadingIcon;
   const actionCount = (actions?.length || 0) + (showClear && value ? 1 : 0);
   const actionGap = 2;
   const rightPad = 8 + actionCount * (iconBtn.box + actionGap);
@@ -224,7 +225,7 @@ export function MorphSearchField({
           variant={variant}
           size="minimal"
           theme={theme}
-          icon={triggerIcon ?? <Search className="w-3.5 h-3.5" />}
+          icon={triggerIconNode}
           collapse={triggerCollapse}
           iconWithLabel={iconWithLabel}
           revealOnHover={triggerReveal}
