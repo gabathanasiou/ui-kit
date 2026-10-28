@@ -31,6 +31,24 @@ test.describe('Glide data grid', () => {
     await expect(page.getByTestId('glide-crew-commits')).toHaveText('1 commits');
   });
 
+  test('Enter activates a DOM button and keeps the grid selection', async ({ page }) => {
+    await page.goto('/#glide');
+    const gallery = page.locator('[data-glide-gallery-sheet] canvas').first();
+    await gallery.scrollIntoViewIfNeeded();
+    const box = await gallery.boundingBox();
+    if (!box) throw new Error('no gallery canvas');
+    await page.mouse.click(box.x + 50, box.y + 32 + 17);
+    for (let i = 0; i < 5; i++) await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('Enter');
+
+    await expect(page.getByTestId('glide-gallery-clicks')).toHaveText('clicks: 1');
+    await expect(page.getByTestId('glide-gallery-last')).toHaveText('last: row 1 · Approve');
+    // The action fires, but focus stays on the canvas: no DOM focus ring,
+    // the selection rectangle stays put.
+    expect(await page.evaluate(() => document.activeElement?.tagName)).toBe('CANVAS');
+    expect(await page.evaluate(() => !!document.activeElement?.closest?.('[data-glide-dom-layer]'))).toBe(false);
+  });
+
   test('cell layouts: a DOM cell hosts an arranged row of real controls', async ({ page }) => {
     await page.goto('/#glide');
     const card = page.getByTestId('glide-layouts-demo');

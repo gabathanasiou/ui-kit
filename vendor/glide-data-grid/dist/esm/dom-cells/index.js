@@ -90,8 +90,16 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
         );
         if (focusables.length !== 1) return;
         const el = focusables[0];
-        if (typeof el.focus === "function") el.focus();
+        // A BUTTON is an action, not a field: fire it and KEEP the grid's focus
+        // (the selection rectangle stays on the cell; no focus ring inside the
+        // DOM). Fields (inputs/pickers) still take focus so you can type.
+        const isButton = el.tagName === "BUTTON" || el.getAttribute("role") === "button";
         if (typeof el.click === "function") el.click();
+        if (isButton) {
+            innerRef.current?.focus();
+        } else if (typeof el.focus === "function") {
+            el.focus();
+        }
     }, [onCellActivated]);
 
     const handleVisible = React.useCallback((range, tx, ty, extras) => {
