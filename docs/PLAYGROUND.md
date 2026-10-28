@@ -69,11 +69,17 @@ Consequences (learned the hard way):
 
 ## Surfaces → testids
 
-- Buttons: `btn-<theme>-<variant>` (subtle / primary / outline / danger-ghost);
-  pressed, icon-only, minimal, `tab` / `tab-header`.
+- Buttons: `btn-<theme>-<variant>` (subtle / primary / outline / danger-ghost),
+  `btn-<theme>-icon-expand` (the bare-icon face in the same grid); states card:
+  pressed, icon-only, minimal, `tab` / `tab-header`; `icon-expand-buttons`
+  (icon → label on hover), `icon-reveal-outline|primary` (bare icon → the
+  variant's box on hover); **icon toggle** `toggle-icon-button` with
+  `toggle-icon-edit` (+ `-status`), `toggle-cycle-button` (+ `-status`, 3+
+  states) and the non-expandable labelled / `toggle-icon-only` pair.
 - Dropdowns: `ctrl-menu-trigger` (controlled, the app's DayEventsModal
   pattern), light + blue/emerald palettes, `initial-trigger`, `long-trigger` /
-  `capped-trigger`, `submenu-trigger`, `itemmanager-trigger`,
+  `capped-trigger`, `submenu-trigger`, `icon-dropdown` (+ `-status`, the
+  icon-expand trigger), `itemmanager-trigger`,
   `menu-rows-trigger`; edge repro `right-edge-trigger`; multiple selection
   `multi-menu-trigger` / `multi-capped-trigger` / `multi-light-trigger` /
   `multi-menu-status` (the Checkbox ↔ Check icon Seg switches the indicator).
@@ -88,7 +94,9 @@ Consequences (learned the hard way):
   `picker-cast` (+ `-status`), `picker-props`, `picker-location`, `picker-roles`,
   `picker-inline`, `picker-wrap`, `picker-async` (+ `-status`), and the dropdown
   BUTTON face `picker-dropdown-button` / `picker-dropdown-custom` /
-  `picker-dropdown-single` (+ `-status`).
+  `picker-dropdown-single` (+ `-status`); morph search faces
+  `morph-search-icon` / `morph-search-swap` / `morph-search-reveal`
+  (+ `morph-search-icon-status`).
 - Modals: `modal-open`, `stacked-open` → "Open Modal 2",
   `menu-modal-open` → `inmodal-menu-trigger` / `inmodal-long-trigger` /
   `inmodal-search-pick`, `kb-modal-open` (visualViewport readout),
