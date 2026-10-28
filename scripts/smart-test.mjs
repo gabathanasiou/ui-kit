@@ -32,6 +32,7 @@ const MENUS = ['dropdown-menu', 'dropdown-highlight', 'context-menu', 'searchabl
 const SEARCH = ['searchable-dropdown', 'search-menu-morph', 'morph-action-field'];
 const RICH = ['rich-text-formatting', 'rich-text-staged-tokens'];
 const CANARY = ['dropdown-menu', 'overlay-morph'];
+const GRID = ['glide'];
 
 // ---- Source -> specs map. First match wins per file. s: 'ALL' = full suite. ----
 const RULES = [
@@ -81,6 +82,8 @@ const RULES = [
   { g: 'src/numberInputMath.ts', s: ['number-input'] },
   { g: 'src/NumberInput.tsx', s: ['number-input'] },
   { g: 'src/index.ts', s: 'ALL' },
+  // Glide data grid — the canvas wrapper + its playground section
+  { g: 'src/glide/**', s: GRID },
   { g: 'src/DatePicker.tsx', s: ['datepicker'] },
   // rich text
   { g: 'src/richText.ts', s: RICH },

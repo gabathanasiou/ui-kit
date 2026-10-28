@@ -135,6 +135,7 @@ export {
 } from './glide';
 export type {
   GlideSheetProps,
+  GlideDomCellSpec,
   GlideSheetColumn,
   GlideSheetEdit,
   GlideSheetRowAction,

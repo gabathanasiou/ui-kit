@@ -11,7 +11,7 @@ export type {
   CustomCell,
   CustomRenderer,
 } from '@glideapps/glide-data-grid';
-export type { GlideSheetProps } from './GlideSheet';
+export type { GlideSheetProps, GlideDomCellSpec } from './GlideSheet';
 export type {
   GlideSheetColumn,
   GlideSheetEdit,

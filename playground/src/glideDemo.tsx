@@ -8,7 +8,6 @@ import {
   GridCellKind,
   kitButtonCell,
   kitBadgeCell,
-  kitFieldCell,
   glideCellColors,
   staticCell,
   textCell,
@@ -16,8 +15,11 @@ import {
   type GlideSheetColumn,
   type GlideSheetEdit,
   type GlideColumnEditor,
+  type GlideDomCellSpec,
   useKitTheme,
 } from '../../src/index';
+import { MorphActionField } from '../../src/MorphActionField';
+import { MorphSearchField } from '../../src/MorphSearchField';
 import { inputCls } from '../../src/input';
 
 /**
@@ -108,6 +110,7 @@ export const CrewCardDemo: React.FC = () => {
   const commit = useCallback((next: CrewRow[]) => {
     setHistory(h => [...h.slice(-19), rows]);
     setRows(next);
+    setCommitCount(c => c + 1);
   }, [rows]);
 
   const onCommit = useCallback((edits: GlideSheetEdit[]) => {
@@ -125,19 +128,15 @@ export const CrewCardDemo: React.FC = () => {
       else if (edit.colKey === 'call') { target.call = edit.value; changed++; }
     }
     if (changed === 0) return;
-    setCommitCount(c => c + 1);
     setStatus(`${edits.length} cell${edits.length === 1 ? '' : 's'} in one commit`);
     commit(next);
   }, [rows, gridRows, commit]);
 
   const getCellContent = useCallback((col: GlideSheetColumn, row: Record<string, string>) => {
     if (col.key === 'role') return staticCell(row.role, { themeOverride: { textDark: colors.muted } });
-    if (col.key === 'person') {
-      return textCell(row.person, {
-        displayData: row.person ? `${row.person}  ▾` : 'Select…  ▾',
-        cursor: 'pointer',
-      });
-    }
+    // The person picker is REAL DOM mounted over the cell (see domCells) —
+    // the canvas cell behind it stays blank.
+    if (col.key === 'person') return staticCell('');
     if (col.key === 'reportTo') {
       return seededTextCell(row.reportTo, { displayData: row.reportTo || '—', cursor: 'pointer' });
     }
@@ -145,15 +144,6 @@ export const CrewCardDemo: React.FC = () => {
   }, [colors.muted]);
 
   const getEditor = useCallback((row: number, colKey: string): GlideColumnEditor | undefined => {
-    if (colKey === 'person') {
-      return {
-        kind: 'select',
-        items: Object.values(PEOPLE).map(name => ({ id: name, label: name })),
-        resolveBy: 'label',
-        placeholder: 'Select…',
-        panelMinWidth: 220,
-      };
-    }
     if (colKey === 'reportTo') {
       return {
         kind: 'select',
@@ -167,6 +157,33 @@ export const CrewCardDemo: React.FC = () => {
     }
     return undefined;
   }, [gridRows]);
+
+  /* Real PickerField per row, mounted ON the Person cell (domCells). Native
+     focus/hover, the kit's own panel, and the row keeps its value while the
+     grid scrolls — no overlay editor involved. */
+  const personCells = useMemo<GlideDomCellSpec[]>(() => rows.map((row, index) => ({
+    row: index,
+    colKey: 'person',
+    node: (
+      <PickerField
+        appearance="chip"
+        mode="single"
+        values={row.person ? [row.person] : []}
+        items={Object.values(PEOPLE).map(name => ({ id: name, label: name }))}
+        resolveBy="label"
+        display="names"
+        placeholder="Select…"
+        onChange={values => {
+          const person = values[0] ?? '';
+          if (person === row.person) return;
+          setStatus('1 cell in one commit');
+          commit(rows.map(r => (r.id === row.id ? { ...r, person } : r)));
+        }}
+        panelMinWidth={240}
+        collapsedWidth={170}
+      />
+    ),
+  })), [rows, commit]);
 
   const rowActions = useCallback((row: number) => [{
     key: 'remove',
@@ -247,6 +264,7 @@ export const CrewCardDemo: React.FC = () => {
         editableKeys={CREW_EDITABLE}
         readOnly={readOnly}
         rowActions={rowActions}
+        domCells={personCells}
         selectionKey="pg:glide:crew"
         baseRowHeight={38}
         baseHeaderHeight={34}
@@ -430,6 +448,8 @@ const BUTTON_ROWS = [
  *  the canvas) and the FIELD cells, whose single click opens the real kit
  *  MorphSearchField / MorphActionField in Glide's overlay editor. */
 export const ButtonTypesDemo: React.FC = () => {
+  const kit = useKitTheme();
+  const mode = kit?.mode ?? 'light';
   const [terms, setTerms] = useState<Record<string, string>>({});
   const [added, setAdded] = useState<Record<string, string>>({});
   const [status, setStatus] = useState('—');
@@ -439,18 +459,16 @@ export const ButtonTypesDemo: React.FC = () => {
       id: r.id,
       step: r.variant,
       label: r.label,
-      term: terms[r.id] ?? '',
-      added: added[r.id] ?? '',
     })),
-    [terms, added],
+    [],
   );
 
   const onCommit = useCallback(() => {}, []);
 
   const getCellContent = useCallback((col: GlideSheetColumn, row: Record<string, string>, rowIndex: number) => {
-    const def = BUTTON_ROWS[rowIndex];
     if (col.key === 'step') return staticCell(row.step);
     if (col.key === 'drawn') {
+      const def = BUTTON_ROWS[rowIndex];
       return kitButtonCell({
         label: def.label,
         variant: def.variant,
@@ -458,36 +476,59 @@ export const ButtonTypesDemo: React.FC = () => {
         onActivate: () => setStatus(`clicked ${def.label}`),
       });
     }
-    if (col.key === 'search') {
-      return kitFieldCell({
-        mode: 'search',
-        label: 'Search',
-        value: row.term,
-        onSubmit: value => {
-          setTerms(t => ({ ...t, [def.id]: value }));
-          setStatus(`search “${value}”`);
-        },
-      });
-    }
-    return kitFieldCell({
-      mode: 'action',
-      label: 'Add',
-      variant: 'primary',
-      value: row.added,
-      placeholder: 'New value…',
-      onSubmit: value => {
-        setAdded(a => ({ ...a, [def.id]: value }));
-        setStatus(`added “${value}”`);
-      },
-    });
+    // The real control is mounted ON the cell (domCells) — nothing to paint.
+    return staticCell('');
   }, []);
+
+  /* Real kit controls living in the cell, not in a floating editor: the grid
+     pins them over the canvas at the cell's rect and they keep focus, hover,
+     animation and tab order. */
+  const domCells = useMemo<GlideDomCellSpec[]>(() => {
+    const out: GlideDomCellSpec[] = [];
+    BUTTON_ROWS.forEach((def, row) => {
+      out.push({
+        row,
+        colKey: 'search',
+        node: (
+          <MorphSearchField
+            value={terms[def.id] ?? ''}
+            onChange={value => setTerms(t => ({ ...t, [def.id]: value }))}
+            triggerLabel={terms[def.id] ? `Search: ${terms[def.id]}` : 'Search'}
+            placeholder="Search…"
+            theme={mode}
+            collapsedWidth={110}
+            expandedWidth={240}
+            active={!!terms[def.id]}
+            onSubmit={value => setStatus(`search “${value}”`)}
+          />
+        ),
+      });
+      out.push({
+        row,
+        colKey: 'add',
+        node: (
+          <MorphActionField
+            value={added[def.id] ?? ''}
+            onChange={value => setAdded(a => ({ ...a, [def.id]: value }))}
+            triggerLabel={added[def.id] ? `Add: ${added[def.id]}` : 'Add'}
+            placeholder="New value…"
+            theme={mode}
+            variant="primary"
+            clearOnSubmit={false}
+            onSubmit={value => setStatus(`added “${value}”`)}
+          />
+        ),
+      });
+    });
+    return out;
+  }, [terms, added, mode]);
 
   return (
     <div className="pg-stack" data-testid="glide-buttons">
       <div className="row">
         <span className="label">
           Drawn buttons fire on one click (hover + focus painted on the canvas). The last two columns are
-          one-click FIELD cells: the cell is the closed trigger, the real kit morph control opens in place.
+          REAL kit controls mounted over the cell — click “Search” and it morphs in place, no floating panel.
         </span>
         <span className="text-[11px] text-[color:var(--ui-text-muted)]" data-testid="glide-buttons-status">
           last: {status}
@@ -500,6 +541,7 @@ export const ButtonTypesDemo: React.FC = () => {
         getCellContent={getCellContent}
         onCommit={onCommit}
         editableKeys={new Set<string>()}
+        domCells={domCells}
         selectionKey="pg:glide:buttons"
         baseRowHeight={38}
         baseHeaderHeight={32}
@@ -514,9 +556,10 @@ export const CapabilityNotes: React.FC = () => (
   <ul className="pg-stack" style={{ margin: 0, paddingLeft: 16, fontSize: 11.5, lineHeight: 1.6, color: 'var(--ui-text-muted)' }}>
     <li><b>Per-cell lock</b> — a cell's own <code>readonly</code> flag. Mix locked and editable cells in one row; the editable wash only paints the ones you can write.</li>
     <li><b>Single-click buttons</b> — custom cells (<code>kitButtonCell</code>) drawn on the canvas, click handled by the renderer. No editor flash, no DOM.</li>
-    <li><b>Kit panels in cells</b> — the overlay editor is real DOM: <code>PickerField</code> / <code>SearchMenu</code> open exactly as they do elsewhere.</li>
+    <li><b>Real DOM in a cell</b> — <code>domCells</code> pins a live React control over its cell (measured with Glide's <code>getBounds</code>, re-pinned on scroll/resize). It keeps focus, hover, animation and tab order; the trigger morphs in place instead of opening a floating editor.</li>
+    <li><b>Kit panels in cells</b> — the overlay editor is also real DOM: <code>PickerField</code> / <code>SearchMenu</code> open exactly as they do elsewhere (<code>kitFieldCell</code>).</li>
     <li><b>DOM chrome stays DOM</b> — the department band, the Add-role row and the trash cell's tooltip are outside the canvas; kit buttons there are real buttons.</li>
-    <li><b>Not possible without a fork</b> — a persistent DOM control inside a cell, per-cell tab order, native text selection inside a cell, CSS hover/focus rings on canvas shapes (drawn states only).</li>
+    <li><b>Canvas-only limits</b> — a drawn cell has no CSS hover/focus/text-selection and no DOM a11y (states are painted). <code>domCells</code> fixes that per cell, at the cost of covering the canvas cell (Glide selection/keyboard skip it).</li>
     <li><b>Plumbing included</b> — range select, fill-down, copy/cut/paste/clear each commit ONCE via <code>onCommit</code> (one undo entry), with the app's paste interception so Glide never pastes twice.</li>
   </ul>
 );

@@ -299,7 +299,7 @@ const KitFieldEditor: React.FC<any> = ({ value, onFinishedEditing }) => {
       {data.mode === 'search' ? (
         <MorphSearchField {...common} onSubmit={v => finish(v)} expandedWidth={260} />
       ) : (
-        <MorphActionField {...common} variant={data.variant === 'danger' ? 'outline' : data.variant ?? 'primary'} triggerIcon={undefined} onSubmit={v => finish(v)} />
+        <MorphActionField {...common} variant={data.variant === 'danger' ? 'outline' : data.variant ?? 'primary'} triggerIcon={undefined} clearOnSubmit={false} onSubmit={v => finish(v)} />
       )}
     </div>
   );

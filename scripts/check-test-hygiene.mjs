@@ -55,8 +55,11 @@ const WAIT_BASELINE = 9;
 // 111 = 110 + the Seg icon-collapse face (labels collapse to the icon, reveal
 //       on hover, the selected segment stays open) — the tab face wired into
 //       the track variant.
-const SPEC_CAP = 18;
-const TEST_CAP = 111;
+// 19 = 18 + glide.spec.ts (experimental grid: the domCells wiring + the
+//      in-cell morph fields; canvas painting stays a manual check).
+const SPEC_CAP = 19;
+// 114 = 111 + the three glide grid cases.
+const TEST_CAP = 114;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

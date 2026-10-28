@@ -99,14 +99,14 @@ page (body attrs too, so portals + overscroll match); surface stays a modal
 property. Runs under `<StrictMode>` (dev-only bugs reproduce — see the morph
 section). **Read `docs/PLAYGROUND.md` before adding/moving a demo or a spec**
 — section map, testids, theme/contrast rules and the CSS gotchas live there.
+**Experimental data grid** (`src/glide/**`, branch `experiment/glide-grid`): a
+canvas spreadsheet with kit cells — read `docs/GLIDE.md` first (peer dep, the
+mandatory grid CSS import, `domCells`, one-commit plumbing).
 
-Playground CSS gotchas (both REQUIRED for correct rendering — the kit ships
-Tailwind classes the consumer provides):
-- `playground.css` imports Tailwind v4 + `@source '../../src'` — without the
-  `@source`, the kit's utilities are never generated (items lay out
-  horizontally, modals render `position: static`).
-- `.ui-menu { z-index: 10001 !important }` — kit menus portal to body at
-  z-[200], UNDER a modal (z-10000); the app's index.css does the same.
+Playground CSS gotchas (REQUIRED — the kit ships Tailwind classes the consumer
+provides): `playground.css` imports Tailwind v4 + `@source '../../src'` (without
+it the kit's utilities are never generated) and raises `.ui-menu` to z-10001
+(kit menus portal to body at z-[200], UNDER a modal at z-10000).
 
 ## Testing (read `docs/TESTING.md` before writing/changing specs)
 
@@ -120,7 +120,7 @@ Tailwind classes the consumer provides):
   projects run every spec — engine-incompatible cases skip on the iPad project with
   a reason (wheel, coarse geometry).
 - New spec or source file → add it to `scripts/smart-test.mjs` RULES; an orphan spec
-  fails `npm run lint`. The suite is capped (12 specs / 70 tests) — extend, push down,
+  fails `npm run lint`. The suite is capped (19 specs / 114 tests) — extend, push down,
   or consciously raise the cap in `scripts/check-test-hygiene.mjs`.
 - **Visual-only changes get NO test** — end with a numbered manual check for the user.
 - Spec-map landmarks: dismissal/hidden-content in `dropdown-menu.spec.ts`; StrictMode

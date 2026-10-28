@@ -29,7 +29,7 @@ export const GlideSection: React.FC = () => (
     <DemoCard
       wide
       label="Button & field cells"
-      hint="Drawn buttons support every variant, icon, hover and focus state — the canvas has no CSS, so those states are painted. Morph-to-search and create/text-box cells cannot live permanently in a cell, but ONE click can open the real kit control in Glide's overlay editor (single-click activation), which is what the last two columns do."
+      hint="Two ways to get a real control into a grid. Drawn buttons live ON the canvas: every variant/icon, with hover and focus painted (the canvas has no CSS). The last two columns are REAL kit components mounted over their cells (domCells): they keep focus, hover, animation and tab order, and morph in place — no floating editor."
       testId="glide-buttons-demo"
     >
       <ButtonTypesDemo />
