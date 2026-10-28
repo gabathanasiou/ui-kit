@@ -1300,7 +1300,9 @@ export function SearchMenu({
           tabIndex={expanded ? -1 : 0}
           data-search-trigger
         >
-          <span>{triggerLabel}</span>
+          {/* Truncate at the trigger's width (CSS ellipsis); a long value must
+              never spill past its fixed button. */}
+          <span className="min-w-0 truncate">{triggerLabel}</span>
         </Button>
       )}
       field={<>{overlayInput}{panel}</>}

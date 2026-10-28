@@ -11812,7 +11812,7 @@ function Hf({
           className: `w-full justify-start ${Se ? "pointer-events-none" : ""} ${s ?? ""}`,
           tabIndex: Se ? -1 : 0,
           "data-search-trigger": !0,
-          children: /* @__PURE__ */ h("span", { children: r })
+          children: /* @__PURE__ */ h("span", { className: "min-w-0 truncate", children: r })
         }
       ),
       field: /* @__PURE__ */ E(ct, { children: [
