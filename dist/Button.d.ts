@@ -66,8 +66,9 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
      *  (lit) button keeps its box so a toggle still reads as on. */
     revealOnHover?: boolean;
     /** With `collapse` + `active`: whether the label stays open while lit.
-     *  Default true (tabs, an applied filter term). Pass false for a TOGGLE
-     *  that should collapse back to its icon after the press. */
+     *  Default false — a toggle collapses back to its icon after the press.
+     *  Pass true for a mode toggle whose ON label must stay readable; tab
+     *  variants always keep the selected label. */
     keepLabelOnActive?: boolean;
     /** Width shim for a label that CHANGES (a toggle: Edit ↔ Done): the button
      *  keeps the width of whichever label is longer, so the press never shifts

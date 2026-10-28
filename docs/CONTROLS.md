@@ -50,7 +50,7 @@ sets `aria-pressed` on base variants; tabs use `aria-selected` instead.
 | `collapse` | icon-only at rest; the label reveals on hover/focus/active/open (needs `icon`) |
 | `iconWithLabel` | with `collapse`: `false` = the swap (icon at rest, TEXT ONLY on reveal) |
 | `revealOnHover` | bare icon: the variant's box appears on hover/focus/open; an active button keeps its box |
-| `keepLabelOnActive` | with `collapse` + `active`: `false` = a TOGGLE collapses back after the press |
+| `keepLabelOnActive` | with `collapse` + `active`: `true` = a TOGGLE keeps its ON label open (default `false` = collapse back; tabs always keep the selected label) |
 | `reserveLabel` | invisible width shim = the longer label (Edit ↔ Done never jitters) |
 | `iconRoll` | `up` (advance, default) \| `down` (return) — direction of the icon-change roll |
 | `className` / `style` | extras only (layout), never a second trigger recipe |
@@ -156,7 +156,7 @@ A toggle is a **Button** with `active` — no separate component:
   variant="outline"
   icon={on ? <Check /> : <Pencil />}
   collapse revealOnHover
-  keepLabelOnActive={false}      // a toggle collapses back to its icon
+  keepLabelOnActive={false}      // default: a toggle collapses back
   reserveLabel="Done"            // width of the longer label (no jitter)
   iconRoll={on ? 'up' : 'down'}  // return rolls back the way it came
   active={on}
@@ -176,7 +176,10 @@ A toggle is a **Button** with `active` — no separate component:
 
 - `activeTone` is the strong ON state: `info` (blue), `success` (emerald),
   `warning` (amber), `danger` (rose). Leave it off for the subtle neutral
-  selected tint. The ON label stays open with `keepLabelOnActive` (the default).
+  selected tint.
+- A toggle collapses back to its icon by default. Pass `keepLabelOnActive`
+  when the ON label must stay readable (a mode toggle). Tabs always keep the
+  selected label.
 - The expandable face is **optional**: a plain labelled `active` Button and a
   square `iconOnly` Button toggle just as well.
 - **3+ states** need no API: cycle your own array and drive

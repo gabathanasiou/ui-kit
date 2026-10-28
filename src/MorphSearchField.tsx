@@ -230,6 +230,7 @@ export function MorphSearchField({
           iconWithLabel={iconWithLabel}
           revealOnHover={triggerReveal}
           active={active}
+          keepLabelOnActive
           onClick={expand}
           className={`${triggerCollapse ? 'w-auto' : 'w-full'} justify-start ${expanded ? 'pointer-events-none' : ''}`}
           tabIndex={expanded ? -1 : 0}
