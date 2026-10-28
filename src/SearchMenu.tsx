@@ -75,6 +75,10 @@ export interface SearchMenuProps {
    *  for adders — so the trigger says WHAT it opens; the expanded field keeps
    *  the magnifier. */
   triggerIcon?: React.ReactNode;
+  /** Expandable mode: the collapsed trigger's Button variant (default
+   *  `primary`). Use `subtle` for an adder ("Add location", "Add role") and
+   *  `outline` for a value field ("Report to") that must read as a field. */
+  triggerVariant?: 'primary' | 'subtle' | 'outline';
   placeholder?: string;
   /** Controlled query (optional). */
   query?: string;
@@ -178,6 +182,7 @@ export function SearchMenu({
   mode = 'expandable',
   triggerLabel = 'Search',
   triggerIcon,
+  triggerVariant = 'primary',
   placeholder = 'Search…',
   query: controlledQuery,
   onQueryChange,
@@ -1282,7 +1287,7 @@ export function SearchMenu({
         <Button
           ref={triggerRef}
           type="button"
-          variant="primary"
+          variant={triggerVariant}
           size="minimal"
           theme={theme === 'dark' ? 'dark' : 'light'}
           icon={triggerIcon ?? <Search className="w-3.5 h-3.5" />}
