@@ -195,6 +195,7 @@ export function createGlideCellEditor(getOpts: () => GlideEditorOptions | null) 
                 cancel();
               }}
               placeholder={cfg.placeholder}
+              style={{ height: '100%' }}
               defaultOpen
               autoFocus
               initialQuery={initialValue}

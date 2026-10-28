@@ -22431,7 +22431,7 @@ function QA(t, e, n, r, i) {
     scrollRef: f
   };
 }
-const e_ = w.lazy(async () => await import("./data-grid-overlay-editor-Czrw-BAF.js"));
+const e_ = w.lazy(async () => await import("./data-grid-overlay-editor-CQenAMMz.js"));
 let t_ = 0;
 function n_(t) {
   return YE(o0(o0(t).filter((e) => e.span !== void 0).map((e) => {
@@ -24639,7 +24639,7 @@ function I_(t, e, n, r, i) {
     height: c - 1
   };
 }
-const A_ = w.lazy(async () => await import("./number-overlay-editor-DPSJBlqh.js")), __ = {
+const A_ = w.lazy(async () => await import("./number-overlay-editor-BDvO4Rp5.js")), __ = {
   getAccessibilityString: (t) => {
     var e;
     return ((e = t.data) == null ? void 0 : e.toString()) ?? "";
@@ -25323,6 +25323,7 @@ function oP(t) {
             T.current = !1, k();
           },
           placeholder: y.placeholder,
+          style: { height: "100%" },
           defaultOpen: !0,
           autoFocus: !0,
           initialQuery: p,

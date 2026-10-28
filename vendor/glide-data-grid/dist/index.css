@@ -20,16 +20,32 @@
    ring/shadow/radius and no fade, so editing looks like typing in the cell. */
 .gdg-d19meir1.gdg-style {
     border-radius: 0;
-    /* Keep the crisp RECTANGLE outline (the cell's focus ring) — square
-       corners, no drop shadow, no fade. */
-    box-shadow: 0 0 0 2px var(--gdg-accent-color);
+    /* Keep the crisp RECTANGLE outline — inset, so it sits exactly where the
+       grid paints the selected cell's border and never grows the box. */
+    box-shadow: inset 0 0 0 1px var(--gdg-accent-color);
     animation: none;
 }
 .gdg-d19meir1.gdg-pad {
-    padding: var(--gdg-cell-vertical-padding) var(--gdg-cell-horizontal-padding);
+    /* Same box as the painted cell: the text sits at the cell's own left inset
+       (+0.5px, where the canvas draws it) and is centred vertically on the
+       theme line rhythm — no stock 8.5/3 card padding. */
+    padding: var(--fork-editor-top, var(--gdg-cell-vertical-padding))
+             calc(var(--gdg-cell-horizontal-padding) + 0.5px);
 }
 .gdg-d19meir1 .gdg-clip-region {
     border-radius: 0;
+    /* Inherit the CELL's typography so every editor face (text, picker,
+       markdown) uses the same font, size and colour as the painted cell. */
+    color: var(--gdg-text-dark);
+    font-family: var(--gdg-font-family);
+    font-size: var(--gdg-editor-font-size);
+}
+/* Dropdown/entity editors (disablePadding) fill the cell box: the kit
+   PickerField is height:100% of it, so the field is the cell's height. */
+.gdg-d19meir1:not(.gdg-pad) .gdg-clip-region {
+    height: 100%;
+    /* Same text origin as the painted cell (the stock card had none). */
+    padding: 0 calc(var(--gdg-cell-horizontal-padding) + 0.5px);
 }
 .gdg-d19meir1 .gdg-clip-region .gdg-growing-entry {
     line-height: var(--gdg-line-height, 1.4);

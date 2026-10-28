@@ -104,10 +104,14 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
 
 ## Editors (overlay)
 
-The fork styles Glide's overlay editor to be **visually identical to the cell**
-— the theme's cell padding + font, square corners, **the crisp rectangle
-outline kept**, no drop shadow or fade. A cell must not change size when it
-enters edit mode.
+The fork styles Glide's overlay editor to be **visually identical to the cell**:
+it occupies the cell's exact rect and height, inherits the cell's typography
+(font family/size/colour), text origin (cell horizontal padding + 0.5px, the
+canvas' own offset) and vertical centring (computed from the theme line rhythm);
+square corners, a **1px inset accent outline** (the same border the grid paints
+on the selected cell), no drop shadow, no fade. Dropdown/entity editors fill the
+same box (their PickerField is `height:100%`), so a picker cell does not change
+size or font when it enters edit mode.
 
 
 `createGlideCellEditor(getOpts)` builds Glide's `provideEditor`:

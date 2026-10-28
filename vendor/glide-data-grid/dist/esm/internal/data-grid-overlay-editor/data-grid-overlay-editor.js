@@ -99,6 +99,16 @@ const DataGridOverlayEditor = p => {
         editor = (React.createElement(CustomEditor, { portalElementRef: portalElementRef, isHighlighted: highlight, activation: activation, onChange: setTempValue, value: targetValue, initialValue: initialValue, onFinishedEditing: onEditorFinished, validatedSelection: isEditableGridCell(targetValue) ? targetValue.selectionRange : undefined, forceEditMode: forceEditMode, target: target, imageEditorOverride: imageEditorOverride, markdownDivCreateNode: markdownDivCreateNode, isValid: isValid, theme: theme }));
     }
     styleOverride = { ...styleOverride, ...stayOnScreenStyle };
+    /* fork: exact vertical centring. The theme's line rhythm is known here, so
+       the pad top that centres the text in the CELL (the box is bloom px
+       taller) is computed per cell instead of a hardcoded 28px guess. */
+    {
+        const _fontPx = parseFloat(theme.editorFontSize) || 12;
+        const _linePx = _fontPx * (typeof theme.lineHeight === "number" ? theme.lineHeight : 1.4);
+        const _padTop = Math.max(0, (target.height - _linePx) / 2);
+        // The box IS the cell: same rect, same height.
+        styleOverride = { ...styleOverride, "--fork-editor-top": `${_padTop}px`, height: `${target.height}px` };
+    }
     // Consider imperatively creating and adding the element to the dom?
     const portalElement = portalElementRef?.current ?? document.getElementById("portal");
     if (portalElement === null) {
@@ -117,7 +127,7 @@ const DataGridOverlayEditor = p => {
     const bloomY = bloom?.[1] ?? 1;
     return createPortal(React.createElement(ThemeContext.Provider, { value: theme },
         React.createElement(ClickOutsideContainer, { style: makeCSSStyle(theme), className: className, onClickOutside: onClickOutside, isOutsideClick: isOutsideClick, customEventTarget: customEventTarget },
-            React.createElement(DataGridOverlayEditorStyle, { ref: ref, id: id, className: classWrap, style: styleOverride, as: useLabel === true ? "label" : undefined, targetX: target.x - bloomX, targetY: target.y - bloomY, targetWidth: target.width + bloomX * 2, targetHeight: target.height + bloomY * 2 },
+            React.createElement(DataGridOverlayEditorStyle, { ref: ref, id: id, className: classWrap, style: styleOverride, as: useLabel === true ? "label" : undefined, /* fork: exactly the cell rect — no bloom offset */ targetX: target.x, targetY: target.y, targetWidth: target.width, targetHeight: target.height },
                 React.createElement("div", { className: "gdg-clip-region", onKeyDown: onKeyDown }, editor)))), portalElement);
 };
 export default DataGridOverlayEditor;
