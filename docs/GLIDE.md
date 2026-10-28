@@ -44,12 +44,11 @@ that file as `./glide.css` from the package.
   guards "open + Enter" so it never pins a spurious override.
 - **Read-only** — the cell's own `readonly` flag, not a grid option. Mix freely;
   the editable wash only paints writable cells. `staticCell()` = no editor.
-- **`kitButtonCell`** — a canvas-drawn button: variants
-  (`primary|subtle|outline|danger`), icons (`plus|trash|chevron|check|search`),
-  disabled, painted hover (`hoverAmount`) and a focus/selection ring. Fires on a
-  **single click** through the renderer's `onClick` (no overlay). There is no
-  CSS in a canvas cell, so every state is painted.
-- **`kitBadgeCell`** — a drawn status pill with kit tones.
+- **`kitBadgeCell`** — a drawn status pill with kit tones (the only painted
+  interactive-looking cell, and it is read-only). **Anything clickable is a
+  real DOM control** (`domCells`) — canvas-drawn buttons were dropped.
+- **Buttons** — mount a real kit `Button` with `domCells`; it keeps hover,
+  focus, press and tab order.
 - **`kitFieldCell`** — the closed button face of a morph control; ONE click
   opens the real `MorphSearchField` / `MorphActionField` in the overlay editor
   (the cell sets `activationBehaviorOverride: 'single-click'`).
@@ -138,9 +137,9 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
 
 ## Canvas limits
 
-- No persistent DOM, per-cell tab order, native text selection or CSS in a cell;
-  `domCells` is the escape hatch, not a fix (but now the fork makes a real
-  in-cell DOM layer possible if we ever want it inside the library).
+- No CSS/text-selection/tab order in a painted cell. `domCells` (the fork's
+  layer) is the supported way to put real controls in a cell; everything
+  interactive should use it.
 - Accessibility is Glide's hidden ARIA mirror; custom cells expose `copyData`.
 - Upstream is quiet (last publish Oct 2025) — treat the pin as ours to move.
 

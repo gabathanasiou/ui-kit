@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Plus, RotateCcw, Undo2 } from 'lucide-react';
+import { ChevronDown, Plus, RotateCcw, Undo2 } from 'lucide-react';
 import {
   Button,
   Checkbox,
@@ -7,7 +7,6 @@ import {
   Seg,
   GlideSheet,
   GridCellKind,
-  kitButtonCell,
   kitBadgeCell,
   glideCellColors,
   staticCell,
@@ -17,6 +16,7 @@ import {
   type GlideSheetEdit,
   type GlideColumnEditor,
   type GlideDomCellSpec,
+  type GlideSheetApi,
   useKitTheme,
 } from '../../src/index';
 import { MorphActionField } from '../../src/MorphActionField';
@@ -97,6 +97,7 @@ const CREW_EDITABLE = new Set(['person', 'reportTo', 'call']);
 export const CrewCardDemo: React.FC = () => {
   const kit = useKitTheme();
   const colors = useMemo(() => glideCellColors(kit?.mode ?? 'light'), [kit?.mode]);
+  const sheetApi = React.useRef<GlideSheetApi | null>(null);
   const [rows, setRows] = useState<CrewRow[]>(INITIAL_ROWS);
   const [history, setHistory] = useState<CrewRow[][]>([]);
   const [readOnly, setReadOnly] = useState(false);
@@ -135,9 +136,12 @@ export const CrewCardDemo: React.FC = () => {
 
   const getCellContent = useCallback((col: GlideSheetColumn, row: Record<string, string>) => {
     if (col.key === 'role') return staticCell(row.role, { themeOverride: { textDark: colors.muted } });
-    // The person picker is REAL DOM mounted over the cell (see domCells) —
-    // the canvas cell behind it stays blank.
-    if (col.key === 'person') return staticCell('');
+    // The person cell is covered by a DOM dropdown button (domCells); the
+    // canvas cell behind it stays blank but must stay EDITABLE so
+    // openCellEditor can put the picker overlay on top.
+    // Seed the editor with the current name (displayData empty: the DOM
+    // button paints the cell, nothing must show on the canvas).
+    if (col.key === 'person') return seededTextCell(row.person, { displayData: '' });
     if (col.key === 'reportTo') {
       return seededTextCell(row.reportTo, { displayData: row.reportTo || '—', cursor: 'pointer' });
     }
@@ -145,6 +149,15 @@ export const CrewCardDemo: React.FC = () => {
   }, [colors.muted]);
 
   const getEditor = useCallback((row: number, colKey: string): GlideColumnEditor | undefined => {
+    if (colKey === 'person') {
+      return {
+        kind: 'select',
+        items: Object.values(PEOPLE).map(name => ({ id: name, label: name })),
+        resolveBy: 'label',
+        placeholder: 'Select…',
+        panelMinWidth: 220,
+      };
+    }
     if (colKey === 'reportTo') {
       return {
         kind: 'select',
@@ -166,25 +179,18 @@ export const CrewCardDemo: React.FC = () => {
     row: index,
     colKey: 'person',
     node: (
-      <PickerField
-        appearance="chip"
-        mode="single"
-        values={row.person ? [row.person] : []}
-        items={Object.values(PEOPLE).map(name => ({ id: name, label: name }))}
-        resolveBy="label"
-        display="names"
-        placeholder="Select…"
-        onChange={values => {
-          const person = values[0] ?? '';
-          if (person === row.person) return;
-          setStatus('1 cell in one commit');
-          commit(rows.map(r => (r.id === row.id ? { ...r, person } : r)));
-        }}
-        panelMinWidth={240}
-        collapsedWidth={170}
-      />
+      <button
+        type="button"
+        className="flex h-[30px] w-full items-center justify-between gap-1.5 rounded-[var(--ui-radius-btn)] border border-[color:var(--ui-border-strong)] bg-[var(--ui-panel-bg)] px-2 text-left text-[12px] text-[color:var(--ui-text)] transition-colors hover:border-[color:var(--ui-input-focus-border)]"
+        onClick={() => sheetApi.current?.openCellEditor(index, 'person')}
+        data-testid={`glide-crew-person-${row.id}`}
+        aria-label={`Edit ${row.person || 'person'}`}
+      >
+        <span className="min-w-0 truncate">{row.person || 'Select…'}</span>
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[color:var(--ui-text-faint)]" />
+      </button>
     ),
-  })), [rows, commit]);
+  })), [rows]);
 
   const rowActions = useCallback((row: number) => [{
     key: 'remove',
@@ -266,6 +272,7 @@ export const CrewCardDemo: React.FC = () => {
         readOnly={readOnly}
         rowActions={rowActions}
         domCells={personCells}
+        apiRef={sheetApi}
         selectionKey="pg:glide:crew"
         baseRowHeight={38}
         baseHeaderHeight={34}
@@ -303,7 +310,7 @@ const GALLERY_COLUMNS: GlideSheetColumn[] = [
   { key: 'locked', label: 'Locked', width: 120 },
   { key: 'toggle', label: 'Toggle', width: 80, align: 'center' },
   { key: 'picker', label: 'Picker', width: 150 },
-  { key: 'button', label: 'Button (one click)', width: 170 },
+  { key: 'button', label: 'Real button', width: 170 },
   { key: 'badge', label: 'Badge', width: 130 },
 ];
 
@@ -327,7 +334,7 @@ const GALLERY_ROWS: GalleryRow[] = [
 ];
 
 const PICKER_OPTIONS = ['Production', 'Camera', 'Art', 'Sound'];
-const BUTTON_VARIANTS = ['primary', 'subtle', 'outline', 'danger'] as const;
+const BUTTON_VARIANTS = ['primary', 'subtle', 'outline', 'danger-ghost'] as const;
 const BUTTON_LABELS = ['Approve', 'Open…', 'Select', 'Delete'];
 const BADGE_LABELS = ['INT DAY', 'EXT NIGHT', 'MORNING', 'HOLD', 'DONE'];
 const BADGE_TONES = ['accent', 'neutral', 'warning', 'danger', 'success'] as const;
@@ -372,18 +379,8 @@ export const CellGalleryDemo: React.FC = () => {
     if (col.key === 'picker') {
       return seededTextCell(row.picker, { displayData: row.picker ? `${row.picker}  ▾` : 'Select…  ▾', cursor: 'pointer' });
     }
-    if (col.key === 'button') {
-      const btn = kitButtonCell({
-        label: BUTTON_LABELS[rowIndex % BUTTON_LABELS.length],
-        icon: rowIndex === 0 ? 'check' : rowIndex === 3 ? 'trash' : undefined,
-        variant: BUTTON_VARIANTS[rowIndex % BUTTON_VARIANTS.length],
-        onActivate: () => {
-          setClicks(c => c + 1);
-          setLastClick(`row ${rowIndex + 1} · ${BUTTON_LABELS[rowIndex % BUTTON_LABELS.length]}`);
-        },
-      });
-      return btn;
-    }
+    // Real kit buttons are mounted over this cell (domCells), not drawn.
+    if (col.key === 'button') return staticCell('');
     return kitBadgeCell({
       label: row.badge,
       tone: BADGE_TONES[rowIndex % BADGE_TONES.length],
@@ -395,10 +392,28 @@ export const CellGalleryDemo: React.FC = () => {
       ? { kind: 'select', items: PICKER_OPTIONS.map(v => ({ id: v, label: v })), resolveBy: 'label', placeholder: 'Department…', panelMinWidth: 200 }
       : undefined, []);
 
+  /* Buttons are real kit Buttons in the cell (the drawn variant is gone). */
+  const buttonCells = useMemo<GlideDomCellSpec[]>(() => gridRows.map((row, index) => ({
+    row: index,
+    colKey: 'button',
+    node: (
+      <Button
+        variant={BUTTON_VARIANTS[index % BUTTON_VARIANTS.length]}
+        className="w-full justify-center"
+        onClick={() => {
+          setClicks(c => c + 1);
+          setLastClick(`row ${index + 1} · ${BUTTON_LABELS[index % BUTTON_LABELS.length]}`);
+        }}
+      >
+        {BUTTON_LABELS[index % BUTTON_LABELS.length]}
+      </Button>
+    ),
+  })), [gridRows]);
+
   return (
     <div className="pg-stack" data-testid="glide-gallery">
       <div className="row">
-        <span className="label">Canvas buttons fire on ONE click (no editor opens). Click a badge? Nothing — it is read-only.</span>
+        <span className="label">Buttons are real kit DOM controls in the cell; the badge is still painted on the canvas (nothing to click).</span>
         <span className="text-[11px] text-[color:var(--ui-text-muted)]" data-testid="glide-gallery-clicks">
           clicks: {clicks}
         </span>
@@ -421,6 +436,7 @@ export const CellGalleryDemo: React.FC = () => {
         getEditor={getEditor}
         onCommit={onCommit}
         editableKeys={GALLERY_EDITABLE}
+        domCells={buttonCells}
         selectionKey="pg:glide:gallery"
         baseRowHeight={34}
         baseHeaderHeight={32}
@@ -571,16 +587,16 @@ export const CellLayoutsDemo: React.FC = () => {
 
 const BUTTON_COLUMNS: GlideSheetColumn[] = [
   { key: 'step', label: 'Step', width: 110 },
-  { key: 'drawn', label: 'Drawn button', width: 170 },
+  { key: 'drawn', label: 'Kit button (DOM)', width: 170 },
   { key: 'search', label: 'Morph to search', width: 220 },
   { key: 'add', label: 'Text box', width: 220 },
 ];
 
 const BUTTON_ROWS = [
-  { id: 'b1', label: 'Approve', variant: 'primary' as const, icon: 'check' as const },
-  { id: 'b2', label: 'Open…', variant: 'subtle' as const, icon: undefined },
-  { id: 'b3', label: 'Select', variant: 'outline' as const, icon: 'chevron' as const },
-  { id: 'b4', label: 'Delete', variant: 'danger' as const, icon: 'trash' as const },
+  { id: 'b1', label: 'Approve', variant: 'primary' as const },
+  { id: 'b2', label: 'Open…', variant: 'subtle' as const },
+  { id: 'b3', label: 'Select', variant: 'outline' as const },
+  { id: 'b4', label: 'Delete', variant: 'danger-ghost' as const },
 ];
 
 /** Every button shape in one grid: the drawn faces (hover + focus painted on
@@ -606,15 +622,7 @@ export const ButtonTypesDemo: React.FC = () => {
 
   const getCellContent = useCallback((col: GlideSheetColumn, row: Record<string, string>, rowIndex: number) => {
     if (col.key === 'step') return staticCell(row.step);
-    if (col.key === 'drawn') {
-      const def = BUTTON_ROWS[rowIndex];
-      return kitButtonCell({
-        label: def.label,
-        variant: def.variant,
-        icon: def.icon,
-        onActivate: () => setStatus(`clicked ${def.label}`),
-      });
-    }
+    if (col.key === 'drawn') return staticCell('');
     // The real control is mounted ON the cell (domCells) — nothing to paint.
     return staticCell('');
   }, []);
@@ -625,6 +633,19 @@ export const ButtonTypesDemo: React.FC = () => {
   const domCells = useMemo<GlideDomCellSpec[]>(() => {
     const out: GlideDomCellSpec[] = [];
     BUTTON_ROWS.forEach((def, row) => {
+      out.push({
+        row,
+        colKey: 'drawn',
+        node: (
+          <Button
+            variant={def.variant}
+            className="w-full justify-center"
+            onClick={() => setStatus(`clicked ${def.label}`)}
+          >
+            {def.label}
+          </Button>
+        ),
+      });
       out.push({
         row,
         colKey: 'search',
@@ -672,8 +693,8 @@ export const ButtonTypesDemo: React.FC = () => {
     <div className="pg-stack" data-testid="glide-buttons">
       <div className="row">
         <span className="label">
-          Drawn buttons fire on one click (hover + focus painted on the canvas). The last two columns are
-          REAL kit controls mounted over the cell — click “Search” and it morphs in place, no floating panel.
+          Every control in this grid is REAL DOM mounted in the cell. Click “Search” and it morphs in
+          place; the buttons are plain kit Buttons — no overlay, no canvas imitation.
         </span>
         <span className="text-[11px] text-[color:var(--ui-text-muted)]" data-testid="glide-buttons-status">
           last: {status}
@@ -700,11 +721,11 @@ export const ButtonTypesDemo: React.FC = () => {
 export const CapabilityNotes: React.FC = () => (
   <ul className="pg-stack" style={{ margin: 0, paddingLeft: 16, fontSize: 11.5, lineHeight: 1.6, color: 'var(--ui-text-muted)' }}>
     <li><b>Per-cell lock</b> — a cell's own <code>readonly</code> flag. Mix locked and editable cells in one row; the editable wash only paints the ones you can write.</li>
-    <li><b>Single-click buttons</b> — custom cells (<code>kitButtonCell</code>) drawn on the canvas, click handled by the renderer. No editor flash, no DOM.</li>
+    <li><b>Buttons</b> — real kit <code>Button</code>s mounted in the cell (<code>domCells</code>): native hover, focus, press and tab order. Canvas-painted buttons were dropped — DOM is strictly better now.</li>
     <li><b>Real DOM in a cell</b> — <code>domCells</code> pins a live React control over its cell (measured with Glide's <code>getBounds</code>, re-pinned on scroll/resize). It keeps focus, hover, animation and tab order; the trigger morphs in place instead of opening a floating editor.</li>
     <li><b>Kit panels in cells</b> — the overlay editor is also real DOM: <code>PickerField</code> / <code>SearchMenu</code> open exactly as they do elsewhere (<code>kitFieldCell</code>).</li>
     <li><b>DOM chrome stays DOM</b> — the department band, the Add-role row and the trash cell's tooltip are outside the canvas; kit buttons there are real buttons.</li>
-    <li><b>Canvas-only limits</b> — a drawn cell has no CSS hover/focus/text-selection and no DOM a11y (states are painted). <code>domCells</code> fixes that per cell, at the cost of covering the canvas cell (Glide selection/keyboard skip it).</li>
+    <li><b>Canvas-only limits</b> — canvases have no CSS hover/focus/text-selection (badges are the only painted interactive-looking thing, and they are read-only). Anything clickable should be a <code>domCells</code> control.</li>
     <li><b>Plumbing included</b> — range select, fill-down, copy/cut/paste/clear each commit ONCE via <code>onCommit</code> (one undo entry), with the app's paste interception so Glide never pastes twice.</li>
   </ul>
 );

@@ -41,9 +41,9 @@ import type { GlideRange, GlideSheetColumn, GlideSheetEdit, GlideSheetRowAction 
  *    as tall as its rows (no vertical scroll / wheel trapping);
  *  - per-cell read-only is the CELL's own `readonly` flag — the host mixes
  *    locked and editable cells freely;
- *  - single-click actions are custom cells (`kitButtonCell`, drawn on the
- *    canvas) or the synthetic row-actions column; kit panels (PickerField /
- *    SearchMenu) open from the overlay editor;
+ *  - interactive controls are REAL DOM mounted over the cell (`domCells`) —
+ *    buttons, pickers, morph fields — or kit panels opened from the overlay
+ *    editor; badges are the only painted cell kind;
  *  - selection, fill-down, copy/cut/paste/clear each commit ONCE through
  *    `onCommit`, so the host stores one undo entry per operation;
  *  - editable cells get the light-blue "type here" wash (deepening on the
@@ -67,6 +67,13 @@ export interface GlideDomCellSpec {
   node: React.ReactNode;
 }
 
+
+/** Imperative surface for host controls (e.g. a DOM dropdown button that must
+ *  behave exactly like double-clicking the cell). */
+export interface GlideSheetApi {
+  /** Opens the cell's overlay editor (the double-click path). */
+  openCellEditor: (row: number, colKey: string) => void;
+}
 
 export interface GlideSheetProps {
   columns: GlideSheetColumn[];
@@ -110,6 +117,8 @@ export interface GlideSheetProps {
   /** Real kit controls mounted over specific cells (see `GlideDomCellSpec`).
    *  The grid re-positions them on scroll, resize and re-render. */
   domCells?: GlideDomCellSpec[];
+  /** Receives the imperative API (open a cell editor). */
+  apiRef?: React.RefObject<GlideSheetApi | null>;
 }
 
 const DEFAULT_ROW_HEIGHT = 28;
@@ -228,6 +237,7 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
   fillHandle = true,
   disableClipboard,
   domCells,
+  apiRef,
 }) => {
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
@@ -361,6 +371,17 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
     }
     return map;
   }, [domCells, COLUMNS]);
+  useEffect(() => {
+    if (!apiRef) return undefined;
+    apiRef.current = {
+      openCellEditor: (row, colKey) => {
+        const col = COLUMNS.findIndex(c => c.key === colKey);
+        if (col >= 0) gridRef.current?.openCellEditor(col, row);
+      },
+    };
+    return () => { apiRef.current = null; };
+  }, [apiRef, COLUMNS]);
+
   const getDomCell = useCallback(
     (col: number, row: number) => domCellMap.get(`${col}:${row}`) ?? null,
     [domCellMap],

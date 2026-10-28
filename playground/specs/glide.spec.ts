@@ -8,21 +8,26 @@ import { test, expect, Page } from '@playwright/test';
 const crewCell = (page: Page, row: number) =>
   page.locator('[data-glide-crew] [data-glide-dom-layer] > div').nth(row);
 
+// Each row mounts three DOM cells: kit button, morph search, text box.
 const buttonCell = (page: Page, colKey: 'search' | 'add', row: number) =>
-  page.locator('[data-glide-button-sheet] [data-glide-dom-layer] > div').nth(row * 2 + (colKey === 'search' ? 0 : 1));
+  page.locator('[data-glide-button-sheet] [data-glide-dom-layer] > div').nth(row * 3 + (colKey === 'search' ? 1 : 2));
 
 test.describe('Glide data grid', () => {
-  test('crew card: a real PickerField lives in the Person cell and commits once', async ({ page }) => {
+  test('crew card: the DOM dropdown button opens the cell editor like a double click', async ({ page }) => {
     await page.goto('/#glide');
-    const picker = crewCell(page, 0).locator('[data-picker-field]').first();
-    await expect(picker.locator('input')).toHaveValue('JOHN DOE');
+    const trigger = page.getByTestId('glide-crew-person-crew-a');
+    await expect(trigger).toContainText('JOHN DOE');
 
-    await picker.click();
+    await trigger.click();
+    // The overlay editor is the double-click path: seeded with the current
+    // name, with the kit picker panel under it.
+    const overlay = page.locator('[data-glide-overlay-layer] [data-picker-field]').first();
+    await expect(overlay.locator('input')).toHaveValue('JOHN DOE');
     const panel = page.locator('#search-menu-panel');
     await expect(panel).toBeVisible();
     await panel.getByText('MAKIS GOUDOUMIS', { exact: true }).first().click();
 
-    await expect(picker.locator('input')).toHaveValue('MAKIS GOUDOUMIS');
+    await expect(trigger).toContainText('MAKIS GOUDOUMIS');
     await expect(page.getByTestId('glide-crew-status')).toHaveText('1 cell in one commit');
     await expect(page.getByTestId('glide-crew-commits')).toHaveText('1 commits');
   });

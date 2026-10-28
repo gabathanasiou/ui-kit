@@ -8,9 +8,8 @@ import { useKitTheme } from '../ThemeScope';
  * Custom Glide cells drawn by the kit.
  *
  * Three things a plain Glide cell cannot express:
- *  - a BUTTON that fires on a SINGLE click (drawn on the canvas, so it is a
- *    picture of a kit button rather than a DOM button);
  *  - a BADGE/PILL (a drawn status label with its own colours);
+ *  (Interactive buttons are NOT drawn: mount a real kit Button with `domCells`.)
  *  - a FIELD cell: one click opens a REAL kit morph control — `SearchMenu`-style
  *    search or a create/text box (`MorphSearchField` / `MorphActionField`) —
  *    in Glide's overlay editor. The animation is the kit's; the cell is only
@@ -23,31 +22,6 @@ import { useKitTheme } from '../ThemeScope';
 
 export type KitButtonIcon = 'plus' | 'trash' | 'chevron' | 'check' | 'search';
 export type KitButtonVariant = 'primary' | 'subtle' | 'outline' | 'danger';
-
-export interface KitButtonCellData {
-  kind: 'kit-button';
-  label: string;
-  icon?: KitButtonIcon;
-  variant?: KitButtonVariant;
-  disabled?: boolean;
-  /** Fired on a single click. Keep side effects small — it is a cell, not a form. */
-  onActivate?: () => void;
-}
-
-export type KitButtonCell = CustomCell<KitButtonCellData>;
-
-/** A canvas-drawn button cell. `readonly` — it never opens an editor. The
- *  `kind` discriminator is added here so callers pass only the face. */
-export function kitButtonCell(data: Omit<KitButtonCellData, 'kind'>): KitButtonCell {
-  const payload: KitButtonCellData = { kind: 'kit-button', ...data };
-  return {
-    kind: GridCellKind.Custom,
-    allowOverlay: false,
-    readonly: true,
-    copyData: payload.label,
-    data: payload,
-  };
-}
 
 export interface KitBadgeCellData {
   kind: 'kit-badge';
@@ -314,23 +288,6 @@ function baseRenderer<T extends CustomCell<{ kind: string }>>(kind: string, draw
   };
 }
 
-const kitButtonRenderer: CustomRenderer<KitButtonCell> = {
-  ...baseRenderer<KitButtonCell>('kit-button', (args, cell) => {
-    drawFace(args.ctx, args.rect, args.theme, {
-      label: cell.data.label,
-      icon: cell.data.icon,
-      variant: cell.data.variant,
-      disabled: cell.data.disabled,
-      hoverAmount: args.hoverAmount,
-      highlighted: args.highlighted,
-    });
-  }),
-  onClick: ({ cell }) => {
-    if (!cell.data.disabled) cell.data.onActivate?.();
-    return undefined;
-  },
-};
-
 const kitBadgeRenderer: CustomRenderer<KitBadgeCell> = {
   kind: GridCellKind.Custom,
   isMatch: (cell): cell is KitBadgeCell => (cell.data as KitBadgeCellData | undefined)?.kind === 'kit-badge',
@@ -372,7 +329,6 @@ const kitFieldRenderer: CustomRenderer<KitFieldCell> = {
 
 /** The renderer list `GlideSheet` always registers. */
 export const kitCellRenderers: readonly CustomRenderer<any>[] = [
-  kitButtonRenderer as CustomRenderer<any>,
   kitBadgeRenderer as CustomRenderer<any>,
   kitFieldRenderer as CustomRenderer<any>,
 ];

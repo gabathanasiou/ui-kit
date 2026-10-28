@@ -11,7 +11,7 @@ export type {
   CustomCell,
   CustomRenderer,
 } from '@glideapps/glide-data-grid';
-export type { GlideSheetProps, GlideDomCellSpec } from './GlideSheet';
+export type { GlideSheetProps, GlideDomCellSpec, GlideSheetApi } from './GlideSheet';
 export type {
   GlideSheetColumn,
   GlideSheetEdit,
@@ -38,15 +38,12 @@ export {
 } from './gridModel';
 export type { PlannedEdit } from './gridModel';
 export {
-  kitButtonCell,
   kitBadgeCell,
   kitFieldCell,
   kitCellRenderers,
   KIT_GLIDE_RENDERERS,
 } from './customCells';
 export type {
-  KitButtonCell,
-  KitButtonCellData,
   KitButtonIcon,
   KitButtonVariant,
   KitBadgeCell,

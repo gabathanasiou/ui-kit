@@ -480,6 +480,8 @@ type ScrollToFn = (col: number | {
 }) => void;
 /** @category DataEditor */
 export interface DataEditorRef {
+    /** fork: open the overlay editor for a data cell, exactly like a double click. */
+    openCellEditor: (col: number, row: number) => void;
     /**
      * Programatically appends a row.
      * @param col The column index to focus in the new row.

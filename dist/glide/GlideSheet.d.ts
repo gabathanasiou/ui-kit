@@ -12,9 +12,9 @@ import type { GlideSheetColumn, GlideSheetEdit, GlideSheetRowAction } from './ty
  *    as tall as its rows (no vertical scroll / wheel trapping);
  *  - per-cell read-only is the CELL's own `readonly` flag — the host mixes
  *    locked and editable cells freely;
- *  - single-click actions are custom cells (`kitButtonCell`, drawn on the
- *    canvas) or the synthetic row-actions column; kit panels (PickerField /
- *    SearchMenu) open from the overlay editor;
+ *  - interactive controls are REAL DOM mounted over the cell (`domCells`) —
+ *    buttons, pickers, morph fields — or kit panels opened from the overlay
+ *    editor; badges are the only painted cell kind;
  *  - selection, fill-down, copy/cut/paste/clear each commit ONCE through
  *    `onCommit`, so the host stores one undo entry per operation;
  *  - editable cells get the light-blue "type here" wash (deepening on the
@@ -35,6 +35,12 @@ export interface GlideDomCellSpec {
     row: number;
     colKey: string;
     node: React.ReactNode;
+}
+/** Imperative surface for host controls (e.g. a DOM dropdown button that must
+ *  behave exactly like double-clicking the cell). */
+export interface GlideSheetApi {
+    /** Opens the cell's overlay editor (the double-click path). */
+    openCellEditor: (row: number, colKey: string) => void;
 }
 export interface GlideSheetProps {
     columns: GlideSheetColumn[];
@@ -78,6 +84,8 @@ export interface GlideSheetProps {
     /** Real kit controls mounted over specific cells (see `GlideDomCellSpec`).
      *  The grid re-positions them on scroll, resize and re-render. */
     domCells?: GlideDomCellSpec[];
+    /** Receives the imperative API (open a cell editor). */
+    apiRef?: React.RefObject<GlideSheetApi | null>;
 }
 export declare const GlideSheet: React.FC<GlideSheetProps>;
 export default GlideSheet;

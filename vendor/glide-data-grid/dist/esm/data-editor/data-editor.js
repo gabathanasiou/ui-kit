@@ -2689,6 +2689,24 @@ const DataEditorImpl = (p, forwardedRef) => {
             return gridRef.current?.getBounds((col ?? 0) + rowMarkerOffset, row);
         },
         focus: () => gridRef.current?.focus(),
+        /* fork: open a cell's overlay editor imperatively — the same path a
+           double-click takes (a DOM dropdown button inside the cell can call
+           this without synthesising pointer events). */
+        openCellEditor: (col, row) => {
+            const content = getMangledCellContent([col, row]);
+            if (content == null || !content.allowOverlay) return;
+            const bounds = gridRef.current?.getBounds(col + rowMarkerOffset, row);
+            if (bounds == null) return;
+            setOverlaySimple({
+                target: bounds,
+                content,
+                initialValue: undefined,
+                highlight: true,
+                cell: [col, row],
+                forceEditMode: true,
+                activation: { inputType: "keyboard", key: "Enter" },
+            });
+        },
         emit: async (e) => {
             switch (e) {
                 case "delete":

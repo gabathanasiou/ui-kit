@@ -3,9 +3,8 @@ import { type CustomCell, type CustomRenderer } from '@glideapps/glide-data-grid
  * Custom Glide cells drawn by the kit.
  *
  * Three things a plain Glide cell cannot express:
- *  - a BUTTON that fires on a SINGLE click (drawn on the canvas, so it is a
- *    picture of a kit button rather than a DOM button);
  *  - a BADGE/PILL (a drawn status label with its own colours);
+ *  (Interactive buttons are NOT drawn: mount a real kit Button with `domCells`.)
  *  - a FIELD cell: one click opens a REAL kit morph control — `SearchMenu`-style
  *    search or a create/text box (`MorphSearchField` / `MorphActionField`) —
  *    in Glide's overlay editor. The animation is the kit's; the cell is only
@@ -17,19 +16,6 @@ import { type CustomCell, type CustomRenderer } from '@glideapps/glide-data-grid
  */
 export type KitButtonIcon = 'plus' | 'trash' | 'chevron' | 'check' | 'search';
 export type KitButtonVariant = 'primary' | 'subtle' | 'outline' | 'danger';
-export interface KitButtonCellData {
-    kind: 'kit-button';
-    label: string;
-    icon?: KitButtonIcon;
-    variant?: KitButtonVariant;
-    disabled?: boolean;
-    /** Fired on a single click. Keep side effects small — it is a cell, not a form. */
-    onActivate?: () => void;
-}
-export type KitButtonCell = CustomCell<KitButtonCellData>;
-/** A canvas-drawn button cell. `readonly` — it never opens an editor. The
- *  `kind` discriminator is added here so callers pass only the face. */
-export declare function kitButtonCell(data: Omit<KitButtonCellData, 'kind'>): KitButtonCell;
 export interface KitBadgeCellData {
     kind: 'kit-badge';
     label: string;
