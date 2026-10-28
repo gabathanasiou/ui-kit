@@ -450,6 +450,11 @@ export function SearchMenu({
      accordion always opened collapsed and the current value was invisible.
      Runs once per open — a later query or a manual toggle is left alone. */
   const openedOnValueRef = useRef(false);
+  /* The open-edge reveal ran before the selected group expanded (its row was
+     not in the DOM yet). Scroll it in on the first layout pass that HAS the
+     row — the per-crew Report-to cell opens straight under the pointer, so the
+     arrow-key reveal is gated and cannot do this pass. */
+  const revealAfterExpandRef = useRef(false);
   useEffect(() => {
     if (!open) {
       openedOnValueRef.current = false;
@@ -469,6 +474,7 @@ export function SearchMenu({
     }
     const expand = groupExpandMode === 'single' ? groupKeys.slice(0, 1) : groupKeys;
     if (!expand.every(key => expandedGroups.has(key))) {
+      revealAfterExpandRef.current = true;
       setExpandedGroups(new Set(expand));
       return;
     }
@@ -897,6 +903,22 @@ export function SearchMenu({
   /** Multi: the panel opens ON the first selected record (catalogue order). */
   const selectedIdsRef = useRef(multiple?.selectedIds);
   selectedIdsRef.current = multiple?.selectedIds;
+  /* Expand-then-scroll: one centered reveal for the current value once the
+     accordion section holding it has rendered. */
+  useLayoutEffect(() => {
+    if (!open || !revealAfterExpandRef.current) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const single = selectedId;
+    if (!single) { revealAfterExpandRef.current = false; return; }
+    const index = rows.findIndex(row => row.kind === 'item' && row.hit.item.id === single);
+    if (index < 0) { revealAfterExpandRef.current = false; return; }
+    const row = panel.querySelector<HTMLElement>(`[data-search-row="${index}"]`);
+    if (!row) return; // not painted yet — keep the flag for the next pass
+    revealRowInScroller(row, 'center', panel.querySelector<HTMLElement>('[data-search-scroller]') ?? null);
+    revealAfterExpandRef.current = false;
+  }, [open, expandedGroups, rows, selectedId]);
+
   const reveal = useRevealRowOnOpen({
     open,
     block: 'center',
