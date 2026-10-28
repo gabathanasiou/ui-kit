@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './playground.css';
+/* Glide's compiled styles (canvas sizing + overlay/editor chrome) — a consumer
+   imports this once next to the kit's own stylesheet. */
+import '@glideapps/glide-data-grid/dist/index.css';
 import { DialogProvider, ThemeScope } from '../../src/index';
 import type { KitAccent, KitMode, KitSurface } from '../../src/index';
 import { SectionNav, TopBar, useActiveSection } from './shell/chrome';
@@ -18,6 +21,7 @@ import { PanelsSection } from './sections/PanelsSection';
 import { RichTextSection } from './sections/RichTextSection';
 import { HeaderTabsSection } from './sections/HeaderTabsSection';
 import { SizingSection } from './sections/SizingSection';
+import { GlideSection } from './sections/GlideSection';
 
 /* ────────────────────────────────────────────────────────────────────────────
    ui-kit playground — the component zoo & debugging surfaces.
@@ -96,6 +100,11 @@ const SECTIONS: SectionDef[] = [
     id: 'header-tabs', group: 'App chrome', title: 'Header tabs',
     blurb: 'Icon-first collapsing tabs with the sliding selection pill — resting, hover, together and tablist semantics.',
     render: () => <HeaderTabsSection />,
+  },
+  {
+    id: 'glide', group: 'Data grid', title: 'Glide data grid',
+    blurb: 'A canvas spreadsheet recreated as the Day Manager crew card, plus every cell kind: locked, editable, toggle, one-click buttons, badges and kit pickers in cells.',
+    render: () => <GlideSection />,
   },
 ];
 

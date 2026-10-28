@@ -1,0 +1,47 @@
+import React from 'react';
+import { DemoCard } from '../shell/chrome';
+import { ButtonTypesDemo, CapabilityNotes, CellGalleryDemo, CrewCardDemo } from '../glideDemo';
+
+/* Glide data grid: the canvas spreadsheet primitives. The crew card is the
+   Day Manager's real card rebuilt on the kit's GlideSheet; the gallery is the
+   cell-kind menu (read-only / editable / locked / toggle / canvas button /
+   badge / kit picker). */
+export const GlideSection: React.FC = () => (
+  <>
+    <DemoCard
+      wide
+      label="Crew card — recreated on Glide"
+      hint="The Day Manager crew card: kit Checkbox / PickerField / Button in the DOM chrome, the roster on a canvas grid. Role is read-only, Person and Report To open the kit PickerField in the cell, Call is a plain text edit, the trash is a single-click canvas cell, and every operation (edit, fill, paste, add, remove) is ONE commit — undo proves it."
+      testId="glide-crew-demo"
+    >
+      <CrewCardDemo />
+    </DemoCard>
+
+    <DemoCard
+      wide
+      label="Cell gallery"
+      hint="Read-only, editable, locked, boolean toggle, canvas button (fires on a single click — no editor), badge and a kit picker, side by side in one grid. Try the hover row, the fill handle, and copying a block into another selection."
+      testId="glide-gallery-demo"
+    >
+      <CellGalleryDemo />
+    </DemoCard>
+
+    <DemoCard
+      wide
+      label="Button & field cells"
+      hint="Drawn buttons support every variant, icon, hover and focus state — the canvas has no CSS, so those states are painted. Morph-to-search and create/text-box cells cannot live permanently in a cell, but ONE click can open the real kit control in Glide's overlay editor (single-click activation), which is what the last two columns do."
+      testId="glide-buttons-demo"
+    >
+      <ButtonTypesDemo />
+    </DemoCard>
+
+    <DemoCard
+      wide
+      label="What this can and cannot do"
+      hint="The canvas model's boundary — and the plumbing that is already shared."
+      testId="glide-notes"
+    >
+      <CapabilityNotes />
+    </DemoCard>
+  </>
+);
