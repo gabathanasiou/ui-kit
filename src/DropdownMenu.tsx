@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useContext, useCallback, useState, useRef, useEffect, useLayoutEffect, useMemo, useId } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Pencil, Copy, Trash2, Plus, Check, X, RotateCcw, Search } from 'lucide-react';
+import { Pencil, CopyPlus, Trash2, Plus, Check, X, RotateCcw, Search } from 'lucide-react';
 import { usePortalTarget, useCurrentDocument } from './popout';
 import { IS_COARSE, getCoarseScale, useCoarseScale, coarsePx } from './device';
 import { useOverlayMorph } from './overlayMorph';
@@ -1445,7 +1445,7 @@ export function ItemManagerDropdown({
                   onTouchStart={() => {}}
                   disabled={readOnly}
                 >
-                  <Copy className={d.btnIcon} />
+                  <CopyPlus className={d.btnIcon} />
                 </RadixDropdownMenu.Item>
                 <RadixDropdownMenu.Item
                   className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer mr-1 ${items.length <= minItems ? d.btnDisabled : isActive ? d.btnDangerActive : d.btnDanger}`}

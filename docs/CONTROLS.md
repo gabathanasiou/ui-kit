@@ -110,6 +110,8 @@ const [i, setI] = useState(0);
 - Keep the label short — the reveal grows the button in flow. For a label that
   CHANGES, pass `reserveLabel` (the longer one) so the press doesn't shift the
   row.
+- **Icon semantics are shared too:** `Copy` = copy to the clipboard,
+  `CopyPlus` = duplicate in place. Never use the same glyph for both.
 
 ## 3. Tabs vs Seg — same bones, different jobs
 

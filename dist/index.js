@@ -2,7 +2,7 @@
 import { jsx as h, jsxs as C, Fragment as st } from "react/jsx-runtime";
 import ot, { createContext as Yt, useContext as Ut, useState as te, useEffect as se, useRef as w, useCallback as ee, useLayoutEffect as dt, useMemo as Qe, useId as zl, useImperativeHandle as Bo } from "react";
 import * as Pe from "@radix-ui/react-dropdown-menu";
-import { Minus as Dl, Check as lr, Search as xn, X as Sn, Pencil as Pl, Copy as Fo, Trash2 as ui, RotateCcw as Ho, Plus as Fr, ChevronRight as Er, ChevronLeft as Ll, ArrowUp as Ol, ArrowDown as Bl, ChevronDown as fn, Underline as Fl, Strikethrough as Hl, RemoveFormatting as _l, Link as jl, ChevronUp as Wl, Anchor as ql } from "lucide-react";
+import { Minus as Dl, Check as lr, Search as xn, X as Sn, Pencil as Pl, CopyPlus as Fo, Trash2 as ui, RotateCcw as Ho, Plus as Fr, ChevronRight as Er, ChevronLeft as Ll, ArrowUp as Ol, ArrowDown as Bl, ChevronDown as fn, Underline as Fl, Strikethrough as Hl, RemoveFormatting as _l, Link as jl, ChevronUp as Wl, Anchor as ql } from "lucide-react";
 import { computePosition as Kl, offset as _o, flip as jo, shift as Wo, size as Jl, useFloating as Vl, autoUpdate as Yl } from "@floating-ui/react-dom";
 import * as cn from "@radix-ui/react-dialog";
 import { createPortal as Hr } from "react-dom";

@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { ArrowUp, ArrowDown, Copy, Trash2 } from 'lucide-react';
+import { ArrowUp, ArrowDown, CopyPlus, Trash2 } from 'lucide-react';
 import { IS_COARSE, useCoarseScale, useCoarseSize, coarsePx } from './device';
 import { Tooltip } from './Tooltip';
 import { useSlidingPill } from './slidingPill';
@@ -282,7 +282,7 @@ export const StructureControls: React.FC<StructureControlsProps> = ({ readOnly, 
   <div className="flex items-center gap-1 shrink-0">
     <ToolButton onClick={() => onMove(-1)} disabled={readOnly} title="Move up" className={TB_BTN_ICON}><ArrowUp className="w-2.5 h-2.5" /></ToolButton>
     <ToolButton onClick={() => onMove(1)} disabled={readOnly} title="Move down" className={TB_BTN_ICON}><ArrowDown className="w-2.5 h-2.5" /></ToolButton>
-    <ToolButton onClick={onDuplicate} disabled={readOnly} title="Duplicate" className={TB_BTN_ICON}><Copy className="w-2.5 h-2.5" /></ToolButton>
+    <ToolButton onClick={onDuplicate} disabled={readOnly} title="Duplicate" className={TB_BTN_ICON}><CopyPlus className="w-2.5 h-2.5" /></ToolButton>
     <div className={TB_DIVIDER} />
     <ToolButton onClick={onRemove} disabled={readOnly} title="Delete" className={`${TB_BTN_ICON} ${TB_DANGER}`}><Trash2 className="w-2.5 h-2.5" /></ToolButton>
   </div>
