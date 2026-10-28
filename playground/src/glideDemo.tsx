@@ -9,6 +9,7 @@ import {
   GridCellKind,
   kitBadgeCell,
   glideCellColors,
+  pickerDomCell,
   staticCell,
   textCell,
   seededTextCell,
@@ -176,42 +177,20 @@ export const CrewCardDemo: React.FC = () => {
   const rowCells = useMemo<GlideDomCellSpec[]>(() => {
     const out: GlideDomCellSpec[] = [];
     rows.forEach((row, index) => {
-      out.push({
+      out.push(pickerDomCell({
         row: index,
         colKey: 'person',
-        passthrough: true,
-        node: (
-          <div className="flex h-full items-center justify-end">
-            <button
-              type="button"
-              className="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-[color:var(--ui-text-faint)] hover:bg-[var(--ui-card-hover)] hover:text-[color:var(--ui-text)]"
-              onClick={() => sheetApi.current?.openCellEditor(index, 'person')}
-              data-testid={`glide-crew-person-open-${row.id}`}
-              aria-label={`Open person picker (${row.person || 'empty'})`}
-            >
-              <ChevronDown className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ),
-      });
-      out.push({
+        label: row.person,
+        testId: `glide-crew-person-open-${row.id}`,
+        onOpen: () => sheetApi.current?.openCellEditor(index, 'person'),
+      }));
+      out.push(pickerDomCell({
         row: index,
         colKey: 'reportTo',
-        passthrough: true,
-        node: (
-          <div className="flex h-full items-center justify-end">
-            <button
-              type="button"
-              className="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-[color:var(--ui-text-faint)] hover:bg-[var(--ui-card-hover)] hover:text-[color:var(--ui-text)]"
-              onClick={() => sheetApi.current?.openCellEditor(index, 'reportTo')}
-              data-testid={`glide-crew-report-open-${row.id}`}
-              aria-label={`Open report-to picker (${row.reportTo})`}
-            >
-              <ChevronDown className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ),
-      });
+        label: row.reportTo,
+        testId: `glide-crew-report-open-${row.id}`,
+        onOpen: () => sheetApi.current?.openCellEditor(index, 'reportTo'),
+      }));
       out.push({
         row: index,
         colKey: 'actions',
@@ -371,6 +350,7 @@ const BADGE_LABELS = ['INT DAY', 'EXT NIGHT', 'MORNING', 'HOLD', 'DONE'];
 const BADGE_TONES = ['accent', 'neutral', 'warning', 'danger', 'success'] as const;
 
 export const CellGalleryDemo: React.FC = () => {
+  const sheetApi = React.useRef<GlideSheetApi | null>(null);
   const kit = useKitTheme();
   const colors = useMemo(() => glideCellColors(kit?.mode ?? 'light'), [kit?.mode]);
   const [rows, setRows] = useState<GalleryRow[]>(GALLERY_ROWS);
@@ -443,6 +423,13 @@ export const CellGalleryDemo: React.FC = () => {
           </Button>
         ),
       });
+      out.push(pickerDomCell({
+        row: index,
+        colKey: 'picker',
+        label: row.picker,
+        testId: `glide-gallery-picker-open-${row.id}`,
+        onOpen: () => sheetApi.current?.openCellEditor(index, 'picker'),
+      }));
     });
     return out;
   }, [gridRows]);
@@ -450,7 +437,7 @@ export const CellGalleryDemo: React.FC = () => {
   return (
     <div className="pg-stack" data-testid="glide-gallery">
       <div className="row">
-        <span className="label">Buttons and pickers are real kit DOM controls in the cell; the badge is painted on the canvas (nothing to click).</span>
+        <span className="label">The button is a real DOM control; the picker is the native cell plus a chevron for one-click opening. The badge is painted (nothing to click).</span>
         <span className="text-[11px] text-[color:var(--ui-text-muted)]" data-testid="glide-gallery-clicks">
           clicks: {clicks}
         </span>
@@ -474,6 +461,8 @@ export const CellGalleryDemo: React.FC = () => {
         onCommit={onCommit}
         editableKeys={GALLERY_EDITABLE}
         domCells={buttonCells}
+        apiRef={sheetApi}
+        apiRef={sheetApi}
         selectionKey="pg:glide:gallery"
         baseRowHeight={34}
         baseHeaderHeight={32}

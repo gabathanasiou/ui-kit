@@ -10,6 +10,8 @@ export type { PlannedEdit } from './gridModel';
 export { kitBadgeCell, kitFieldCell, kitCellRenderers, KIT_GLIDE_RENDERERS, } from './customCells';
 export type { KitButtonIcon, KitButtonVariant, KitBadgeCell, KitBadgeCellData, KitFieldCell, KitFieldCellData, } from './customCells';
 export { createGlideCellEditor, useGlideEscapeCancel } from './editors';
+export { PickerChevron, pickerDomCell } from './pickerCell';
+export type { PickerDomCellOptions } from './pickerCell';
 export type { GlideColumnEditor, GlideEditorOptions, GlideTextEditor, GlideSelectEditor, } from './editors';
 export { createGlideTheme, glideCellColors, readGlideAccent, useGlideTheme, } from './theme';
 export type { GlideMode, GlideCellColors, GlideThemeOptions } from './theme';

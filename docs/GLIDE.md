@@ -83,10 +83,18 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
 - Mount only the cells that need it; a DOM box per cell defeats the canvas.
 - **`passthrough: true`** makes the box click-through (`pointer-events: none`):
   only the node's own `pointer-events: auto` children capture. Use it for a
-  small affordance drawn over a NATIVE cell — e.g. the crew card's chevron
-  button: the canvas value stays selectable/editable (click selects,
-  double-click opens the picker) and ONE click on the chevron calls
-  `apiRef.openCellEditor(row, colKey)` to open the same editor.
+  small affordance drawn over a NATIVE cell.
+- **ALL picker cells use `pickerDomCell`** (`src/glide/pickerCell.tsx`): a
+  native picker cell (value painted, selectable, double-click opens the editor)
+  plus a chevron button that calls `apiRef.openCellEditor(row, colKey)` for the
+  single-click path. Never hand-roll the chevron:
+
+  ```tsx
+  const api = useRef<GlideSheetApi | null>(null);
+  <GlideSheet apiRef={api} domCells={[
+    pickerDomCell({ row, colKey: 'person', label: person, onOpen: () => api.current?.openCellEditor(row, 'person') }),
+  ]} />
+  ```
 - `kitFieldCell` remains for the cheaper "one click → overlay editor" variant.
 - **Enter activates a DOM cell:** arrow-key navigation moves the grid selection
   onto the cell; Enter (or Space) fires the fork's `onCellActivated` hook, which

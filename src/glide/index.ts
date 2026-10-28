@@ -50,6 +50,8 @@ export type {
   KitFieldCellData,
 } from './customCells';
 export { createGlideCellEditor, useGlideEscapeCancel } from './editors';
+export { PickerChevron, pickerDomCell } from './pickerCell';
+export type { PickerDomCellOptions } from './pickerCell';
 export type {
   GlideColumnEditor,
   GlideEditorOptions,
