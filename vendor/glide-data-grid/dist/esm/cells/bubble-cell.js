@@ -50,4 +50,3 @@ function drawBubbles(args, data) {
         ctx.fillText(data[i], rectInfo.x + theme.bubblePadding, y + h / 2 + getMiddleCenterBias(ctx, theme));
     }
 }
-//# sourceMappingURL=bubble-cell.js.map

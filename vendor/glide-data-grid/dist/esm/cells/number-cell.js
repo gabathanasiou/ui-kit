@@ -41,4 +41,3 @@ export const numberCellRenderer = {
         return { ...cell, data: newNumber, displayData: details.formattedString ?? cell.displayData };
     },
 };
-//# sourceMappingURL=number-cell.js.map

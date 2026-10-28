@@ -285,4 +285,3 @@ export const sprites = {
     protectedColumnOverlay,
     renameIcon,
 };
-//# sourceMappingURL=sprites.js.map

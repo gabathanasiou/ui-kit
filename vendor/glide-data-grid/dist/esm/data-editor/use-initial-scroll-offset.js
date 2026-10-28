@@ -78,4 +78,3 @@ export function useInitialScrollOffset(scrollOffsetX, scrollOffsetY, rowHeight, 
         scrollRef,
     };
 }
-//# sourceMappingURL=use-initial-scroll-offset.js.map

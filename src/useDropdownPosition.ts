@@ -156,6 +156,10 @@ export function useDropdownPosition({
         ],
       }).then(({ x, y, placement }) => {
         if (cancelled) return;
+        // A hidden/detached anchor (a field inside an unmounted or
+        // zero-layout container) makes floating-ui return NaN. Keep the last
+        // good position instead of writing `left: NaN`.
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return;
         onPositionRef.current({
           top: Math.round(y),
           left: Math.round(x),

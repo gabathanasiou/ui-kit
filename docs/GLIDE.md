@@ -57,7 +57,8 @@ that file as `./glide.css` from the package.
 
 ## Real DOM inside a cell (`domCells`)
 
-There is no DOM in a Glide cell, so a real control is **pinned over** the cell:
+There is no DOM in a Glide cell, so real controls are **pinned over** the cell by
+the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`):
 
 ```tsx
 <GlideSheet
@@ -66,20 +67,26 @@ There is no DOM in a Glide cell, so a real control is **pinned over** the cell:
 />
 ```
 
-- The wrapper renders a **click-through layer** (`pointer-events:none`) with one
-  absolutely-positioned box per spec (`pointer-events:auto`).
-- Rects come from `gridRef.getBounds(col, row)` (viewport coords) minus the
-  wrapper rect, re-measured on `onVisibleRegionChanged`, `ResizeObserver`,
-  window scroll and data changes. Cells scrolled out of view unmount.
-- The control keeps **native focus, hover, CSS animation and tab order** — a
-  morphing button expands in place instead of floating.
-- The canvas cell underneath should return `staticCell('')` (nothing paints
-  behind the control).
+- The fork renders a **click-through layer** inside the editor root with one
+  absolutely-positioned box per visible cell that has a node. Rects come from
+  the editor's own `getBounds`, re-measured from the library's visible-region
+  stream (scroll), a `ResizeObserver` and every render.
+- **The box IS the container** — the cell's full width/height, `overflow:
+  visible`. Lay out whatever fits: a row of buttons, a morph field beside an
+  adder, a picker + Apply, a Seg. The host styles its own padding.
+- Controls keep **native focus, hover, CSS animation and tab order**; a morph
+  expands in place instead of floating. The canvas cell underneath should
+  return `staticCell('')`.
 - Costs: the DOM box **covers** its canvas cell, so Glide selection / keyboard
-  navigation / the fill handle skip that cell, and its size is the cell's (a
-  control wider than the column spills over the next one — set
-  `expandedWidth`/`collapsedWidth` deliberately).
+  navigation / the fill handle skip that cell. A control wider than the column
+  spills over the neighbour — size it deliberately.
 - Mount only the cells that need it; a DOM box per cell defeats the canvas.
+- `kitFieldCell` remains for the cheaper "one click → overlay editor" variant.
+- **Enter activates a DOM cell:** arrow-key navigation moves the grid selection
+  onto the cell; Enter (or Space) fires the fork's `onCellActivated` hook, which
+  focuses + clicks the cell's control **when it holds exactly one** focusable
+  element (a picker, a morph trigger, a single button). Multi-control cells are
+  left alone — navigate into them with Tab instead.
 
 ## Editors (overlay)
 

@@ -366,4 +366,3 @@ export function drawCell(ctx, cell, col, row, isLastCol, isLastRow, x, y, w, h, 
         enqueue?.(allocatedItem);
     return result;
 }
-//# sourceMappingURL=data-grid-render.cells.js.map

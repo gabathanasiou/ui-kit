@@ -35,4 +35,3 @@ function getHoverEffectRect(ctx, cellRect, displayData, theme, fullSize) {
         height: h - 1,
     };
 }
-//# sourceMappingURL=draw-edit-hover-indicator.js.map

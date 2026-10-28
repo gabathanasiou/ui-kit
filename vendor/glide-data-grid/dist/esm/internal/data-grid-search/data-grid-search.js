@@ -294,4 +294,3 @@ const DataGridSearch = p => {
         searchbox));
 };
 export default DataGridSearch;
-//# sourceMappingURL=data-grid-search.js.map

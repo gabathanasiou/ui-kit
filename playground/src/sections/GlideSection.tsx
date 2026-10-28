@@ -1,6 +1,6 @@
 import React from 'react';
 import { DemoCard } from '../shell/chrome';
-import { ButtonTypesDemo, CapabilityNotes, CellGalleryDemo, CrewCardDemo } from '../glideDemo';
+import { ButtonTypesDemo, CapabilityNotes, CellLayoutsDemo, CellGalleryDemo, CrewCardDemo } from '../glideDemo';
 
 /* Glide data grid: the canvas spreadsheet primitives. The crew card is the
    Day Manager's real card rebuilt on the kit's GlideSheet; the gallery is the
@@ -24,6 +24,15 @@ export const GlideSection: React.FC = () => (
       testId="glide-gallery-demo"
     >
       <CellGalleryDemo />
+    </DemoCard>
+
+    <DemoCard
+      wide
+      label="Cell layouts — the cell as a container"
+      hint="Real DOM cells are boxes the size of the cell: arrange a row of buttons, a morph field beside an adder, a picker plus Apply, a Seg — anything a panel can hold. No overlay editor, no floating panel; the controls live in the row."
+      testId="glide-layouts-demo"
+    >
+      <CellLayoutsDemo />
     </DemoCard>
 
     <DemoCard

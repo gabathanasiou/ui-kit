@@ -16,4 +16,3 @@ const DataEditorAllImpl = (p, ref) => {
     return (React.createElement(DataEditor, { ...p, renderers: renderers, headerIcons: allSprites, ref: ref, imageWindowLoader: imageWindowLoader }));
 };
 export const DataEditorAll = React.forwardRef(DataEditorAllImpl);
-//# sourceMappingURL=data-editor-all.js.map

@@ -4,6 +4,7 @@ import {
   Button,
   Checkbox,
   PickerField,
+  Seg,
   GlideSheet,
   GridCellKind,
   kitButtonCell,
@@ -428,7 +429,145 @@ export const CellGalleryDemo: React.FC = () => {
   );
 };
 
-/* ── 3. Button & field cells ─────────────────────────────────────────────── */
+/* ── 3. Cell layouts (the cell as a container) ───────────────────────────── */
+
+const LAYOUT_COLUMNS: GlideSheetColumn[] = [
+  { key: 'label', label: 'Cell', width: 160 },
+  { key: 'tools', label: 'Content (real DOM, arranged in the cell)', width: 620 },
+];
+
+const LAYOUT_ROWS = [
+  { id: 'l1', label: 'Row actions' },
+  { id: 'l2', label: 'Search + create' },
+  { id: 'l3', label: 'Assign + apply' },
+  { id: 'l4', label: 'Mode switch' },
+];
+
+/** The DOM cell is a full-bleed CONTAINER: lay out whatever the row needs —
+ *  several buttons, a morph field next to an adder, a picker plus a commit
+ *  button, a Seg. Nothing here is an overlay editor. */
+export const CellLayoutsDemo: React.FC = () => {
+  const kit = useKitTheme();
+  const mode = kit?.mode ?? 'light';
+  const [status, setStatus] = useState('—');
+  const [dept, setDept] = useState('');
+  const [terms, setTerms] = useState<Record<string, string>>({});
+  const [added, setAdded] = useState<Record<string, string>>({});
+  const [modeValue, setModeValue] = useState('day');
+
+  const rows = useMemo(
+    () => LAYOUT_ROWS.map(r => ({ id: r.id, label: r.label, tools: '' })),
+    [],
+  );
+
+  const getCellContent = useCallback((col: GlideSheetColumn, row: Record<string, string>) =>
+    col.key === 'label'
+      ? staticCell(row.label)
+      : staticCell(''), []);
+
+  const onCommit = useCallback(() => {}, []);
+
+  const domCells = useMemo<GlideDomCellSpec[]>(() => {
+    const cell = (node: React.ReactNode, row: number) => ({ row, colKey: 'tools', node });
+    return [
+      cell(
+        <div className="flex h-full items-center gap-2 px-2">
+          <Button variant="primary" onClick={() => setStatus('approved row 1')}>Approve</Button>
+          <Button variant="outline" onClick={() => setStatus('held row 1')}>Hold</Button>
+          <Button variant="danger-ghost" onClick={() => setStatus('deleted row 1')}>Delete</Button>
+        </div>,
+        0,
+      ),
+      cell(
+        <div className="flex h-full items-center gap-2 px-2">
+          <MorphSearchField
+            value={terms.l2 ?? ''}
+            onChange={value => setTerms(t => ({ ...t, l2: value }))}
+            triggerLabel={terms.l2 ? `Search: ${terms.l2}` : 'Search'}
+            theme={mode}
+            collapsedWidth={110}
+            expandedWidth={220}
+            onSubmit={value => setStatus(`search “${value}”`)}
+          />
+          <MorphActionField
+            value={added.l2 ?? ''}
+            onChange={value => setAdded(a => ({ ...a, l2: value }))}
+            triggerLabel={added.l2 ? `Add: ${added.l2}` : 'Add'}
+            theme={mode}
+            variant="primary"
+            clearOnSubmit={false}
+            onSubmit={value => setStatus(`added “${value}”`)}
+          />
+        </div>,
+        1,
+      ),
+      cell(
+        <div className="flex h-full items-center gap-2 px-2">
+          <PickerField
+            appearance="chip"
+            mode="single"
+            values={dept ? [dept] : []}
+            items={PICKER_OPTIONS.map(v => ({ id: v, label: v }))}
+            resolveBy="label"
+            display="names"
+            placeholder="Department…"
+            onChange={values => setDept(values[0] ?? '')}
+            collapsedWidth={170}
+            panelMinWidth={220}
+          />
+          <Button variant="primary" disabled={!dept} onClick={() => setStatus(`assigned ${dept}`)}>
+            Apply
+          </Button>
+        </div>,
+        2,
+      ),
+      cell(
+        <div className="flex h-full items-center gap-2 px-2">
+          <Seg
+            options={[
+              { v: 'day', l: 'Day' },
+              { v: 'night', l: 'Night' },
+              { v: 'magic', l: 'Magic hour' },
+            ]}
+            value={modeValue}
+            onChange={value => { setModeValue(value); setStatus(`mode ${value}`); }}
+            theme={mode}
+          />
+          <span className="text-[11px] text-[color:var(--ui-text-muted)]">one canvas row, three real controls</span>
+        </div>,
+        3,
+      ),
+    ];
+  }, [terms, added, dept, mode, modeValue]);
+
+  return (
+    <div className="pg-stack" data-testid="glide-layouts">
+      <div className="row">
+        <span className="label">
+          A DOM cell is a container the width of its column: lay out several kit controls in it like any
+          other panel. The canvas cell behind stays blank.
+        </span>
+        <span className="text-[11px] text-[color:var(--ui-text-muted)]" data-testid="glide-layout-status">
+          last: {status}
+        </span>
+      </div>
+      <GlideSheet
+        dataAttr="data-glide-layout-sheet"
+        columns={LAYOUT_COLUMNS}
+        rows={rows}
+        getCellContent={getCellContent}
+        onCommit={onCommit}
+        editableKeys={new Set<string>()}
+        domCells={domCells}
+        selectionKey="pg:glide:layouts"
+        baseRowHeight={44}
+        baseHeaderHeight={32}
+      />
+    </div>
+  );
+};
+
+/* ── 4. Button & field cells ─────────────────────────────────────────────── */
 
 const BUTTON_COLUMNS: GlideSheetColumn[] = [
   { key: 'step', label: 'Step', width: 110 },
@@ -490,23 +629,27 @@ export const ButtonTypesDemo: React.FC = () => {
         row,
         colKey: 'search',
         node: (
+          <div className="w-full px-1">
           <MorphSearchField
             value={terms[def.id] ?? ''}
             onChange={value => setTerms(t => ({ ...t, [def.id]: value }))}
             triggerLabel={terms[def.id] ? `Search: ${terms[def.id]}` : 'Search'}
             placeholder="Search…"
             theme={mode}
+            stretch
             collapsedWidth={110}
             expandedWidth={240}
             active={!!terms[def.id]}
             onSubmit={value => setStatus(`search “${value}”`)}
           />
+          </div>
         ),
       });
       out.push({
         row,
         colKey: 'add',
         node: (
+          <div className="w-full px-1">
           <MorphActionField
             value={added[def.id] ?? ''}
             onChange={value => setAdded(a => ({ ...a, [def.id]: value }))}
@@ -514,9 +657,11 @@ export const ButtonTypesDemo: React.FC = () => {
             placeholder="New value…"
             theme={mode}
             variant="primary"
+            stretch
             clearOnSubmit={false}
             onSubmit={value => setStatus(`added “${value}”`)}
           />
+          </div>
         ),
       });
     });

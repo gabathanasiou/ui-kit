@@ -38,4 +38,3 @@ export const GrowingEntry = (props) => {
         React.createElement(ShadowBox, { className: className }, useText + "\n"),
         React.createElement(InputBox, { ...rest, className: (className ?? "") + " gdg-input", id: inputID, ref: inputRef, onKeyDown: onKeyDownInner, value: useText, placeholder: placeholder, dir: "auto" })));
 };
-//# sourceMappingURL=growing-entry.js.map

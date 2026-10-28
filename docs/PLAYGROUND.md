@@ -101,9 +101,11 @@ Consequences (learned the hard way):
   `glide-crew-status` / `-commits` / `-undo` / `-include` / `-report-to` /
   `-precall` / `-add-role`; the Person cells are REAL PickerFields under
   `[data-glide-dom-layer]`), `glide-gallery-demo` (`glide-gallery-clicks` /
-  `-last` / `-reset`), `glide-buttons-demo` (`glide-buttons-status`; the Search
-  and Add columns are in-cell morph fields), `glide-notes`. The canvas is not
-  queryable — specs drive the DOM cells only; painting is a manual check.
+  `-last` / `-reset`), `glide-layouts-demo` (`glide-layout-status`; DOM-cell
+  rows of arranged controls, `[data-glide-dom-cell]`), `glide-buttons-demo`
+  (`glide-buttons-status`; the Search and Add columns are in-cell morph
+  fields), `glide-notes`. The canvas is not queryable — specs drive the DOM
+  cells only; painting is a manual check.
 - Modals: `modal-open`, `stacked-open` → "Open Modal 2",
   `menu-modal-open` → `inmodal-menu-trigger` / `inmodal-long-trigger` /
   `inmodal-search-pick`, `kb-modal-open` (visualViewport readout),

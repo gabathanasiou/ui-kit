@@ -91,4 +91,3 @@ export function drawImage(args, data, rounding, contentAlign) {
         drawX += imgWidth + itemMargin;
     }
 }
-//# sourceMappingURL=image-cell.js.map

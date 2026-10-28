@@ -101,4 +101,3 @@ export const uriCellRenderer = {
         ? undefined
         : { ...cell, data: toPaste, displayData: details.formattedString ?? cell.displayData },
 };
-//# sourceMappingURL=uri-cell.js.map

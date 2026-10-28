@@ -18,4 +18,3 @@ export const ImageOverlayEditor = p => {
         canWrite && onEditClick && (React.createElement("button", { className: "gdg-edit-icon", onClick: onEditClick },
             React.createElement(EditPencil, null)))));
 };
-//# sourceMappingURL=image-overlay-editor.js.map

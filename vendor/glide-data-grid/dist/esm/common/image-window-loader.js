@@ -95,4 +95,3 @@ class ImageWindowLoaderImpl extends WindowingTrackerBase {
     }
 }
 export default ImageWindowLoaderImpl;
-//# sourceMappingURL=image-window-loader.js.map

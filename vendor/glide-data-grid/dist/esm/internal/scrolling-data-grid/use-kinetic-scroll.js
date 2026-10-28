@@ -62,4 +62,3 @@ const useKineticScroll = (isEnabled, callback, targetScroller) => {
     }, [isEnabled, scrollEl]);
 };
 export default useKineticScroll;
-//# sourceMappingURL=use-kinetic-scroll.js.map

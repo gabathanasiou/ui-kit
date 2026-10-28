@@ -50,4 +50,3 @@ function drawNewRowCell(args, data, icon) {
     ctx.fillText(data, textX + x + theme.cellHorizontalPadding + 0.5, y + h / 2 + getMiddleCenterBias(ctx, theme));
     ctx.beginPath();
 }
-//# sourceMappingURL=new-row-cell.js.map

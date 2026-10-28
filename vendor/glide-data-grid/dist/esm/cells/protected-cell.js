@@ -32,4 +32,3 @@ function drawProtectedCell(args) {
     ctx.strokeStyle = theme.textLight;
     ctx.stroke();
 }
-//# sourceMappingURL=protected-cell.js.map

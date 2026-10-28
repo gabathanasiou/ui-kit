@@ -50,4 +50,3 @@ export function useCellsForSelection(getCellsForSelectionIn, getCellContent, row
     const getCellsForSelection = getCellsForSelectionIn !== undefined ? getCellsForSelectionMangled : undefined;
     return [getCellsForSelection, getCellsForSelectionDirect];
 }
-//# sourceMappingURL=use-cells-for-selection.js.map

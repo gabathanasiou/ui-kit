@@ -258,4 +258,3 @@ export function drawGridLines(ctx, effectiveCols, cellYOffset, translateX, trans
         ctx.restore();
     }
 }
-//# sourceMappingURL=data-grid-render.lines.js.map

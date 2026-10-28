@@ -92,4 +92,3 @@ export class AnimationManager {
         }
     };
 }
-//# sourceMappingURL=animation-manager.js.map

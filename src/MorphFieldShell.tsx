@@ -29,6 +29,10 @@ export interface MorphFieldShellProps extends Omit<React.HTMLAttributes<HTMLDivE
   rootRef?: React.Ref<HTMLDivElement>;
   /** Prevent flex shrinking (toolbar controls). Default false. */
   shrink?: boolean;
+  /** Fill the container instead of hugging `collapsedWidth`: the whole box
+   *  (and the expanded field) is 100% wide. For grid cells and full-width
+   *  toolbars; the width morph becomes a cross-fade. */
+  stretch?: boolean;
 }
 
 export function MorphFieldShell({
@@ -39,6 +43,7 @@ export function MorphFieldShell({
   field,
   rootRef,
   shrink = false,
+  stretch = false,
   className = '',
   style,
   ...rest
@@ -119,15 +124,15 @@ export function MorphFieldShell({
     <div
       {...rest}
       ref={setRoot}
-      className={`relative inline-flex ${shrink ? 'shrink-0' : ''} ${className}`}
+      className={`relative ${stretch ? 'flex' : 'inline-flex'} ${shrink ? 'shrink-0' : ''} ${className}`}
       style={{
         ...style,
-        width,
+        width: stretch ? '100%' : width,
         transition: 'width 220ms cubic-bezier(0.32, 0.72, 0, 1)',
       }}
     >
       <div
-        className={`${collapsedWidth === 'auto' ? 'w-auto' : 'w-full'} origin-left ${expanded ? 'opacity-0 pointer-events-none' : 'opacity-100'} motion-reduce:transition-none`}
+        className={`${stretch ? 'w-full' : collapsedWidth === 'auto' ? 'w-auto' : 'w-full'} origin-left ${expanded ? 'opacity-0 pointer-events-none' : 'opacity-100'} motion-reduce:transition-none`}
         style={{
           transform: expanded ? 'scaleX(0.98)' : 'scaleX(1)',
           transition: 'opacity 150ms ease, transform 220ms cubic-bezier(0.32, 0.72, 0, 1)',

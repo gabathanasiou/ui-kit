@@ -31,4 +31,3 @@ export function useAnimationQueue(draw) {
         queue.current.push(packed);
     }, [loop]);
 }
-//# sourceMappingURL=use-animation-queue.js.map

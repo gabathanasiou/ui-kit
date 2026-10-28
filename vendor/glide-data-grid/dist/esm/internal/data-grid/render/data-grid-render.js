@@ -305,4 +305,3 @@ export function drawGrid(arg, lastArg) {
     targetCtx.restore();
     overlayCtx.restore();
 }
-//# sourceMappingURL=data-grid-render.js.map

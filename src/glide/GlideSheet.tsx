@@ -12,6 +12,7 @@ import DataEditor, {
   type Item,
   type Theme,
 } from '@glideapps/glide-data-grid';
+import { DataEditorWithDomCells } from '@glideapps/glide-data-grid';
 import { ClipboardPaste, Copy, Scissors, Trash2 } from 'lucide-react';
 import { ContextMenu, ContextMenuDivider, ContextMenuItem } from '../ContextMenu';
 import { useCurrentDocument, usePortalTarget } from '../popout';
@@ -349,66 +350,21 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
   const hoveredRowRef = useRef<number | null>(null);
 
   /* ── DOM cells ────────────────────────────────────────────────────────────
-     A transparent layer pinned over the canvas. Each control is positioned to
-     its cell's rect (viewport coords from Glide's getBounds), re-measured on
-     scroll / resize / data change. The layer itself is click-through. */
-  const domCellsRef = useRef(domCells);
-  domCellsRef.current = domCells;
-  const domCellsKey = (domCells ?? []).map(c => `${c.row}:${c.colKey}`).join(',');
-  const [domRects, setDomRects] = useState<Record<string, { left: number; top: number; width: number; height: number }>>({});
-
-  const measureDomCells = useCallback(() => {
-    const grid = gridRef.current;
-    const wrap = wrapperRef.current;
-    if (!grid || !wrap) return;
-    const wrapRect = wrap.getBoundingClientRect();
-    const next: Record<string, { left: number; top: number; width: number; height: number }> = {};
-    for (const spec of domCellsRef.current ?? []) {
+     Real controls live in the FORK's DOM layer: `getDomCell` is called per
+     visible cell and the wrapper pins its own boxes (see
+     vendor/glide-data-grid/dist/esm/dom-cells). The host only names the cells. */
+  const domCellMap = useMemo(() => {
+    const map = new Map<string, React.ReactNode>();
+    for (const spec of domCells ?? []) {
       const col = COLUMNS.findIndex(c => c.key === spec.colKey);
-      if (col < 0) continue;
-      const bounds = grid.getBounds(col, spec.row);
-      if (!bounds) continue;
-      next[`${spec.row}:${spec.colKey}`] = {
-        left: Math.round(bounds.x - wrapRect.left),
-        top: Math.round(bounds.y - wrapRect.top),
-        width: Math.round(bounds.width),
-        height: Math.round(bounds.height),
-      };
+      if (col >= 0) map.set(`${col}:${spec.row}`, spec.node);
     }
-    setDomRects(prev => {
-      const prevKeys = Object.keys(prev);
-      const nextKeys = Object.keys(next);
-      const same = prevKeys.length === nextKeys.length && nextKeys.every(key => {
-        const a = prev[key];
-        const b = next[key];
-        return a !== undefined && a.left === b.left && a.top === b.top && a.width === b.width && a.height === b.height;
-      });
-      return same ? prev : next;
-    });
-  }, [COLUMNS]);
-
-  useEffect(() => {
-    if (!domCellsKey) {
-      setDomRects(prev => (Object.keys(prev).length === 0 ? prev : {}));
-      return;
-    }
-    const frame = requestAnimationFrame(measureDomCells);
-    const wrap = wrapperRef.current;
-    const observer = wrap ? new ResizeObserver(() => requestAnimationFrame(measureDomCells)) : null;
-    if (wrap && observer) observer.observe(wrap);
-    const onScroll = () => requestAnimationFrame(measureDomCells);
-    window.addEventListener('scroll', onScroll, true);
-    return () => {
-      cancelAnimationFrame(frame);
-      observer?.disconnect();
-      window.removeEventListener('scroll', onScroll, true);
-    };
-  }, [domCellsKey, measureDomCells, rows, COLUMNS]);
-
-  const onVisibleRegionChanged = useCallback(() => {
-    if (!domCellsRef.current || domCellsRef.current.length === 0) return;
-    requestAnimationFrame(measureDomCells);
-  }, [measureDomCells]);
+    return map;
+  }, [domCells, COLUMNS]);
+  const getDomCell = useCallback(
+    (col: number, row: number) => domCellMap.get(`${col}:${row}`) ?? null,
+    [domCellMap],
+  );
 
   /** Repaint just the two rows affected by a hover change. */
   const onItemHovered = useCallback((args: any) => {
@@ -709,8 +665,9 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
         {rows.length === 0 && emptyLabel ? (
           <div className="px-2.5 py-6 text-center text-xs text-[color:var(--ui-text-faint)]">{emptyLabel}</div>
         ) : gridWidth > 0 ? (
-          <DataEditor
+          <DataEditorWithDomCells
             ref={gridRef}
+            getDomCell={domCells && domCells.length > 0 ? getDomCell : undefined}
             width={Math.max(120, Math.floor(gridWidth) - 1)}
             height={contentHeight}
             columns={glideColumns}
@@ -731,7 +688,6 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
             onCellClicked={onCellClicked}
             onItemHovered={onItemHovered}
             onCellContextMenu={onCellContextMenu}
-            onVisibleRegionChanged={onVisibleRegionChanged}
             customRenderers={renderers}
             editOnType
             rangeSelect="rect"
@@ -745,34 +701,6 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
           <div style={{ height: contentHeight }} />
         )}
       </div>
-
-      {domCells && domCells.length > 0 && (
-        <div className="absolute inset-0 z-[1] pointer-events-none" data-glide-dom-layer>
-          {domCells.map(spec => {
-            const key = `${spec.row}:${spec.colKey}`;
-            const box = domRects[key];
-            if (!box) return null;
-            return (
-              <div
-                key={key}
-                style={{
-                  position: 'absolute',
-                  left: box.left,
-                  top: box.top,
-                  width: box.width,
-                  height: box.height,
-                  pointerEvents: 'auto',
-                  display: 'flex',
-                  alignItems: 'center',
-                  minWidth: 0,
-                }}
-              >
-                <div style={{ width: '100%', minWidth: 0 }}>{spec.node}</div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       <ContextMenu
         open={!!contextMenu}

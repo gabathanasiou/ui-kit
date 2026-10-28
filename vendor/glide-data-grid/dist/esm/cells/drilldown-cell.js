@@ -168,4 +168,3 @@ function drawDrilldownCell(args, data) {
         ctx.fillText(d.text, drawX, y + h / 2 + getMiddleCenterBias(ctx, theme));
     }
 }
-//# sourceMappingURL=drilldown-cell.js.map

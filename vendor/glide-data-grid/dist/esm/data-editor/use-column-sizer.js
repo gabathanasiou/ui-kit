@@ -186,4 +186,3 @@ export function useColumnSizer(columns, rows, getCellsForSelection, clientWidth,
         };
     }, [clientWidth, columns, ctx, selectedData, theme, minColumnWidth, maxColumnWidth, getCellRenderer]);
 }
-//# sourceMappingURL=use-column-sizer.js.map

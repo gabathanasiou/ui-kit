@@ -27,4 +27,3 @@ export const markdownCellRenderer = {
     },
     onPaste: (toPaste, cell) => (toPaste === cell.data ? undefined : { ...cell, data: toPaste }),
 };
-//# sourceMappingURL=markdown-cell.js.map

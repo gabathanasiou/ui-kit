@@ -216,4 +216,3 @@ export function computeCanBlit(current, last) {
     }
     return true;
 }
-//# sourceMappingURL=data-grid-render.blit.js.map

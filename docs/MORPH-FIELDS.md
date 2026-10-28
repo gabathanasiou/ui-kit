@@ -59,6 +59,7 @@ Neither opens a panel/dropdown. For a record picker use `SearchMenu`; for a cell
 | `onSubmit` / `onCancel` | Built-in Check / X + keyboard contract |
 | `clearOnSubmit` / `clearOnCancel` | Clear the draft on that exit (default true) |
 | `collapsedWidth` / `expandedWidth` | Morph widths (px) |
+| `stretch` | Fill the container (grid cells, full-width toolbars): root and field are 100% wide and the label centers; the width morph becomes a cross-fade |
 | `variant` | Collapsed button variant; default `primary` |
 | `theme` | `light` / `dark` |
 | `autoFocus` | Open + focus on mount |

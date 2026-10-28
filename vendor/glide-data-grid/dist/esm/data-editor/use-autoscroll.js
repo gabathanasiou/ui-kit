@@ -33,4 +33,3 @@ export function useAutoscroll(scrollDirection, scrollRef, onScroll) {
         };
     }, [scrollRef, xDir, yDir, onScroll]);
 }
-//# sourceMappingURL=use-autoscroll.js.map

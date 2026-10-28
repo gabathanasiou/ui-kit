@@ -62,4 +62,3 @@ export function drawCheckbox(ctx, theme, checked, x, y, width, height, highlight
             assertNever(checked);
     }
 }
-//# sourceMappingURL=draw-checkbox.js.map

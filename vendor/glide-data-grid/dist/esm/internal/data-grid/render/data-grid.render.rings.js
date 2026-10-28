@@ -202,4 +202,3 @@ export function drawFillHandle(ctx, width, height, cellYOffset, translateX, tran
     result();
     return result;
 }
-//# sourceMappingURL=data-grid.render.rings.js.map

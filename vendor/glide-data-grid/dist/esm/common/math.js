@@ -294,4 +294,3 @@ export function splitRectIntoRegions(rect, splitIndicies, width, height, splitLo
     }
     return result;
 }
-//# sourceMappingURL=math.js.map

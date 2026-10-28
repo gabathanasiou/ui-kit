@@ -17,4 +17,3 @@ export const browserIsSafari = lazy(() => window.navigator.userAgent.includes("M
     window.navigator.userAgent.includes("Safari") &&
     !window.navigator.userAgent.includes("Chrome"));
 export const browserIsOSX = lazy(() => window.navigator.platform.toLowerCase().startsWith("mac"));
-//# sourceMappingURL=browser-detect.js.map

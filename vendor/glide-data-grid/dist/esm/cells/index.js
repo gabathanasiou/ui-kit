@@ -27,4 +27,3 @@ export const AllCellRenderers = [
     textCellRenderer,
     uriCellRenderer,
 ];
-//# sourceMappingURL=index.js.map

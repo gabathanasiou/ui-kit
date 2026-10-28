@@ -31,4 +31,3 @@ export default class ClickOutsideContainer extends React.PureComponent {
         return (React.createElement("div", { ...rest, ref: this.wrapperRef }, this.props.children));
     }
 }
-//# sourceMappingURL=click-outside-container.js.map

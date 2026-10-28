@@ -7,4 +7,3 @@ const BubblesOverlayEditor = p => {
         React.createElement("textarea", { className: "gdg-input", autoFocus: true })));
 };
 export default BubblesOverlayEditor;
-//# sourceMappingURL=bubbles-overlay-editor.js.map

@@ -121,4 +121,3 @@ const DataGridOverlayEditor = p => {
                 React.createElement("div", { className: "gdg-clip-region", onKeyDown: onKeyDown }, editor)))), portalElement);
 };
 export default DataGridOverlayEditor;
-//# sourceMappingURL=data-grid-overlay-editor.js.map

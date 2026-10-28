@@ -296,4 +296,3 @@ export class CompactSelection {
         }
     }
 }
-//# sourceMappingURL=data-grid-types.js.map

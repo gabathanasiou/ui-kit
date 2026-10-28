@@ -379,4 +379,3 @@ export function drawHeader(ctx, x, y, width, height, c, selected, theme, isHover
         drawHeaderInner(ctx, x, y, width, height, c, selected, theme, isHovered, posX, posY, hoverAmount, spriteManager, touchMode, isRtl, headerLayout);
     }
 }
-//# sourceMappingURL=data-grid-render.header.js.map

@@ -77,4 +77,3 @@ function drawMarkerRowCell(args, index, checked, markerKind, drawHandle, style) 
         }
     }
 }
-//# sourceMappingURL=marker-cell.js.map

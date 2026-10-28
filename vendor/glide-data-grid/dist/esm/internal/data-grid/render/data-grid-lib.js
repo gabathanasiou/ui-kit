@@ -617,4 +617,3 @@ export function computeBounds(col, row, width, height, groupHeaderHeight, totalH
     }
     return result;
 }
-//# sourceMappingURL=data-grid-lib.js.map

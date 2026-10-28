@@ -62,4 +62,3 @@ export class SpriteManager {
         }
     }
 }
-//# sourceMappingURL=data-grid-sprites.js.map

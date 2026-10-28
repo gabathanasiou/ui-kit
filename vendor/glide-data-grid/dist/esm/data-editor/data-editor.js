@@ -2858,4 +2858,3 @@ const DataEditorImpl = (p, forwardedRef) => {
  * @param {DataEditorProps} props
  */
 export const DataEditor = React.forwardRef(DataEditorImpl);
-//# sourceMappingURL=data-editor.js.map

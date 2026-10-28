@@ -27,4 +27,3 @@ export function mouseEventArgsAreEqual(args, other) {
         args?.location[0] === other?.location[0] &&
         args?.location[1] === other?.location[1]);
 }
-//# sourceMappingURL=event-args.js.map

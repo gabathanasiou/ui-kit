@@ -44,4 +44,3 @@ export function useStayOnScreen() {
         style,
     };
 }
-//# sourceMappingURL=use-stay-on-screen.js.map

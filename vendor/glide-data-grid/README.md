@@ -18,6 +18,19 @@ same specifier to `dist/dts/index.d.ts`. Nothing resolves upstream — deleting
 the npm package has no effect. CSS consumers import
 `vendor/glide-data-grid/dist/index.css` (or the package path when published).
 
+## Local patches in this vendored build
+
+1. **`dom-cells/`** — new module exporting `DataEditorWithDomCells` (+
+   `GetDomCell`/`DomCellEditorProps` types): mounts a click-through DOM layer
+   over the canvas and pins one box per visible cell from `getBounds`, refreshed
+   from `onVisibleRegionChanged`. Exported from `index.js` / `index.d.ts`.
+   The kit maps `GlideSheet.domCells` onto it.
+   Enter/Space on the selected cell activates its control when the DOM cell
+   holds exactly one focusable element.
+2. **Source maps stripped** — `*.map` files and their `sourceMappingURL`
+   comments are removed to keep the vendored tree small (Vite then logs no
+   missing-map errors).
+
 ## Patching
 
 - **Small change:** edit the file in `dist/esm/**` directly (the code is plain

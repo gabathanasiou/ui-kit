@@ -55,6 +55,9 @@ export interface MorphSearchFieldProps {
   autoFocus?: boolean;
   /** Notified when the field expands/collapses (never on value changes). */
   onExpandedChange?: (expanded: boolean) => void;
+  /** Fill the container (grid cells, full-width toolbars) instead of hugging
+   *  `collapsedWidth`; the label centers. */
+  stretch?: boolean;
   /** Action buttons inside the field's right edge. */
   actions?: MorphFieldAction[];
   /** Leading icon inside the expanded field. Defaults to `triggerIcon`; pass
@@ -90,6 +93,7 @@ export function MorphSearchField({
   active = false,
   autoFocus = false,
   onExpandedChange,
+  stretch = false,
   actions,
   leadingIcon,
   showClear = true,
@@ -213,6 +217,7 @@ export function MorphSearchField({
       expandedWidth={expandedWidth}
       rootRef={rootRef}
       shrink
+      stretch={stretch}
       data-morph-search
       data-theme={theme}
       data-expanded={expanded ? 'true' : 'false'}
@@ -232,7 +237,7 @@ export function MorphSearchField({
           active={active}
           keepLabelOnActive
           onClick={expand}
-          className={`${triggerCollapse ? 'w-auto' : 'w-full'} justify-start ${expanded ? 'pointer-events-none' : ''}`}
+          className={`${triggerCollapse ? 'w-auto' : 'w-full'} ${stretch ? 'justify-center' : 'justify-start'} ${expanded ? 'pointer-events-none' : ''}`}
           tabIndex={expanded ? -1 : 0}
           aria-expanded={expanded}
           aria-label={ariaLabel || triggerLabel}

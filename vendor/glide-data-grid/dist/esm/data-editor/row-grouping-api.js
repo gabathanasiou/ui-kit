@@ -31,4 +31,3 @@ export function getRowGroupingForPath(rowGrouping, path) {
     }
     return getRowGroupingForPath(rowGrouping[index].subGroups ?? [], rest);
 }
-//# sourceMappingURL=row-grouping-api.js.map

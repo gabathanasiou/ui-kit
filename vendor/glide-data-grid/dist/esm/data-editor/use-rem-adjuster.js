@@ -23,4 +23,3 @@ export function useRemAdjuster({ rowHeight: rowHeightIn, headerHeight: headerHei
     }, [groupHeaderHeightIn, headerHeightIn, overscrollXIn, overscrollYIn, remSize, rowHeightIn, scaleToRem, themeIn]);
     return { rowHeight, headerHeight, groupHeaderHeight, theme, overscrollX, overscrollY };
 }
-//# sourceMappingURL=use-rem-adjuster.js.map

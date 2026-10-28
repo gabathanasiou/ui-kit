@@ -27,6 +27,22 @@ test.describe('Glide data grid', () => {
     await expect(page.getByTestId('glide-crew-commits')).toHaveText('1 commits');
   });
 
+  test('cell layouts: a DOM cell hosts an arranged row of real controls', async ({ page }) => {
+    await page.goto('/#glide');
+    const card = page.getByTestId('glide-layouts-demo');
+    const cells = card.locator('[data-glide-dom-cell]');
+    await expect(cells).toHaveCount(4);
+
+    const actions = cells.nth(0);
+    await expect(actions.getByRole('button')).toHaveCount(3);
+    await actions.getByRole('button', { name: 'Approve' }).click();
+    await expect(page.getByTestId('glide-layout-status')).toHaveText('last: approved row 1');
+
+    // The morph field shares a cell with the adder, each with its own trigger.
+    const searchCell = cells.nth(1);
+    await expect(searchCell.locator('[data-morph-search-trigger]')).toHaveCount(2);
+  });
+
   test('field cells: morph-to-search lives in the cell and submits in place', async ({ page }) => {
     await page.goto('/#glide');
     const cell = buttonCell(page, 'search', 0);

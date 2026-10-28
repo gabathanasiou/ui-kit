@@ -58,8 +58,8 @@ const WAIT_BASELINE = 9;
 // 19 = 18 + glide.spec.ts (experimental grid: the domCells wiring + the
 //      in-cell morph fields; canvas painting stays a manual check).
 const SPEC_CAP = 19;
-// 114 = 111 + the three glide grid cases.
-const TEST_CAP = 114;
+// 115 = 111 + the four glide grid cases.
+const TEST_CAP = 115;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

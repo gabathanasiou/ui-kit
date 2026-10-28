@@ -67,4 +67,3 @@ export class RenderStateProvider extends WindowingTrackerBase {
         }
     };
 }
-//# sourceMappingURL=render-state-provider.js.map

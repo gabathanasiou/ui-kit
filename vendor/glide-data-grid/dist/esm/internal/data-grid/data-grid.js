@@ -1191,4 +1191,3 @@ const DataGrid = (p, forwardedRef) => {
         stickyShadow));
 };
 export default React.memo(React.forwardRef(DataGrid));
-//# sourceMappingURL=data-grid.js.map

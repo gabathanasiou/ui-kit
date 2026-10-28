@@ -194,4 +194,3 @@ export function copyToClipboard(cells, columnIndexes, e) {
 export function toggleBoolean(data) {
     return data !== true;
 }
-//# sourceMappingURL=data-editor-fns.js.map

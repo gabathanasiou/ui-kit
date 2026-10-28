@@ -73,4 +73,3 @@ function isHotkeyInner(hotkey, args) {
     }
     return (args.altKey === wantAlt && args.ctrlKey === wantCtrl && args.shiftKey === wantShift && args.metaKey === wantMeta);
 }
-//# sourceMappingURL=is-hotkey.js.map

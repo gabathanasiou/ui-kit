@@ -29,4 +29,3 @@ export const MarkdownOverlayEditor = p => {
                 React.createElement(EditPencil, null)))),
         React.createElement("textarea", { className: "gdg-md-edit-textarea gdg-input", autoFocus: true })));
 };
-//# sourceMappingURL=markdown-overlay-editor.js.map

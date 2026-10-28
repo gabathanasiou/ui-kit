@@ -84,4 +84,3 @@ function drawBoolean(args, data, canEdit, maxSize, hoverEffectIntensity) {
         ctx.globalAlpha = 1;
     }
 }
-//# sourceMappingURL=boolean-cell.js.map

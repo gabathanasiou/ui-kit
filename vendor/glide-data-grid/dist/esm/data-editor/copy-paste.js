@@ -266,4 +266,3 @@ export function decodeHTML(html) {
     }
     return result;
 }
-//# sourceMappingURL=copy-paste.js.map

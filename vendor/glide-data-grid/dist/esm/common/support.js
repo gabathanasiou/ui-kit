@@ -57,4 +57,3 @@ export function deepEqual(foo, bar) {
     }
     return foo !== foo && bar !== bar;
 }
-//# sourceMappingURL=support.js.map

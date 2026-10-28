@@ -26,6 +26,10 @@ export interface MorphFieldShellProps extends Omit<React.HTMLAttributes<HTMLDivE
     rootRef?: React.Ref<HTMLDivElement>;
     /** Prevent flex shrinking (toolbar controls). Default false. */
     shrink?: boolean;
+    /** Fill the container instead of hugging `collapsedWidth`: the whole box
+     *  (and the expanded field) is 100% wide. For grid cells and full-width
+     *  toolbars; the width morph becomes a cross-fade. */
+    stretch?: boolean;
 }
-export declare function MorphFieldShell({ expanded, collapsedWidth, expandedWidth, trigger, field, rootRef, shrink, className, style, ...rest }: MorphFieldShellProps): React.JSX.Element;
+export declare function MorphFieldShell({ expanded, collapsedWidth, expandedWidth, trigger, field, rootRef, shrink, stretch, className, style, ...rest }: MorphFieldShellProps): React.JSX.Element;
 export default MorphFieldShell;

@@ -20,4 +20,3 @@ export const rowIDCellRenderer = {
     },
     onPaste: () => undefined,
 };
-//# sourceMappingURL=row-id-cell.js.map

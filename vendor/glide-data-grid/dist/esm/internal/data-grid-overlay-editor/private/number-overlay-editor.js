@@ -27,4 +27,3 @@ const NumberOverlayEditor = p => {
             onValueChange: onChange })));
 };
 export default NumberOverlayEditor;
-//# sourceMappingURL=number-overlay-editor.js.map

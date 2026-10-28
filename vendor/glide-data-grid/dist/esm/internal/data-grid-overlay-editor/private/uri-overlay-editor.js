@@ -18,4 +18,3 @@ const UriOverlayEditor = p => {
         React.createElement("textarea", { className: "gdg-input", autoFocus: true })));
 };
 export default UriOverlayEditor;
-//# sourceMappingURL=uri-overlay-editor.js.map

@@ -119,4 +119,3 @@ export function getLuminance(color) {
     const [r, g, b] = parseToRgba(color);
     return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
 }
-//# sourceMappingURL=color-parser.js.map

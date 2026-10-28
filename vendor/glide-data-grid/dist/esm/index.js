@@ -33,4 +33,5 @@ export { useRowGrouping } from "./data-editor/row-grouping-api.js";
  * @hidden
  */
 export { DataEditorAll as default } from "./data-editor-all.js";
-//# sourceMappingURL=index.js.map
+/* fork: DOM cells */
+export { DataEditorWithDomCells } from "./dom-cells/index.js";

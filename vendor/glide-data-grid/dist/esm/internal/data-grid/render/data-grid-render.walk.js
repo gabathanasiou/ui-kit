@@ -119,4 +119,3 @@ export function getSpanBounds(span, cellX, cellY, cellW, cellH, column, allColum
     }
     return [frozenRect, contentRect];
 }
-//# sourceMappingURL=data-grid-render.walk.js.map

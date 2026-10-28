@@ -48,6 +48,9 @@ export interface MorphSearchFieldProps {
     autoFocus?: boolean;
     /** Notified when the field expands/collapses (never on value changes). */
     onExpandedChange?: (expanded: boolean) => void;
+    /** Fill the container (grid cells, full-width toolbars) instead of hugging
+     *  `collapsedWidth`; the label centers. */
+    stretch?: boolean;
     /** Action buttons inside the field's right edge. */
     actions?: MorphFieldAction[];
     /** Leading icon inside the expanded field. Defaults to `triggerIcon`; pass
@@ -66,5 +69,5 @@ export interface MorphSearchFieldProps {
     className?: string;
     "aria-label"?: string;
 }
-export declare function MorphSearchField({ value, onChange, triggerLabel, triggerIcon, placeholder, collapsedWidth, expandedWidth, variant, triggerCollapse, iconWithLabel, triggerReveal, theme, active, autoFocus, onExpandedChange, actions, leadingIcon, showClear, onSubmit, onCancel, cancelOnEscape, cancelOnOutside, className, 'aria-label': ariaLabel, }: MorphSearchFieldProps): React.JSX.Element;
+export declare function MorphSearchField({ value, onChange, triggerLabel, triggerIcon, placeholder, collapsedWidth, expandedWidth, variant, triggerCollapse, iconWithLabel, triggerReveal, theme, active, autoFocus, onExpandedChange, stretch, actions, leadingIcon, showClear, onSubmit, onCancel, cancelOnEscape, cancelOnOutside, className, 'aria-label': ariaLabel, }: MorphSearchFieldProps): React.JSX.Element;
 export default MorphSearchField;

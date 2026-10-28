@@ -109,4 +109,3 @@ export function useSelectionBehavior(gridSelection, setGridSelection, rangeBehav
     }, [columnBehavior, gridSelection, rangeBehavior, rowBehavior, setGridSelection]);
     return [setCurrent, setSelectedRows, setSelectedColumns];
 }
-//# sourceMappingURL=use-selection-behavior.js.map

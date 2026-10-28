@@ -49,3 +49,6 @@ export type { RowGroup, RowGroupingOptions } from "./data-editor/row-grouping.js
  * @hidden
  */
 export { DataEditorAll as default } from "./data-editor-all.js";
+/* fork: DOM cells */
+export { DataEditorWithDomCells } from "./dom-cells/index.js";
+export type { GetDomCell, DomCellEditorProps } from "./dom-cells/index.js";

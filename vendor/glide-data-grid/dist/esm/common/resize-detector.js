@@ -24,4 +24,3 @@ export function useResizeDetector(initialSize) {
     }, [ref.current]);
     return { ref, ...size };
 }
-//# sourceMappingURL=resize-detector.js.map

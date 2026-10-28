@@ -45,4 +45,3 @@ export const textCellRenderer = {
         ? undefined
         : { ...cell, data: toPaste, displayData: details.formattedString ?? cell.displayData },
 };
-//# sourceMappingURL=text-cell.js.map

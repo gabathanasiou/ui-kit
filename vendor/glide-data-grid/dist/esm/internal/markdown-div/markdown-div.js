@@ -38,4 +38,3 @@ export default class MarkdownDiv extends React.PureComponent {
         return React.createElement(MarkdownContainer, { ref: this.containerRefHook });
     }
 }
-//# sourceMappingURL=markdown-div.js.map
