@@ -128,7 +128,9 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
                     "div",
                     {
                         key: b.col + ":" + b.row,
-                        className: domCellClassName,
+                        /* `group` lets a host control react to the focused cell
+                           with Tailwind's group-data-[glide-dom-focused=true]:… */
+                        className: "group" + (domCellClassName ? " " + domCellClassName : ""),
                         ref: el => {
                             if (el == null) return;
                             // A "button-only" cell (exactly one focusable and it

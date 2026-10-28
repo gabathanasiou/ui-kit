@@ -199,7 +199,7 @@ export const CrewCardDemo: React.FC = () => {
         node: (
           <button
             type="button"
-            className="flex h-full w-full items-center justify-center text-rose-500 transition-colors hover:bg-rose-500/10"
+            className="flex h-full w-full items-center justify-center text-rose-500 transition-colors hover:bg-rose-500/10 group-data-[glide-dom-focused=true]:bg-rose-500/10"
             aria-label="Remove from this day"
             title="Remove from this day"
             data-testid={`glide-crew-remove-${row.id}`}

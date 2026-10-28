@@ -22431,7 +22431,7 @@ function QA(t, e, n, r, i) {
     scrollRef: f
   };
 }
-const e_ = w.lazy(async () => await import("./data-grid-overlay-editor-CHQEdsYq.js"));
+const e_ = w.lazy(async () => await import("./data-grid-overlay-editor-WdR-wamu.js"));
 let t_ = 0;
 function n_(t) {
   return YE(o0(o0(t).filter((e) => e.span !== void 0).map((e) => {
@@ -24639,7 +24639,7 @@ function I_(t, e, n, r, i) {
     height: c - 1
   };
 }
-const A_ = w.lazy(async () => await import("./number-overlay-editor-DX44EBhk.js")), __ = {
+const A_ = w.lazy(async () => await import("./number-overlay-editor-I_cs4d_e.js")), __ = {
   getAccessibilityString: (t) => {
     var e;
     return ((e = t.data) == null ? void 0 : e.toString()) ?? "";
@@ -25014,7 +25014,9 @@ const j_ = (t, e) => {
           "div",
           {
             key: M.col + ":" + M.row,
-            className: s,
+            /* `group` lets a host control react to the focused cell
+               with Tailwind's group-data-[glide-dom-focused=true]:… */
+            className: "group" + (s ? " " + s : ""),
             ref: (P) => {
               if (P == null) return;
               const S = P.querySelectorAll(

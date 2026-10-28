@@ -48,7 +48,13 @@
    repaint it (same 1px accent rectangle the grid draws). Passthrough boxes are
    transparent over a NATIVE cell — the grid's own border shows through, so they
    must not paint a second one. */
-[data-glide-dom-cell][data-glide-dom-focused]:not([data-glide-dom-passthrough]) {
+[data-glide-dom-cell][data-glide-dom-focused]:not([data-glide-dom-passthrough])::after {
+    /* An overlay, not a box-shadow: a full-bleed child (the trash button)
+       paints over an inset shadow — the rectangle must stay on top. */
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
     box-shadow: inset 0 0 0 1px var(--glide-dom-accent, var(--gdg-accent-color, #2563eb));
 }
 /* BUTTON-ONLY cells (one real button, not a chevron affordance) also show the
