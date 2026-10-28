@@ -387,9 +387,8 @@ export const CellGalleryDemo: React.FC = () => {
         allowOverlay: false,
       };
     }
-    if (col.key === 'picker') {
-      return seededTextCell(row.picker, { displayData: row.picker ? `${row.picker}  ▾` : 'Select…  ▾', cursor: 'pointer' });
-    }
+    // The chevron is the DOM helper's button — never draw a second one.
+    if (col.key === 'picker') return seededTextCell(row.picker, { displayData: row.picker || '—' });
     // Real kit buttons are mounted over this cell (domCells), not drawn.
     if (col.key === 'button') return staticCell('');
     return kitBadgeCell({

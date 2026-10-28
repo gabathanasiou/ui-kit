@@ -27,7 +27,11 @@ the npm package has no effect. CSS consumers import
    The kit maps `GlideSheet.domCells` onto it.
    Enter/Space on the selected cell activates its control when the DOM cell
    holds exactly one focusable element.
-2. **Source maps stripped** — `*.map` files and their `sourceMappingURL`
+2. **Editor chrome** (`dist/index.css`, "fork: the overlay editor must look
+   like the cell") — square corners, a crisp 2px accent rectangle outline, no
+   drop shadow/fade, and the cell's own padding/font/line rhythm, so editing
+   reads as typing in the cell.
+3. **Source maps stripped** — `*.map` files and their `sourceMappingURL`
    comments are removed to keep the vendored tree small (Vite then logs no
    missing-map errors).
 

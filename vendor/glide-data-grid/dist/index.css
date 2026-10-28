@@ -12,3 +12,29 @@
 @import "./esm/internal/data-grid-search/data-grid-search-style.css";
 @import "./esm/internal/markdown-div/private/markdown-container.css";
 @import "./esm/internal/growing-entry/growing-entry-style.css";
+
+/* fork: the overlay editor must look like the cell it replaces ---------------
+   Glide's stock editor is a raised card (2px radius, accent ring, drop shadow,
+   8.5/3 padding, 16px line-height) — it reads as a different surface. Here it
+   keeps the cell's own background, padding, font and line rhythm, with no
+   ring/shadow/radius and no fade, so editing looks like typing in the cell. */
+.gdg-d19meir1.gdg-style {
+    border-radius: 0;
+    /* Keep the crisp RECTANGLE outline (the cell's focus ring) — square
+       corners, no drop shadow, no fade. */
+    box-shadow: 0 0 0 2px var(--gdg-accent-color);
+    animation: none;
+}
+.gdg-d19meir1.gdg-pad {
+    padding: var(--gdg-cell-vertical-padding) var(--gdg-cell-horizontal-padding);
+}
+.gdg-d19meir1 .gdg-clip-region {
+    border-radius: 0;
+}
+.gdg-d19meir1 .gdg-clip-region .gdg-growing-entry {
+    line-height: var(--gdg-line-height, 1.4);
+}
+.gdg-d19meir1 .gdg-clip-region textarea.gdg-input {
+    line-height: var(--gdg-line-height, 1.4);
+    font-size: var(--gdg-editor-font-size);
+}

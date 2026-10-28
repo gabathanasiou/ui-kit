@@ -104,6 +104,12 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
 
 ## Editors (overlay)
 
+The fork styles Glide's overlay editor to be **visually identical to the cell**
+— the theme's cell padding + font, square corners, **the crisp rectangle
+outline kept**, no drop shadow or fade. A cell must not change size when it
+enters edit mode.
+
+
 `createGlideCellEditor(getOpts)` builds Glide's `provideEditor`:
 
 - **Build it ONCE per grid lifetime** (`useMemo(() => …, [])`) with live config
