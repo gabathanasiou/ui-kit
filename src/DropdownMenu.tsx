@@ -17,6 +17,13 @@ export type DropdownTheme = 'light' | 'dark' | 'blue' | 'emerald';
 
 export const DropdownThemeContext = createContext<DropdownTheme>('dark');
 export const useDropdownTheme = () => useContext(DropdownThemeContext);
+/** The parent menu's RESOLVED token attributes (`data-theme` / `data-mode` /
+ *  `data-accent`). Submenus portal to the body, so they cannot inherit the
+ *  parent content's CSS variables — they must paint the same attributes. The
+ *  theme NAME alone is not enough: a menu that inherited `data-accent` (light
+ *  or dark preset in an emerald/zinc project) would lose the accent. */
+export const DropdownThemeAttrsContext = createContext<Record<string, string>>({ 'data-theme': 'dark' });
+export const useDropdownThemeAttrs = () => useContext(DropdownThemeAttrsContext);
 
 /** Shared row sizing for menu items AND item-manager rows (padding + font +
  *  line-height, coarse-scaled) — ONE knob to resize every dropdown row
@@ -1020,6 +1027,7 @@ export default function DropdownMenu({
       </RadixDropdownMenu.Trigger>
       <RadixDropdownMenu.Portal container={portalTarget ?? undefined}>
         <DropdownThemeContext.Provider value={theme}>
+        <DropdownThemeAttrsContext.Provider value={menu.attrs}>
           <SubmenuContext.Provider value={{ chain: subChain, setChain: setSubChain, morph, keyboardOpened: keyboardOpenedSub, setKeyboardOpened: setKeyboardOpenedSub }}>
             <MenuHighlightContext.Provider value={highlight}>
               <MenuSearchContext.Provider value={{ query, setQuery }}>
@@ -1143,6 +1151,7 @@ export default function DropdownMenu({
               </MenuSearchContext.Provider>
             </MenuHighlightContext.Provider>
           </SubmenuContext.Provider>
+        </DropdownThemeAttrsContext.Provider>
         </DropdownThemeContext.Provider>
       </RadixDropdownMenu.Portal>
     </RadixDropdownMenu.Root>

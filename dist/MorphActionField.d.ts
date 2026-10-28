@@ -30,7 +30,7 @@ export interface MorphActionFieldProps extends Omit<MorphSearchFieldProps, 'acti
     /** Clear the draft when cancelling (default true). */
     clearOnCancel?: boolean;
     /** Collapsed button variant (default `primary`). */
-    variant?: 'subtle' | 'primary';
+    variant?: 'subtle' | 'primary' | 'outline';
 }
-export declare function MorphActionField({ triggerLabel, triggerIcon, fieldIcon, actions, onSubmit, onCancel, clearOnSubmit, clearOnCancel, onChange, value, variant, ...rest }: MorphActionFieldProps): React.JSX.Element;
+export declare function MorphActionField({ triggerLabel, triggerIcon, fieldIcon, actions, onSubmit, onCancel, clearOnSubmit, clearOnCancel, onChange, value, variant, triggerCollapse, iconWithLabel, ...rest }: MorphActionFieldProps): React.JSX.Element;
 export default MorphActionField;

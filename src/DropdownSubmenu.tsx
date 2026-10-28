@@ -2,7 +2,7 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronRight } from 'lucide-react';
-import { useDropdownTheme, SubmenuContext, MenuHighlightContext, useMenuHighlight, useMenuHighlightState, useMenuKeys, useMenuKeyLock, useMenuWheel } from './DropdownMenu';
+import { useDropdownTheme, useDropdownThemeAttrs, SubmenuContext, MenuHighlightContext, useMenuHighlight, useMenuHighlightState, useMenuKeys, useMenuKeyLock, useMenuWheel } from './DropdownMenu';
 import type { MenuHighlightItem } from './DropdownMenu';
 import { useCoarseScale, coarsePx } from './device';
 import { usePortalTarget } from './popout';
@@ -29,6 +29,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
      nested sub stands the parent's keys down). */
   const isTopmost = chain[chain.length - 1] === id;
   const theme = useDropdownTheme();
+  const themeAttrs = useDropdownThemeAttrs();
   const portalTarget = usePortalTarget();
   const subTriggerRef = useRef<HTMLDivElement>(null);
   const subContentRef = useRef<HTMLDivElement>(null);
@@ -196,7 +197,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
       <RadixDropdownMenu.Portal container={portalTarget ?? undefined}>
         <RadixDropdownMenu.SubContent
           ref={setComposedRef}
-          data-theme={theme}
+          {...themeAttrs}
           className={contentClasses}
           sideOffset={8}
           alignOffset={-4}

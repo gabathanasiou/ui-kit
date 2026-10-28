@@ -109,6 +109,15 @@ Rules:
   unchanged; **focus keeps that lift** and only nudges the border
   (`--ui-input-focus-border`, a subtle neutral step). Both are animated (120ms).
   One token set drives both.
+- **One control scale.** Height: **30px for every control** — buttons, text
+  inputs (`inputCls('md' | 'sm')`, `useInputSize()`), number boxes, Seg
+  segments and every picker trigger (coarse/touch keeps its larger tap size).
+  Radii:
+  `--ui-radius-btn` (6px) on inputs, number boxes, buttons and Seg tracks;
+  nested corners follow **R_inner = R_outer − padding** — the Seg track pads by
+  2px, so its segments/pill use `--ui-radius-inset` (`calc(6px - 2px)` = 4px).
+  `.ui-input-ghost` is the borderless field: no border at rest, border + fill on
+  hover, stronger border while focused.
 - **Card shells stay neutral; only their headers wear the accent.** A neutral
   raised fill + `--ui-border-strong` keeps the card readable on the neutral body.
 - **Card-header hovers stay in the accent family** (a deeper/lighter step), never

@@ -56,10 +56,26 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   /** Square icon-only shape (no label): equal width/height at the toolbar
    *  control size, contents centered. Pair with `aria-label`/`title`. */
   iconOnly?: boolean;
-  /** `minimal` matches the kit text input box exactly (same padding, border
-   *  and line-height) — for search triggers and controls sitting beside a
-   *  field. */
+  /** `minimal` = the STANDARD 30px control box (radius 6, compact padding) —
+   *  for search triggers and controls sitting beside a field. Form inputs
+   *  (`inputCls('md')`) are the taller 34px box. */
   size?: 'default' | 'minimal';
+  /** Bare icon at rest: the variant's box (fill / border / outline) is hidden
+   *  until hover, keyboard focus or open. Pair with `collapse` for the full
+   *  "icon → button" reveal (the label rides out with the box). An ACTIVE
+   *  (lit) button keeps its box so a toggle still reads as on. */
+  revealOnHover?: boolean;
+  /** With `collapse` + `active`: whether the label stays open while lit.
+   *  Default true (tabs, an applied filter term). Pass false for a TOGGLE
+   *  that should collapse back to its icon after the press. */
+  keepLabelOnActive?: boolean;
+  /** Width shim for a label that CHANGES (a toggle: Edit ↔ Done): the button
+   *  keeps the width of whichever label is longer, so the press never shifts
+   *  it. Pass the longest label text. */
+  reserveLabel?: React.ReactNode;
+  /** Direction of the icon-change roll when the icon swaps: `up` (advancing,
+   *  default) or `down` (returning) — a toggle rolls back the way it came. */
+  iconRoll?: 'up' | 'down';
   /** Leading icon — tab variants sit icon-first (before the label), inherits
    *  `currentColor`. */
   icon?: React.ReactNode;
@@ -94,6 +110,10 @@ export default function Button({
   active = false,
   iconOnly = false,
   size: sizeProp = 'default',
+  revealOnHover = false,
+  keepLabelOnActive = true,
+  reserveLabel,
+  iconRoll = 'up',
   icon,
   collapse = false,
   iconWithLabel = true,
@@ -110,12 +130,17 @@ export default function Button({
   const cloud = cloudProp ?? buttonCloudOf(kit);
   /* Proportional coarse scaling: base sizes interpolate by the global scale
      (inline style — Tailwind can't JIT runtime classes). */
-  const subtleSize = useCoarseSize({ px: 10, py: 7, fs: 12 }, { px: 14, py: 9, fs: 14 });
-  const primarySize = useCoarseSize({ px: 12, py: 7, fs: 12 }, { px: 16, py: 9, fs: 14 });
+  const subtleSize = useCoarseSize({ px: 10, py: 6, fs: 12 }, { px: 14, py: 9, fs: 14 });
+  const primarySize = useCoarseSize({ px: 12, py: 6, fs: 12 }, { px: 16, py: 9, fs: 14 });
   const tabSize = useCoarseSize({ px: 12, py: 6, fs: 12 }, { px: 16, py: 10, fs: 14 });
   const PAD = '';
   const PAD_PRIMARY = '';
-  const BASE = 'inline-flex items-center rounded font-semibold transition-colors cursor-pointer select-none whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed';
+  const BASE = `${revealOnHover ? 'ui-reveal ' : ''}ui-press inline-flex items-center font-semibold transition-colors cursor-pointer select-none whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed`;
+  /* Header/mini tabs keep the 4px tab recipe: their SELECTED pill is drawn by
+     the row (TAB_PILL) with `rounded`, so the button must match it. Control
+     variants take the shared 6px control radius. */
+  const TAB_RADIUS = 'rounded';
+  const CONTROL_RADIUS = 'rounded-[var(--ui-radius-btn)]';
 
   /* The mini-tab recipe (PageToolbar sub-tabs): the row renders the measured
      fill pill (useSlidingPill + TAB_PILL below) — the button carries only the
@@ -218,20 +243,20 @@ export default function Button({
   let cls: string;
   if (variant === 'tab') {
     const t = TAB[theme];
-    cls = active
+    cls = `${TAB_RADIUS} ${active
       ? (tone ? CLOUD_TAB[tone].active : t.active)
-      : (tone ? CLOUD_TAB[tone][theme === 'light' ? 'inactiveLight' : 'inactiveDark'] : t.inactive);
+      : (tone ? CLOUD_TAB[tone][theme === 'light' ? 'inactiveLight' : 'inactiveDark'] : t.inactive)}`;
   } else if (variant === 'tab-header') {
     const fill = tone
       ? (active ? CLOUD_HEADER[tone].active : CLOUD_HEADER[tone].inactive)
       : (active ? TAB_HEADER.active : TAB_HEADER.inactive);
-    cls = `${fill} ${isOpen ? (tone ? CLOUD_HEADER[tone].open : TAB_HEADER.open) : ''}`;
+    cls = `${TAB_RADIUS} ${fill} ${isOpen ? (tone ? CLOUD_HEADER[tone].open : TAB_HEADER.open) : ''}`;
   } else {
-    cls = `${spec.base} ${isOpen ? spec.open : ''}`;
+    cls = `${CONTROL_RADIUS} ${spec.base} ${isOpen ? spec.open : ''}`;
     if (active) cls = `${cls} ${ACTIVE}`;
     if (variant === 'primary' && tone) {
       const cp = CLOUD_PRIMARY[tone];
-      cls = isOpen ? `${cp.base} ${cp.open}` : cp.base;
+      cls = `${CONTROL_RADIUS} ${isOpen ? `${cp.base} ${cp.open}` : cp.base}`;
     }
   }
   /* Icon-first collapse (roadmap 258) — the mechanics live in the shared
@@ -250,13 +275,25 @@ export default function Button({
       data-mode={theme}
       data-accent={kit?.accent}
       className={`${BASE} ${iconOnly ? 'justify-center' : ''} ${collapsible ? 'group' : ''} ${cls} ${className}`}
+      /* A toggled base-variant button is a PRESSED toggle: expose it to AT
+         (tabs are selections and use aria-selected/current instead). */
+      aria-pressed={active && !variant.startsWith('tab') ? true : undefined}
+      data-active={active || undefined}
       style={sizing}
       {...rest}
     >
       {iconOnly
         ? children
         : (
-          <TabFace icon={icon} collapse={collapse} iconWithLabel={iconWithLabel} active={active} gap={gap}>
+          <TabFace
+            icon={icon}
+            collapse={collapse}
+            iconWithLabel={iconWithLabel}
+            active={active && keepLabelOnActive}
+            gap={gap}
+            reserve={reserveLabel}
+            roll={iconRoll}
+          >
             {children}
           </TabFace>
         )}

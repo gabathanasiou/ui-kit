@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 /**
  * The icon ↔ label face of a tab (roadmap 258) — the collapsing mechanics,
@@ -30,6 +30,13 @@ export interface TabFaceProps {
   active?: boolean;
   /** Icon ↔ label gap in px (the caller's coarse-scaled value). */
   gap?: number;
+  /** Width shim: rendered invisibly beside the label so the tab keeps the
+   *  width of its LONGEST label. A toggle that swaps its label (Edit ↔ Done)
+   *  then never changes width mid-press. */
+  reserve?: React.ReactNode;
+  /** Icon-change roll direction: `up` advances (default), `down` rolls back —
+   *  so returning to a previous icon comes from the side it left by. */
+  roll?: 'up' | 'down';
   children?: React.ReactNode;
 }
 
@@ -38,10 +45,53 @@ const LABEL_STATES = 'group-hover:grid-cols-[1fr] group-focus-visible:grid-cols-
 const ICON_HIDDEN_STATES = 'group-hover:grid-cols-[0fr] group-focus-visible:grid-cols-[0fr] group-data-[state=open]:grid-cols-[0fr]';
 const LABEL_SHOWN_STATES = 'group-hover:opacity-100 group-focus-visible:opacity-100 group-data-[state=open]:opacity-100';
 
-export function TabFace({ icon, collapse = false, iconWithLabel = true, active = false, gap = 6, children }: TabFaceProps) {
+/** Stable-enough identity for a React icon node: a new element object is
+ *  created on every render, so a reference check would re-animate constantly.
+ *  Type + the sizing class/props covers the real swaps (Pencil ↔ Check). */
+function iconSignature(node: React.ReactNode): string {
+  if (!React.isValidElement(node)) return String(node ?? '');
+  const type = node.type as { displayName?: string; name?: string } | string;
+  const name = typeof type === 'string' ? type : (type.displayName || type.name || 'icon');
+  const props = node.props as Record<string, unknown>;
+  return `${name}|${props.className ?? ''}|${props.size ?? ''}`;
+}
+
+export function TabFace({ icon, collapse = false, iconWithLabel = true, active = false, gap = 6, reserve, roll = 'up', children }: TabFaceProps) {
   const collapsible = !!collapse && !!icon;
   const swap = collapsible && !iconWithLabel;
   const showIcon = !!icon && (iconWithLabel || collapsible);
+
+  /* Icon swap animation: when the icon node MEANINGFULLY changes (Pencil →
+     Check) the old glyph scales/rotates out under the new one. The label
+     stays put. Reduced motion drops the animation. */
+  const sig = iconSignature(icon);
+  const [outgoing, setOutgoing] = useState<React.ReactNode>(null);
+  const prevRef = useRef<{ sig: string; node: React.ReactNode }>({ sig, node: icon });
+  useEffect(() => {
+    if (sig === prevRef.current.sig) { prevRef.current.node = icon; return; }
+    setOutgoing(prevRef.current.node);
+    prevRef.current = { sig, node: icon };
+    const timer = window.setTimeout(() => setOutgoing(null), 200);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sig]);
+
+  const iconFace = (
+    /* A vertical ROLL, not a cross-fade: the old glyph scrolls up out of the
+       clipped box while the new one scrolls up into place (the iOS/macOS
+       state-change feel). The incoming icon is in normal flow (it owns the
+       box size); the outgoing one overlays it and is clipped. */
+    <span className="relative inline-flex items-center justify-center overflow-hidden">
+      {outgoing != null && (
+        <span key={`out:${prevRef.current.sig}`} aria-hidden className={`ui-icon-roll-out${roll === 'down' ? '-down' : ''} absolute inset-0 inline-flex items-center justify-center`}>
+          {outgoing}
+        </span>
+      )}
+      <span key={`in:${sig}`} className={`ui-icon-roll-in${roll === 'down' ? '-down' : ''} inline-flex items-center justify-center`}>
+        {icon}
+      </span>
+    </span>
+  );
 
   /* No collapsing surface: the shell's own flex layout draws the face
      (plain labeled buttons keep their exact previous DOM). */
@@ -58,10 +108,10 @@ export function TabFace({ icon, collapse = false, iconWithLabel = true, active =
     <>
       {showIcon && (swap ? (
         <span data-kit-icon className={`grid min-w-0 ${MOTION} ${active ? 'grid-cols-[0fr]' : `grid-cols-[1fr] ${ICON_HIDDEN_STATES}`}`}>
-          <span className="inline-flex min-w-0 items-center overflow-hidden">{icon}</span>
+          <span className="inline-flex min-w-0 items-center overflow-hidden">{iconFace}</span>
         </span>
       ) : (
-        <span data-kit-icon className="shrink-0 inline-flex items-center justify-center">{icon}</span>
+        <span data-kit-icon className="shrink-0 inline-flex items-center justify-center">{iconFace}</span>
       ))}
       <span data-kit-label className={`grid min-w-0 ${MOTION} ${active ? 'grid-cols-[1fr]' : `grid-cols-[0fr] ${LABEL_STATES}`}`}>
         <span className="min-w-0 overflow-hidden">
@@ -71,7 +121,12 @@ export function TabFace({ icon, collapse = false, iconWithLabel = true, active =
               : ''}`}
             style={swap ? ({ '--kit-collapse-gap': `${gap}px` } as React.CSSProperties) : { paddingLeft: gap }}
           >
-            {children}
+            {reserve ? (
+              <span className="inline-grid min-w-0">
+                <span aria-hidden className="invisible col-start-1 row-start-1 whitespace-nowrap">{reserve}</span>
+                <span className="col-start-1 row-start-1">{children}</span>
+              </span>
+            ) : children}
           </span>
         </span>
       </span>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Checkbox, Checklist, RadioList, DatePicker, NumberInput, Seg, FloatingToggle, Button,
+  inputCls, useInputSize,
 } from '../../../src/index';
 import { CalendarDays, List, Table2 } from 'lucide-react';
 import { DemoCard } from '../shell/chrome';
@@ -113,6 +114,7 @@ function NumberInputOptions() {
 function SegTrackDemos() {
   const [tab, setTab] = useState('stages');
   const [view, setView] = useState('strips');
+  const [swapView, setSwapView] = useState('strips');
   const [peopleTab, setPeopleTab] = useState('people');
   return (
     <>
@@ -152,7 +154,7 @@ function SegTrackDemos() {
           />
         </div>
       </div>
-      <div className="row" data-testid="seg-track-light">
+      <div className="row pg-surface-light" data-testid="seg-track-light">
         <div className="label">Seg variant=&quot;track&quot; — light toolbar</div>
         <Seg
           variant="track"
@@ -167,7 +169,40 @@ function SegTrackDemos() {
         />
         <Button theme="light" variant="subtle" active={view === 'events'} data-testid="seg-light-toggle">Toggle mirror</Button>
       </div>
-      <div className="row" data-testid="seg-track-blue">
+      <div className="row pg-surface-light" data-testid="seg-icon-collapse">
+        <div className="label">Seg variant=&quot;track&quot; — icon collapse (label reveals on hover; the selected segment stays open)</div>
+        <Seg
+          variant="track"
+          theme="light"
+          iconCollapse
+          value={view}
+          options={[
+            { v: 'strips', l: 'Strips', icon: <List className="w-3.5 h-3.5" />, ariaLabel: 'Strips view' },
+            { v: 'events', l: 'Events', icon: <CalendarDays className="w-3.5 h-3.5" />, ariaLabel: 'Events view' },
+            { v: 'table', l: 'Table', icon: <Table2 className="w-3.5 h-3.5" />, ariaLabel: 'Table view' },
+          ]}
+          onChange={setView}
+          ariaLabel="Icon collapse view"
+        />
+      </div>
+      <div className="row pg-surface-light" data-testid="seg-icon-swap">
+        <div className="label">Seg variant=&quot;track&quot; — icon swap (icon at rest; TEXT ONLY on hover/selected)</div>
+        <Seg
+          variant="track"
+          theme="light"
+          iconCollapse
+          iconWithLabel={false}
+          value={swapView}
+          options={[
+            { v: 'strips', l: 'Strips', icon: <List className="w-3.5 h-3.5" />, ariaLabel: 'Strips view' },
+            { v: 'events', l: 'Events', icon: <CalendarDays className="w-3.5 h-3.5" />, ariaLabel: 'Events view' },
+            { v: 'table', l: 'Table', icon: <Table2 className="w-3.5 h-3.5" />, ariaLabel: 'Table view' },
+          ]}
+          ariaLabel="Icon swap view"
+          onChange={setSwapView}
+        />
+      </div>
+      <div className="row pg-surface-light" data-testid="seg-track-blue">
         <div className="label">Seg variant=&quot;track&quot; — blue project chrome (Drive)</div>
         <Seg
           variant="track"
@@ -182,7 +217,7 @@ function SegTrackDemos() {
         />
         <Button variant="primary" cloud data-testid="seg-blue-primary">Blue primary</Button>
       </div>
-      <div className="row" data-testid="seg-track-emerald">
+      <div className="row pg-surface-light" data-testid="seg-track-emerald">
         <div className="label">Seg variant=&quot;track&quot; — emerald project chrome (shared)</div>
         <Seg
           variant="track"
@@ -262,9 +297,55 @@ function FloatingToggleDemo() {
   );
 }
 
+/* The kit's text-input recipe: `.ui-input` tokens + the proportional sizing
+   helpers. Nothing to configure — this is what every modal/form field uses. */
+function TextFieldDemos() {
+  const [value, setValue] = useState('Stage 5 — Riverside');
+  const size = useInputSize();
+  return (
+    <div className="pg-stack" data-testid="text-input-demo" style={{ maxWidth: 520 }}>
+      <div>
+        <span className="label">Text input — md (modal bodies, class recipe)</span>
+        <input
+          className={`w-full ${inputCls()}`}
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          placeholder="Type here…"
+        />
+      </div>
+      <div>
+        <span className="label">Text input — proportional (useInputSize, scales with the coarse slider)</span>
+        <input style={size} className="w-full ui-input" defaultValue="Stage 5 — Riverside" />
+      </div>
+      <div>
+        <span className="label">Text input — sm (compact chrome)</span>
+        <input className={`w-full ${inputCls('sm')}`} defaultValue="Camera notes" />
+      </div>
+      <div>
+        <span className="label">Level with a Button — md input + outline minimal button</span>
+        <div className="row" style={{ margin: 0 }}>
+          <input className={`${inputCls()} flex-1`} placeholder="Sits level with the button…" />
+          <Button variant="outline" size="minimal">Browse</Button>
+        </div>
+      </div>
+      <div>
+        <span className="label">Borderless — `ui-input-ghost`: edge + fill appear on hover/focus</span>
+        <input className={`w-full ${inputCls()} ui-input-ghost`} defaultValue="Reads as text until touched" />
+      </div>
+      <div>
+        <span className="label">Disabled</span>
+        <input className={`w-full ${inputCls()}`} value="Locked" disabled readOnly />
+      </div>
+    </div>
+  );
+}
+
 export function InputsSection() {
   return (
     <>
+      <DemoCard label="Text input" hint="The .ui-input recipe: md / proportional / sm, level with a Button, disabled.">
+        <TextFieldDemos />
+      </DemoCard>
       <DemoCard label="Selection controls" hint="Checkbox (pill / plain / danger / disabled / block), checklist (leading + trailing), radio list.">
         <SelectionDemos />
       </DemoCard>

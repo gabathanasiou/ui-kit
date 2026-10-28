@@ -39,7 +39,7 @@ export interface MorphActionFieldProps extends Omit<
   /** Clear the draft when cancelling (default true). */
   clearOnCancel?: boolean;
   /** Collapsed button variant (default `primary`). */
-  variant?: 'subtle' | 'primary';
+  variant?: 'subtle' | 'primary' | 'outline';
 }
 
 export function MorphActionField({
@@ -54,6 +54,8 @@ export function MorphActionField({
   onChange,
   value,
   variant = 'primary',
+  triggerCollapse = false,
+  iconWithLabel = true,
   ...rest
 }: MorphActionFieldProps) {
   const submit = (next: string) => {
@@ -87,6 +89,8 @@ export function MorphActionField({
       onChange={onChange}
       triggerLabel={triggerLabel}
       triggerIcon={triggerIcon}
+      triggerCollapse={triggerCollapse}
+      iconWithLabel={iconWithLabel}
       leadingIcon={fieldIcon}
       actions={fieldActions}
       showClear={false}

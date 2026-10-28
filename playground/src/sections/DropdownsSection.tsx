@@ -123,6 +123,30 @@ function RightEdgeMenu() {
   );
 }
 
+/* Icon-only trigger that expands to a labelled button on hover and opens the
+   menu on click (`Button collapse revealOnHover` — the same face as the
+   toolbars). Radix writes `data-state=open`, which the reveal treats as an
+   interaction state, so the open menu keeps the button expanded. */
+function IconDropdownDemo() {
+  const [pick, setPick] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="row" data-testid="icon-dropdown">
+      <DropdownMenu
+        open={open}
+        onOpenChange={setOpen}
+        width="w-40"
+        trigger={<Button variant="outline" icon={<Pencil className="w-3.5 h-3.5" />} collapse revealOnHover aria-label="Edit actions">Actions</Button>}
+      >
+        <DropdownItem onClick={() => setPick('Rename')}>Rename</DropdownItem>
+        <DropdownItem onClick={() => setPick('Duplicate')}>Duplicate</DropdownItem>
+        <DropdownItem variant="danger" onClick={() => setPick('Delete')}>Delete</DropdownItem>
+      </DropdownMenu>
+      <span className="label" data-testid="icon-dropdown-status">{pick || '—'}</span>
+    </div>
+  );
+}
+
 function SubmenuDemo() {
   const [open, setOpen] = useState(false);
   const [pick, setPick] = useState<string | null>(null);
@@ -336,6 +360,9 @@ export function DropdownsSection() {
         hint="Rows toggle and the panel stays open; the footer hero commits one draft. Escape, click-away or the trigger cancels. Sound Mixer is disabled; the capped menu disables unchecked rows at 3. Toggle Checkbox / Check icon to compare the row indicator."
       >
         <MultipleMenuDemo />
+      </DemoCard>
+      <DemoCard label="Icon trigger — expands on hover" hint="A bare icon button grows into a labelled button on hover (and while the menu is open), then opens the menu on click.">
+        <IconDropdownDemo />
       </DemoCard>
       <DemoCard label="Submenus" hint="Nested subs coexist; each level owns its own highlight.">
         <SubmenuDemo />

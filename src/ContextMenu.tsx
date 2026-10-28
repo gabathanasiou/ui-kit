@@ -9,7 +9,7 @@ import DropdownSubmenu from './DropdownSubmenu';
 import { useKitTheme, menuAttributesOf } from './ThemeScope';
 import { revealRowInScroller } from './revealInScroller';
 import {
-  DropdownThemeContext, SubmenuContext, MenuHighlightContext, useMenuHighlight,
+  DropdownThemeContext, DropdownThemeAttrsContext, SubmenuContext, MenuHighlightContext, useMenuHighlight,
   useMenuHighlightState, useMenuKeys, useMenuKeyLock, useMenuWheel, menuItemLabel,
 } from './DropdownMenu';
 import type { DropdownTheme, MenuHighlightItem } from './DropdownMenu';
@@ -170,6 +170,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
       </RadixDropdownMenu.Trigger>
       <RadixDropdownMenu.Portal>
         <DropdownThemeContext.Provider value={theme}>
+        <DropdownThemeAttrsContext.Provider value={resolved.attrs}>
         <SubmenuContext.Provider value={{ chain: subChain, setChain: setSubChain, morph, keyboardOpened: keyboardOpenedSub, setKeyboardOpened: setKeyboardOpenedSub }}>
           <MenuHighlightContext.Provider value={highlight}>
             <RadixDropdownMenu.Content
@@ -184,6 +185,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
             </RadixDropdownMenu.Content>
           </MenuHighlightContext.Provider>
         </SubmenuContext.Provider>
+        </DropdownThemeAttrsContext.Provider>
         </DropdownThemeContext.Provider>
       </RadixDropdownMenu.Portal>
     </RadixDropdownMenu.Root>

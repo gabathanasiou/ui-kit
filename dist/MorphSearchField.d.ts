@@ -25,12 +25,23 @@ export interface MorphSearchFieldProps {
     /** Trigger leading icon (default: a magnifier). */
     triggerIcon?: React.ReactNode;
     placeholder?: string;
-    /** Collapsed button width in px. Default 88. */
-    collapsedWidth?: number;
+    /** Collapsed button width in px, or `'auto'` so an icon-first trigger
+     *  (`triggerCollapse`) hugs the icon and expands on hover. Default 88. */
+    collapsedWidth?: number | 'auto';
     /** Expanded field width in px. Default 200. */
     expandedWidth?: number;
     /** Button variant while collapsed (default `subtle` = toolbar secondary). */
-    variant?: 'subtle' | 'primary';
+    variant?: 'subtle' | 'primary' | 'outline';
+    /** Icon-first trigger (the tab face, roadmap 258): the ICON alone at rest,
+     *  the label reveals on hover. With `iconWithLabel={false}` the pair swaps —
+     *  icon at rest, TEXT ONLY on hover. The applied-term state (`active`) keeps
+     *  the label open. Needs a `triggerIcon` (the default magnifier counts). */
+    triggerCollapse?: boolean;
+    /** With `triggerCollapse`: false = text-only on hover (the icon collapses). */
+    iconWithLabel?: boolean;
+    /** Bare icon at rest (no box); the trigger takes its variant's box on hover.
+     *  Pair with `triggerCollapse` for icon → button → field. */
+    triggerReveal?: boolean;
     theme?: 'light' | 'dark';
     /** Tinted trigger while a term is applied (the collapsed state's "on" cue). */
     active?: boolean;
@@ -55,5 +66,5 @@ export interface MorphSearchFieldProps {
     className?: string;
     "aria-label"?: string;
 }
-export declare function MorphSearchField({ value, onChange, triggerLabel, triggerIcon, placeholder, collapsedWidth, expandedWidth, variant, theme, active, autoFocus, onExpandedChange, actions, leadingIcon, showClear, onSubmit, onCancel, cancelOnEscape, cancelOnOutside, className, 'aria-label': ariaLabel, }: MorphSearchFieldProps): React.JSX.Element;
+export declare function MorphSearchField({ value, onChange, triggerLabel, triggerIcon, placeholder, collapsedWidth, expandedWidth, variant, triggerCollapse, iconWithLabel, triggerReveal, theme, active, autoFocus, onExpandedChange, actions, leadingIcon, showClear, onSubmit, onCancel, cancelOnEscape, cancelOnOutside, className, 'aria-label': ariaLabel, }: MorphSearchFieldProps): React.JSX.Element;
 export default MorphSearchField;

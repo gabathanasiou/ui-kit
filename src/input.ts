@@ -17,7 +17,9 @@ export function inputCls(size: 'md' | 'sm' = 'md'): string {
   if (size === 'sm') {
     return `${coarse ? 'px-3 py-2 text-sm' : 'px-2 py-1.5 text-xs'} ui-input`;
   }
-  return `${coarse ? 'px-4 py-3 text-sm' : 'px-3 py-2 text-xs'} ui-input`;
+  /* Same 30px control box as the buttons/Seg (6 + 6 + 16 + 2 border) — the
+     old 8px padding made md fields 34px and they never sat level in a row. */
+  return `${coarse ? 'px-4 py-3 text-sm' : 'px-3 py-1.5 text-xs'} ui-input`;
 }
 
 /** PROPORTIONAL input sizing (spread as an inline style next to `ui-input`):

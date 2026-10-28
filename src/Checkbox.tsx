@@ -74,7 +74,7 @@ export default function Checkbox({ checked, onChange, disabled = false, label, i
   const pillPad = pill ? `ui-checkbox-pill rounded-lg` : '';
   return (
     <label
-      className={`ui-checkbox ${pillPad} ${tone === 'danger' ? 'ui-checkbox-tone-danger' : ''} ${disabled ? 'ui-disabled' : ''} ${className}`}
+      className={`ui-press ui-checkbox ${pillPad} ${tone === 'danger' ? 'ui-checkbox-tone-danger' : ''} ${disabled ? 'ui-disabled' : ''} ${className}`}
       style={{ display: block ? 'flex' : 'inline-flex', alignItems: 'center', gap, padding: pill ? `${pillPadY}px ${pillPadX}px` : undefined }}
       onClick={(e) => e.stopPropagation()}
       {...(theme ? { 'data-theme': theme } : {})}

@@ -9,6 +9,9 @@ Shared interaction primitives for Gabriel's apps — extracted from the **lemon_
 - `ContextMenu` + `LongPressMenuProvider` — long-press ring → synthetic `contextmenu` (touch's right-click), shared with desktop right-click. Opt in with `data-context-menu` on any element; opt out a subtree with `useLongPressOptOut()`
 - `Dialog` — `confirm() / prompt() / alert()` provider (Enter/Esc/click-outside, "don't ask again")
 - `Modal` + `ModalFooter` — draggable dialog with stacked morph (child grows from the modal beneath it, survivor shrinks back), standalone zoom in/out, and animated content-driven size changes; Enter confirms the footer primary action when nothing interactive is focused; `morph={false}` opts out per-instance
+- `SearchMenu` — the shared catalogue panel: groups/accordions, deep comma-tag search, keyboard model, `multiple` (draft + footer hero for bulk actions), and the controlled seam `PickerField` builds on
+- `PickerField` — the ONE value picker: single/multi, `inline` / `wrap` / `chip` / `morph` / **`button`** faces, `names` / `chips` / `count` / custom display, commit-on-close, async `loadItems` (manual: `docs/PICKER-FIELD.md`)
+- `Button` / `Seg` / `NumberInput` / `inputCls` — the control family on ONE scale: every control 30px tall, `--ui-radius-btn` 6px, nested corners via `--ui-radius-inset`
 - `useSmartPosition` / `useFixedPosition` — visualViewport-aware popup positioning (stays above the iOS keyboard)
 - `popout` — `PopoutWindowContext` + portal/document/window helpers
 

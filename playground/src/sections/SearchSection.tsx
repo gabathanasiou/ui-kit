@@ -26,6 +26,8 @@ function DeepSearchDemo() {
   const [pick, setPick] = useState<string | null>(null);
   const [groupMode, setGroupMode] = useState<'multiple' | 'single'>('multiple');
   const [filter, setFilter] = useState('');
+  const [iconFilter, setIconFilter] = useState('');
+  const [swapFilter, setSwapFilter] = useState('');
   const [flatPick, setFlatPick] = useState(FLAT_ITEMS[40].id);
   const groups = DEEP_CATEGORIES.map(c => ({ ...c, count: records.filter(r => r.group === c.key).length }));
   const common = {
@@ -115,6 +117,47 @@ function DeepSearchDemo() {
         />
       </div>
       <span className="label" data-testid="morph-search-status">filter: {filter || '—'}</span>
+      <div className="flex flex-wrap items-center gap-3">
+        <div data-testid="morph-search-icon">
+          <MorphSearchField
+            value={iconFilter}
+            onChange={setIconFilter}
+            triggerLabel="Search"
+            variant="outline"
+            triggerCollapse
+            collapsedWidth="auto"
+            expandedWidth={200}
+            placeholder="Search…"
+          />
+        </div>
+        <div data-testid="morph-search-reveal">
+          <MorphSearchField
+            value={swapFilter}
+            onChange={setSwapFilter}
+            triggerLabel="Search"
+            variant="outline"
+            triggerCollapse
+            triggerReveal
+            collapsedWidth="auto"
+            expandedWidth={200}
+            placeholder="Search…"
+          />
+        </div>
+        <div data-testid="morph-search-swap">
+          <MorphSearchField
+            value={swapFilter}
+            onChange={setSwapFilter}
+            triggerLabel="Search"
+            variant="outline"
+            triggerCollapse
+            iconWithLabel={false}
+            collapsedWidth="auto"
+            expandedWidth={200}
+            placeholder="Search…"
+          />
+        </div>
+      </div>
+      <span className="label" data-testid="morph-search-icon-status">icon: {iconFilter || '—'} · swap: {swapFilter || '—'}</span>
       <div data-testid="search-menu-group-mode">
         <Seg
           value={groupMode}
@@ -315,6 +358,9 @@ function PickerFieldDemo() {
   const [accordionLoc, setAccordionLoc] = useState<string[]>(['loc-hospital']);
   const [roles, setRoles] = useState<string[]>(['camera-op']);
   const [buttonRoles, setButtonRoles] = useState<string[]>([]);
+  const [dropdownRoles, setDropdownRoles] = useState<string[]>(['camera-op']);
+  const [dropdownCustom, setDropdownCustom] = useState<string[]>(['gaffer', 'grip']);
+  const [dropdownSingle, setDropdownSingle] = useState<string[]>([]);
   const [asyncTz, setAsyncTz] = useState<string[]>([]);
   const [longTz, setLongTz] = useState<string[]>(['Pacific/Auckland']);
   const [display, setDisplay] = useState<'names' | 'chips' | 'count'>('names');
@@ -474,6 +520,57 @@ function PickerFieldDemo() {
             panelWidth={300}
           />
           <span className="label" data-testid="picker-button-status">button: {buttonRoles.join(', ') || '—'}</span>
+        </div>
+
+        <div data-testid="picker-dropdown-button">
+          <span className="label">Dropdown button — no typing; closed face follows Display (names / chips / count)</span>
+          <PickerField
+            appearance="button"
+            mode="multiple"
+            values={dropdownRoles}
+            onChange={values => { setDropdownRoles(values); bump(); }}
+            items={MULTI_ROLES}
+            groups={PICKER_ROLE_GROUPS}
+            browse="open"
+            display={display}
+            indicator="check"
+            placeholder="Select roles…"
+            panelWidth={300}
+          />
+          <span className="label" data-testid="picker-dropdown-button-status">dropdown: {dropdownRoles.join(', ') || '—'}</span>
+        </div>
+
+        <div data-testid="picker-dropdown-custom">
+          <span className="label">Dropdown button — custom closed text (formatDisplay)</span>
+          <PickerField
+            appearance="button"
+            mode="multiple"
+            values={dropdownCustom}
+            onChange={values => { setDropdownCustom(values); bump(); }}
+            items={MULTI_ROLES}
+            groups={PICKER_ROLE_GROUPS}
+            indicator={indicator}
+            formatDisplay={values => (values.length ? `${values.length} of ${MULTI_ROLES.length} roles` : 'No roles selected')}
+            placeholder="No roles selected"
+            panelWidth={300}
+          />
+          <span className="label" data-testid="picker-dropdown-custom-status">custom: {dropdownCustom.join(', ') || '—'}</span>
+        </div>
+
+        <div data-testid="picker-dropdown-single">
+          <span className="label">Dropdown button — single pick (closes on select)</span>
+          <PickerField
+            appearance="button"
+            mode="single"
+            values={dropdownSingle}
+            onChange={values => { setDropdownSingle(values); bump(); }}
+            items={PICKER_LOCATIONS}
+            groups={PICKER_LOCATION_GROUPS}
+            browse="open"
+            placeholder="Choose location…"
+            panelWidth={300}
+          />
+          <span className="label" data-testid="picker-dropdown-single-status">single: {dropdownSingle[0] || '—'}</span>
         </div>
 
         <div data-testid="picker-inline" className="rounded border border-zinc-700 px-2 py-1.5">

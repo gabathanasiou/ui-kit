@@ -284,12 +284,23 @@ export function SearchMenu({
     if (!open || !anchorEl) return;
     setAnchorWidth(anchorEl.getBoundingClientRect().width);
   }, [open, expanded, anchorRef]);
+  /* Keep the panel in the DOM through its close morph. The morph hook plays a
+     close on the live element when `visible` flips false, then reports
+     `onClosed`; unmounting on the same commit (the old `open ? portal : null`)
+     killed it before the first frame, so SearchMenu closed with a snap while
+     DropdownMenu faded — and the unmount-driven clone path can't help either,
+     because `visible` is already false at detach. */
+  const [persisted, setPersisted] = useState(false);
+  useEffect(() => {
+    if (open) setPersisted(true);
+  }, [open]);
   const setPanelRef = useOverlayMorph<HTMLDivElement>({
     visible: open,
     morph,
     anchor: () => (anchorRef?.current ?? rootRef.current)?.getBoundingClientRect() ?? null,
     ref: panelRef,
     cloneOnUnmount: true,
+    onClosed: () => setPersisted(false),
   });
 
   const emptyActionLabels = (emptyActions || []).map(action =>
@@ -555,6 +566,22 @@ export function SearchMenu({
     if (row.kind === 'item') lastActivatedRef.current = row.hit.item.id;
     else if (row.kind === 'group' || row.kind === 'action') lastActivatedRef.current = null;
     if (row.kind === 'group') {
+      if (multipleActive) {
+        /* Multi-select: the LABEL acts like the group checkbox (select the
+           whole category, or its stored token). Expanding is the chevron's
+           job (and the rest of the row). */
+        const token = multiple?.groupToken?.(row.group.key);
+        if (token) {
+          if (selection.canToggle(token)) selection.toggle(token);
+          return;
+        }
+        const ids = items
+          .filter(item => item.group === row.group.key && item.checkable !== false
+            && visibleIdSet.has(item.id) && !selection.isDisabled(item.id))
+          .map(item => item.id);
+        if (ids.length) selection.toggleGroup(ids);
+        return;
+      }
       if (onSelectGroup) {
         onSelectGroup(row.group);
         if (closeOnSelect) close();
@@ -583,7 +610,7 @@ export function SearchMenu({
       if (action) action.onClick(query);
       if (closeOnSelect) close();
     }
-  }, [close, closeOnSelect, emptyActions, footerActions, groupsActionable, leadingActions, multipleActive, onSelect, onSelectGroup, query, selection, toggleGroup]);
+  }, [close, closeOnSelect, emptyActions, footerActions, groupsActionable, items, leadingActions, multiple, multipleActive, onSelect, onSelectGroup, query, selection, toggleGroup, visibleIdSet]);
 
   const moveHighlight = (dir: 1 | -1) => {
     if (navigateRows.length === 0) return;
@@ -979,12 +1006,12 @@ export function SearchMenu({
     );
     const count = multipleActive
       ? (
-        <span className={`shrink-0 tabular-nums text-[10px] ${actionable ? 'text-zinc-400' : 'opacity-70'}`}>
+        <span className={`shrink-0 tabular-nums text-[10px] ${actionable ? 'text-[color:var(--ui-text-faint)]' : 'opacity-70'}`}>
           {selectedInGroup}/{groupItems.length}
         </span>
       )
       : row.group.count !== undefined && (
-        <span className={`shrink-0 tabular-nums ${actionable ? 'text-[10px] text-zinc-400' : 'opacity-70'}`}>{row.group.count}</span>
+        <span className={`shrink-0 tabular-nums ${actionable ? 'text-[10px] text-[color:var(--ui-text-faint)]' : 'opacity-70'}`}>{row.group.count}</span>
       );
     // Plain header (browseExpanded, or any category during a query): the
     // dropdown group-label face — never an item, never hoverable, never a
@@ -1013,7 +1040,9 @@ export function SearchMenu({
         aria-selected={false}
         aria-expanded={showChevron ? groupExpanded : undefined}
         data-search-group={row.group.key}
+        onMouseDown={e => e.preventDefault()}
         onMouseEnter={() => setHighlighted(rowIndex, 'pointer')}
+        onClick={() => { if (showChevron) toggleGroup(row.group.key); }}
         style={itemSize}
         className={`w-full rounded flex items-center gap-1 outline-none select-none font-medium ${d.itemDefault} ${active ? 'ui-item-highlighted' : ''}`}
       >
@@ -1022,13 +1051,15 @@ export function SearchMenu({
           type="button"
           tabIndex={-1}
           onMouseDown={e => e.preventDefault()}
-          onClick={() => activate(row)}
-          className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
+          onClick={e => { e.stopPropagation(); activate(row); }}
+          className="flex w-auto min-w-0 max-w-full cursor-pointer items-center gap-2 text-left"
         >
           {row.group.icon && <span className={`${d.icon} shrink-0`}>{row.group.icon}</span>}
-          <span className="flex-1 truncate">{row.group.label}</span>
-          {count}
+          <span className="truncate">{row.group.label}</span>
         </button>
+        {/* The rest of the row is the EXPAND target (the label is the tick). */}
+        <span className="min-w-0 flex-1" />
+        {count}
         {showChevron && (
           <button
             type="button"
@@ -1038,7 +1069,7 @@ export function SearchMenu({
             onMouseDown={e => e.preventDefault()}
             onClick={e => { e.stopPropagation(); toggleGroup(row.group.key); }}
             style={{ width: iconBtn.box, height: iconBtn.box }}
-            className="shrink-0 flex cursor-pointer items-center justify-center rounded text-zinc-400 hover:text-zinc-700"
+            className="shrink-0 flex cursor-pointer items-center justify-center rounded text-[color:var(--ui-text-muted)] hover:text-[color:var(--ui-text)]"
           >
             <ChevronDown
               size={iconBtn.icon}
@@ -1112,7 +1143,7 @@ export function SearchMenu({
     }
   }
 
-  const panel = open ? createPortal(
+  const panel = (open || persisted) ? createPortal(
     <div
       ref={setPanelRef}
       id="search-menu-panel"

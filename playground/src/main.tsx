@@ -17,6 +17,7 @@ import { DialogsSection } from './sections/DialogsSection';
 import { PanelsSection } from './sections/PanelsSection';
 import { RichTextSection } from './sections/RichTextSection';
 import { HeaderTabsSection } from './sections/HeaderTabsSection';
+import { SizingSection } from './sections/SizingSection';
 
 /* ────────────────────────────────────────────────────────────────────────────
    ui-kit playground — the component zoo & debugging surfaces.
@@ -50,6 +51,11 @@ const SECTIONS: SectionDef[] = [
     id: 'inputs', group: 'Foundations', title: 'Inputs & forms',
     blurb: 'Selection rows, the date picker, the numeric box in every mode, segmented controls and the floating toggle.',
     render: () => <InputsSection />,
+  },
+  {
+    id: 'sizing', group: 'Foundations', title: 'Sizing audit',
+    blurb: 'Every common control measured live (height · corner radius) — the canonical 30px + 6px scale, with drift flagged in red.',
+    render: () => <SizingSection />,
   },
   {
     id: 'dropdowns', group: 'Menus & pickers', title: 'Dropdown menus',

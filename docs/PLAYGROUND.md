@@ -86,7 +86,9 @@ Consequences (learned the hard way):
   multiple selection `multi-search-accordion` / `multi-search-browse` /
   `multi-search-status`; PickerField `picker-field-demo` / `picker-commits`,
   `picker-cast` (+ `-status`), `picker-props`, `picker-location`, `picker-roles`,
-  `picker-inline`, `picker-wrap`, `picker-async` (+ `-status`).
+  `picker-inline`, `picker-wrap`, `picker-async` (+ `-status`), and the dropdown
+  BUTTON face `picker-dropdown-button` / `picker-dropdown-custom` /
+  `picker-dropdown-single` (+ `-status`).
 - Modals: `modal-open`, `stacked-open` → "Open Modal 2",
   `menu-modal-open` → `inmodal-menu-trigger` / `inmodal-long-trigger` /
   `inmodal-search-pick`, `kb-modal-open` (visualViewport readout),
@@ -96,9 +98,19 @@ Consequences (learned the hard way):
   `dlg-spawn-child` / `dlg-nested-back|cancel|save`.
 - Panels: `panel-trigger` / `panel` (clone-on-unmount; the trigger is in the
   fixed right-hand debug rail so its anchor maths are scroll-independent).
-- Inputs: `number-input-demo` / `-light` / `-toolbar` / `-options`,
-  `seg-track-dark|light|blue|emerald`, `seg-tablist`, `seg-chrome`,
-  `seg-dense`, `seg-icons`, `floating-toggle-demo`, `checklist-trailing`.
+- Inputs: `text-input-demo` (md / proportional / sm / borderless / level with
+  a Button / disabled), `number-input-demo` / `-light` / `-toolbar` /
+  `-options`, `seg-track-dark|light|blue|emerald`, `seg-tablist`, `seg-chrome`,
+  `seg-dense`, `seg-icons`, `seg-icon-collapse` (the tab face: labels collapse
+  to icons and reveal on hover), `floating-toggle-demo`, `checklist-trailing`.
+- Sizing audit: two views behind the `Measured` / `In a line` Seg —
+  `sizing-demo` lists one row per common control, each printing its **live
+  measured** height + radius (`data-size-row="<label>"` / `data-size-value`),
+  with drift flagged red against the canonical 30px + 6px scale (Seg segments:
+  4px, the nested-radius rule); `sizing-lineup` puts the same
+  controls in real rows (toolbar / form / filter / dark strip) so baseline
+  drift is visible the way it is in the app. Add new controls to BOTH views
+  when you introduce one.
 - Rich text: `rt-demo`, `rt-editor`, `rt-output`, `rt-print`,
   `rt-style-heading|clear|state`, `rt-insert`.
 - Misc: `ctx-target` (+ fixed `ctx-right-edge`), `ctx-long-target` (30 rows —

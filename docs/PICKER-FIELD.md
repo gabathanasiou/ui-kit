@@ -48,8 +48,13 @@ are conveniences for the default row.
 | `wrap` | multi-line cell editor (textarea, full-box hitbox) |
 | `chip` | bordered form trigger with a chevron (Link Manager / rules) |
 | `morph` | a button that morphs into the field (form header rows) |
+| `button` | a plain dropdown BUTTON — outline box + chevron, **no text input**: click opens the tick list, the trigger stays pressed while open (`data-state="open"`), closing commits, Escape cancels. Its face renders the live draft (`display` / `formatDisplay` / `renderTrigger`), so "2 selected" updates on every tick. |
 
-All faces use the same panel and value model. Coarse sizing follows the global
+All faces use the same panel and value model. The `button` face carries the
+focus itself (no field), so arrows/Enter work without a text box; pressing the
+trigger again dismisses + commits (it must not rely on blur — Safari blurs a
+button on mousedown, which used to close-then-reopen it). The panel plays the
+shared close morph (it stays mounted through `onClosed`, then unmounts). Coarse sizing follows the global
 scale (`useCoarseScale`, `coarsePx`). `skipComma` opens a multi field without
 the trailing `, ` (a typed-key cell open); `portalTarget` hosts the panel for
 cell editors/modals.

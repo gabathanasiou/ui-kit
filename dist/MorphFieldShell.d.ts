@@ -11,7 +11,12 @@ import React from 'react';
  */
 export interface MorphFieldShellProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children'> {
     expanded: boolean;
-    collapsedWidth: number;
+    /** Collapsed width in px, or `'auto'` — the root hugs the trigger, so an
+     *  icon-first trigger (`Button collapse`) can EXPAND on hover without a
+     *  reserved empty box. `auto` cannot CSS-transition, so the shell measures
+     *  the live width on expand and starts the width animation from it (FLIP);
+     *  closing snaps back (the trigger cross-fade covers it). */
+    collapsedWidth: number | 'auto';
     expandedWidth: number;
     /** Collapsed button face (rendered inside the fading trigger layer). */
     trigger: React.ReactNode;

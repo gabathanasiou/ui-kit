@@ -165,6 +165,21 @@ test('submenu still opens sideways and its items get their own highlight', async
   await expect(sub).toBeVisible();
   await page.getByRole('menuitem', { name: 'Nested A' }).hover();
   await expect(litRows(page).last()).toContainText('Nested A');
+
+  // Portaled submenus must inherit the PARENT's resolved theme attrs — not a
+  // light/dark preset (which silently drops the project accent: an emerald
+  // project's nested menu would go zinc/blue).
+  const parent = await menu(page).first().evaluate(el => ({
+    attrs: ['data-theme', 'data-mode', 'data-accent'].map(a => el.getAttribute(a)),
+    accent: getComputedStyle(el).getPropertyValue('--ui-accent-solid').trim(),
+  }));
+  const nested = await sub.evaluate(el => ({
+    attrs: ['data-theme', 'data-mode', 'data-accent'].map(a => el.getAttribute(a)),
+    accent: getComputedStyle(el).getPropertyValue('--ui-accent-solid').trim(),
+  }));
+  expect(nested.attrs).toEqual(parent.attrs);
+  expect(nested.accent).toBe(parent.accent);
+  expect(nested.accent).not.toBe('');
 });
 
 test('the currently selected item keeps a distinct selected tint', async ({ page }) => {

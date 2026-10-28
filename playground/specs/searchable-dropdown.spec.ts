@@ -628,7 +628,7 @@ test('PickerField: single grouped commit, morph face and async source', async ({
   await expect(page.getByTestId('picker-async-status')).toHaveText('tz: Asia/Tokyo');
 });
 
-test('MorphSearchField: button morphs into a filter field and keeps the term', async ({ page }) => {
+test('MorphSearchField: button morphs into a filter field and keeps the term', async ({ page }, testInfo) => {
   await page.goto('/');
   const wrap = page.getByTestId('morph-search-field');
   const trigger = wrap.locator('[data-morph-search-trigger]');
@@ -657,4 +657,20 @@ test('MorphSearchField: button morphs into a filter field and keeps the term', a
   await expect(trigger).toBeVisible();
   await expect(status).toHaveText('filter: —');
   await expect(trigger).toBeFocused();
+
+  // Icon-only trigger (`triggerCollapse`, the tab face): the icon at rest, the
+  // label on hover — and the click still morphs into the search field.
+  const iconWrap = page.getByTestId('morph-search-icon');
+  const iconTrigger = iconWrap.locator('[data-morph-search-trigger]');
+  const iconLabel = iconTrigger.locator('[data-kit-label]');
+  await iconWrap.scrollIntoViewIfNeeded();
+  if (!testInfo.project.name.includes('ipad')) {
+    await page.mouse.move(0, 0);
+    await expect.poll(() => iconLabel.evaluate(el => Math.round(el.getBoundingClientRect().width))).toBe(0);
+    await iconTrigger.hover();
+    await expect.poll(() => iconLabel.evaluate(el => Math.round(el.getBoundingClientRect().width))).toBeGreaterThan(20);
+  }
+  await iconTrigger.click();
+  await expect(iconWrap.locator('[data-morph-search-input]')).toBeVisible();
+  await expect(iconWrap.locator('[data-morph-search-input]')).toBeFocused();
 });

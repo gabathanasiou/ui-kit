@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Anchor, ChevronDown, Plus } from 'lucide-react';
+import Button from './Button';
 import SearchMenu, { type SearchMenuHandle } from './SearchMenu';
 import type { SearchMenuGroup, SearchMenuItem } from './searchMenuModel';
 import { orderByCatalogue, sameSelection } from './selection';
@@ -27,9 +28,11 @@ import { inputCls } from './input';
  * PickerField — the kit's ONE value picker (roadmap 322, phase 5).
  *
  * A field that stores an array of keys and edits it against a catalogue:
- *  - `appearance="inline" | "wrap"` — the cell editor (thin, transparent);
- *  - `appearance="chip"`            — the bordered form-field trigger;
- *  - `appearance="morph"`           — a button that morphs into the field.
+ *  - `inline` | `wrap` — the cell editor (thin, transparent);
+ *  - `chip`            — the bordered form-field trigger (searchable: typing filters);
+ *  - `morph`           — a button that morphs into the field;
+ *  - `button`          — a plain dropdown BUTTON (outline + chevron): no text
+ *                        input, clicking opens the tick list, closing commits.
  *
  * The PANEL is the shared `SearchMenu` catalogue (no second implementation):
  * groups, deep search, create-from-typed (leading action), custom rows and
@@ -42,7 +45,7 @@ import { inputCls } from './input';
  * (blur / outside / Tab) — only when it actually changed. Escape cancels.
  */
 
-export type PickerAppearance = 'inline' | 'chip' | 'wrap' | 'morph';
+export type PickerAppearance = 'inline' | 'chip' | 'wrap' | 'morph' | 'button';
 
 export interface PickerTriggerContext {
   values: string[];
@@ -231,6 +234,7 @@ export function PickerField({
   const [asyncItems, setAsyncItems] = useState<PickerItem[] | null>(null);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const morphFieldRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<SearchMenuHandle>(null);
@@ -291,12 +295,14 @@ export function PickerField({
   }, [open, readOnly, disabled, values, editingText, seedQuery]);
 
   /* Focus + caret on the open edge; after a toggle, keep the caret at the end
-     so typing appends the next segment. */
+     so typing appends the next segment. The button face has no text field —
+     its trigger takes the focus so the panel's arrows/Enter keep working. */
   useLayoutEffect(() => {
     if (!open) return;
-    const el = inputRef.current;
+    const el = inputRef.current ?? triggerRef.current;
     if (!el) return;
     el.focus();
+    if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
     if (mode === 'single' && selectAllOnOpen) {
       el.setSelectionRange(0, el.value.length);
     } else {
@@ -692,6 +698,69 @@ export function PickerField({
   const chipPadX = coarsePx(9, 12, scale);
   const chipFont = coarsePx(12, 14, scale);
 
+  if (appearance === 'button') {
+    /* A plain dropdown BUTTON — the menu-trigger look, not a field: no text
+       input, so a click opens the tick list and the trigger renders the
+       display preset (names / chips / count / formatDisplay). The face mirrors
+       the LIVE draft while open (it updates on every tick), and falls back to
+       the committed value when closed. Closing commits; Escape cancels. The
+       trigger carries the focus so the panel's arrows and Enter keep working
+       without a text box. */
+    const onTriggerKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) =>
+      onKeyDown(event as unknown as React.KeyboardEvent<HTMLInputElement>);
+    const faceValues = open ? draft : values;
+    const faceDisplay = formatPickerValues(faceValues, items, resolveBy, display, formatDisplay);
+    const faceEmpty = !faceDisplay;
+    return (
+      <div
+        ref={rootRef}
+        data-picker-field
+        className={`relative ${className}`}
+        style={style}
+        onMouseDown={e => e.stopPropagation()}
+        onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
+      >
+        {renderTrigger ? (
+          <span className="pointer-events-none flex w-full min-w-0 items-center">
+            {renderTrigger({ values: [...faceValues], items, display: faceDisplay, open, toggle: openPicker })}
+          </span>
+        ) : (
+          <Button
+            ref={triggerRef}
+            variant="outline"
+            theme={theme === 'dark' ? 'dark' : 'light'}
+            disabled={disabled}
+            onClick={readOnly ? undefined : () => (open ? commit() : openPicker())}
+            onKeyDown={onTriggerKeyDown}
+            data-state={open ? 'open' : 'closed'}
+            aria-haspopup="listbox"
+            aria-expanded={open}
+            className="w-full justify-between gap-2"
+          >
+            {display === 'chips' && faceValues.length > 0 ? (
+              <span className="flex min-w-0 flex-1 flex-wrap items-center gap-1 overflow-hidden">
+                {faceValues.map(value => (
+                  <span
+                    key={value}
+                    className="inline-flex items-center rounded border border-[color:var(--ui-border)] bg-[var(--ui-card-bg)] px-1.5 py-0.5 text-[10px] text-[color:var(--ui-text)]"
+                  >
+                    {labelOf(value)}
+                  </span>
+                ))}
+              </span>
+            ) : (
+              <span className={`min-w-0 flex-1 truncate text-left ${faceEmpty ? 'italic text-[color:var(--ui-text-faint)]' : ''}`}>
+                {faceDisplay || placeholder}
+              </span>
+            )}
+            <ChevronDown className="h-3 w-3 shrink-0 text-[color:var(--ui-text-faint)]" />
+          </Button>
+        )}
+        {panel}
+      </div>
+    );
+  }
+
   if (appearance === 'morph') {
     return (
       <MorphFieldShell
@@ -711,7 +780,7 @@ export function PickerField({
               type="button"
               disabled={disabled}
               onClick={openPicker}
-              className="flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded border border-[color:var(--ui-border-strong)] bg-[var(--ui-panel-bg)] text-left outline-none transition-colors hover:border-[color:var(--ui-input-focus-border)] disabled:cursor-default disabled:opacity-50"
+              className="ui-press flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-[var(--ui-radius-btn)] border border-[color:var(--ui-border-strong)] bg-[var(--ui-panel-bg)] text-left outline-none transition-colors hover:border-[color:var(--ui-input-focus-border)] disabled:cursor-default disabled:opacity-50"
               style={{ padding: `${chipPadY}px ${chipPadX}px`, fontSize: chipFont }}
             >
               <span className={`min-w-0 flex-1 truncate ${empty ? 'italic text-[color:var(--ui-text-muted)]' : ''}`}>
@@ -766,7 +835,7 @@ export function PickerField({
       ref={rootRef}
       data-picker-field
       className={`relative ${chip
-        ? 'flex w-full items-center gap-1.5 rounded border border-[color:var(--ui-border-strong)] bg-[var(--ui-panel-bg)] text-left outline-none focus-within:border-[color:var(--ui-input-focus-border)]'
+        ? 'ui-press flex w-full items-center gap-1.5 rounded-[var(--ui-radius-btn)] border border-[color:var(--ui-border-strong)] bg-[var(--ui-panel-bg)] text-left outline-none focus-within:border-[color:var(--ui-input-focus-border)]'
         : (wrap ? 'min-h-[1lh] w-full pb-[1lh]' : (inlineAutoGrow ? 'w-max max-w-[400px] min-w-[72px]' : 'h-[1lh] w-full'))} ${className}`}
       style={chip
         ? { padding: `${padY}px ${padX}px`, fontSize: chipFont, ...style }

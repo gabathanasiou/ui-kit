@@ -4,6 +4,7 @@ import { ArrowUp, ArrowDown, Copy, Trash2 } from 'lucide-react';
 import { IS_COARSE, useCoarseScale, useCoarseSize, coarsePx } from './device';
 import { Tooltip } from './Tooltip';
 import { useSlidingPill } from './slidingPill';
+import { TabFace } from './TabFace';
 import { useKitTheme, segModeOf } from './ThemeScope';
 
 // ---- dark editor-toolbox vocabulary (touch devices scale up — app pattern) ----
@@ -38,7 +39,7 @@ export const TB_TOGGLE_OFF = 'bg-zinc-800 border-zinc-700 text-zinc-500 hover:bg
 export const TB_INPUT = IS_COARSE ? 'h-10 px-2.5 text-sm bg-zinc-800 border border-zinc-700 rounded text-zinc-300 placeholder:text-zinc-600 outline-none focus:border-zinc-500 disabled:opacity-30' : 'h-7 px-2 text-[10px] bg-zinc-800 border border-zinc-700 rounded text-zinc-300 placeholder:text-zinc-600 outline-none focus:border-zinc-500 disabled:opacity-30';
 export const TB_NUM = IS_COARSE ? 'w-14 h-9 bg-zinc-800 border border-zinc-700 rounded text-sm text-center text-zinc-300 outline-none focus:border-[var(--ui-input-focus-border)] shrink-0 read-only:opacity-50' : 'w-10 h-6 bg-zinc-800 border border-zinc-700 rounded text-[11px] text-center text-zinc-300 outline-none focus:border-[var(--ui-input-focus-border)] shrink-0 read-only:opacity-50';
 export const TB_DIVIDER = IS_COARSE ? 'w-px h-7 bg-zinc-700 mx-1' : 'w-px h-5 bg-zinc-700 mx-0.5';
-export const TB_SEG = 'inline-flex rounded overflow-hidden border border-[var(--ui-border-strong)]';
+export const TB_SEG = 'inline-flex rounded-[var(--ui-radius-btn)] overflow-hidden border border-[var(--ui-border-strong)]';
 /** Dropdown trigger look shared by every picker — matches the ribbon designer's
  *  dropdown buttons (h-7, coarse h-10) instead of the old thin strip. */
 export const TB_PICKER = IS_COARSE
@@ -115,9 +116,16 @@ export const Seg: React.FC<{
   /** Tab semantics: role=tablist/tab + aria-selected (segments switch
    *  panels). Default is a button group with aria-pressed. */
   tablist?: boolean;
+  /** Track variant: icon-first collapsing labels (the tab face, roadmap 258).
+   *  The label collapses to the icon and reveals on hover/focus; the SELECTED
+   *  segment always shows its label. Requires an `icon` per option. */
+  iconCollapse?: boolean;
+  /** With `iconCollapse`: false swaps the pair (the icon collapses instead of
+   *  the label). Default true. */
+  iconWithLabel?: boolean;
   /** Accessible name for the container (group/tablist). */
   ariaLabel?: string;
-}> = ({ value, options, onChange, disabled, active, stretch, dense, variant = 'chrome', theme: themeProp, tablist, ariaLabel }) => {
+}> = ({ value, options, onChange, disabled, active, stretch, dense, variant = 'chrome', theme: themeProp, tablist, iconCollapse = false, iconWithLabel = true, ariaLabel }) => {
   const kit = useKitTheme();
   const theme = themeProp ?? segModeOf(kit);
   /* Self-scope the track so the pill/outline tokens resolve even when the Seg
@@ -126,6 +134,7 @@ export const Seg: React.FC<{
   const trackAccent = themeProp === 'blue' || themeProp === 'emerald' ? themeProp : kit?.accent ?? 'zinc';
   const trackAttrs = { 'data-mode': theme === 'dark' ? 'dark' : 'light', 'data-accent': trackAccent };
   const chrome = useToolbarChrome();
+  const scale = useCoarseScale();
   const height = dense && !IS_COARSE ? 24 : chrome.control.height;
   const trackSize = useCoarseSize({ px: 12, py: 6, fs: 12 }, { px: 16, py: 10, fs: 14 });
   /* Fixed segment height on fine pointers so text and icon segments agree
@@ -134,7 +143,7 @@ export const Seg: React.FC<{
      look). Coarse keeps the padding-driven touch size. */
   const trackSegStyle: React.CSSProperties = IS_COARSE
     ? trackSize
-    : { padding: '0 12px', fontSize: 12, height: dense ? 20 : 30 };
+    : { padding: '0 12px', fontSize: 12, height: dense ? 20 : 24 };
   const isOn = (v: string) => (active ? active(v) : value === v);
 
   /* Sliding pill: the shared measured-highlight mechanism (useSlidingPill —
@@ -152,17 +161,18 @@ export const Seg: React.FC<{
         role={tablist ? 'tablist' : 'group'}
         aria-label={ariaLabel}
         {...trackAttrs}
-        className={`relative inline-flex items-center rounded border p-0.5 ${stretch ? 'w-full' : ''} ${TRACK.wrap}`}
+        className={`relative inline-flex items-center rounded-[var(--ui-radius-btn)] border p-0.5 ${IS_COARSE ? '' : (dense ? 'h-[26px]' : 'h-[30px]')} ${stretch ? 'w-full' : ''} ${TRACK.wrap}`}
       >
         {pill.style && (
           <span
             aria-hidden
-            className={`absolute rounded ${TRACK.pill} ${pill.motionClass}`}
+            className={`absolute rounded-[var(--ui-radius-inset)] ${TRACK.pill} ${pill.motionClass}`}
             style={{ ...pill.style, top: 2, bottom: 2 }}
           />
         )}
         {options.map((o, i) => {
           const on = isOn(o.v);
+          const collapsible = iconCollapse && !!o.icon;
           return (
             <button
               key={o.v}
@@ -177,10 +187,17 @@ export const Seg: React.FC<{
               aria-pressed={tablist ? undefined : on}
               aria-label={o.ariaLabel ?? (o.l ? undefined : o.title)}
               style={trackSegStyle}
-              className={`relative z-10 inline-flex cursor-pointer select-none items-center justify-center gap-1.5 whitespace-nowrap rounded font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${stretch ? 'flex-1' : ''} ${on ? TRACK.active : TRACK.idle}`}
+              className={`relative z-10 inline-flex cursor-pointer select-none items-center justify-center whitespace-nowrap rounded-[var(--ui-radius-inset)] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${collapsible ? 'group gap-0' : 'gap-1.5'} ${stretch ? 'flex-1' : ''} ${on ? TRACK.active : TRACK.idle}`}
             >
-              {o.icon}
-              {o.l}
+              <TabFace
+                icon={o.icon}
+                collapse={collapsible}
+                iconWithLabel={iconWithLabel}
+                active={on}
+                gap={coarsePx(6, 8, scale)}
+              >
+                {o.l}
+              </TabFace>
             </button>
           );
         })}

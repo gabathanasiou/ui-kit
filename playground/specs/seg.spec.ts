@@ -76,3 +76,49 @@ test('Checklist trailing check + per-row dataProps', async ({ page }) => {
   await row.click();
   await expect(row).toHaveAttribute('aria-pressed', 'true');
 });
+
+test('track variant: icon-collapse labels (tab face) — collapsed at rest, reveal on hover, selected stays open', async ({ page }, testInfo) => {
+  await page.goto('/');
+  const seg = page.getByTestId('seg-icon-collapse').locator('[role="group"]');
+  const labelWidths = () => seg.locator('[data-kit-label]').evaluateAll(els =>
+    els.map(el => Math.round(el.getBoundingClientRect().width)));
+  const strips = seg.getByRole('button', { name: 'Strips view' });
+  const events = seg.getByRole('button', { name: 'Events view' });
+
+  // Selected segment shows its label; the others collapse to their icon.
+  const rest = await labelWidths();
+  expect(rest[0]).toBeGreaterThan(20);
+  expect(rest[1]).toBe(0);
+
+  // Hover reveals the label without changing the selection. Touch devices have
+  // no hover: there the tap-select path below is the contract (a tap selects,
+  // and the selected segment keeps its label open).
+  if (!testInfo.project.name.includes('ipad')) {
+    await events.hover();
+    await expect.poll(async () => (await labelWidths())[1]).toBeGreaterThan(20);
+    await expect(events).toHaveAttribute('aria-pressed', 'false');
+  }
+
+  // Selecting keeps the label open and collapses the previous one.
+  await events.click();
+  await expect(events).toHaveAttribute('aria-pressed', 'true');
+  await expect(strips).toHaveAttribute('aria-pressed', 'false');
+  await expect.poll(async () => (await labelWidths())[1]).toBeGreaterThan(20);
+  await expect.poll(async () => (await labelWidths())[0]).toBe(0);
+
+  // SWAP face (`iconWithLabel={false}`): icons at rest, TEXT ONLY while hovered
+  // (the icon collapses into a 0-width column) and for the selected segment.
+  const swap = page.getByTestId('seg-icon-swap').locator('[role="group"]');
+  const swapEvents = swap.getByRole('button', { name: 'Events view' });
+  const swapLabelWidth = () => swapEvents.locator('[data-kit-label]')
+    .evaluate(el => Math.round(el.getBoundingClientRect().width));
+  const swapIconWidth = () => swapEvents.locator('[data-kit-icon]')
+    .evaluate(el => Math.round(el.getBoundingClientRect().width));
+  if (!testInfo.project.name.includes('ipad')) {
+    await page.mouse.move(0, 0);
+    await expect.poll(swapLabelWidth).toBe(0);
+    await swapEvents.hover();
+    await expect.poll(swapLabelWidth).toBeGreaterThan(20);
+    await expect.poll(swapIconWidth).toBe(0);
+  }
+});

@@ -3,6 +3,13 @@ import type { MultipleSelectionProps } from './selection';
 export type DropdownTheme = 'light' | 'dark' | 'blue' | 'emerald';
 export declare const DropdownThemeContext: React.Context<DropdownTheme>;
 export declare const useDropdownTheme: () => DropdownTheme;
+/** The parent menu's RESOLVED token attributes (`data-theme` / `data-mode` /
+ *  `data-accent`). Submenus portal to the body, so they cannot inherit the
+ *  parent content's CSS variables — they must paint the same attributes. The
+ *  theme NAME alone is not enough: a menu that inherited `data-accent` (light
+ *  or dark preset in an emerald/zinc project) would lose the accent. */
+export declare const DropdownThemeAttrsContext: React.Context<Record<string, string>>;
+export declare const useDropdownThemeAttrs: () => Record<string, string>;
 /** Shared row sizing for menu items AND item-manager rows (padding + font +
  *  line-height, coarse-scaled) — ONE knob to resize every dropdown row
  *  globally. Consumers spread it as an inline style. */

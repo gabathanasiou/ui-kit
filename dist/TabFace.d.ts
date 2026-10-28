@@ -28,6 +28,13 @@ export interface TabFaceProps {
     active?: boolean;
     /** Icon ↔ label gap in px (the caller's coarse-scaled value). */
     gap?: number;
+    /** Width shim: rendered invisibly beside the label so the tab keeps the
+     *  width of its LONGEST label. A toggle that swaps its label (Edit ↔ Done)
+     *  then never changes width mid-press. */
+    reserve?: React.ReactNode;
+    /** Icon-change roll direction: `up` advances (default), `down` rolls back —
+     *  so returning to a previous icon comes from the side it left by. */
+    roll?: 'up' | 'down';
     children?: React.ReactNode;
 }
-export declare function TabFace({ icon, collapse, iconWithLabel, active, gap, children }: TabFaceProps): React.JSX.Element;
+export declare function TabFace({ icon, collapse, iconWithLabel, active, gap, reserve, roll, children }: TabFaceProps): React.JSX.Element;

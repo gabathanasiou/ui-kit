@@ -173,7 +173,7 @@ export default function NumberInput({
         disabled={disabled}
         className={className ?? 'ui-input w-20'}
         style={{
-          ...(boxed ? { ...inputSize, minHeight: coarsePx(30, 38, scale) } : {}),
+          ...(boxed ? { ...inputSize, minHeight: coarsePx(28, 36, scale) } : {}),
           paddingRight: stepperW + 2,
           cursor: disabled || readOnly ? undefined : focused ? 'text' : 'ns-resize',
         }}

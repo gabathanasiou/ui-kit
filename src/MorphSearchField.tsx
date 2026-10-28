@@ -4,7 +4,7 @@ import { Search, X } from 'lucide-react';
 import Button from './Button';
 import { inputCls } from './input';
 import MorphFieldShell from './MorphFieldShell';
-import { useIconButtonSize } from './device';
+import { useIconButtonSize, useCoarseScale, coarsePx } from './device';
 import type { MorphFieldAction } from './morphFieldTypes';
 export type { MorphFieldAction } from './morphFieldTypes';
 
@@ -32,12 +32,23 @@ export interface MorphSearchFieldProps {
   /** Trigger leading icon (default: a magnifier). */
   triggerIcon?: React.ReactNode;
   placeholder?: string;
-  /** Collapsed button width in px. Default 88. */
-  collapsedWidth?: number;
+  /** Collapsed button width in px, or `'auto'` so an icon-first trigger
+   *  (`triggerCollapse`) hugs the icon and expands on hover. Default 88. */
+  collapsedWidth?: number | 'auto';
   /** Expanded field width in px. Default 200. */
   expandedWidth?: number;
   /** Button variant while collapsed (default `subtle` = toolbar secondary). */
-  variant?: 'subtle' | 'primary';
+  variant?: 'subtle' | 'primary' | 'outline';
+  /** Icon-first trigger (the tab face, roadmap 258): the ICON alone at rest,
+   *  the label reveals on hover. With `iconWithLabel={false}` the pair swaps —
+   *  icon at rest, TEXT ONLY on hover. The applied-term state (`active`) keeps
+   *  the label open. Needs a `triggerIcon` (the default magnifier counts). */
+  triggerCollapse?: boolean;
+  /** With `triggerCollapse`: false = text-only on hover (the icon collapses). */
+  iconWithLabel?: boolean;
+  /** Bare icon at rest (no box); the trigger takes its variant's box on hover.
+   *  Pair with `triggerCollapse` for icon → button → field. */
+  triggerReveal?: boolean;
   theme?: 'light' | 'dark';
   /** Tinted trigger while a term is applied (the collapsed state's "on" cue). */
   active?: boolean;
@@ -72,6 +83,9 @@ export function MorphSearchField({
   collapsedWidth = 88,
   expandedWidth = 200,
   variant = 'subtle',
+  triggerCollapse = false,
+  iconWithLabel = true,
+  triggerReveal = false,
   theme,
   active = false,
   autoFocus = false,
@@ -93,6 +107,11 @@ export function MorphSearchField({
   const inputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const iconBtn = useIconButtonSize();
+  const scale = useCoarseScale();
+  /* The trigger is a `Button size="minimal"`: its icon starts at the button's
+     padding + 1px transparent border. The field's leading icon uses the SAME
+     inset, so the icon does not jump when the button morphs into the field. */
+  const fieldIconInset = coarsePx(9, 13, scale);
 
   const setOpen = useCallback((next: boolean) => {
     if (expandedRef.current === next) return;
@@ -151,9 +170,12 @@ export function MorphSearchField({
   }, [expanded, collapse, cancelOnOutside, onCancel]);
 
   const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && onSubmit) {
+    /* Enter always ENDS the morph (a submitted search collapses back to its
+       trigger, like Escape / click-away / Tab) — the host only hears about it
+       when it passed `onSubmit`. */
+    if (event.key === 'Enter') {
       event.preventDefault();
-      onSubmit(value);
+      onSubmit?.(value);
       collapse(true);
       return;
     }
@@ -203,23 +225,28 @@ export function MorphSearchField({
           size="minimal"
           theme={theme}
           icon={triggerIcon ?? <Search className="w-3.5 h-3.5" />}
+          collapse={triggerCollapse}
+          iconWithLabel={iconWithLabel}
+          revealOnHover={triggerReveal}
           active={active}
           onClick={expand}
-          className={`w-full justify-start ${expanded ? 'pointer-events-none' : ''}`}
+          className={`${triggerCollapse ? 'w-auto' : 'w-full'} justify-start ${expanded ? 'pointer-events-none' : ''}`}
           tabIndex={expanded ? -1 : 0}
           aria-expanded={expanded}
           aria-label={ariaLabel || triggerLabel}
           data-morph-search-trigger
         >
-          <span className="min-w-0 truncate">{triggerLabel}</span>
+          {/* A collapsing trigger rides its own auto width out — truncating
+              here would flash an ellipsis mid-reveal ("Sea…"). */}
+          <span className={`min-w-0 ${triggerCollapse ? '' : 'truncate'}`}>{triggerLabel}</span>
         </Button>
       )}
       field={(
         <>
           {fieldLeadIcon && (
             <span
-              className="ui-icon absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ width: iconBtn.icon, height: iconBtn.icon }}
+              className="ui-icon absolute top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ left: fieldIconInset, width: iconBtn.icon, height: iconBtn.icon }}
             >
               {iconWrap(fieldLeadIcon)}
             </span>
@@ -233,7 +260,7 @@ export function MorphSearchField({
             aria-label={ariaLabel || placeholder}
             tabIndex={expanded ? 0 : -1}
             data-morph-search-input
-            style={{ paddingLeft: fieldLeadIcon ? iconBtn.icon + 16 : 10, paddingRight: rightPad }}
+            style={{ paddingLeft: fieldLeadIcon ? fieldIconInset + iconBtn.icon + 6 : 10, paddingRight: rightPad }}
             className={`${inputCls('sm')} w-full`}
           />
           <span className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">

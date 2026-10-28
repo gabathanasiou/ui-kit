@@ -396,3 +396,39 @@ body {
   .pg-hero-title { font-size: 21px; }
   .pg-section { padding: 14px; }
 }
+
+/* ── Sizing audit rows (SizingSection) ───────────────────────────────────── */
+.pg-size-row {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr) 130px 78px;
+  gap: 10px;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px dashed rgba(127, 127, 127, 0.18);
+}
+.pg-size-label { width: auto; }
+.pg-size-control { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.pg-size-value {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-text-muted);
+  white-space: nowrap;
+}
+.pg-size-drift { color: #f87171; font-weight: 600; }
+.pg-size-expected {
+  font-size: 10px;
+  color: var(--ui-text-faint);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Side-by-side control lineup (SizingSection → In a line) */
+.pg-line-row {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px dashed rgba(127, 127, 127, 0.18);
+}
+.pg-line-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }

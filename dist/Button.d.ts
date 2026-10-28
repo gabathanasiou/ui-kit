@@ -51,10 +51,26 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     /** Square icon-only shape (no label): equal width/height at the toolbar
      *  control size, contents centered. Pair with `aria-label`/`title`. */
     iconOnly?: boolean;
-    /** `minimal` matches the kit text input box exactly (same padding, border
-     *  and line-height) — for search triggers and controls sitting beside a
-     *  field. */
+    /** `minimal` = the STANDARD 30px control box (radius 6, compact padding) —
+     *  for search triggers and controls sitting beside a field. Form inputs
+     *  (`inputCls('md')`) are the taller 34px box. */
     size?: 'default' | 'minimal';
+    /** Bare icon at rest: the variant's box (fill / border / outline) is hidden
+     *  until hover, keyboard focus or open. Pair with `collapse` for the full
+     *  "icon → button" reveal (the label rides out with the box). An ACTIVE
+     *  (lit) button keeps its box so a toggle still reads as on. */
+    revealOnHover?: boolean;
+    /** With `collapse` + `active`: whether the label stays open while lit.
+     *  Default true (tabs, an applied filter term). Pass false for a TOGGLE
+     *  that should collapse back to its icon after the press. */
+    keepLabelOnActive?: boolean;
+    /** Width shim for a label that CHANGES (a toggle: Edit ↔ Done): the button
+     *  keeps the width of whichever label is longer, so the press never shifts
+     *  it. Pass the longest label text. */
+    reserveLabel?: React.ReactNode;
+    /** Direction of the icon-change roll when the icon swaps: `up` (advancing,
+     *  default) or `down` (returning) — a toggle rolls back the way it came. */
+    iconRoll?: 'up' | 'down';
     /** Leading icon — tab variants sit icon-first (before the label), inherits
      *  `currentColor`. */
     icon?: React.ReactNode;
@@ -77,4 +93,4 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
  *  + the tabs' refs) so the selection box glides. On a `dark` toolbar
  *  `plain` is white — a zinc-950 pill vanished into the bar. */
 export declare const TAB_PILL: Record<'light' | 'dark', Record<'plain' | 'blue' | 'emerald', string>>;
-export default function Button({ variant, theme: themeProp, cloud: cloudProp, active, iconOnly, size: sizeProp, icon, collapse, iconWithLabel, className, type, children, ...rest }: ButtonProps): React.JSX.Element;
+export default function Button({ variant, theme: themeProp, cloud: cloudProp, active, iconOnly, size: sizeProp, revealOnHover, keepLabelOnActive, reserveLabel, iconRoll, icon, collapse, iconWithLabel, className, type, children, ...rest }: ButtonProps): React.JSX.Element;

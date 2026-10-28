@@ -129,6 +129,10 @@
   --ui-radius-menu: 8px;
   --ui-radius-input: 6px;
   --ui-radius-btn: 6px;
+  /* Concentric nested corner: R_inner = R_outer − padding. The Seg track pads
+     its segments by 2px, so the track is 6 and the pill/segments are 4. One
+     token instead of ad-hoc maths per component. */
+  --ui-radius-inset: calc(var(--ui-radius-btn) - 2px);
   /* Modal chrome (roadmap 302) — the shell reads these, never Tailwind zinc.
      `--ui-modal-header-base` is the NEUTRAL band; `chrome="accent"` swaps the
      header to `--ui-chrome-bg` (the project tint). */
@@ -838,6 +842,60 @@
   scroll-margin-block: 16px;
 }
 
+/* Reveal-on-hover box: the control is a BARE icon at rest and takes its
+   variant's full box (border / fill / edge) on hover, focus-visible or while
+   open. Unlayered so it beats the variant's utility classes at rest; the
+   :not(…) guards hand those classes straight back on interaction. Pair with
+   `Button collapse` (icon-only at rest → the label rides the reveal out). */
+.ui-reveal:not(:hover):not(:focus-visible):not([data-state="open"]):not([data-active]) {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+/* Icon change (TabFace): a vertical ROLL inside the clipped icon box — the
+   old glyph scrolls up and out, the new one scrolls up into place (Pencil ↔
+   Check on a toggle). Reads as one object changing state, not two icons
+   swapping. */
+@keyframes ui-icon-roll-in {
+  from { opacity: 0.4; transform: translateY(110%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ui-icon-roll-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-110%); }
+}
+.ui-icon-roll-in { animation: ui-icon-roll-in 200ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.ui-icon-roll-out { animation: ui-icon-roll-out 200ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+
+/* Returning (toggle off / step back): the SAME roll, reversed — the icon
+   comes back from the side it left by. */
+@keyframes ui-icon-roll-in-down {
+  from { opacity: 0.4; transform: translateY(-110%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ui-icon-roll-out-down {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(110%); }
+}
+.ui-icon-roll-in-down { animation: ui-icon-roll-in-down 200ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.ui-icon-roll-out-down { animation: ui-icon-roll-out-down 200ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .ui-icon-roll-in, .ui-icon-roll-out,
+  .ui-icon-roll-in-down, .ui-icon-roll-out-down { animation: none; }
+}
+
+/* Momentary press — the clicked control shrinks a hair (a "smaller button"
+   feel) without changing the layout. Instant on purpose: a transition would
+   lag the finger. Applied to buttons, Seg segments, checkbox pills and picker
+   triggers; never to text/number inputs. */
+/* TEMPORARILY DISABLED (owner, picker iteration): the click/press scale is
+   off. The `ui-press` classes stay on the controls, so re-enabling is this one
+   rule. */
+.ui-press:active {
+  /* transform: scale(0.98); */
+}
+
 /* Press feedback: SQUEEZE the current background into a smaller pill — an
    inset ring in the panel color cuts 2px into the fill on mousedown (no
    layout shift, no color swap), then springs back. The row radius bumps so
@@ -1079,6 +1137,22 @@
 
   .ui-input:focus {
     background: var(--ui-input-focus-bg);
+    border-color: var(--ui-input-focus-border);
+  }
+
+  /* BORDERLESS field — no edge at rest, the edge (plus the subtle fill)
+     appears on hover and stays while editing. For a field that sits inside a
+     card/row and should read as plain text until touched. Same box, radius
+     and padding as `.ui-input` (pair it: `ui-input ui-input-ghost`). */
+  .ui-input-ghost {
+    border-color: transparent;
+  }
+
+  .ui-input-ghost:hover {
+    border-color: var(--ui-input-hover-border);
+  }
+
+  .ui-input-ghost:focus {
     border-color: var(--ui-input-focus-border);
   }
 }

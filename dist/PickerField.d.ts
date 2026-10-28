@@ -6,9 +6,11 @@ import type { DropdownTheme } from './DropdownMenu';
  * PickerField — the kit's ONE value picker (roadmap 322, phase 5).
  *
  * A field that stores an array of keys and edits it against a catalogue:
- *  - `appearance="inline" | "wrap"` — the cell editor (thin, transparent);
- *  - `appearance="chip"`            — the bordered form-field trigger;
- *  - `appearance="morph"`           — a button that morphs into the field.
+ *  - `inline` | `wrap` — the cell editor (thin, transparent);
+ *  - `chip`            — the bordered form-field trigger (searchable: typing filters);
+ *  - `morph`           — a button that morphs into the field;
+ *  - `button`          — a plain dropdown BUTTON (outline + chevron): no text
+ *                        input, clicking opens the tick list, closing commits.
  *
  * The PANEL is the shared `SearchMenu` catalogue (no second implementation):
  * groups, deep search, create-from-typed (leading action), custom rows and
@@ -20,7 +22,7 @@ import type { DropdownTheme } from './DropdownMenu';
  * toggle, the field text mirrors the draft, and the VALUE commits on close
  * (blur / outside / Tab) — only when it actually changed. Escape cancels.
  */
-export type PickerAppearance = 'inline' | 'chip' | 'wrap' | 'morph';
+export type PickerAppearance = 'inline' | 'chip' | 'wrap' | 'morph' | 'button';
 export interface PickerTriggerContext {
     values: string[];
     items: PickerItem[];

@@ -30,7 +30,7 @@ export declare const TB_TOGGLE_OFF = "bg-zinc-800 border-zinc-700 text-zinc-500 
 export declare const TB_INPUT: string;
 export declare const TB_NUM: string;
 export declare const TB_DIVIDER: string;
-export declare const TB_SEG = "inline-flex rounded overflow-hidden border border-[var(--ui-border-strong)]";
+export declare const TB_SEG = "inline-flex rounded-[var(--ui-radius-btn)] overflow-hidden border border-[var(--ui-border-strong)]";
 /** Dropdown trigger look shared by every picker — matches the ribbon designer's
  *  dropdown buttons (h-7, coarse h-10) instead of the old thin strip. */
 export declare const TB_PICKER: string;
@@ -88,6 +88,13 @@ export declare const Seg: React.FC<{
     /** Tab semantics: role=tablist/tab + aria-selected (segments switch
      *  panels). Default is a button group with aria-pressed. */
     tablist?: boolean;
+    /** Track variant: icon-first collapsing labels (the tab face, roadmap 258).
+     *  The label collapses to the icon and reveals on hover/focus; the SELECTED
+     *  segment always shows its label. Requires an `icon` per option. */
+    iconCollapse?: boolean;
+    /** With `iconCollapse`: false swaps the pair (the icon collapses instead of
+     *  the label). Default true. */
+    iconWithLabel?: boolean;
     /** Accessible name for the container (group/tablist). */
     ariaLabel?: string;
 }>;
