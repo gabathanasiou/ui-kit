@@ -99,8 +99,9 @@ Consequences (learned the hard way):
   (+ `morph-search-icon-status`).
 - Glide data grid (`#glide`, experimental): `glide-crew-demo` (the crew card —
   `glide-crew-status` / `-commits` / `-undo` / `-include` / `-report-to` /
-  `-precall` / `-add-role`; the Person cells are REAL PickerFields under
-  `[data-glide-dom-layer]`), `glide-gallery-demo` (`glide-gallery-clicks` /
+  `-precall` / `-add-role`; Person/Report-To are native picker cells with a
+  passthrough DOM chevron (`glide-crew-person-open-<id>` /
+  `glide-crew-report-open-<id>`) under `[data-glide-dom-layer]`), `glide-gallery-demo` (`glide-gallery-clicks` /
   `-last` / `-reset`), `glide-layouts-demo` (`glide-layout-status`; DOM-cell
   rows of arranged controls, `[data-glide-dom-cell]`), `glide-buttons-demo`
   (`glide-buttons-status`; the Search and Add columns are in-cell morph

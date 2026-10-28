@@ -1,7 +1,7 @@
 import React from 'react';
 import { type CellClickedEventArgs, type CustomRenderer, type GridCell, type Item, type Theme } from '@glideapps/glide-data-grid';
 import { type GlideColumnEditor } from './editors';
-import type { GlideSheetColumn, GlideSheetEdit, GlideSheetRowAction } from './types';
+import type { GlideSheetColumn, GlideSheetEdit } from './types';
 /**
  * GlideSheet — a compact, self-sizing spreadsheet grid for a page card.
  *
@@ -35,6 +35,9 @@ export interface GlideDomCellSpec {
     row: number;
     colKey: string;
     node: React.ReactNode;
+    /** Click-through box: only the node's own `pointer-events: auto`
+     *  descendants capture, so the canvas cell stays selectable. */
+    passthrough?: boolean;
 }
 /** Imperative surface for host controls (e.g. a DOM dropdown button that must
  *  behave exactly like double-clicking the cell). */
@@ -62,8 +65,6 @@ export interface GlideSheetProps {
     /** DOM data attribute for tests/scoping. */
     dataAttr?: string;
     className?: string;
-    /** Trailing per-row actions, drawn as canvas glyphs (single click). */
-    rowActions?: (rowIndex: number) => GlideSheetRowAction[];
     /** Inline dropdown editors per column key. */
     editors?: Record<string, GlideColumnEditor>;
     /** Per-(row, column) editor — wins over `editors`. */

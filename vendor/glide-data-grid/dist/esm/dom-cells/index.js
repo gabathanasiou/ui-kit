@@ -108,7 +108,12 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
             "div",
             { ref: layerRef, style: { position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1 }, "data-glide-dom-layer": "" },
             boxes.map(b => {
-                const node = getDomCell?.(b.col, b.row);
+                const entry = getDomCell?.(b.col, b.row);
+                if (entry == null || entry === false) return null;
+                // A spec may opt into a click-through box: only its own
+                // interactive children (e.g. a chevron button) capture.
+                const spec = (typeof entry === "object" && !React.isValidElement(entry) && "node" in entry) ? entry : null;
+                const node = spec != null ? spec.node : entry;
                 if (node == null || node === false) return null;
                 return React.createElement(
                     "div",
@@ -128,7 +133,7 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
                                up with painted cells. */
                             padding: 4,
                             boxSizing: "border-box",
-                            pointerEvents: "auto",
+                            pointerEvents: spec != null && spec.passthrough === true ? "none" : "auto",
                             /* The cell is a CONTAINER: the host arranges its own
                                buttons/fields inside (and may overflow the box
                                for a morph that expands). */

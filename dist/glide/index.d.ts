@@ -2,7 +2,7 @@ export { GlideSheet } from './GlideSheet';
 export { GridCellKind } from '@glideapps/glide-data-grid';
 export type { GridCell, GridSelection, EditableGridCell, Item, Theme, CustomCell, CustomRenderer, } from '@glideapps/glide-data-grid';
 export type { GlideSheetProps, GlideDomCellSpec, GlideSheetApi } from './GlideSheet';
-export type { GlideSheetColumn, GlideSheetEdit, GlideSheetRowAction, GlideRowGlyph, GlideRange, } from './types';
+export type { GlideSheetColumn, GlideSheetEdit, GlideRange, } from './types';
 export { textCell, seededTextCell, staticCell, actionGlyphCell, isSeededNoop, buildCopyText, buildCutPlan, } from './cells';
 export type { TextCellOptions, CutCommit } from './cells';
 export { effectiveGridRange, expandRangeFill, planGridPaste, planGridClear, parseClipboardGrid, } from './gridModel';

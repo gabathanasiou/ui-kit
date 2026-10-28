@@ -29,7 +29,7 @@ import {
 } from './gridModel';
 import { createGlideCellEditor, useGlideEscapeCancel, type GlideColumnEditor, type GlideEditorOptions } from './editors';
 import { KIT_GLIDE_RENDERERS } from './customCells';
-import type { GlideRange, GlideSheetColumn, GlideSheetEdit, GlideSheetRowAction } from './types';
+import type { GlideRange, GlideSheetColumn, GlideSheetEdit } from './types';
 
 /**
  * GlideSheet — a compact, self-sizing spreadsheet grid for a page card.
@@ -65,6 +65,9 @@ export interface GlideDomCellSpec {
   row: number;
   colKey: string;
   node: React.ReactNode;
+  /** Click-through box: only the node's own `pointer-events: auto`
+   *  descendants capture, so the canvas cell stays selectable. */
+  passthrough?: boolean;
 }
 
 
@@ -95,8 +98,6 @@ export interface GlideSheetProps {
   /** DOM data attribute for tests/scoping. */
   dataAttr?: string;
   className?: string;
-  /** Trailing per-row actions, drawn as canvas glyphs (single click). */
-  rowActions?: (rowIndex: number) => GlideSheetRowAction[];
   /** Inline dropdown editors per column key. */
   editors?: Record<string, GlideColumnEditor>;
   /** Per-(row, column) editor — wins over `editors`. */
@@ -123,7 +124,6 @@ export interface GlideSheetProps {
 
 const DEFAULT_ROW_HEIGHT = 28;
 const DEFAULT_HEADER_HEIGHT = 30;
-const ACTIONS_COLUMN: GlideSheetColumn = { key: 'actions', label: '', width: 34 };
 const EMPTY_SELECTION: GridSelection = {
   columns: CompactSelection.empty(),
   rows: CompactSelection.empty(),
@@ -203,15 +203,6 @@ function useMeasuredWidth(): { ref: React.RefObject<HTMLDivElement | null>; widt
   return { ref, width };
 }
 
-function preloadGlyph(svg: string): HTMLImageElement | null {
-  if (typeof Image === 'undefined') return null;
-  const img = new Image();
-  img.src = 'data:image/svg+xml;base64,' + btoa(svg);
-  return img;
-}
-
-const TRASH_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>';
-const PLUS_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3f3f46" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>';
 
 export const GlideSheet: React.FC<GlideSheetProps> = ({
   columns,
@@ -227,7 +218,6 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
   wrapHeaders,
   dataAttr,
   className = '',
-  rowActions,
   editors,
   getEditor,
   customRenderers,
@@ -252,22 +242,17 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
   const { ref: sizeRef, width: gridWidth } = useMeasuredWidth();
 
   const COLUMNS = useMemo(() => {
-    const all = rowActions ? [...columns, ACTIONS_COLUMN] : columns;
-    const dataColumns = all.filter(c => c.key !== 'actions');
-    const actionsWidth = rowActions ? ACTIONS_COLUMN.width : 0;
-    const total = dataColumns.reduce((sum, c) => sum + c.width, 0);
-    if (!gridWidth || gridWidth <= 0 || total <= 0) return all;
-    const target = Math.max(120, Math.floor(gridWidth) - 1) - actionsWidth;
-    const flexIdx = Math.min(1, dataColumns.length - 1);
-    const widths = dataColumns.map(c => Math.max(40, Math.floor((c.width / total) * target)));
+    const total = columns.reduce((sum, c) => sum + c.width, 0);
+    if (!gridWidth || gridWidth <= 0 || total <= 0) return columns;
+    const target = Math.max(120, Math.floor(gridWidth) - 1);
+    const flexIdx = Math.min(1, columns.length - 1);
+    const widths = columns.map(c => Math.max(40, Math.floor((c.width / total) * target)));
     if (flexIdx >= 0) {
       const sum = widths.reduce((s, w) => s + w, 0);
       widths[flexIdx] = Math.max(40, widths[flexIdx] + (target - sum));
     }
-    const out = dataColumns.map((c, i) => ({ ...c, width: widths[i] }));
-    if (rowActions) out.push(ACTIONS_COLUMN);
-    return out;
-  }, [columns, gridWidth, rowActions]);
+    return columns.map((c, i) => ({ ...c, width: widths[i] }));
+  }, [columns, gridWidth]);
 
   const glideColumns: GridColumn[] = useMemo(
     () => COLUMNS.map(c => ({ title: c.label.toUpperCase(), width: c.width })),
@@ -340,14 +325,6 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
   const escapeCancel = useGlideEscapeCancel();
 
   const gridRef = useRef<DataEditorRef>(null);
-  const trashImg = useRef<HTMLImageElement | null>(null);
-  const plusImg = useRef<HTMLImageElement | null>(null);
-  useEffect(() => {
-    if (!rowActions) return;
-    trashImg.current = preloadGlyph(TRASH_SVG);
-    plusImg.current = preloadGlyph(PLUS_SVG);
-  }, [rowActions]);
-
   const [gridSelection, setGridSelection] = useState<GridSelection>(() =>
     (selectionKey ? SELECTION_CACHE.get(selectionKey) : undefined) ?? EMPTY_SELECTION);
   useEffect(() => {
@@ -364,10 +341,10 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
      visible cell and the wrapper pins its own boxes (see
      vendor/glide-data-grid/dist/esm/dom-cells). The host only names the cells. */
   const domCellMap = useMemo(() => {
-    const map = new Map<string, React.ReactNode>();
+    const map = new Map<string, { node: React.ReactNode; passthrough?: boolean }>();
     for (const spec of domCells ?? []) {
       const col = COLUMNS.findIndex(c => c.key === spec.colKey);
-      if (col >= 0) map.set(`${col}:${spec.row}`, spec.node);
+      if (col >= 0) map.set(`${col}:${spec.row}`, { node: spec.node, passthrough: spec.passthrough });
     }
     return map;
   }, [domCells, COLUMNS]);
@@ -405,7 +382,6 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
     const r = rowsRef.current[row];
     if (!colDef || !r) return actionGlyphCell({ readonly: true });
     const hovered = row === hoveredRowRef.current;
-    if (colDef.key === 'actions') return actionGlyphCell({ hovered, hoverBg: cellColors.readonlyHoverBg });
     const cell = getCellContent(colDef, r, row);
     // A read-only sheet is enforced per cell: Glide has no grid-level flag.
     if (readOnlyRef.current) return { ...cell, readonly: true, allowOverlay: false } as GridCell;
@@ -469,38 +445,9 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
     ctx.restore();
   }, [COLUMNS, wrapHeaders]);
 
-  const drawCell = useCallback((args: any, drawContent: () => void) => {
-    drawContent();
-    const colDef = COLUMNS[args.col];
-    if (!colDef || colDef.key !== 'actions' || !rowActions) return;
-    if (args.row >= rowsRef.current.length) return;
-    const actions = rowActions(args.row);
-    if (!actions || actions.length === 0) return;
-    const { ctx, rect } = args;
-    const slot = rect.width / actions.length;
-    const size = Math.min(13, slot - 4, rect.height - 4);
-    actions.forEach((action, i) => {
-      const img = action.icon === 'plus' ? plusImg.current : trashImg.current;
-      if (!img || !img.complete) return;
-      const cx = rect.x + slot * i + slot / 2;
-      ctx.drawImage(img, cx - size / 2, rect.y + (rect.height - size) / 2, size, size);
-    });
-  }, [COLUMNS, rowActions]);
-
   const onCellClicked = useCallback((cell: Item, event: CellClickedEventArgs) => {
-    if (rowActions && COLUMNS[cell[0]]?.key === 'actions') {
-      const row = cell[1];
-      if (row >= 0 && row < rowsRef.current.length) {
-        const actions = rowActions(row);
-        const width = event?.bounds?.width ?? 0;
-        const idx = width > 0
-          ? Math.min(actions.length - 1, Math.max(0, Math.floor((event.localEventX ?? 0) / (width / actions.length))))
-          : 0;
-        actions[idx]?.onClick();
-      }
-    }
     onCellClick?.(cell, event);
-  }, [COLUMNS, rowActions, onCellClick]);
+  }, [onCellClick]);
 
   /** Applies a set of planned edits as ONE commit. */
   const applyEdits = useCallback((edits: PlannedEdit[]) => {
@@ -705,7 +652,6 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
             rowHeight={rowH}
             headerHeight={headerH}
             drawHeader={drawHeader}
-            drawCell={rowActions ? drawCell : undefined}
             onCellClicked={onCellClicked}
             onItemHovered={onItemHovered}
             onCellContextMenu={onCellContextMenu}

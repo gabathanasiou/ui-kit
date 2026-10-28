@@ -16,16 +16,6 @@ export interface GlideSheetEdit {
   value: string;
 }
 
-export type GlideRowGlyph = 'plus' | 'trash';
-
-/** One trailing per-row action, drawn as a canvas glyph. */
-export interface GlideSheetRowAction {
-  key: string;
-  title: string;
-  icon: GlideRowGlyph;
-  onClick: () => void;
-}
-
 /** A rectangle in grid (row/column) coordinates. */
 export interface GlideRange {
   x: number;

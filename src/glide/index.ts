@@ -15,8 +15,6 @@ export type { GlideSheetProps, GlideDomCellSpec, GlideSheetApi } from './GlideSh
 export type {
   GlideSheetColumn,
   GlideSheetEdit,
-  GlideSheetRowAction,
-  GlideRowGlyph,
   GlideRange,
 } from './types';
 export {

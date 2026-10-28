@@ -138,8 +138,6 @@ export type {
   GlideSheetApi,
   GlideSheetColumn,
   GlideSheetEdit,
-  GlideSheetRowAction,
-  GlideRowGlyph,
   GlideRange,
   TextCellOptions,
   CutCommit,

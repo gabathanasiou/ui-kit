@@ -81,6 +81,12 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
   navigation / the fill handle skip that cell. A control wider than the column
   spills over the neighbour — size it deliberately.
 - Mount only the cells that need it; a DOM box per cell defeats the canvas.
+- **`passthrough: true`** makes the box click-through (`pointer-events: none`):
+  only the node's own `pointer-events: auto` children capture. Use it for a
+  small affordance drawn over a NATIVE cell — e.g. the crew card's chevron
+  button: the canvas value stays selectable/editable (click selects,
+  double-click opens the picker) and ONE click on the chevron calls
+  `apiRef.openCellEditor(row, colKey)` to open the same editor.
 - `kitFieldCell` remains for the cheaper "one click → overlay editor" variant.
 - **Enter activates a DOM cell:** arrow-key navigation moves the grid selection
   onto the cell; Enter (or Space) fires the fork's `onCellActivated` hook, which

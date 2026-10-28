@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ChevronDown, Plus, RotateCcw, Undo2 } from 'lucide-react';
+import { ChevronDown, Plus, RotateCcw, Trash2, Undo2 } from 'lucide-react';
 import {
   Button,
   Checkbox,
@@ -90,6 +90,7 @@ const CREW_COLUMNS: GlideSheetColumn[] = [
   { key: 'person', label: 'Person', width: 190 },
   { key: 'reportTo', label: 'Report To', width: 220 },
   { key: 'call', label: 'Call', width: 80, align: 'center' },
+  { key: 'actions', label: '', width: 44 },
 ];
 
 const CREW_EDITABLE = new Set(['person', 'reportTo', 'call']);
@@ -136,15 +137,12 @@ export const CrewCardDemo: React.FC = () => {
 
   const getCellContent = useCallback((col: GlideSheetColumn, row: Record<string, string>) => {
     if (col.key === 'role') return staticCell(row.role, { themeOverride: { textDark: colors.muted } });
-    // The person cell is covered by a DOM dropdown button (domCells); the
-    // canvas cell behind it stays blank but must stay EDITABLE so
-    // openCellEditor can put the picker overlay on top.
-    // Seed the editor with the current name (displayData empty: the DOM
-    // button paints the cell, nothing must show on the canvas).
-    if (col.key === 'person') return seededTextCell(row.person, { displayData: '' });
-    if (col.key === 'reportTo') {
-      return seededTextCell(row.reportTo, { displayData: row.reportTo || '—', cursor: 'pointer' });
-    }
+    // Native picker cell: the value is painted on the canvas (selectable,
+    // double-click opens the editor). A small DOM chevron button in the cell
+    // opens the same editor with ONE click.
+    if (col.key === 'person') return seededTextCell(row.person, { displayData: row.person || '—' });
+    if (col.key === 'reportTo') return seededTextCell(row.reportTo, { displayData: row.reportTo || '—' });
+    if (col.key === 'actions') return staticCell('');
     return seededTextCell(row.call, { displayData: row.call || '—', align: 'center' });
   }, [colors.muted]);
 
@@ -165,7 +163,7 @@ export const CrewCardDemo: React.FC = () => {
         resolveBy: 'id',
         seedValue: gridRows[row]?.reportToId ?? '',
         placeholder: 'Select…',
-        panelMinWidth: 300,
+        panelMinWidth: 320,
         browse: 'open',
       };
     }
@@ -175,34 +173,68 @@ export const CrewCardDemo: React.FC = () => {
   /* Real PickerField per row, mounted ON the Person cell (domCells). Native
      focus/hover, the kit's own panel, and the row keeps its value while the
      grid scrolls — no overlay editor involved. */
-  const personCells = useMemo<GlideDomCellSpec[]>(() => rows.map((row, index) => ({
-    row: index,
-    colKey: 'person',
-    node: (
-      <button
-        type="button"
-        className="flex h-[30px] w-full items-center justify-between gap-1.5 rounded-[var(--ui-radius-btn)] border border-[color:var(--ui-border-strong)] bg-[var(--ui-panel-bg)] px-2 text-left text-[12px] text-[color:var(--ui-text)] transition-colors hover:border-[color:var(--ui-input-focus-border)]"
-        onClick={() => sheetApi.current?.openCellEditor(index, 'person')}
-        data-testid={`glide-crew-person-${row.id}`}
-        aria-label={`Edit ${row.person || 'person'}`}
-      >
-        <span className="min-w-0 truncate">{row.person || 'Select…'}</span>
-        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[color:var(--ui-text-faint)]" />
-      </button>
-    ),
-  })), [rows]);
-
-  const rowActions = useCallback((row: number) => [{
-    key: 'remove',
-    title: 'Remove from this day',
-    icon: 'trash' as const,
-    onClick: () => {
-      const target = gridRows[row];
-      if (!target) return;
-      setStatus('row removed');
-      commit(rows.filter(r => r.id !== target.id));
-    },
-  }], [gridRows, rows, commit]);
+  const rowCells = useMemo<GlideDomCellSpec[]>(() => {
+    const out: GlideDomCellSpec[] = [];
+    rows.forEach((row, index) => {
+      out.push({
+        row: index,
+        colKey: 'person',
+        passthrough: true,
+        node: (
+          <div className="flex h-full items-center justify-end">
+            <button
+              type="button"
+              className="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-[color:var(--ui-text-faint)] hover:bg-[var(--ui-card-hover)] hover:text-[color:var(--ui-text)]"
+              onClick={() => sheetApi.current?.openCellEditor(index, 'person')}
+              data-testid={`glide-crew-person-open-${row.id}`}
+              aria-label={`Open person picker (${row.person || 'empty'})`}
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ),
+      });
+      out.push({
+        row: index,
+        colKey: 'reportTo',
+        passthrough: true,
+        node: (
+          <div className="flex h-full items-center justify-end">
+            <button
+              type="button"
+              className="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-[color:var(--ui-text-faint)] hover:bg-[var(--ui-card-hover)] hover:text-[color:var(--ui-text)]"
+              onClick={() => sheetApi.current?.openCellEditor(index, 'reportTo')}
+              data-testid={`glide-crew-report-open-${row.id}`}
+              aria-label={`Open report-to picker (${row.reportTo})`}
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ),
+      });
+      out.push({
+        row: index,
+        colKey: 'actions',
+        node: (
+          <Button
+            variant="danger-ghost"
+            iconOnly
+            aria-label="Remove from this day"
+            title="Remove from this day"
+            data-testid={`glide-crew-remove-${row.id}`}
+            className="mx-auto"
+            onClick={() => {
+              setStatus('row removed');
+              commit(rows.filter(r => r.id !== row.id));
+            }}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        ),
+      });
+    });
+    return out;
+  }, [rows, commit]);
 
   const undo = () => {
     setHistory(h => {
@@ -270,8 +302,7 @@ export const CrewCardDemo: React.FC = () => {
         onCommit={onCommit}
         editableKeys={CREW_EDITABLE}
         readOnly={readOnly}
-        rowActions={rowActions}
-        domCells={personCells}
+        domCells={rowCells}
         apiRef={sheetApi}
         selectionKey="pg:glide:crew"
         baseRowHeight={38}
@@ -392,28 +423,34 @@ export const CellGalleryDemo: React.FC = () => {
       ? { kind: 'select', items: PICKER_OPTIONS.map(v => ({ id: v, label: v })), resolveBy: 'label', placeholder: 'Department…', panelMinWidth: 200 }
       : undefined, []);
 
-  /* Buttons are real kit Buttons in the cell (the drawn variant is gone). */
-  const buttonCells = useMemo<GlideDomCellSpec[]>(() => gridRows.map((row, index) => ({
-    row: index,
-    colKey: 'button',
-    node: (
-      <Button
-        variant={BUTTON_VARIANTS[index % BUTTON_VARIANTS.length]}
-        className="w-full justify-center"
-        onClick={() => {
-          setClicks(c => c + 1);
-          setLastClick(`row ${index + 1} · ${BUTTON_LABELS[index % BUTTON_LABELS.length]}`);
-        }}
-      >
-        {BUTTON_LABELS[index % BUTTON_LABELS.length]}
-      </Button>
-    ),
-  })), [gridRows]);
+  /* Real controls in the cell: a kit Button and a PickerField per row. */
+  const buttonCells = useMemo<GlideDomCellSpec[]>(() => {
+    const out: GlideDomCellSpec[] = [];
+    gridRows.forEach((row, index) => {
+      out.push({
+        row: index,
+        colKey: 'button',
+        node: (
+          <Button
+            variant={BUTTON_VARIANTS[index % BUTTON_VARIANTS.length]}
+            className="w-full justify-center"
+            onClick={() => {
+              setClicks(c => c + 1);
+              setLastClick(`row ${index + 1} · ${BUTTON_LABELS[index % BUTTON_LABELS.length]}`);
+            }}
+          >
+            {BUTTON_LABELS[index % BUTTON_LABELS.length]}
+          </Button>
+        ),
+      });
+    });
+    return out;
+  }, [gridRows]);
 
   return (
     <div className="pg-stack" data-testid="glide-gallery">
       <div className="row">
-        <span className="label">Buttons are real kit DOM controls in the cell; the badge is still painted on the canvas (nothing to click).</span>
+        <span className="label">Buttons and pickers are real kit DOM controls in the cell; the badge is painted on the canvas (nothing to click).</span>
         <span className="text-[11px] text-[color:var(--ui-text-muted)]" data-testid="glide-gallery-clicks">
           clicks: {clicks}
         </span>
