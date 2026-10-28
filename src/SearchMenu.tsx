@@ -116,8 +116,9 @@ export interface SearchMenuProps {
    *  `onSelect`. */
   selectedId?: string;
   autoFocus?: boolean;
-  /** Expandable mode widths (px). */
-  collapsedWidth?: number;
+  /** Expandable mode widths (px). `collapsedWidth: 'auto'` hugs the trigger
+   *  content (a long value field shows its full label instead of a fixed box). */
+  collapsedWidth?: number | 'auto';
   expandedWidth?: number;
   /** Panel width override (defaults to the trigger width). */
   panelWidth?: number | string;
