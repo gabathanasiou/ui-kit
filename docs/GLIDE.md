@@ -71,9 +71,10 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
   absolutely-positioned box per visible cell that has a node. Rects come from
   the editor's own `getBounds`, re-measured from the library's visible-region
   stream (scroll), a `ResizeObserver` and every render.
-- **The box IS the container** — the cell's full width/height, `overflow:
-  visible`. Lay out whatever fits: a row of buttons, a morph field beside an
-  adder, a picker + Apply, a Seg. The host styles its own padding.
+- **The box IS the container** — the cell's width/height minus Glide's 4px cell
+  inset (the same margin the drawn kit faces use), `overflow: visible`. Lay out
+  whatever fits: a row of buttons, a morph field beside an adder, a picker +
+  Apply, a Seg. Inner gaps/padding are the host's.
 - Controls keep **native focus, hover, CSS animation and tab order**; a morph
   expands in place instead of floating. The canvas cell underneath should
   return `staticCell('')`.

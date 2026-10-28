@@ -122,6 +122,12 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
                             top: b.top,
                             width: b.width,
                             height: b.height,
+                            /* Glide's cell padding (4px vertical, 8px
+                               horizontal is the theme default; the drawn kit
+                               faces use 4px all round) so host controls line
+                               up with painted cells. */
+                            padding: 4,
+                            boxSizing: "border-box",
                             pointerEvents: "auto",
                             /* The cell is a CONTAINER: the host arranges its own
                                buttons/fields inside (and may overflow the box

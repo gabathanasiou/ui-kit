@@ -22431,7 +22431,7 @@ function i_(t, e, n, r, i) {
     scrollRef: f
   };
 }
-const o_ = w.lazy(async () => await import("./data-grid-overlay-editor-Bpz-llSw.js"));
+const o_ = w.lazy(async () => await import("./data-grid-overlay-editor-v8XW9kQI.js"));
 let s_ = 0;
 function a_(t) {
   return QE(s0(s0(t).filter((e) => e.span !== void 0).map((e) => {
@@ -24621,7 +24621,7 @@ function N_(t, e, n, r, i) {
     height: c - 1
   };
 }
-const O_ = w.lazy(async () => await import("./number-overlay-editor-BaKaKI3L.js")), z_ = {
+const O_ = w.lazy(async () => await import("./number-overlay-editor-CBfgaW5W.js")), z_ = {
   getAccessibilityString: (t) => {
     var e;
     return ((e = t.data) == null ? void 0 : e.toString()) ?? "";
@@ -25001,6 +25001,12 @@ const X_ = (t, e) => {
               top: m.top,
               width: m.width,
               height: m.height,
+              /* Glide's cell padding (4px vertical, 8px
+                 horizontal is the theme default; the drawn kit
+                 faces use 4px all round) so host controls line
+                 up with painted cells. */
+              padding: 4,
+              boxSizing: "border-box",
               pointerEvents: "auto",
               /* The cell is a CONTAINER: the host arranges its own
                  buttons/fields inside (and may overflow the box

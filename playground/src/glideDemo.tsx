@@ -471,7 +471,7 @@ export const CellLayoutsDemo: React.FC = () => {
     const cell = (node: React.ReactNode, row: number) => ({ row, colKey: 'tools', node });
     return [
       cell(
-        <div className="flex h-full items-center gap-2 px-2">
+        <div className="flex h-full items-center gap-2">
           <Button variant="primary" onClick={() => setStatus('approved row 1')}>Approve</Button>
           <Button variant="outline" onClick={() => setStatus('held row 1')}>Hold</Button>
           <Button variant="danger-ghost" onClick={() => setStatus('deleted row 1')}>Delete</Button>
@@ -479,7 +479,7 @@ export const CellLayoutsDemo: React.FC = () => {
         0,
       ),
       cell(
-        <div className="flex h-full items-center gap-2 px-2">
+        <div className="flex h-full items-center gap-2">
           <MorphSearchField
             value={terms.l2 ?? ''}
             onChange={value => setTerms(t => ({ ...t, l2: value }))}
@@ -502,7 +502,7 @@ export const CellLayoutsDemo: React.FC = () => {
         1,
       ),
       cell(
-        <div className="flex h-full items-center gap-2 px-2">
+        <div className="flex h-full items-center gap-2">
           <PickerField
             appearance="chip"
             mode="single"
@@ -522,7 +522,7 @@ export const CellLayoutsDemo: React.FC = () => {
         2,
       ),
       cell(
-        <div className="flex h-full items-center gap-2 px-2">
+        <div className="flex h-full items-center gap-2">
           <Seg
             options={[
               { v: 'day', l: 'Day' },
@@ -629,7 +629,7 @@ export const ButtonTypesDemo: React.FC = () => {
         row,
         colKey: 'search',
         node: (
-          <div className="w-full px-1">
+          <div className="w-full">
           <MorphSearchField
             value={terms[def.id] ?? ''}
             onChange={value => setTerms(t => ({ ...t, [def.id]: value }))}
@@ -649,7 +649,7 @@ export const ButtonTypesDemo: React.FC = () => {
         row,
         colKey: 'add',
         node: (
-          <div className="w-full px-1">
+          <div className="w-full">
           <MorphActionField
             value={added[def.id] ?? ''}
             onChange={value => setAdded(a => ({ ...a, [def.id]: value }))}
