@@ -22,7 +22,7 @@
     border-radius: 0;
     /* Keep the crisp RECTANGLE outline — inset, so it sits exactly where the
        grid paints the selected cell's border and never grows the box. */
-    box-shadow: inset 0 0 0 1px var(--gdg-accent-color);
+    box-shadow: inset 0 0 0 1px var(--glide-dom-accent, var(--gdg-accent-color, #2563eb));
     animation: none;
 }
 .gdg-d19meir1.gdg-pad {
@@ -44,9 +44,16 @@
    PickerField is height:100% of it, so the field is the cell's height. */
 /* fork: a DOM cell under the grid's selection rectangle shows the hover wash
    (its controls are DOM, so the canvas hover tint would otherwise be hidden). */
-[data-glide-dom-cell][data-glide-dom-focused] {
-    /* The grid's OWN hover tint (set by GlideSheet), not a kit accent wash —
-       so it matches hovering the row with the mouse. */
+/* The canvas selection border sits UNDER an opaque DOM box, so those cells
+   repaint it (same 1px accent rectangle the grid draws). Passthrough boxes are
+   transparent over a NATIVE cell — the grid's own border shows through, so they
+   must not paint a second one. */
+[data-glide-dom-cell][data-glide-dom-focused]:not([data-glide-dom-passthrough]) {
+    box-shadow: inset 0 0 0 1px var(--glide-dom-accent, var(--gdg-accent-color, #2563eb));
+}
+/* BUTTON-ONLY cells (one real button, not a chevron affordance) also show the
+   grid's OWN hover tint (set by GlideSheet), exactly like hovering the row. */
+[data-glide-dom-cell][data-glide-dom-focused][data-glide-dom-button="true"]:not([data-glide-dom-passthrough]) {
     background: var(--glide-dom-hover-bg, var(--gdg-bg-cell-medium));
 }
 .gdg-d19meir1:not(.gdg-pad) .gdg-clip-region {

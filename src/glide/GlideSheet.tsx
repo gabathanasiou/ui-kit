@@ -623,7 +623,7 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
       className={`relative ${className}`}
       {...(dataAttr ? { [dataAttr]: '' } : {})}
       data-glide-sheet={mode}
-      style={{ '--glide-dom-hover-bg': cellColors.readonlyHoverBg } as React.CSSProperties}
+      style={{ '--glide-dom-hover-bg': cellColors.readonlyHoverBg, '--glide-dom-accent': theme.accentColor } as React.CSSProperties}
       onPointerLeave={() => {
         const prev = hoveredRowRef.current;
         if (prev == null) return;

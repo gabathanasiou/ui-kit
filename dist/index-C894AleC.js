@@ -22431,7 +22431,7 @@ function QA(t, e, n, r, i) {
     scrollRef: f
   };
 }
-const e_ = w.lazy(async () => await import("./data-grid-overlay-editor-CQt2QTtZ.js"));
+const e_ = w.lazy(async () => await import("./data-grid-overlay-editor-CHQEdsYq.js"));
 let t_ = 0;
 function n_(t) {
   return YE(o0(o0(t).filter((e) => e.span !== void 0).map((e) => {
@@ -24639,7 +24639,7 @@ function I_(t, e, n, r, i) {
     height: c - 1
   };
 }
-const A_ = w.lazy(async () => await import("./number-overlay-editor-C1Sx9ehS.js")), __ = {
+const A_ = w.lazy(async () => await import("./number-overlay-editor-DX44EBhk.js")), __ = {
   getAccessibilityString: (t) => {
     var e;
     return ((e = t.data) == null ? void 0 : e.toString()) ?? "";
@@ -25015,11 +25015,19 @@ const j_ = (t, e) => {
           {
             key: M.col + ":" + M.row,
             className: s,
+            ref: (P) => {
+              if (P == null) return;
+              const S = P.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+              );
+              !(P.getAttribute("data-glide-dom-passthrough") === "true") && S.length === 1 && S[0].tagName === "BUTTON" ? P.setAttribute("data-glide-dom-button", "true") : P.removeAttribute("data-glide-dom-button");
+            },
             "data-glide-dom-cell": M.col + ":" + M.row,
             /* The grid's selection rectangle is on this cell: paint
                the same hover wash the canvas rows use, so the DOM
                cell reads as hovered. */
             "data-glide-dom-focused": c != null && c[0] === M.col && c[1] === M.row ? "true" : void 0,
+            "data-glide-dom-passthrough": C != null && C.passthrough === !0 ? "true" : void 0,
             style: {
               position: "absolute",
               left: M.left,
@@ -25862,7 +25870,7 @@ const M3 = ({
       className: `relative ${f}`,
       ...d ? { [d]: "" } : {},
       "data-glide-sheet": x,
-      style: { "--glide-dom-hover-bg": k.readonlyHoverBg },
+      style: { "--glide-dom-hover-bg": k.readonlyHoverBg, "--glide-dom-accent": z.accentColor },
       onPointerLeave: () => {
         var ue;
         const pe = Ce.current;

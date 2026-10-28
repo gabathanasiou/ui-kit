@@ -129,11 +129,27 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
                     {
                         key: b.col + ":" + b.row,
                         className: domCellClassName,
+                        ref: el => {
+                            if (el == null) return;
+                            // A "button-only" cell (exactly one focusable and it
+                            // is a BUTTON) gets the hover tint when focused; any
+                            // other DOM cell only keeps the selection rectangle.
+                            const focusables = el.querySelectorAll(
+                                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                            );
+                            // Passthrough boxes are affordances over a native
+                            // cell (e.g. a picker chevron) — never "button-only".
+                            const isPassthrough = el.getAttribute("data-glide-dom-passthrough") === "true";
+                            const isButton = !isPassthrough && focusables.length === 1 && focusables[0].tagName === "BUTTON";
+                            if (isButton) el.setAttribute("data-glide-dom-button", "true");
+                            else el.removeAttribute("data-glide-dom-button");
+                        },
                         "data-glide-dom-cell": b.col + ":" + b.row,
                         /* The grid's selection rectangle is on this cell: paint
                            the same hover wash the canvas rows use, so the DOM
                            cell reads as hovered. */
                         "data-glide-dom-focused": focusedCell != null && focusedCell[0] === b.col && focusedCell[1] === b.row ? "true" : undefined,
+                        "data-glide-dom-passthrough": spec != null && spec.passthrough === true ? "true" : undefined,
                         style: {
                             position: "absolute",
                             left: b.left,

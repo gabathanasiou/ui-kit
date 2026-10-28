@@ -82,6 +82,12 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
   navigation / the fill handle skip that cell. A control wider than the column
   spills over the neighbour — size it deliberately.
 - Mount only the cells that need it; a DOM box per cell defeats the canvas.
+- **Focused cells keep the selection rectangle.** An opaque DOM box covers the
+  canvas border, so the fork repaints the same 1px accent rectangle. A
+  **button-only** cell (exactly one focusable, a BUTTON) additionally gets the
+  grid's own hover tint when focused — as if the row were hovered — using
+  `--glide-dom-hover-bg` published by `GlideSheet`. Passthrough boxes paint
+  neither (the native canvas border shows through).
 - **`passthrough: true`** makes the box click-through (`pointer-events: none`):
   only the node's own `pointer-events: auto` children capture. Use it for a
   small affordance drawn over a NATIVE cell.
