@@ -32,6 +32,13 @@
     padding: var(--fork-editor-top, var(--gdg-cell-vertical-padding))
              calc(var(--gdg-cell-horizontal-padding) + 0.5px);
 }
+.gdg-d19meir1.gdg-pad .gdg-clip-region {
+    /* A padded editor is exactly one cell tall: never scroll. The line box can
+       be a fraction of a pixel taller than the clip area (e.g. 17.5px line in a
+       35px cell), which Chromium rounds into a 1px overflow — the tiny
+       scrollbar users saw inside the floating box. */
+    overflow-y: hidden;
+}
 .gdg-d19meir1 .gdg-clip-region {
     border-radius: 0;
     /* Inherit the CELL's typography so every editor face (text, picker,
@@ -69,6 +76,10 @@
 }
 .gdg-d19meir1 .gdg-clip-region .gdg-growing-entry {
     line-height: var(--gdg-line-height, 1.4);
+    /* Stock Glide offsets the entry 6px down inside a taller card. Our box IS
+       the cell and already pads to centre the line, so that margin only adds
+       6px of overflow — which surfaces as a scrollbar inside the editor. */
+    margin-top: 0;
 }
 .gdg-d19meir1 .gdg-clip-region textarea.gdg-input {
     line-height: var(--gdg-line-height, 1.4);

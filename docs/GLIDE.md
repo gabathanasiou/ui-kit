@@ -118,7 +118,10 @@ canvas' own offset) and vertical centring (computed from the theme line rhythm);
 square corners, a **1px inset accent outline** (the same border the grid paints
 on the selected cell), no drop shadow, no fade. Dropdown/entity editors fill the
 same box (their PickerField is `height:100%`), so a picker cell does not change
-size or font when it enters edit mode.
+size or font when it enters edit mode. A padded editor is **exactly one cell
+tall and never scrolls** (`overflow-y: hidden`): stock Glide's growing-entry
+carries a 6px top margin and its line box can round a fraction over the clip
+area, both of which surfaced as a tiny scrollbar inside the floating box.
 
 
 `createGlideCellEditor(getOpts)` builds Glide's `provideEditor`:
