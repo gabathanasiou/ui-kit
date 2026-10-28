@@ -29,7 +29,12 @@ the npm package has no effect. CSS consumers import
    holds exactly one focusable element. Frozen columns are measured on every
    pass (the visible range starts at the first SCROLLED column) and
    `freezeColumns` is forwarded to the inner editor. `domCellBottomInset` hides
-   boxes covered by a sticky trailing row. `getDomHeaderCell` pins real controls
+   boxes covered by a sticky trailing row. Box positions are also written
+   directly in the layout effect (same frame as the canvas paint); during a
+   fast scroll the boxes hide (`data-glide-scrolling`, cleared 90ms after the
+   last scroll) and re-pin on settle, so no button is ever seen straddling
+   rows.
+   `getDomHeaderCell` pins real controls
    over column headers (frozen/scrolled aware); headers expose
    `data-glide-header-focused` when the selection range covers their column.
    The overscroll band past the last row is flattened to the cell background

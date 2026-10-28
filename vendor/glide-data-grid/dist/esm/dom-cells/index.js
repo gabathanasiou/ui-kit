@@ -15,6 +15,9 @@ import { DataEditorAll } from "../data-editor-all.js";
 export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDomCells(props, ref) {
     const { getDomCell, getDomHeaderCell, onVisibleRegionChanged, onCellActivated, domCellClassName, gridSelection, freezeColumns = 0, domCellBottomInset = 0, ...rest } = props;
     const focusedCell = gridSelection?.current?.cell;
+    const fixedRowHeight = typeof props.rowHeight === "number" ? props.rowHeight : null;
+    const lastRangeRef = React.useRef(null);
+    const scrollEndTimer = React.useRef(null);
     const hasHeadersRef = React.useRef(false);
     hasHeadersRef.current = getDomHeaderCell != null;
     const freezeRef = React.useRef(freezeColumns);
@@ -102,9 +105,44 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
         });
     }, []);
 
+    /* Move the existing boxes WITHOUT waiting for React: during a fast /
+       smooth scroll the canvas paints in the scroll pass, while a state
+       update lands one frame later — the buttons visibly straddled rows.
+       getBounds is already fresh inside onVisibleRegionChanged, so write the
+       inline left/top there (same frame as the paint). */
+    const syncPositions = React.useCallback(() => {
+        const grid = innerRef.current;
+        const wrap = wrapRef.current;
+        const layer = layerRef.current;
+        if (grid == null || wrap == null || layer == null) return;
+        const wr = wrap.getBoundingClientRect();
+        for (const el of layer.children) {
+            const cellKey = el.getAttribute("data-glide-dom-cell");
+            const headerCol = el.getAttribute("data-glide-dom-header");
+            let col = -1;
+            let row = -1;
+            if (cellKey != null) {
+                const parts = cellKey.split(":");
+                col = Number(parts[0]);
+                row = Number(parts[1]);
+            }
+            else if (headerCol != null) {
+                col = Number(headerCol);
+            }
+            else {
+                continue;
+            }
+            const b = grid.getBounds(col, row);
+            if (b == null) continue;
+            el.style.left = Math.round(b.x - wr.left) + "px";
+            el.style.top = Math.round(b.y - wr.top) + "px";
+        }
+    }, []);
+
     // Re-measure after every render: data/column/size changes all land here.
     React.useLayoutEffect(() => {
         measure();
+        syncPositions();
     });
 
     React.useEffect(() => {
@@ -112,11 +150,20 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
         if (wrap == null) return undefined;
         const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => measure()) : null;
         if (ro != null) ro.observe(wrap);
-        const onScroll = () => { requestAnimationFrame(measure); };
+        const onScroll = () => {
+            syncPositions();
+            // After React commits the new visible region (fresh getBounds) and
+            // still before the browser paints — same frame as the canvas.
+            requestAnimationFrame(() => { syncPositions(); measure(); });
+        };
         window.addEventListener("scroll", onScroll, true);
         return () => {
             if (ro != null) ro.disconnect();
             window.removeEventListener("scroll", onScroll, true);
+            if (scrollEndTimer.current != null) {
+                clearTimeout(scrollEndTimer.current);
+                scrollEndTimer.current = null;
+            }
         };
     }, [measure]);
 
@@ -145,10 +192,32 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
     }, [onCellActivated]);
 
     const handleVisible = React.useCallback((range, tx, ty, extras) => {
+        const prev = lastRangeRef.current;
+        lastRangeRef.current = { range, tx, ty };
         visibleRef.current = range;
-        requestAnimationFrame(measure);
+        /* Fast scroll: the canvas paints in the scroll pass while the boxes
+           land a frame later (a half-row at speed). Hide them for the fling,
+           show them once it settles — no misaligned buttons are ever seen. */
+        if (prev != null && fixedRowHeight != null) {
+            const dy = Math.abs((ty - prev.ty) - (range.y - prev.range.y) * fixedRowHeight);
+            if (dy > 4) {
+                const layer = layerRef.current;
+                if (layer != null) {
+                    layer.setAttribute("data-glide-scrolling", "true");
+                    if (scrollEndTimer.current != null) clearTimeout(scrollEndTimer.current);
+                    scrollEndTimer.current = setTimeout(() => {
+                        scrollEndTimer.current = null;
+                        layer.removeAttribute("data-glide-scrolling");
+                        syncPositions();
+                    }, 90);
+                }
+            }
+        }
+        // Exact positions after the commit, before paint.
+        syncPositions();
+        requestAnimationFrame(() => { syncPositions(); measure(); });
         onVisibleRegionChanged?.(range, tx, ty, extras);
-    }, [measure, onVisibleRegionChanged]);
+    }, [measure, syncPositions, onVisibleRegionChanged, fixedRowHeight]);
 
     return React.createElement(
         "div",

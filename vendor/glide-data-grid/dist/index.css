@@ -49,6 +49,12 @@
 }
 /* Dropdown/entity editors (disablePadding) fill the cell box: the kit
    PickerField is height:100% of it, so the field is the cell's height. */
+/* fork: pinned DOM controls hide during a fast scroll (the canvas paint and the
+   overlay land in different frames — buttons would straddle rows). */
+[data-glide-dom-layer][data-glide-scrolling="true"] > * {
+    visibility: hidden;
+}
+
 /* fork: a DOM cell under the grid's selection rectangle shows the hover wash
    (its controls are DOM, so the canvas hover tint would otherwise be hidden). */
 /* The canvas selection border sits UNDER an opaque DOM box, so those cells

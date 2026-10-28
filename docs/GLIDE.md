@@ -98,6 +98,10 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
 />
 ```
 
+- During a **fast scroll** the pinned boxes are hidden (`data-glide-scrolling`
+  on the layer, cleared ~90ms after the last scroll event) and re-pinned on
+  settle: the canvas paint and the DOM overlay land in different frames, so at
+  speed a button would visibly straddle two rows.
 - The fork renders a **click-through layer** inside the editor root with one
   absolutely-positioned box per visible cell that has a node. Rects come from
   the editor's own `getBounds`, re-measured from the library's visible-region
