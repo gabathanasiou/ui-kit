@@ -1293,7 +1293,7 @@ export function SearchMenu({
           variant={triggerVariant}
           size="minimal"
           theme={theme === 'dark' ? 'dark' : 'light'}
-          icon={triggerIcon ?? <Search className="w-3.5 h-3.5" />}
+          icon={triggerIcon === undefined ? <Search className="w-3.5 h-3.5" /> : triggerIcon}
           onClick={openPanel}
           className={`w-full justify-start ${expanded ? 'pointer-events-none' : ''} ${triggerClassName ?? ''}`}
           tabIndex={expanded ? -1 : 0}

@@ -11807,7 +11807,7 @@ function Hf({
           variant: o,
           size: "minimal",
           theme: S === "dark" ? "dark" : "light",
-          icon: i ?? /* @__PURE__ */ h(Pn, { className: "w-3.5 h-3.5" }),
+          icon: i === void 0 ? /* @__PURE__ */ h(Pn, { className: "w-3.5 h-3.5" }) : i,
           onClick: Ge,
           className: `w-full justify-start ${Se ? "pointer-events-none" : ""} ${s ?? ""}`,
           tabIndex: Se ? -1 : 0,
