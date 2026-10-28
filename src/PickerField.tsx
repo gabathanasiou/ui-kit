@@ -132,6 +132,10 @@ export interface PickerFieldProps {
   onTabExit?: (el?: HTMLElement) => void;
   /** Async source (replaces AsyncResultsDropdown): debounced on the query. */
   loadItems?: (query: string) => Promise<PickerItem[]>;
+  /** Empty-panel copy while an async source has not returned yet (defaults to
+   *  the search menu's "No matches" state once a query exists). */
+  emptyTitle?: string;
+  emptyHint?: string;
   sortItems?: (items: PickerItem[], values: string[]) => PickerItem[];
   max?: number;
   disabledIds?: readonly string[];
@@ -191,6 +195,8 @@ export function PickerField({
   onEscape,
   onTabExit,
   loadItems,
+  emptyTitle,
+  emptyHint,
   sortItems,
   max,
   disabledIds,
@@ -551,7 +557,15 @@ export function PickerField({
     textRef.current = next;
     setText(next);
     if (mode === 'single') setSingleQuery(next);
-    if (!open) setOpen(true);
+    if (!open) {
+      /* Typing into a CLOSED field starts an editing session. The input can
+         still hold focus when the panel closed (right after a pick), so
+         `openPicker` never re-ran and the session flag stayed false — the
+         close-time commit then dropped the typed text. */
+      editingRef.current = true;
+      cancelledRef.current = false;
+      setOpen(true);
+    }
     if (mode === 'multiple') {
       /* EntityDropdown parity: the text IS the value, so deleting a segment
          unchecks its row LIVE (and a later toggle can't resurrect it). The
@@ -639,8 +653,8 @@ export function PickerField({
       expandableGroups={groups.length > 0 && browse === 'accordion'}
       groupExpandMode="single"
       renderItem={renderRow}
-      emptyTitle={loading ? 'Searching…' : undefined}
-      emptyHint={loading ? 'Fetching matching records.' : undefined}
+      emptyTitle={loading ? 'Searching…' : emptyTitle}
+      emptyHint={loading ? 'Fetching matching records.' : emptyHint}
       theme={theme}
       panelWidth={panelWidth}
       panelMinWidth={panelMinWidth}

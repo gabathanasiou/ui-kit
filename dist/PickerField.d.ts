@@ -108,6 +108,10 @@ export interface PickerFieldProps {
     onTabExit?: (el?: HTMLElement) => void;
     /** Async source (replaces AsyncResultsDropdown): debounced on the query. */
     loadItems?: (query: string) => Promise<PickerItem[]>;
+    /** Empty-panel copy while an async source has not returned yet (defaults to
+     *  the search menu's "No matches" state once a query exists). */
+    emptyTitle?: string;
+    emptyHint?: string;
     sortItems?: (items: PickerItem[], values: string[]) => PickerItem[];
     max?: number;
     disabledIds?: readonly string[];
@@ -119,5 +123,5 @@ export interface PickerFieldProps {
      *  it is selected. The key must resolve to a `hidden` PickerItem. */
     groupToken?: (groupKey: string) => string | undefined;
 }
-export declare function PickerField({ values, onChange, items, groups, resolveBy, mode, appearance, display, formatDisplay, formatEditing, renderTrigger, renderItem, badge, trailing, anchoredKeys, anchoredLabel, placeholder, readOnly, inputReadOnly, disabled, autoFocus, defaultOpen, selectAllOnOpen, uppercase, allowFreeText, theme: themeProp, className, style, panelWidth, panelMinWidth, initialQuery, keepAllRows, maxMenuHeight, portalTarget, autoGrow, skipComma, collapsedWidth, expandedWidth, createLabel, onCreateItem, onExit, onEscape, onTabExit, loadItems, sortItems, max, disabledIds, indicator, browse, groupToken, }: PickerFieldProps): React.JSX.Element;
+export declare function PickerField({ values, onChange, items, groups, resolveBy, mode, appearance, display, formatDisplay, formatEditing, renderTrigger, renderItem, badge, trailing, anchoredKeys, anchoredLabel, placeholder, readOnly, inputReadOnly, disabled, autoFocus, defaultOpen, selectAllOnOpen, uppercase, allowFreeText, theme: themeProp, className, style, panelWidth, panelMinWidth, initialQuery, keepAllRows, maxMenuHeight, portalTarget, autoGrow, skipComma, collapsedWidth, expandedWidth, createLabel, onCreateItem, onExit, onEscape, onTabExit, loadItems, emptyTitle, emptyHint, sortItems, max, disabledIds, indicator, browse, groupToken, }: PickerFieldProps): React.JSX.Element;
 export default PickerField;
