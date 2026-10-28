@@ -139,12 +139,13 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
                                horizontal is the theme default; the drawn kit
                                faces use 4px all round) so host controls line
                                up with painted cells. */
-                            padding: 4,
+                            /* `bleed` = the control IS the cell (edge-to-edge hit
+                               target); otherwise the cell's 4px inset + vertical
+                               centring apply. */
+                            padding: spec != null && spec.bleed === true ? 0 : 4,
                             boxSizing: "border-box",
                             pointerEvents: spec != null && spec.passthrough === true ? "none" : "auto",
-                            /* Controls are centred in the cell's content box —
-                               same gap above and below, whatever the row height. */
-                            display: "flex",
+                            display: spec != null && spec.bleed === true ? "block" : "flex",
                             alignItems: "center",
                             /* The cell is a CONTAINER: the host arranges its own
                                buttons/fields inside (and may overflow the box

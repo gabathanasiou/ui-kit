@@ -38,6 +38,9 @@ export interface GlideDomCellSpec {
     /** Click-through box: only the node's own `pointer-events: auto`
      *  descendants capture, so the canvas cell stays selectable. */
     passthrough?: boolean;
+    /** Edge-to-edge: the node fills the whole cell (no 4px inset, no vertical
+     *  centring) — a full-cell button. */
+    bleed?: boolean;
 }
 /** Imperative surface for host controls (e.g. a DOM dropdown button that must
  *  behave exactly like double-clicking the cell). */

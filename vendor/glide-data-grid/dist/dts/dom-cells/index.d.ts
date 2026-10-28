@@ -7,6 +7,9 @@ export interface DomCellEntry {
     /** The box is click-through: only the node's own pointer-events:auto
      *  descendants capture (keeps the canvas selectable underneath). */
     passthrough?: boolean;
+    /** Edge-to-edge: no 4px inset, no vertical centring — the node fills the
+     *  whole cell (a full-cell button / hit target). */
+    bleed?: boolean;
 }
 
 export type GetDomCell = (col: number, row: number) => DomCellEntry | React.ReactNode | null | false;

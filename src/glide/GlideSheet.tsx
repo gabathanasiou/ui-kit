@@ -68,6 +68,9 @@ export interface GlideDomCellSpec {
   /** Click-through box: only the node's own `pointer-events: auto`
    *  descendants capture, so the canvas cell stays selectable. */
   passthrough?: boolean;
+  /** Edge-to-edge: the node fills the whole cell (no 4px inset, no vertical
+   *  centring) — a full-cell button. */
+  bleed?: boolean;
 }
 
 
@@ -341,10 +344,10 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
      visible cell and the wrapper pins its own boxes (see
      vendor/glide-data-grid/dist/esm/dom-cells). The host only names the cells. */
   const domCellMap = useMemo(() => {
-    const map = new Map<string, { node: React.ReactNode; passthrough?: boolean }>();
+    const map = new Map<string, { node: React.ReactNode; passthrough?: boolean; bleed?: boolean }>();
     for (const spec of domCells ?? []) {
       const col = COLUMNS.findIndex(c => c.key === spec.colKey);
-      if (col >= 0) map.set(`${col}:${spec.row}`, { node: spec.node, passthrough: spec.passthrough });
+      if (col >= 0) map.set(`${col}:${spec.row}`, { node: spec.node, passthrough: spec.passthrough, bleed: spec.bleed });
     }
     return map;
   }, [domCells, COLUMNS]);

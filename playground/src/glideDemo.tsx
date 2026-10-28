@@ -194,21 +194,22 @@ export const CrewCardDemo: React.FC = () => {
       out.push({
         row: index,
         colKey: 'actions',
+        // Full-bleed: the trash button IS the cell (whole cell is the target).
+        bleed: true,
         node: (
-          <Button
-            variant="danger-ghost"
-            iconOnly
+          <button
+            type="button"
+            className="flex h-full w-full items-center justify-center text-rose-500 transition-colors hover:bg-rose-500/10"
             aria-label="Remove from this day"
             title="Remove from this day"
             data-testid={`glide-crew-remove-${row.id}`}
-            className="mx-auto"
             onClick={() => {
               setStatus('row removed');
               commit(rows.filter(r => r.id !== row.id));
             }}
           >
             <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+          </button>
         ),
       });
     });

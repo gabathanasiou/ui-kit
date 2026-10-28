@@ -26,7 +26,7 @@ export interface PickerDomCellOptions {
 }
 
 export const PickerChevron: React.FC<{ label?: string; testId?: string; onOpen: () => void }> = ({ label, testId, onOpen }) => (
-  <div className="flex h-full items-center justify-end">
+  <div className="flex h-full w-full items-center justify-end">
     <button
       type="button"
       className="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-[color:var(--ui-text-faint)] hover:bg-[var(--ui-card-hover)] hover:text-[color:var(--ui-text)]"
