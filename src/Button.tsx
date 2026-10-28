@@ -53,6 +53,11 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
    *  accent tint so the button reads as ON. On `tab`/`tab-header` it fills the
    *  selected-tab pill instead. */
   active?: boolean;
+  /** Fill used while `active` (base variants only; tabs keep their pill).
+   *  `neutral` (default) = the kit's subtle selected tint. A semantic tone
+   *  paints a strong status fill instead — for mode toggles whose ON state
+   *  must read as a different colour (e.g. the Schedule's Editing mode). */
+  activeTone?: 'neutral' | 'info' | 'success' | 'warning' | 'danger';
   /** Square icon-only shape (no label): equal width/height at the toolbar
    *  control size, contents centered. Pair with `aria-label`/`title`. */
   iconOnly?: boolean;
@@ -108,6 +113,7 @@ export default function Button({
   theme: themeProp,
   cloud: cloudProp,
   active = false,
+  activeTone = 'neutral',
   iconOnly = false,
   size: sizeProp = 'default',
   revealOnHover = false,
@@ -240,6 +246,14 @@ export default function Button({
   /* Toggled state: accent fill + white text (dark) / blue text (light). The
      `!` overrides beat the variant's base/`open` colors; no outline. */
   const ACTIVE = 'bg-[var(--ui-btn-active-bg)]! text-[color:var(--ui-btn-active-text)]!';
+  /* Strong semantic ON state (activeTone) — a mode toggle that must read as a
+     different colour, not the subtle selected tint. */
+  const ACTIVE_TONES = {
+    info: 'bg-blue-600! hover:bg-blue-500! text-white!',
+    success: 'bg-emerald-600! hover:bg-emerald-500! text-white!',
+    warning: 'bg-amber-500! hover:bg-amber-400! text-zinc-950!',
+    danger: 'bg-rose-600! hover:bg-rose-500! text-white!',
+  } as const;
   let cls: string;
   if (variant === 'tab') {
     const t = TAB[theme];
@@ -253,11 +267,13 @@ export default function Button({
     cls = `${TAB_RADIUS} ${fill} ${isOpen ? (tone ? CLOUD_HEADER[tone].open : TAB_HEADER.open) : ''}`;
   } else {
     cls = `${CONTROL_RADIUS} ${spec.base} ${isOpen ? spec.open : ''}`;
-    if (active) cls = `${cls} ${ACTIVE}`;
     if (variant === 'primary' && tone) {
       const cp = CLOUD_PRIMARY[tone];
       cls = `${CONTROL_RADIUS} ${isOpen ? `${cp.base} ${cp.open}` : cp.base}`;
     }
+    /* Applied AFTER the cloud-primary fill so a primary toggle's ON tone is
+       never wiped by the project accent. */
+    if (active) cls = `${cls} ${activeTone === 'neutral' ? ACTIVE : ACTIVE_TONES[activeTone]}`;
   }
   /* Icon-first collapse (roadmap 258) — the mechanics live in the shared
      TabFace (Seg options can adopt them); the button supplies the shell: the

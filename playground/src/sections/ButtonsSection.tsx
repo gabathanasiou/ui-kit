@@ -82,10 +82,11 @@ function PillTabs({
   );
 }
 
-/* Icon toggle — the Schedule toolbar's Edit pattern: bare icon at rest, hover
-   expands the label, the press LIGHTS it (the `active` fill) and collapses it
-   back to the icon. The icon ROLLS to the next one (direction-aware: a return
-   rolls back the way it came). Works with or without the expandable face. */
+/* Icon toggle — the Schedule toolbar's Edit pattern: primary at rest, hover
+   expands the label; the press keeps the label open and paints a strong
+   `activeTone` (the neutral selected tint by default). The icon ROLLS to the
+   next one (direction-aware: a return rolls back the way it came). Works with
+   or without the expandable face. */
 const TOGGLE_STATES = [
   { id: 'off', label: 'Edit', icon: <Pencil className="w-3.5 h-3.5" />, active: false },
   { id: 'editing', label: 'Editing', icon: <Check className="w-3.5 h-3.5" />, active: true },
@@ -109,16 +110,16 @@ function ToggleIconButtonDemo() {
     <div className="pg-stack" data-testid="toggle-icon-button">
       <div className="row" style={{ margin: 0 }}>
         <Button
-          variant="outline"
+          variant="primary"
           icon={editing ? <Check className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
           collapse
-          revealOnHover
-          keepLabelOnActive={false}
-          reserveLabel="Editing"
+          keepLabelOnActive
+          reserveLabel="Done"
           iconRoll={editing ? 'up' : 'down'}
           active={editing}
-          aria-label={editing ? 'Done editing' : 'Edit'}
-          title={editing ? 'Done editing' : 'Edit'}
+          activeTone="info"
+          aria-label={editing ? 'Done' : 'Edit'}
+          title={editing ? 'Done' : 'Edit'}
           onClick={() => setEditing(v => !v)}
           data-testid="toggle-icon-edit"
         >
@@ -170,7 +171,7 @@ export function ButtonsSection() {
       <DemoCard label="Dark theme" hint="The same set on the dark toolbar palette.">
         <VariantGrid theme="dark" />
       </DemoCard>
-      <DemoCard label="Icon toggle" hint="Bare icon at rest → hover expands the label → press lights it and keeps the label (the Schedule Edit button).">
+      <DemoCard label="Icon toggle" hint="Primary icon at rest → hover expands the label → press keeps the label open and lights the info tone (the Schedule Edit button).">
         <ToggleIconButtonDemo />
       </DemoCard>
       <DemoCard label="States & shapes" hint="Pressed tint, icon-only square, minimal (matches a text input), tabs with their sliding pill, and the blue / emerald project primaries.">

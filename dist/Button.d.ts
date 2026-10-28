@@ -48,6 +48,11 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
      *  accent tint so the button reads as ON. On `tab`/`tab-header` it fills the
      *  selected-tab pill instead. */
     active?: boolean;
+    /** Fill used while `active` (base variants only; tabs keep their pill).
+     *  `neutral` (default) = the kit's subtle selected tint. A semantic tone
+     *  paints a strong status fill instead — for mode toggles whose ON state
+     *  must read as a different colour (e.g. the Schedule's Editing mode). */
+    activeTone?: 'neutral' | 'info' | 'success' | 'warning' | 'danger';
     /** Square icon-only shape (no label): equal width/height at the toolbar
      *  control size, contents centered. Pair with `aria-label`/`title`. */
     iconOnly?: boolean;
@@ -93,4 +98,4 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
  *  + the tabs' refs) so the selection box glides. On a `dark` toolbar
  *  `plain` is white — a zinc-950 pill vanished into the bar. */
 export declare const TAB_PILL: Record<'light' | 'dark', Record<'plain' | 'blue' | 'emerald', string>>;
-export default function Button({ variant, theme: themeProp, cloud: cloudProp, active, iconOnly, size: sizeProp, revealOnHover, keepLabelOnActive, reserveLabel, iconRoll, icon, collapse, iconWithLabel, className, type, children, ...rest }: ButtonProps): React.JSX.Element;
+export default function Button({ variant, theme: themeProp, cloud: cloudProp, active, activeTone, iconOnly, size: sizeProp, revealOnHover, keepLabelOnActive, reserveLabel, iconRoll, icon, collapse, iconWithLabel, className, type, children, ...rest }: ButtonProps): React.JSX.Element;

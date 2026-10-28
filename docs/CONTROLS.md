@@ -42,6 +42,7 @@ sets `aria-pressed` on base variants; tabs use `aria-selected` instead.
 | `theme` | `light` \| `dark` (toolbar palettes) |
 | `cloud` | `true`/`'emerald'` — project-chrome tint for light primaries and tabs |
 | `active` | lit/toggled fill; `aria-pressed` on base variants |
+| `activeTone` | fill while `active`: `neutral` (default selected tint) / `info` / `success` / `warning` / `danger` — a strong status fill for mode toggles |
 | `disabled` | 40% opacity, no pointer |
 | `iconOnly` | square icon button (`iconDim` 28 / 40 coarse); pair with `aria-label`/`title` |
 | `size` | `default` \| `minimal` (the **30px standard box**, radius 6) |
@@ -76,11 +77,21 @@ sets `aria-pressed` on base variants; tabs use `aria-selected` instead.
 <Button
   variant="outline"
   icon={on ? <Check /> : <Pencil />}
-  collapse revealOnHover keepLabelOnActive={false} reserveLabel="Editing"
+  collapse revealOnHover keepLabelOnActive={false} reserveLabel="Done"
   iconRoll={on ? 'up' : 'down'}
   active={on}
   onClick={() => setOn(!on)}
->Editing</Button>
+>Done</Button>
+
+// mode toggle — ON stays open and switches to a strong tone
+<Button
+  variant="primary" activeTone="info"
+  icon={editing ? <Check /> : <Pencil />}
+  collapse keepLabelOnActive reserveLabel="Done"
+  iconRoll={editing ? 'down' : 'up'}
+  active={editing}
+  onClick={() => setEditing(!editing)}
+>{editing ? 'Done' : 'Edit'}</Button>
 
 // toggle with 3+ states — cycle your own array, no extra API
 const [i, setI] = useState(0);
@@ -146,13 +157,26 @@ A toggle is a **Button** with `active` — no separate component:
   icon={on ? <Check /> : <Pencil />}
   collapse revealOnHover
   keepLabelOnActive={false}      // a toggle collapses back to its icon
-  reserveLabel="Editing"         // width of the longer label (no jitter)
+  reserveLabel="Done"            // width of the longer label (no jitter)
   iconRoll={on ? 'up' : 'down'}  // return rolls back the way it came
   active={on}
   onClick={() => setOn(!on)}
->Editing</Button>
+>Done</Button>
+
+// mode toggle: the ON label stays open and the fill changes colour
+<Button
+  variant="primary" activeTone="info"
+  icon={editing ? <Check /> : <Pencil />}
+  collapse keepLabelOnActive reserveLabel="Done"
+  iconRoll={editing ? 'down' : 'up'}
+  active={editing}
+  onClick={() => setEditing(!editing)}
+>{editing ? 'Done' : 'Edit'}</Button>
 ```
 
+- `activeTone` is the strong ON state: `info` (blue), `success` (emerald),
+  `warning` (amber), `danger` (rose). Leave it off for the subtle neutral
+  selected tint. The ON label stays open with `keepLabelOnActive` (the default).
 - The expandable face is **optional**: a plain labelled `active` Button and a
   square `iconOnly` Button toggle just as well.
 - **3+ states** need no API: cycle your own array and drive
