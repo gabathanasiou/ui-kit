@@ -1,9 +1,8 @@
 # Glide data grid (kit module) — `src/glide/`
 
-Status: **experimental** (branch `experiment/glide-grid`). The kit does not
-depend on the grid library at runtime until a consumer imports this module:
-`@glideapps/glide-data-grid` is an **optional peer**, pinned exact. Nothing is
-versioned/built into `dist` for this work yet.
+Status: **experimental** (branch `experiment/glide-grid`). **We own the grid
+runtime**: it is a vendored fork of Glide Data Grid, not an npm dependency (see
+`vendor/glide-data-grid/README.md`). No version bump / release tag yet.
 
 Read this before touching `GlideSheet`, the cell factories, or the playground
 "Data grid" section. Glide paints on a **canvas**: there is no DOM per cell,
@@ -15,12 +14,16 @@ hangs off.
 ```ts
 // once, next to the kit stylesheet
 import '@gabriel/ui-kit/ui-kit.css';
-import '@glideapps/glide-data-grid/dist/index.css'; // REQUIRED: canvas sizing + overlay chrome
+// REQUIRED: canvas sizing + overlay chrome (vendored; shipped with the kit)
+import '@gabriel/ui-kit/glide.css';
 import { GlideSheet, textCell, kitButtonCell } from '@gabriel/ui-kit';
 ```
 
-The CSS import is not optional — without it Glide's root has **zero height**
-and no canvas is created (a silent blank grid). This bit the playground once.
+The grid CSS is not optional — without it Glide's root has **zero height** and
+no canvas is created (a silent blank grid). This bit the playground once. On
+this branch the playground imports it from
+`vendor/glide-data-grid/dist/index.css`; promoting the module means exporting
+that file as `./glide.css` from the package.
 
 ## Files
 
@@ -107,14 +110,31 @@ There is no DOM in a Glide cell, so a real control is **pinned over** the cell:
   (switching page tabs).
 - `readOnly` is enforced per cell (Glide has no grid-level readonly).
 
-## Canvas limits (decide before reaching for a fork)
+## The fork (we own the code now)
+
+- **Upstream fork:** https://github.com/gabathanasiou/glide-data-grid (real
+  source + build config; use it for structural changes and to pull upstream
+  fixes).
+- **What the kit runs:** `vendor/glide-data-grid/dist` — the published build's
+  readable ESM + types + CSS, vendored at `6.0.4-alpha24`. There is **no**
+  `@glideapps/glide-data-grid` in `package.json`; `scripts/glide-fork.mjs`
+  aliases the specifier to the vendored build in every config (kit build,
+  playground, Vitest). Types come from `tsconfig.json` `paths`.
+- **Quick patches** edit `vendor/glide-data-grid/dist/esm/**` directly (plain
+  ESM, names intact) with a `// fork:` comment. **Structural changes** are made
+  in the GitHub fork, built, and re-vendored (steps in the vendor README).
+- Glide's runtime deps (`lodash`, `marked`, `@linaria/react`,
+  `canvas-hypertxt`, `react-number-format`, `react-responsive-carousel`) are
+  kit devDependencies and get bundled into the kit's `dist` on build.
+- MIT, copyright typeguard Inc. — `vendor/glide-data-grid/LICENSE`.
+
+## Canvas limits
 
 - No persistent DOM, per-cell tab order, native text selection or CSS in a cell;
-  `domCells` is the escape hatch, not a fix.
+  `domCells` is the escape hatch, not a fix (but now the fork makes a real
+  in-cell DOM layer possible if we ever want it inside the library).
 - Accessibility is Glide's hidden ARIA mirror; custom cells expose `copyData`.
-- Glide 6.0.4-alpha24 is the newest published build (upstream quiet since
-  Jan 2026). If internals must change, vendor the package's `src/` (it ships
-  with the npm tarball) and switch the imports — MIT, no permission needed.
+- Upstream is quiet (last publish Oct 2025) — treat the pin as ours to move.
 
 ## Playground
 

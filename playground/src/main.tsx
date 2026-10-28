@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './playground.css';
 /* Glide's compiled styles (canvas sizing + overlay/editor chrome) — a consumer
    imports this once next to the kit's own stylesheet. */
-import '@glideapps/glide-data-grid/dist/index.css';
+import '../../vendor/glide-data-grid/dist/index.css';
 import { DialogProvider, ThemeScope } from '../../src/index';
 import type { KitAccent, KitMode, KitSurface } from '../../src/index';
 import { SectionNav, TopBar, useActiveSection } from './shell/chrome';

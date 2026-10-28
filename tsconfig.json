@@ -4,6 +4,10 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@glideapps/glide-data-grid": ["./vendor/glide-data-grid/dist/dts/index.d.ts"]
+    },
     "jsx": "react-jsx",
     "strict": true,
     "skipLibCheck": true,

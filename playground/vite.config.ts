@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { glideForkAlias } from '../scripts/glide-fork.mjs';
 
 /* Playground dev server — imports the kit SOURCE (../src/index.ts) directly,
    so kit changes are live without building. Run from the kit root:
@@ -10,6 +11,8 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   root: __dirname,
   plugins: [react(), tailwindcss()],
+  // The playground imports the kit source, which imports our Glide fork.
+  resolve: { alias: glideForkAlias },
   server: {
     port: 5183,
     strictPort: true,

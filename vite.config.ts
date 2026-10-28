@@ -1,8 +1,11 @@
 import { defineConfig } from 'vite';
+import { glideForkAlias } from './scripts/glide-fork.mjs';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  // The kit runs OUR fork (see vendor/glide-data-grid/README.md).
+  resolve: { alias: glideForkAlias },
   build: {
     lib: {
       entry: 'src/index.ts',
@@ -35,7 +38,6 @@ export default defineConfig({
         '@tiptap/extension-placeholder',
         '@tiptap/extension-text-style',
         '@tiptap/extension-underline',
-        '@glideapps/glide-data-grid',
       ],
     },
   },
