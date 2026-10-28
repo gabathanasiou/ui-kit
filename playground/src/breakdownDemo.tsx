@@ -426,8 +426,9 @@ export const BreakdownPage: React.FC<{ onExit: () => void }> = ({ onExit }) => {
     ),
   })), [sortedScenes, removeScene]);
 
-  /* Every header is a real kit button (the fork's DOM header layer) with the
-     sort toggle: the icon names the state, clicking cycles asc → desc → off. */
+  /* The header stays CANVAS-painted; each column gets a small sort
+     affordance pinned at its right edge — the picker-chevron recipe. The
+     header box is click-through, so the canvas still owns header clicks. */
   const headerCells = useMemo(() => {
     const out: Record<string, React.ReactNode> = {};
     for (const col of COLUMNS) {
@@ -442,13 +443,9 @@ export const BreakdownPage: React.FC<{ onExit: () => void }> = ({ onExit }) => {
           aria-label={`Sort by ${col.label}${dir === 'asc' ? ' (ascending)' : dir === 'desc' ? ' (descending)' : ''}`}
           title={`Sort by ${col.label}`}
           onClick={() => toggleSort(col.key)}
-          className={`relative flex h-full w-full items-center pl-2 ${dir ? 'pr-6' : 'pr-2 hover:pr-6'} bg-[var(--glide-header-bg)] text-[10.5px] font-semibold uppercase text-[color:var(--glide-header-fg)] transition-colors hover:bg-[var(--glide-header-hover-bg)] group-data-[glide-header-focused=true]:bg-[var(--glide-header-focus-bg)]`}
-          style={{ justifyContent: col.align === 'center' ? 'center' : 'flex-start' }}
+          className={`pointer-events-auto absolute right-0.5 top-1/2 -translate-y-1/2 rounded p-1 text-[color:var(--glide-header-fg)] transition-opacity group-data-[glide-header-selected=true]:text-[color:var(--glide-header-fg-selected)] hover:bg-[var(--glide-header-hover-bg)] ${dir ? 'opacity-100' : 'opacity-40 hover:opacity-100'}`}
         >
-          <span className="truncate">{col.label.toUpperCase()}</span>
-          {/* The sort face only takes space on hover / when active, so a
-              narrow header still shows its whole title at rest. */}
-          <Icon className={`pointer-events-none absolute right-1 h-3 w-3 ${dir ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+          <Icon className="h-3 w-3" />
         </button>
       );
     }

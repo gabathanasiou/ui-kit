@@ -168,6 +168,7 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
                             className: "group" + (domCellClassName ? " " + domCellClassName : ""),
                             "data-glide-dom-header": String(b.col),
                             "data-glide-header-focused": headerFocused(b.col) ? "true" : undefined,
+                            "data-glide-header-selected": gridSelection?.columns?.hasIndex?.(b.col) === true ? "true" : undefined,
                             style: {
                                 position: "absolute",
                                 left: b.left,
@@ -175,7 +176,11 @@ export const DataEditorWithDomCells = React.forwardRef(function DataEditorWithDo
                                 width: b.width,
                                 height: b.height,
                                 boxSizing: "border-box",
-                                pointerEvents: "auto",
+                                /* Click-through: the canvas header keeps its
+                                   own click/selection/resize; only the node's
+                                   own pointer-events:auto children (a sort
+                                   affordance) capture. */
+                                pointerEvents: "none",
                             },
                         },
                         headerNode

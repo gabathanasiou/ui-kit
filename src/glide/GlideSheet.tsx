@@ -480,7 +480,11 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
     const colDef = COLUMNS[columnIndex];
     if (!colDef) return;
     const centered = (colDef.align ?? 'left') === 'center';
-    if (!centered && !wrapHeaders) return;
+    // A column with a real header control keeps its title on the canvas but
+    // reserves the control's lane on the right (never an overlap).
+    const hasControl = headerCellMap.has(columnIndex);
+    if (!centered && !wrapHeaders && !hasControl) return;
+    const reserve = hasControl ? 18 : 0;
     ctx.save();
     /* Repaint the header's own background BEFORE the centred/wrapped title.
        This must mirror Glide's selection tint — painting plain bgHeader here
@@ -502,20 +506,22 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
       ctx.fillStyle = gridTheme.accentColor;
       ctx.fillRect(rect.x + 1, rect.y, rect.width - 2, rect.height);
     }
-    ctx.fillStyle = gridTheme.textHeader;
+    // A selected column is filled with the accent: its title flips to the
+    // selected text colour (white), never staying gray on green.
+    ctx.fillStyle = args.isSelected ? gridTheme.textHeaderSelected : gridTheme.textHeader;
     ctx.textAlign = centered ? 'center' : 'left';
     ctx.textBaseline = 'middle';
     ctx.beginPath();
-    ctx.rect(rect.x, rect.y, rect.width, rect.height);
+    ctx.rect(rect.x, rect.y, rect.width - reserve, rect.height);
     ctx.clip();
-    const x = centered ? rect.x + rect.width / 2 : rect.x + 6;
+    const x = centered ? rect.x + (rect.width - reserve) / 2 : rect.x + 6;
     const title = String(column.title);
     if (!wrapHeaders) {
       ctx.fillText(title, x, rect.y + rect.height / 2);
     } else {
       const lines: string[] = [];
       let line = '';
-      const maxW = rect.width - 8;
+      const maxW = rect.width - 8 - reserve;
       for (const word of title.split(/\s+/)) {
         const next = line ? `${line} ${word}` : word;
         if (ctx.measureText(next).width <= maxW) { line = next; continue; }
@@ -533,7 +539,7 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
       lines.forEach((l, i) => ctx.fillText(l, x, startY + i * lh));
     }
     ctx.restore();
-  }, [COLUMNS, wrapHeaders]);
+  }, [COLUMNS, wrapHeaders, headerCellMap]);
 
   const onCellClicked = useCallback((cell: Item, event: CellClickedEventArgs) => {
     onCellClick?.(cell, event);
@@ -716,6 +722,7 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
         // The header face, for real DOM header controls (they cover the canvas).
         '--glide-header-bg': theme.bgHeader,
         '--glide-header-fg': theme.textHeader,
+        '--glide-header-fg-selected': theme.textHeaderSelected,
         '--glide-header-hover-bg': theme.bgHeaderHovered,
         '--glide-header-focus-bg': theme.bgHeaderHasFocus,
       } as React.CSSProperties}

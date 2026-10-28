@@ -148,8 +148,8 @@ Seg: Off / Scene # / + Pages / + Script / + I/E / + Set), `breakdown-scene-count
 `breakdown-add-scene`, `breakdown-undo`, `breakdown-status`, `breakdown-commits`.
 Row-marker gutter, up to six frozen leading columns, smooth scrolling, a
 sticky header, kit editors in the cells, a trash DOM cell per row, and real DOM
-header buttons that sort (`breakdown-sort-<columnKey>`, `data-sort` =
-`none|asc|desc`). The grid has 5 rows of overscroll space past the trailing add
+small sort buttons pinned at each header's right edge (`breakdown-sort-<columnKey>`,
+`data-sort` = `none|asc|desc`; the header label stays canvas-painted). The grid has 5 rows of overscroll space past the trailing add
 row — blank space, not empty rows.
 
 ## Playground CSS gotchas (both REQUIRED for correct rendering)

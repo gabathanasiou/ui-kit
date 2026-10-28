@@ -266,17 +266,13 @@ export function drawGrid(arg, lastArg) {
     /* fork: OVERSCROLL BAND — the space past the last row (Glide's
        overscrollY) is not more rows. Stock paints the full-height grid lines
        there, which reads as phantom empty rows; flatten it to the cell
-       background. Skipped when sticky trailing rows own the bottom edge. */
+       background. The band starts at the bottom of the LAST PAINTED row (the
+       append row included, variable heights honoured). */
     if (freezeTrailingRows === 0) {
-        let rowsHeight = 0;
-        if (typeof rowHeight === "number") {
-            rowsHeight = rows * rowHeight;
-        }
-        else {
-            for (let r = 0; r < rows; r++)
-                rowsHeight += rowHeight(r);
-        }
-        const bandTop = totalHeaderHeight + rowsHeight + translateY;
+        const lastRow = getLastRow(effectiveCols, height, totalHeaderHeight, translateX, translateY, cellYOffset, rows, getRowHeight, freezeTrailingRows, hasAppendRow);
+        let bandTop = totalHeaderHeight + translateY;
+        for (let r = cellYOffset; r <= lastRow; r++)
+            bandTop += getRowHeight(r);
         if (bandTop < height) {
             const y = Math.max(totalHeaderHeight, bandTop);
             targetCtx.fillStyle = theme.bgCell;

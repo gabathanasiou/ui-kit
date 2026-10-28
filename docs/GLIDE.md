@@ -66,18 +66,25 @@ each named column's header (the fork's `getDomHeaderCell`, measured with
 />
 ```
 
-- The host node fills the header cell; `GlideSheet` publishes the canvas chrome
-  as CSS variables so it matches: `--glide-header-bg`, `--glide-header-fg`,
+- The header box is **click-through** (`pointer-events: none`): the canvas keeps
+  owning header clicks/selection. The node's own `pointer-events: auto` child
+  is the only thing that captures — the same contract as `pickerDomCell`.
+- The host node sits over the painted header; `GlideSheet` publishes the canvas
+  chrome as CSS variables so it matches: `--glide-header-bg`,
+  `--glide-header-fg`, `--glide-header-fg-selected`,
   `--glide-header-hover-bg`, `--glide-header-focus-bg`.
-- Each header box carries `group` + `data-glide-header-focused` when the
-  selection covers its column (the whole RANGE, not just the current cell), so
-  `group-data-[glide-header-focused=true]:…` mirrors the canvas tint.
+- Each header box carries `group`, `data-glide-header-focused` when the
+  selection covers its column (the whole RANGE, not just the current cell) and
+  `data-glide-header-selected` when the column itself is selected, so
+  `group-data-[…]:…` mirrors the canvas tint/text.
+- `drawHeader` reserves the control's lane (18px) when it repaints a title, so
+  a header with a button never draws its text underneath it.
 - Columns without an entry keep Glide's painted header (the row-marker gutter
-  and the action lane in the Breakdown). A header control owns the click —
-  column selection/resize on those columns is replaced by the control.
+  and the action lane in the Breakdown).
 
-The Breakdown demo's headers are kit buttons that cycle
-none → ascending → descending with the kit's sort glyphs.
+The Breakdown demo pins a small sort affordance at each header's right edge
+(the picker-chevron recipe): the label stays canvas-painted, the icon cycles
+none → ascending → descending.
 
 ## Real DOM inside a cell (`domCells`)
 
