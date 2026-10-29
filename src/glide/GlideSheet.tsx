@@ -30,7 +30,7 @@ import {
 } from './gridModel';
 import { createGlideCellEditor, useGlideEscapeCancel, type GlideColumnEditor, type GlideEditorOptions } from './editors';
 import { KIT_GLIDE_RENDERERS } from './customCells';
-import { controlCellRenderers, isControlCell, isKitGlyphCell, isKitPickerCell, pressControlCell } from './controlCells';
+import { controlCellRenderers, isControlCell, isKitGlyphCell, isKitGlyphGroupCell, isKitPickerCell, pressControlCell } from './controlCells';
 import type { GlideRange, GlideSheetColumn, GlideSheetEdit } from './types';
 
 /**
@@ -481,7 +481,7 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
         const bg = hovered ? cellColors.editableHoverBg : cellColors.editableBg;
         return { ...cell, themeOverride: { ...ownOverride, bgCell: bg, bgCellMedium: bg } } as GridCell;
       }
-      if (isKitGlyphCell(cell) && hovered) {
+      if ((isKitGlyphCell(cell) || isKitGlyphGroupCell(cell)) && hovered) {
         return { ...cell, themeOverride: { ...ownOverride, bgCell: cellColors.readonlyHoverBg, bgCellMedium: cellColors.readonlyHoverBg } } as GridCell;
       }
       return cell;
@@ -581,16 +581,23 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
 
   /** Glide's activation hook: Enter/Space, double-click and type-to-edit.
    *  A painted glyph fires its action exactly once here and the canvas keeps
-   *  focus; a picker needs nothing (Glide's own reselect opens its overlay
-   *  editor, the ONE `select` editor). */
+   *  focus (a group cell fires its FIRST button); a picker needs nothing
+   *  (Glide's own reselect opens its overlay editor, the ONE `select` editor). */
   const handleCellActivated = useCallback((cell: Item, event: CellActivatedEventArgs) => {
     const [col, row] = cell;
     const colDef = COLUMNS[col];
     const r = rowsRef.current[row];
     const content = colDef && r ? getCellContent(colDef, r, row) : null;
-    if (content && isKitGlyphCell(content) && !readOnlyRef.current) {
-      pressControlCell(cell, content.data.label);
-      content.data.onActivate?.();
+    const button = content && !readOnlyRef.current
+      ? isKitGlyphGroupCell(content)
+        ? content.data.buttons[0]
+        : isKitGlyphCell(content)
+          ? content.data
+          : undefined
+      : undefined;
+    if (button) {
+      pressControlCell(cell, button.label);
+      button.onActivate?.();
       gridRef.current?.updateCells([{ cell }]);
       onCellActivated?.(cell, event);
       return;

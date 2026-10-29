@@ -52,15 +52,20 @@ export type {
 export {
   kitPickerCell,
   kitGlyphCell,
+  kitGlyphGroupCell,
   controlCellRenderers,
   isControlCell,
   isKitGlyphCell,
+  isKitGlyphGroupCell,
   isKitPickerCell,
   pressControlCell,
 } from './controlCells';
 export type {
+  KitGlyphButton,
   KitGlyphCell,
   KitGlyphCellData,
+  KitGlyphGroupCell,
+  KitGlyphGroupCellData,
   KitGlyphIcon,
   KitGlyphTone,
   KitPickerCell,
