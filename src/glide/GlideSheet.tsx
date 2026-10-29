@@ -245,7 +245,11 @@ function useMeasuredWidth(): { ref: React.RefObject<HTMLDivElement | null>; widt
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const update = () => setWidth(prev => (prev === el.getBoundingClientRect().width ? prev : el.getBoundingClientRect().width));
+    // LAYOUT width, never the transformed rect: a kit Modal opens with a
+    // scale morph (0.94 → 1), and `getBoundingClientRect()` measured mid-morph
+    // locks the grid to ~94% of its card (the transform never fires a resize,
+    // so it never corrects).
+    const update = () => setWidth(prev => (prev === el.offsetWidth ? prev : el.offsetWidth));
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
