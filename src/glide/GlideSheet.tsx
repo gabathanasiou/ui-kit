@@ -716,6 +716,11 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
       className={`relative ${className}`}
       {...(dataAttr ? { [dataAttr]: '' } : {})}
       data-glide-sheet={mode}
+      /* A content-height sheet fits its rows exactly; it must never scroll.
+         Safari (always-visible scrollbars) otherwise latches BOTH scrollbars on
+         after a row is added: the vertical bar steals width, the horizontal bar
+         steals height, and neither clears. */
+      {...(height == null ? { 'data-glide-fit': '' } : {})}
       style={{
         '--glide-dom-hover-bg': cellColors.readonlyHoverBg,
         '--glide-dom-accent': theme.accentColor,
