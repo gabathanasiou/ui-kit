@@ -190,12 +190,18 @@ const NativeBreakdown: React.FC<ZoneProps & {
   }, [apiRef]);
 
   const removeScene = useCallback((id: string) => {
-    const scene = scenes.find(s => s.id === id);
+    const index = scenes.findIndex(s => s.id === id);
+    const scene = scenes[index];
     onClicks();
     setScenes(prev => prev.filter(s => s.id !== id));
     onCommit();
     onStatus(`removed scene ${scene?.sceneNumber ?? ''}`);
-  }, [scenes, onStatus, onCommit, onClicks]);
+    // The deleted row is gone: keep the selection in the action column on the
+    // row that FELL INTO the deleted slot (the one below); if it was the last
+    // row, the new last row takes it.
+    const remaining = scenes.length - 1;
+    if (remaining > 0) apiRef.current?.selectCell(Math.min(index, remaining - 1), 'actions');
+  }, [scenes, onStatus, onCommit, onClicks, apiRef]);
 
   const addScene = useCallback((afterIndex?: number, countClick = false) => {
     setScenes(prev => {
@@ -411,12 +417,16 @@ const NativeCrewCard: React.FC<ZoneProps & {
   }, [apiRef]);
 
   const removeRow = useCallback((id: string) => {
-    const row = rows.find(r => r.id === id);
+    const index = rows.findIndex(r => r.id === id);
+    const row = rows[index];
     onClicks();
     setRows(prev => prev.filter(r => r.id !== id));
     onCommit();
     onStatus(`removed ${row?.person || row?.role || 'row'}`);
-  }, [rows, onStatus, onCommit, onClicks]);
+    // The row below falls into the deleted slot: keep the selection there.
+    const remaining = rows.length - 1;
+    if (remaining > 0) apiRef.current?.selectCell(Math.min(index, remaining - 1), 'actions');
+  }, [rows, onStatus, onCommit, onClicks, apiRef]);
 
   const addRole = useCallback(() => {
     setRows(prev => [...prev, {
