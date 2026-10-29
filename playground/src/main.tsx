@@ -24,7 +24,7 @@ import { SizingSection } from './sections/SizingSection';
 import { GlideSection } from './sections/GlideSection';
 import { BreakdownPage } from './breakdownDemo';
 import { GlideNativeCellsPage } from './glideNativeCellsDemo';
-import { SingleCellPage } from './singleCellDemo';
+import { SingleCellsStandalone } from './singleCellDemo';
 
 /* ────────────────────────────────────────────────────────────────────────────
    ui-kit playground — the component zoo & debugging surfaces.
@@ -116,12 +116,15 @@ const SECTIONS: SectionDef[] = [
 const PAGES: NavSection[] = [
   { id: 'breakdown', group: 'Full pages', title: 'Breakdown' },
   { id: 'glide-native-cells', group: 'Full pages', title: 'Canvas cell controls' },
-  { id: 'glide-single-cell', group: 'Full pages', title: 'Single cell input' },
 ];
 
+/* Routes that are NOT in the rail: linkable pop-out views (the Single cells
+   tab has one, so the cells can be opened in their own window). */
+const HIDDEN_PAGES = ['glide-single-cell'];
+
 function pageFromHash(): string | null {
-  const id = location.hash.replace(/^#\/?/, '');
-  return PAGES.some(p => p.id === id) ? id : null;
+  const id = location.hash.replace(/^#\/?/, '').split('?')[0];
+  return PAGES.some(p => p.id === id) || HIDDEN_PAGES.includes(id) ? id : null;
 }
 
 function useHashPage(): string | null {
@@ -209,7 +212,7 @@ export function App() {
         ) : page === 'glide-native-cells' ? (
           <GlideNativeCellsPage onExit={() => { window.location.hash = 'glide'; }} />
         ) : page === 'glide-single-cell' ? (
-          <SingleCellPage onExit={() => { window.location.hash = 'glide'; }} />
+          <SingleCellsStandalone />
         ) : null}
       </ThemeScope>
     );

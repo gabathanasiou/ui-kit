@@ -192,6 +192,9 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
   to one cell. A row action that deletes its row calls it for the same index
   (the row below falls into the deleted slot; the new last row when it was the
   last), so the selection stays where the eye already is.
+- **`baseHeaderHeight={0}`** makes a header-less sheet (one cell in an element):
+  the wrapper sets `data-glide-no-header`, and the vendored CSS hides the 1px
+  header canvas Glide still creates at that height (vendor patch 8).
 - `needsHoverPosition` gives `draw` a cell-LOCAL `hoverX/hoverY`; the renderer
   never paints a second focus rectangle (the grid owns selection), sets
   `overrideCursor('pointer')` over the lane only, and calls
@@ -263,6 +266,10 @@ them. The opt-ins, all on `GlideSheet`:
   cells on their own band (the visible-range stream starts at the first SCROLLED
   column, so they cannot be derived from it) and forwards `freezeColumns` to the
   inner editor.
+- **The card width is the LAYOUT width** (`offsetWidth`), never the transformed
+  rect: a kit Modal opens with a scale morph (0.94 → 1), and measuring
+  `getBoundingClientRect()` mid-morph locked the grid to ~94% of its card — the
+  transform never fires a resize, so it never corrected.
 - **The scroll pass paints, not the next React frame.** The fork's
   `InfiniteScroller` commits the visible-region update inside `flushSync`, so the
   canvas repaints on the same offsets the native scroll just applied. A deferred
@@ -316,7 +323,7 @@ off-screen.
 - **Quick patches** edit `vendor/glide-data-grid/dist/esm/**` directly (plain
   ESM, names intact) with a `// fork:` comment. **Structural changes** are made
   in the GitHub fork, built, and re-vendored (steps in the vendor README). The
-  full patch list is `vendor/glide-data-grid/README.md` §Local patches — patch 7
+  full patch list is `vendor/glide-data-grid/README.md` §Local patches — patch 8
   is the imperative `openCellEditor` row-marker column offset (painted picker
   lanes open editors through that API).
 - Glide's runtime deps (`lodash`, `marked`, `@linaria/react`,
@@ -354,12 +361,19 @@ Sections under "Data grid":
   (`chevronCenter`/`glyphCenter`/`cellBounds`) builds lane points from the
   grid's `getBounds`, so the spec never hardcodes coordinates.
 
-- `#glide-single-cell` (full page) — `glide-single-cell-demo`: the minimal
-  input loop in one element — ONE editable cell (select → type → overlay text
-  editor → Enter commits), the host value shown beside it. The other
-  experiment's single-cell harness can be compared side by side.
-  Testids: `-back`, `-value`, `-status`, `-commits`; dev helper
-  `window.__glideSingleCell.cellBounds(row, colKey)`.
+- **Single cells** is a TAB of `#glide-native-cells` (not a page): header-less
+  sheets (`baseHeaderHeight={0}` → `data-glide-no-header`), each element with
+  no table chrome. Cases: Text (type → Enter commits), Picker (painted
+  chevron lane), Button (check glyph), Two buttons (split lane), Toggle
+  (boolean), Locked (static), **Rows ×3** (one column, three rows — Arrow
+  Up/Down + Enter) and **Columns ×3** (one row, three columns — Arrow
+  Left/Right + Enter) for keyboard navigation. Testids:
+  `glide-native-single-<kind>`, `-text-value`/`-text-status`,
+  `-picker-value`, `-button-clicks`, `-group-clicks`/`-group-last`,
+  `-toggle-value`, `-rows-value`/`-rows-status`,
+  `-columns-value`/`-columns-status`; dev helper
+  `singlePoint(key, row, colKey, where)`. A **Pop out ↗** button opens the
+  hidden `#glide-single-cell` route (not in the rail) in its own window.
 
 Specs: `playground/specs/glide.spec.ts` + `glide-native-cells.spec.ts`; pure
 math: `src/__tests__/glideGridModel.test.ts`, lane hit-test:

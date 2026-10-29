@@ -68,10 +68,11 @@ const SPEC_CAP = 20;
 // 121 = 120 + DOM controls track a fast vertical AND horizontal scroll in the
 //       same frame (the drift regression: boxes are pinned from painted
 //       offsets, which are a frame stale at speed).
-// 129 = 121 + the seven canvas-native control cases (lane vs body vs Enter vs
-//       double-click, glyph click + Enter exactly-once, Add role, Modal) and
-//       the single-cell input page (type → overlay editor → Enter commits).
-const TEST_CAP = 129;
+// 130 = 121 + the seven canvas-native control cases (lane vs body vs Enter vs
+//       double-click, glyph click + Enter exactly-once, Add role, Modal), the
+//       single-cell input tab (type → overlay editor → Enter commits) and the
+//       Rows/Columns keyboard walk (ArrowDown/Right + Enter edits in place).
+const TEST_CAP = 130;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

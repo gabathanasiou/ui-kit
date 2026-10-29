@@ -165,12 +165,19 @@ The dev-only `window.__glideNativeCells` helper
 (`chevronCenter`/`glyphCenter`/`cellBounds`, from the grid's `getBounds`) is how
 the spec clicks a painted lane without hardcoding coordinates.
 
-`#glide-single-cell` (experimental) is the minimal edit loop in one element: a
-card with ONE editable Glide cell (select → type → the overlay text editor →
-Enter commits) and the host value beside it. Testids:
-`glide-single-cell-demo`, `-back`, `-value`, `-status`, `-commits`; dev helper
-`window.__glideSingleCell.cellBounds(row, colKey)`. It mirrors the other
-experiment's single-cell harness for a side-by-side canvas-vs-DOM comparison.
+The **Single cells** tab of `#glide-native-cells` is the minimal edit loop:
+header-less Glide sheets with no table chrome — Text (type → Enter commits),
+Picker (painted chevron), Button (check glyph), Two buttons (split lane),
+Toggle (boolean), Locked (static), **Rows ×3** (one column, three rows) and
+**Columns ×3** (one row, three columns) for keyboard walking (Arrow keys +
+Enter edit in place). Testids: `glide-native-single-<kind>`,
+`-text-value`/`-text-status`, `-picker-value`, `-button-clicks`,
+`-group-clicks`/`-group-last`, `-toggle-value`, `-rows-value`/`-rows-status`,
+`-columns-value`/`-columns-status`; dev helper
+`window.__glideNativeCells.singlePoint(key, row, colKey, where)`. A
+**Pop out ↗** button opens the hidden `#glide-single-cell` route in its own
+window (not in the rail). Mirrors the other experiment's single-cell harness
+for a side-by-side canvas-vs-DOM comparison.
 
 ## Playground CSS gotchas (both REQUIRED for correct rendering)
 

@@ -57,6 +57,24 @@ async function stableNativePoint(
 const sheetCanvas = (page: Page, sheet: 'breakdown' | 'crew') =>
   page.locator(`[data-glide-native-${sheet}] canvas`).first();
 
+/** A stable point in one of the Single cells cards (they mount with the tab). */
+async function singleCellPoint(page: Page, key: string, row: number, colKey: string): Promise<Point> {
+  let previous = '';
+  let point: Point = { x: 0, y: 0 };
+  await expect.poll(async () => {
+    const next = await page.evaluate(({ key, row, colKey }) => {
+      const api = (window as unknown as { __glideNativeCells?: { singlePoint: (k: string, r: number, c: string) => Point | null } }).__glideNativeCells;
+      return api?.singlePoint(key, row, colKey) ?? null;
+    }, { key, row, colKey });
+    const usable = !!next && Number.isFinite(next.x) && Number.isFinite(next.y);
+    const stable = usable && !!previous && `${next!.x},${next!.y}` === previous;
+    previous = usable ? `${next!.x},${next!.y}` : '';
+    if (usable) point = next!;
+    return stable;
+  }, { timeout: 3000 }).toBe(true);
+  return point;
+}
+
 async function pickerOverlay(page: Page) {
   return page.locator('[data-glide-overlay-layer] [data-picker-field]').first();
 }
@@ -141,41 +159,68 @@ test.describe('Glide canvas-native cell controls', () => {
     await expect(page.getByTestId('glide-native-cells-clicks')).toHaveText('clicks: 1');
   });
 
-  test('single cell: typing then Enter commits through the host', async ({ page }) => {
-    await page.goto('/#glide-single-cell');
-    await expect(page.getByTestId('glide-single-cell-demo')).toBeVisible();
-    // The page registers its helper + the grid API after mount.
-    const readCell = () => page.evaluate(() => {
-      const api = (window as unknown as { __glideSingleCell?: { cellBounds: (row: number, colKey: string) => { x: number; y: number; width: number; height: number } | null } }).__glideSingleCell;
-      return api?.cellBounds(0, 'value') ?? null;
-    });
-    // Poll until the grid has a real (finite, stable) rect: the first frames
-    // report a 0-sized canvas, whose scale makes the bounds NaN.
-    let cell: { x: number; y: number; width: number; height: number } | null = null;
-    await expect.poll(async () => {
-      const next = await readCell();
-      const usable = !!next
-        && [next.x, next.y, next.width, next.height].every(Number.isFinite)
-        && next.width > 0;
-      const stable = usable && !!cell
-        && next!.x === cell.x && next!.y === cell.y && next!.width === cell.width;
-      cell = usable ? next : null;
-      return stable;
-    }, { timeout: 3000 }).toBe(true);
-    if (!cell) throw new Error('no single-cell bounds');
+  test('single cells: typing + Enter commits, and the pop-out opens in its own window', async ({ page }) => {
+    await page.getByTestId('glide-native-cells-zone').getByRole('button', { name: 'Single cells', exact: true }).click();
+    await expect(page.getByTestId('glide-native-single-text')).toBeVisible();
+    await expect(page.getByTestId('glide-native-cells-rows')).toHaveText('8 cells');
 
     // Double-click opens the overlay text editor; type the value and commit
     // with Enter (the same loop as typing into any Glide cell).
-    await page.mouse.dblclick(cell.x + 20, cell.y + cell.height / 2);
+    const cell = await singleCellPoint(page, 'text', 0, 'value');
+    await page.mouse.dblclick(cell.x, cell.y);
     const editor = page.locator('[data-glide-overlay-layer] textarea');
     await expect(editor).toBeFocused();
     await editor.fill('SCENE 12');
     await expect(editor).toHaveValue('SCENE 12');
     await page.keyboard.press('Enter');
 
-    await expect(page.getByTestId('glide-single-cell-value')).toHaveText('SCENE 12');
-    await expect(page.getByTestId('glide-single-cell-commits')).toHaveText('1 commit');
-    await expect(page.getByTestId('glide-single-cell-status')).toHaveText('committed “SCENE 12”');
+    await expect(page.getByTestId('glide-native-single-text-value')).toHaveText('SCENE 12');
+    await expect(page.getByTestId('glide-native-single-text-status')).toHaveText('1 commit');
+
+    // The pop-out route (hidden from the rail) still opens a standalone window.
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.getByTestId('glide-native-cells-popout').click(),
+    ]);
+    await expect(popup.getByTestId('glide-single-cell-demo')).toBeVisible();
+    await expect(popup.getByTestId('glide-native-single-text')).toBeVisible();
+    await popup.close();
+  });
+
+  test('single cells: arrow keys move between rows and columns', async ({ page }) => {
+    await page.getByTestId('glide-native-cells-zone').getByRole('button', { name: 'Single cells', exact: true }).click();
+
+    // Rows: select row 1, ArrowDown to row 2, Enter edits it in place. Scroll
+    // the card in first — the sheet is below the fold on the iPad viewport and
+    // a click outside it never focuses the canvas.
+    const rowsCard = page.getByTestId('glide-native-single-rows');
+    await rowsCard.scrollIntoViewIfNeeded();
+    const row0 = await singleCellPoint(page, 'rows', 0, 'value');
+    await page.mouse.click(row0.x, row0.y);
+    await expect(page.locator('[data-glide-single-rows] canvas').first()).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    const editor = page.locator('[data-glide-overlay-layer] textarea');
+    await expect(editor).toBeFocused();
+    await editor.fill('SECOND');
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('glide-native-single-rows-value')).toContainText('SECOND');
+    await expect(page.getByTestId('glide-native-single-rows-value')).toContainText('Scene 3');
+    await expect(page.getByTestId('glide-native-single-rows-status')).toHaveText('row 2 → SECOND');
+
+    // Columns: select Scene, ArrowRight to Pages, Enter edits that cell.
+    const columnsCard = page.getByTestId('glide-native-single-columns');
+    await columnsCard.scrollIntoViewIfNeeded();
+    const scene = await singleCellPoint(page, 'columns', 0, 'scene');
+    await page.mouse.click(scene.x, scene.y);
+    await expect(page.locator('[data-glide-single-columns] canvas').first()).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('Enter');
+    await expect(editor).toBeFocused();
+    await editor.fill('3 1/8');
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('glide-native-single-columns-value')).toContainText('3 1/8');
+    await expect(page.getByTestId('glide-native-single-columns-status')).toHaveText('pages → 3 1/8');
   });
 
   test('the card inside a kit Modal: the lane opens the picker above the dialog', async ({ page }) => {

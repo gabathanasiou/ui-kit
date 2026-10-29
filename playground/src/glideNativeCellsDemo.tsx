@@ -19,6 +19,7 @@ import {
   type GlideSheetColumn,
   type GlideSheetEdit,
 } from '../../src/index';
+import { SingleCellsZone, type SingleCellKey } from './singleCellDemo';
 
 /**
  * Canvas-native cell controls — the experiment page (never replaces `#glide`
@@ -37,12 +38,13 @@ import {
  * the spec can click the painted lane without hardcoding page coordinates.
  */
 
-type Zone = 'full' | 'embedded' | 'modal';
+type Zone = 'full' | 'embedded' | 'modal' | 'single';
 
 const ZONES = [
   { v: 'full', l: 'Full screen' },
   { v: 'embedded', l: 'Embedded' },
   { v: 'modal', l: 'Modal' },
+  { v: 'single', l: 'Single cells' },
 ];
 
 const FREEZE_OPTIONS = [
@@ -58,6 +60,8 @@ interface NativeCellApi {
   /** `index`/`count` address one button of a split group cell (left → right);
    *  the default is the single-button right lane. */
   glyphCenter(row: number, colKey: string, index?: number, count?: number): { x: number; y: number } | null;
+  /** A point in one of the "Single cells" cards (header-less 1×1 sheets). */
+  singlePoint(key: SingleCellKey, row: number, colKey: string, where?: 'center' | 'chevron' | 'glyph'): { x: number; y: number } | null;
 }
 
 declare global {
@@ -569,6 +573,7 @@ export const GlideNativeCellsPage: React.FC<{ onExit: () => void }> = ({ onExit 
 
   const fullApi = useRef<GlideSheetApi | null>(null);
   const crewApi = useRef<GlideSheetApi | null>(null);
+  const singleApis = useRef<Partial<Record<SingleCellKey, GlideSheetApi | null>>>({});
   const zoneRef = useRef<Zone>(zone);
   zoneRef.current = zone;
 
@@ -576,9 +581,16 @@ export const GlideNativeCellsPage: React.FC<{ onExit: () => void }> = ({ onExit 
   const onCommit = useCallback(() => setCommits(c => c + 1), []);
   const onClicks = useCallback(() => setClicks(c => c + 1), []);
   const onRows = useCallback((count: number) => setRows(count), []);
+  const onSingleApis = useCallback((apis: Partial<Record<SingleCellKey, GlideSheetApi | null>>) => {
+    singleApis.current = apis;
+  }, []);
 
   useEffect(() => {
-    const api = () => (zoneRef.current === 'full' ? fullApi.current : crewApi.current);
+    const api = () => (zoneRef.current === 'full'
+      ? fullApi.current
+      : zoneRef.current === 'single'
+        ? singleApis.current.text ?? null
+        : crewApi.current);
     window.__glideNativeCells = {
       cellBounds(row, colKey) {
         const b = api()?.getCellBounds(row, colKey);
@@ -600,6 +612,19 @@ export const GlideNativeCellsPage: React.FC<{ onExit: () => void }> = ({ onExit 
         const segment = b.width / count;
         return { x: b.x + segment * (index + 0.5), y: b.y + b.height / 2 };
       },
+      singlePoint(key, row, colKey, where = 'center') {
+        const b = singleApis.current[key]?.getCellBounds(row, colKey);
+        if (!b) return null;
+        if (where === 'chevron') {
+          const lane = Math.min(CONTROL_LANE, b.width);
+          return { x: b.x + b.width - lane / 2, y: b.y + b.height / 2 };
+        }
+        if (where === 'glyph') {
+          const lane = Math.min(GLYPH_LANE, b.width);
+          return { x: b.x + b.width - lane / 2, y: b.y + b.height / 2 };
+        }
+        return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+      },
     };
     return () => { delete window.__glideNativeCells; };
   }, []);
@@ -616,16 +641,8 @@ export const GlideNativeCellsPage: React.FC<{ onExit: () => void }> = ({ onExit 
         </button>
         <div className="pg-page-title">IT&rsquo;S A WONDERFUL LIFE</div>
         <span className="pg-page-sub">Canvas controls</span>
-        <a
-          className="pg-page-back"
-          href="#glide-single-cell"
-          data-testid="glide-native-cells-single-link"
-          title="The minimal one-cell input loop"
-        >
-          Single cell →
-        </a>
         <span className="pg-page-stats" data-testid="glide-native-cells-rows">
-          {rows} {zone === 'full' ? 'scenes' : 'crew'}
+          {rows} {zone === 'full' ? 'scenes' : zone === 'single' ? 'cells' : 'crew'}
         </span>
         <div className="pg-page-tools">
           <span data-testid="glide-native-cells-zone">
@@ -635,6 +652,16 @@ export const GlideNativeCellsPage: React.FC<{ onExit: () => void }> = ({ onExit 
             <span data-testid="glide-native-cells-freeze">
               <Seg dense value={String(freeze)} options={FREEZE_OPTIONS} onChange={v => setFreeze(Number(v))} />
             </span>
+          ) : null}
+          {zone === 'single' ? (
+            <Button
+              variant="subtle"
+              data-testid="glide-native-cells-popout"
+              title="Open the single cells in their own window"
+              onClick={() => window.open(`${location.origin}${location.pathname}#glide-single-cell`, '_blank', 'width=980,height=640')}
+            >
+              Pop out ↗
+            </Button>
           ) : null}
           <span className="pg-page-meta">
             <span className="pg-page-status" data-testid="glide-native-cells-clicks">clicks: {clicks}</span>
@@ -655,6 +682,8 @@ export const GlideNativeCellsPage: React.FC<{ onExit: () => void }> = ({ onExit 
           onClicks={onClicks}
           onRows={onRows}
         />
+      ) : zone === 'single' ? (
+        <SingleCellsZone onRows={onRows} onApis={onSingleApis} />
       ) : (
         <div className="pg-page-body overflow-auto p-4">
           <div className="mx-auto max-w-3xl">
