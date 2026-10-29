@@ -257,6 +257,11 @@ export function SearchMenu({
    *  (so the next Enter commits the draft) but arrow navigation resumes from
    *  the picked row — Down goes to the next record, not back to the top. */
   const lastActivatedRef = useRef<string | null>(null);
+  /** Multi lists that sort checked rows to the top re-order UNDER the cursor
+   *  on every tick. Remember the rows that were visually above/below it so the
+   *  next arrow continues from where the user was, not from the ticked row's
+   *  new index. Consumed by the next arrow press. */
+  const resumeNeighborRef = useRef<{ up: string | null; down: string | null } | null>(null);
   const setHighlighted = useCallback((index: number, source: 'keyboard' | 'pointer' = 'keyboard') => {
     pointerDrivenRef.current = source === 'pointer';
     setHighlightedState(index);
@@ -549,7 +554,10 @@ export function SearchMenu({
 
   useEffect(() => {
     if (!open) lastActivatedRef.current = null;
-  }, [open]);
+    // A new query re-orders/filters the rows — an old neighbour memory would
+    // point at a different record.
+    resumeNeighborRef.current = null;
+  }, [open, query]);
 
   // Expandable: focus the field once it mounts.
   useEffect(() => {
@@ -608,7 +616,21 @@ export function SearchMenu({
     if (row.kind === 'item') {
       if (multipleActive) {
         /* Toggle only — the panel stays open until the footer hero commits. */
-        if (selection.canToggle(row.hit.item.id)) selection.toggle(row.hit.item.id);
+        if (selection.canToggle(row.hit.item.id)) {
+          // Checked rows sort to the top, so the list re-orders under the
+          // cursor. Remember the visual neighbours: the next arrow resumes
+          // from where the user was, not from the toggled row's new index.
+          const pos = navigateRows.findIndex(x => x.row === row);
+          const idAt = (i: number) => {
+            const entry = navigateRows[i];
+            return entry?.row.kind === 'item' ? entry.row.hit.item.id : null;
+          };
+          resumeNeighborRef.current = pos < 0 ? null : { up: idAt(pos - 1), down: idAt(pos + 1) };
+          selection.toggle(row.hit.item.id);
+          // An index highlight would mark a different record after the
+          // re-sort; the remembered neighbour is the resume point.
+          setHighlighted(-1, 'keyboard');
+        }
         return;
       }
       onSelect(row.hit.item);
@@ -625,10 +647,24 @@ export function SearchMenu({
       if (action) action.onClick(query);
       if (closeOnSelect) close();
     }
-  }, [close, closeOnSelect, emptyActions, footerActions, groupsActionable, items, leadingActions, multiple, multipleActive, onSelect, onSelectGroup, query, selection, toggleGroup, visibleIdSet]);
+  }, [close, closeOnSelect, emptyActions, footerActions, groupsActionable, items, leadingActions, multiple, multipleActive, navigateRows, onSelect, onSelectGroup, query, selection, setHighlighted, toggleGroup, visibleIdSet]);
 
   const moveHighlight = (dir: 1 | -1) => {
     if (navigateRows.length === 0) return;
+    // A multi toggle just re-sorted the list: jump to the row that was
+    // visually above/below the cursor BEFORE the toggle.
+    const remembered = resumeNeighborRef.current;
+    const neighborId = dir === 1 ? remembered?.down : remembered?.up;
+    if (neighborId != null) {
+      const target = navigateRows.find(
+        x => x.row.kind === 'item' && x.row.hit.item.id === neighborId,
+      );
+      if (target) {
+        resumeNeighborRef.current = null;
+        setHighlighted(target.index);
+        return;
+      }
+    }
     let from = highlighted;
     if (from < 0 && lastActivatedRef.current) {
       const resume = navigateRows.find(
