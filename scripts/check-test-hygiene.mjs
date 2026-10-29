@@ -57,7 +57,10 @@ const WAIT_BASELINE = 9;
 //       the track variant.
 // 19 = 18 + glide.spec.ts (experimental grid: the domCells wiring + the
 //      in-cell morph fields; canvas painting stays a manual check).
-const SPEC_CAP = 19;
+// 20 = 19 + glide-native-cells.spec.ts (roadmap 326: painted picker lanes,
+//      glyph click/Enter exactly-once, the split action cell, the crew card
+//      and the same card inside a Modal — pointer paths the canvas hides).
+const SPEC_CAP = 20;
 // 116 = 111 + the five glide grid cases (incl. Enter → button).
 // 120 = 116 + the breakdown page (the frozen Scene # edit after a sideways
 //       scroll, the add-row/undo one-commit contract, the full-page route, and
@@ -65,7 +68,9 @@ const SPEC_CAP = 19;
 // 121 = 120 + DOM controls track a fast vertical AND horizontal scroll in the
 //       same frame (the drift regression: boxes are pinned from painted
 //       offsets, which are a frame stale at speed).
-const TEST_CAP = 121;
+// 128 = 121 + the seven canvas-native control cases (lane vs body vs Enter vs
+//       double-click, glyph click + Enter exactly-once, Add role, Modal).
+const TEST_CAP = 128;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

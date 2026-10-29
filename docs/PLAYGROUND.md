@@ -97,7 +97,9 @@ Consequences (learned the hard way):
   `picker-dropdown-single` (+ `-status`); morph search faces
   `morph-search-icon` / `morph-search-swap` / `morph-search-reveal`
   (+ `morph-search-icon-status`).
-- Glide data grid (`#glide`, experimental): `glide-crew-demo` (the crew card —
+- Glide data grid (`#glide`, experimental): painted control cells
+  (`kitPickerCell` / `kitGlyphCell` / `kitGlyphGroupCell`) live on the full page
+  `#glide-native-cells` — see Full pages. `glide-crew-demo` (the crew card —
   `glide-crew-status` / `-commits` / `-undo` / `-include` / `-report-to` /
   `-precall` / `-add-role`; Person/Report-To are native picker cells with a
   passthrough DOM chevron (`glide-crew-person-open-<id>` /
@@ -151,6 +153,17 @@ sticky header, kit editors in the cells, a trash DOM cell per row, and real DOM
 small sort buttons pinned at each header's right edge (`breakdown-sort-<columnKey>`,
 `data-sort` = `none|asc|desc`; the header label stays canvas-painted). The grid has 5 rows of overscroll space past the trailing add
 row — blank space, not empty rows.
+
+`#glide-native-cells` (experimental, roadmap 326) is the canvas-native control
+cells page: no `domCells` for pickers, trash or add. A zone Seg switches three
+shapes — a 60-scene Breakdown, the crew card embedded, and the same card inside
+a kit `Modal`. Testids: `glide-native-cells-demo`, `-back`, `-rows`, `-zone`,
+`-freeze`, `-add`, `-clicks`, `-status`, `-commits`,
+`-open-modal`, `glide-native-crew-card`. The action column is one cell with TWO
+painted buttons (add · trash, split lanes) and is **not** frozen by default.
+The dev-only `window.__glideNativeCells` helper
+(`chevronCenter`/`glyphCenter`/`cellBounds`, from the grid's `getBounds`) is how
+the spec clicks a painted lane without hardcoding coordinates.
 
 ## Playground CSS gotchas (both REQUIRED for correct rendering)
 

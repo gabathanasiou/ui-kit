@@ -32,8 +32,10 @@ that file as `./glide.css` from the package.
 | `GlideSheet.tsx` | the grid wrapper: auto-fit OR scrollable columns, frozen columns + row markers, content/fixed height, trailing add row, editable tint, selection/cache, fill/paste/copy/cut/clear, DOM cells |
 | `cells.ts` | `textCell`, `seededTextCell`, `staticCell`, `actionGlyphCell`, `isSeededNoop`, copy/cut text |
 | `gridModel.ts` | pure geometry: selection → rect, range fill, paste, clear, clipboard parsing |
-| `customCells.tsx` | `kitButtonCell`, `kitBadgeCell`, `kitFieldCell` + renderers + the morph editor |
-| `editors.tsx` | `createGlideCellEditor` (text + kit `PickerField` select) |
+| `customCells.tsx` | `kitButtonCell`, `kitBadgeCell`, `kitFieldCell` + renderers + the morph editor; the shared `drawIcon`/`roundRect`/`isDark` paint helpers |
+| `controlCells.tsx` | `kitPickerCell`, `kitGlyphCell`, `kitGlyphGroupCell` + renderers: painted affordances (no DOM) |
+| `controlGeometry.ts` | pure lane hit-test (`CONTROL_LANE`, `GLYPH_LANE`, `isControlHit`) |
+| `editors.tsx` | `createGlideCellEditor` (text + kit `PickerField` select; seeds painted picker cells) |
 | `theme.ts` | canvas `Theme` from the kit mode/accent + cell colours |
 
 ## Cell kinds
@@ -44,11 +46,24 @@ that file as `./glide.css` from the package.
   guards "open + Enter" so it never pins a spurious override.
 - **Read-only** — the cell's own `readonly` flag, not a grid option. Mix freely;
   the editable wash only paints writable cells. `staticCell()` = no editor.
-- **`kitBadgeCell`** — a drawn status pill with kit tones (the only painted
-  interactive-looking cell, and it is read-only). **Anything clickable is a
-  real DOM control** (`domCells`) — canvas-drawn buttons were dropped.
-- **Buttons** — mount a real kit `Button` with `domCells`; it keeps hover,
-  focus, press and tab order.
+- **`kitBadgeCell`** — a drawn status pill with kit tones (read-only).
+- **`kitPickerCell`** — a value + a painted 24px chevron lane. ONE click in the
+  LANE calls the host's `onOpen` (normally `api.openCellEditor(row, colKey)` →
+  the column's `select` editor, the SAME `PickerField` a double-click opens);
+  a click on the body only selects; double-click/Enter activate through Glide.
+  The cell keeps `copyData`, the grid's selection and its native focus ring.
+  The value uses Glide's own `drawTextCell` (same metrics/padding/baseline),
+  clipped before the lane.
+- **`kitGlyphCell` / `kitGlyphGroupCell`** — painted buttons (trash / plus /
+  chevron / check) with NO DOM box: full-rect hover fill (`hoverBg` or the
+  tone's tint), a ~90ms painted press flash, `pointer` over the target, and
+  `readonly: true`. The group variant splits ONE cell into 2+ equal lanes, so
+  row actions need one column, not one per button (Enter fires the FIRST =
+  primary). The action fires exactly once: on a lane click via the renderer's
+  `onClick` (which `preventDefault`s the activation) or on Enter/Space via
+  `GlideSheet.onCellActivated`; the canvas keeps focus either way.
+- **Buttons** — mount a real kit `Button` with `domCells` when you need native
+  focus/tab order, text labels, or a compound layout of real controls.
 - **`kitFieldCell`** — the closed button face of a morph control; ONE click
   opens the real `MorphSearchField` / `MorphActionField` in the overlay editor
   (the cell sets `activationBehaviorOverride: 'single-click'`).
@@ -139,23 +154,49 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
 - **`passthrough: true`** makes the box click-through (`pointer-events: none`):
   only the node's own `pointer-events: auto` children capture. Use it for a
   small affordance drawn over a NATIVE cell.
-- **ALL picker cells use `pickerDomCell`** (`src/glide/pickerCell.tsx`): a
-  native picker cell (value painted, selectable, double-click opens the editor)
-  plus a chevron button that calls `apiRef.openCellEditor(row, colKey)` for the
-  single-click path. Never hand-roll the chevron:
+- **A SIMPLE picker column is a painted `kitPickerCell`** — value + chevron
+  lane, no DOM box:
 
   ```tsx
   const api = useRef<GlideSheetApi | null>(null);
-  <GlideSheet apiRef={api} domCells={[
-    pickerDomCell({ row, colKey: 'person', label: person, onOpen: () => api.current?.openCellEditor(row, 'person') }),
-  ]} />
+  getCellContent: (col, row) => col.key === 'person'
+    ? kitPickerCell({ value: row.person, label: `Person for ${row.role}`, onOpen: () => api.current?.openCellEditor(row, 'person') })
+    : …,
+  getEditor: (row, colKey) => colKey === 'person' ? { kind: 'select', items, resolveBy: 'label' } : undefined,
   ```
-- `kitFieldCell` remains for the cheaper "one click → overlay editor" variant.
+  The lane click opens the SAME overlay `select` editor as double-click/Enter
+  (the editor accepts a painted picker payload and seeds from its `seedValue`).
+- **`pickerDomCell`** (`src/glide/pickerCell.tsx`) remains for COMPOUND cells
+  and the older demos: a passthrough DOM chevron pinned over a native picker
+  cell. Never hand-roll that chevron; prefer the painted cell for new columns.
+- `kitFieldCell` remains for the "one click → morph field" variant.
 - **Enter activates a DOM cell:** arrow-key navigation moves the grid selection
   onto the cell; Enter (or Space) fires the fork's `onCellActivated` hook, which
   focuses + clicks the cell's control **when it holds exactly one** focusable
   element (a picker, a morph trigger, a single button). Multi-control cells are
   left alone — navigate into them with Tab instead.
+
+## Painted control plumbing
+
+- **`GlideSheet` `onCellActivated?: (cell, event)`** — Glide's activation
+  (Enter/Space, double-click, type-to-edit), after the wrapper resolves the
+  cell. A glyph/group cell fires `onActivate` (or its first button) exactly
+  once and the canvas keeps focus; the host callback still runs. A picker cell
+  is left to Glide's own reselect, which opens its overlay editor — never add
+  a second activation path.
+- **`GlideSheetApi.getCellBounds(row, colKey)`** — the cell rect in VIEWPORT
+  coordinates. The playground's dev-only `window.__glideNativeCells`
+  (`chevronCenter`/`glyphCenter`) builds lane click points from it, so specs
+  never hardcode page coordinates.
+- `needsHoverPosition` gives `draw` a cell-LOCAL `hoverX/hoverY`; the renderer
+  never paints a second focus rectangle (the grid owns selection), sets
+  `overrideCursor('pointer')` over the lane only, and calls
+  `requestAnimationFrame` while the press flash is live. The press state is
+  keyed by row + the button's accessible label, so labels must be unique per
+  row ("Remove scene 12").
+- Hover fills are the WHOLE target rectangle (`hoverBg` or the tone's tint, no
+  inset pill). A group cell splits its lane into equal segments; each segment
+  has its own hover, flash and click hit-test.
 
 ## Editors (overlay)
 
@@ -180,6 +221,8 @@ area, both of which surfaced as a tiny scrollbar inside the floating box.
 - `text` — a kit-styled input (Enter commits without moving the selection).
 - `select` — the kit's ONE value picker, `PickerField appearance="inline"`, with
   `defaultOpen`/`autoFocus`/`panelMinWidth`; commits on close, Escape cancels.
+  It also serves painted `kitPickerCell`s: the seed comes from the cell payload
+  (`seedValue`/`value`) when the painted value is not the stored value.
 - `columnOffset` = 1 for grids with a row-marker column, 0 otherwise (the raw
   column index is offset — the classic Glide trap).
 
@@ -242,13 +285,15 @@ them. The opt-ins, all on `GlideSheet`:
   `addRowSticky` (default false) pins the trailing add-row to the viewport
   bottom instead of leaving it at the end of the scroll.
 
-The page-scale recreation is the playground's `#breakdown` page
-(`BreakdownPage` — a full-window app tab, not a section card): row markers,
-`Scene #` / `Pages` / `Script Day` / `I/E` / `Set` frozen (a Seg switches the
-count), smooth scrolling, real kit editors for the entity columns, a trash DOM
-cell in the scrollable Actions column, and the trailing add row. The grid's
-height is measured from the flex remainder, so a wrapped toolbar shrinks the
-grid instead of pushing it off-screen.
+The page-scale recreations are the playground's `#breakdown` and
+`#glide-native-cells` pages (full-window app tabs, not section cards): row
+markers, frozen leading columns (a Seg switches the count), smooth scrolling,
+real kit editors for the entity columns, and the trailing add row. `#breakdown`
+keeps a trash DOM cell in the scrollable Actions column; `#glide-native-cells`
+replaces the picker chevrons, trash and add-row actions with PAINTED control
+cells (one split action cell: add · trash). Both measure the grid's height from
+the flex remainder, so a wrapped toolbar shrinks the grid instead of pushing it
+off-screen.
 
 ## The fork (we own the code now)
 
@@ -262,7 +307,10 @@ grid instead of pushing it off-screen.
   playground, Vitest). Types come from `tsconfig.json` `paths`.
 - **Quick patches** edit `vendor/glide-data-grid/dist/esm/**` directly (plain
   ESM, names intact) with a `// fork:` comment. **Structural changes** are made
-  in the GitHub fork, built, and re-vendored (steps in the vendor README).
+  in the GitHub fork, built, and re-vendored (steps in the vendor README). The
+  full patch list is `vendor/glide-data-grid/README.md` §Local patches — patch 7
+  is the imperative `openCellEditor` row-marker column offset (painted picker
+  lanes open editors through that API).
 - Glide's runtime deps (`lodash`, `marked`, `@linaria/react`,
   `canvas-hypertxt`, `react-number-format`, `react-responsive-carousel`) are
   kit devDependencies and get bundled into the kit's `dist` on build.
@@ -270,9 +318,10 @@ grid instead of pushing it off-screen.
 
 ## Canvas limits
 
-- No CSS/text-selection/tab order in a painted cell. `domCells` (the fork's
-  layer) is the supported way to put real controls in a cell; everything
-  interactive should use it.
+- No CSS/text-selection/tab order in a painted cell. Simple affordances are
+  painted (`controlCells.tsx`); anything that needs native focus/tab order,
+  text labels, or several real controls in one cell uses `domCells` (the
+  fork's layer).
 - Accessibility is Glide's hidden ARIA mirror; custom cells expose `copyData`.
 - Upstream is quiet (last publish Oct 2025) — treat the pin as ours to move.
 
@@ -288,6 +337,15 @@ Sections under "Data grid":
   scale (`breakdown-freeze` Seg, `-scene-count`, `-add-scene`, `-undo`,
   `-status`, `-commits`, `-back`; row-marker gutter + frozen columns + trailing
   add row, smooth scrolling, no showroom chrome).
+- `#glide-native-cells` (full page) — `glide-native-cells-demo`: the painted
+  control cells at three scales (zone Seg): a 60-scene Breakdown with canvas
+  pickers + a 2-button action cell (add · trash) + freeze Seg; the crew card
+  embedded (canvas pickers/trash + Add role); the same card inside a kit
+  `Modal`. The action column is NOT frozen by default — the buttons live in the
+  scrolling body. Dev helper `window.__glideNativeCells`
+  (`chevronCenter`/`glyphCenter`/`cellBounds`) builds lane points from the
+  grid's `getBounds`, so the spec never hardcodes coordinates.
 
-Spec: `playground/specs/glide.spec.ts`; pure math:
-`src/__tests__/glideGridModel.test.ts`.
+Specs: `playground/specs/glide.spec.ts` + `glide-native-cells.spec.ts`; pure
+math: `src/__tests__/glideGridModel.test.ts`, lane hit-test:
+`src/__tests__/controlGeometry.test.ts`.
