@@ -49,6 +49,25 @@ export type {
   KitFieldCell,
   KitFieldCellData,
 } from './customCells';
+export {
+  kitPickerCell,
+  kitGlyphCell,
+  controlCellRenderers,
+  isControlCell,
+  isKitGlyphCell,
+  isKitPickerCell,
+  pressControlCell,
+} from './controlCells';
+export type {
+  KitGlyphCell,
+  KitGlyphCellData,
+  KitGlyphIcon,
+  KitGlyphTone,
+  KitPickerCell,
+  KitPickerCellData,
+} from './controlCells';
+export { CONTROL_LANE, GLYPH_LANE, PRESS_MS, isControlHit } from './controlGeometry';
+export type { ControlLane } from './controlGeometry';
 export { createGlideCellEditor, useGlideEscapeCancel } from './editors';
 export { PickerChevron, pickerDomCell } from './pickerCell';
 export type { PickerDomCellOptions } from './pickerCell';

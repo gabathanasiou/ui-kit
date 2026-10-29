@@ -95,7 +95,8 @@ const DARK_BADGE_TONES: Record<NonNullable<KitBadgeCellData['tone']>, { bg: stri
   danger: { bg: 'rgba(248, 113, 113, 0.2)', fg: '#fecaca' },
 };
 
-function isDark(theme: Theme): boolean {
+/** Canvas theme dark/light discriminator (shared by every painted cell kind). */
+export function isDark(theme: Theme): boolean {
   const hex = theme.bgCell.replace('#', '');
   if (hex.length !== 6) return theme.textDark === '#ffffff';
   const n = parseInt(hex, 16);
@@ -103,7 +104,7 @@ function isDark(theme: Theme): boolean {
   return l < 0.5;
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
   const radius = Math.min(r, h / 2, w / 2);
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
@@ -118,7 +119,7 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-function drawIcon(ctx: CanvasRenderingContext2D, icon: KitButtonIcon, x: number, y: number, size: number, color: string): void {
+export function drawIcon(ctx: CanvasRenderingContext2D, icon: KitButtonIcon, x: number, y: number, size: number, color: string): void {
   ctx.save();
   ctx.strokeStyle = color;
   ctx.lineWidth = Math.max(1.25, size / 10);
