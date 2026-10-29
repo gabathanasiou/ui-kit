@@ -98,14 +98,26 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
 />
 ```
 
-- During a **fast scroll** the pinned boxes are hidden (`data-glide-scrolling`
-  on the layer, cleared ~90ms after the last scroll event) and re-pinned on
-  settle: the canvas paint and the DOM overlay land in different frames, so at
-  speed a button would visibly straddle two rows.
-- The fork renders a **click-through layer** inside the editor root with one
-  absolutely-positioned box per visible cell that has a node. Rects come from
-  the editor's own `getBounds`, re-measured from the library's visible-region
-  stream (scroll), a `ResizeObserver` and every render.
+- **Content-space boxes, compositor-scrolled bands.** A box is positioned ONCE
+  from the grid's own content geometry (`getContentBounds` — canvas-relative,
+  independent of the scroll position). Scrolling moves four clipped BANDS with a
+  single `translate3d` each — the frozen headers, the scrolled headers, the
+  frozen cells and the body cells — so a control cannot straddle two cells at any
+  speed, vertically or horizontally. There is **no** scroll heuristic and no
+  hiding/flash: the canvas and the overlay are painted from the same offsets in
+  the same frame.
+- **Same-frame painting is a fork change too**: `InfiniteScroller` commits its
+  visible-region update inside `flushSync`, so the canvas repaints in the scroll
+  pass instead of a React frame later. Without it the painted cells trail the
+  native scroll (and anything pinned to them) by one frame.
+- **Frozen columns and headers do not scroll on one axis**, which is why the
+  layer is split into bands rather than one mover. The frozen pane is the
+  row-marker gutter plus the frozen data columns. The **sticky trailing add row**
+  is handled structurally: the body bands end at `domCellBottomInset`, so boxes
+  never float on the add row.
+- The window of mounted body cells is the visible range **plus overscan** rows and
+  columns; it rebuilds as the range leaves that window. Scrolling never waits for
+  React to mount a control — the window is already a superset.
 - **The box IS the container** — the cell's width/height minus Glide's 4px cell
   inset (the same margin the drawn kit faces use), `overflow: visible`, content
   centred vertically (equal gap above and below at any row height). Lay out
@@ -196,10 +208,15 @@ them. The opt-ins, all on `GlideSheet`:
   Without it the widths are ratios and are scaled to the card (no scrollbar).
 - **`freezeColumns={n}`** — pin the first **n DATA columns**. Glide counts the
   row-marker gutter on its own (`freezeColumns + rowMarkerOffset`), so `1`
-  freezes `Scene #`, not the gutter. The fork's DOM layer always measures the
-  frozen cells too (the visible-range stream starts at the first SCROLLED
-  column, so they are added explicitly) and forwards `freezeColumns` to the
+  freezes `Scene #`, not the gutter. The fork's DOM layer measures the frozen
+  cells on their own band (the visible-range stream starts at the first SCROLLED
+  column, so they cannot be derived from it) and forwards `freezeColumns` to the
   inner editor.
+- **The scroll pass paints, not the next React frame.** The fork's
+  `InfiniteScroller` commits the visible-region update inside `flushSync`, so the
+  canvas repaints on the same offsets the native scroll just applied. A deferred
+  commit shows up as one-frame drift during a fling — and anything pinned to the
+  cells (DOM controls) trails with it.
 - **`rowMarkers={{ kind: 'clickable-number', width: 44, startIndex: 1 }}`** —
   the numbered gutter. Glide hands `provideEditor` the RAW column index, so the
   wrapper sets `columnOffset: 1` automatically — never hand-offset editors.
@@ -212,6 +229,13 @@ them. The opt-ins, all on `GlideSheet`:
   otherwise a trash button would float on the add row.
 - **`smoothScroll`** — Glide's `smoothScrollX/Y`: the grid translates in pixels
   instead of snapping to cell edges. The Breakdown uses it.
+- **Safari scrollbars (fork).** Stock forces `overflow: scroll` on Safari; with
+  "always show scrollbars" that reserves a gutter, and an exactly-sized inline
+  card latches BOTH bars on (the vertical bar steals width → horizontal bar
+  steals height → neither clears). The fork uses `overflow: auto` everywhere,
+  and a content-height sheet (no `height` prop) also carries `data-glide-fit`,
+  which pins `overflow-y: hidden` — it can never legitimately scroll
+  vertically. `scrollable` without a fixed height keeps horizontal scrolling.
 - **`overscrollY`** — extra scrollable space past the last row (Glide's
   `overscrollY`). The fork flattens that band to the cell background: stock
   paints full-height grid lines there, which reads as phantom empty rows.
