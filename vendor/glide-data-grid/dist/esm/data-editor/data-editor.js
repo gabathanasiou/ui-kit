@@ -2698,16 +2698,22 @@ const DataEditorImpl = (p, forwardedRef) => {
            double-click takes (a DOM dropdown button inside the cell can call
            this without synthesising pointer events). */
         openCellEditor: (col, row) => {
-            const content = getMangledCellContent([col, row]);
+            // fork: the imperative API takes a DATA column, but
+            // getMangledCellContent + the overlay's `cell` are RAW (the
+            // row-marker gutter is column 0). Stock mixed the two, so a grid
+            // with row markers opened the PREVIOUS column's content in the
+            // clicked cell's box (the DOM picker columns never hit it).
+            const rawCol = col + rowMarkerOffset;
+            const content = getMangledCellContent([rawCol, row]);
             if (content == null || !content.allowOverlay) return;
-            const bounds = gridRef.current?.getBounds(col + rowMarkerOffset, row);
+            const bounds = gridRef.current?.getBounds(rawCol, row);
             if (bounds == null) return;
             setOverlaySimple({
                 target: bounds,
                 content,
                 initialValue: undefined,
                 highlight: true,
-                cell: [col, row],
+                cell: [rawCol, row],
                 forceEditMode: true,
                 activation: { inputType: "keyboard", key: "Enter" },
             });

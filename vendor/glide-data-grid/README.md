@@ -56,6 +56,12 @@ the npm package has no effect. CSS consumers import
 6. **Source maps stripped** — `*.map` files and their `sourceMappingURL`
    comments are removed to keep the vendored tree small (Vite then logs no
    missing-map errors).
+7. **Imperative `openCellEditor` column offset** (`dist/esm/data-editor`) — the
+   API takes a DATA column, while `getMangledCellContent` and the overlay's
+   `cell` are RAW (the row-marker gutter is column 0). Stock mixed the two: on
+   a grid with row markers it opened the PREVIOUS column's content in the
+   clicked cell's box. The fork adds `rowMarkerOffset` for both, matching the
+   double-click path (painted picker lanes call this API).
 
 ## Patching
 
