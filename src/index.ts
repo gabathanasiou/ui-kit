@@ -103,6 +103,7 @@ export type {
 export { SelectionCheck, SelectionFooter } from './SelectionControls';
 export type { SelectionCheckProps, SelectionFooterProps, SelectionFooterHero } from './SelectionControls';
 
-/* Glide lives on the `@gabriel/ui-kit/glide` and `/glide-controls` subpaths —
-   importing the root must never pull the grid runtime (the host owns it). */
+/* Glide's published entry is `@gabriel/ui-kit/glide-controls` (the painted
+   control cells). `src/glide` itself is source-only — importing the root must
+   never pull the grid runtime (the host owns it). */
 
