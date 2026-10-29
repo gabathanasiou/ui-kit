@@ -93,6 +93,9 @@ export interface GlideSheetApi {
   /** The cell's rect in VIEWPORT coordinates (agents/specs clicking a painted
    *  lane, anchored pop-outs). Undefined when the column/cell is not visible. */
   getCellBounds: (row: number, colKey: string) => { x: number; y: number; width: number; height: number } | undefined;
+  /** Moves the grid selection to one cell (a row action that removes its row
+   *  points the selection at the row above). Focuses the canvas. */
+  selectCell: (row: number, colKey: string) => void;
 }
 
 export interface GlideSheetProps {
@@ -418,6 +421,22 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
     }
     return map;
   }, [domCells, COLUMNS]);
+  const selectCell = useCallback((row: number, colKey: string) => {
+    const col = COLUMNS.findIndex(c => c.key === colKey);
+    if (col < 0 || row < 0) return;
+    const cell: Item = [col, row];
+    const next: GridSelection = {
+      current: { cell, range: { x: col, y: row, width: 1, height: 1 }, rangeStack: [] },
+      columns: CompactSelection.empty(),
+      rows: CompactSelection.empty(),
+    };
+    gridSelectionRef.current = next;
+    setGridSelection(next);
+    if (selectionKey) SELECTION_CACHE.set(selectionKey, next);
+    gridRef.current?.focus();
+    gridRef.current?.scrollTo(col, row, 'vertical');
+  }, [COLUMNS, selectionKey]);
+
   useEffect(() => {
     if (!apiRef) return undefined;
     apiRef.current = {
@@ -429,9 +448,10 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
         const col = COLUMNS.findIndex(c => c.key === colKey);
         return col >= 0 ? gridRef.current?.getBounds(col, row) : undefined;
       },
+      selectCell,
     };
     return () => { apiRef.current = null; };
-  }, [apiRef, COLUMNS]);
+  }, [apiRef, COLUMNS, selectCell]);
 
   const getDomCell = useCallback(
     (col: number, row: number) => domCellMap.get(`${col}:${row}`) ?? null,

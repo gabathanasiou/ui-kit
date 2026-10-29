@@ -327,9 +327,13 @@ const kitGlyphRenderer: CustomRenderer<KitGlyphCell> = {
     const laneSpec = data.lane ?? 'full';
     const lane = controlRect(rect, laneSpec);
     const inLane = hoverX !== undefined && isControlHit(hoverX, rect.width, laneSpec);
+    // The keyboard selection (the grid's focus rectangle) paints the SAME
+    // tone fill as the mouse hover, so a selected button never reads as a
+    // neutral box.
+    const lit = inLane || args.highlighted;
     const flash = pressAmount(args.row, data.label, args.frameTime, args.requestAnimationFrame);
 
-    if (inLane) paintFill(ctx, lane, data.hoverBg ?? toneHoverBg(data.tone, theme, dark));
+    if (lit) paintFill(ctx, lane, data.hoverBg ?? toneHoverBg(data.tone, theme, dark));
     paintPress(ctx, lane, dark, flash);
 
     const iconSize = Math.max(12, Math.min(16, rect.height - 12));
@@ -339,7 +343,7 @@ const kitGlyphRenderer: CustomRenderer<KitGlyphCell> = {
       lane.x + (lane.width - iconSize) / 2,
       rect.y + (rect.height - iconSize) / 2,
       iconSize,
-      glyphColor(data.tone, theme, dark, inLane),
+      glyphColor(data.tone, theme, dark, lit),
     );
 
     if (hoverX !== undefined) args.overrideCursor?.(inLane ? 'pointer' : 'default');
@@ -374,7 +378,9 @@ const kitGlyphGroupRenderer: CustomRenderer<KitGlyphGroupCell> = {
     data.buttons.forEach((button, index) => {
       const segment = segmentRect(lane, count, index);
       const flash = pressAmount(args.row, button.label, args.frameTime, args.requestAnimationFrame);
-      if (index === hovered) paintFill(ctx, segment, button.hoverBg ?? toneHoverBg(button.tone, theme, dark));
+      // A selected cell lights its PRIMARY button (what Enter fires).
+      const lit = index === hovered || (args.highlighted && index === 0);
+      if (lit) paintFill(ctx, segment, button.hoverBg ?? toneHoverBg(button.tone, theme, dark));
       paintPress(ctx, segment, dark, flash);
       const iconSize = Math.max(10, Math.min(16, Math.min(segment.width - 8, rect.height - 12)));
       if (iconSize <= 0) return;
@@ -384,7 +390,7 @@ const kitGlyphGroupRenderer: CustomRenderer<KitGlyphGroupCell> = {
         segment.x + (segment.width - iconSize) / 2,
         rect.y + (rect.height - iconSize) / 2,
         iconSize,
-        glyphColor(button.tone, theme, dark, index === hovered),
+        glyphColor(button.tone, theme, dark, lit),
       );
     });
 
