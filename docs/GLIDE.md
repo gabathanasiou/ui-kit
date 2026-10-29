@@ -1,8 +1,13 @@
 # Glide data grid (kit module) — `src/glide/`
 
-Status: **experimental** (branch `experiment/glide-grid`). **We own the grid
-runtime**: it is a vendored fork of Glide Data Grid, not an npm dependency (see
-`vendor/glide-data-grid/README.md`). No version bump / release tag yet.
+Status: **released runtime, experimental wrapper.** The kit owns the grid
+runtime — a vendored fork of Glide Data Grid (`vendor/glide-data-grid/README.md`)
+— and publishes the painted control cells as `@gabriel/ui-kit/glide-controls`
+(released **v0.1.173**, pinned by lemon_schedule). `GlideSheet` itself is still
+the kit's internal/playground wrapper and is **not a package export** today:
+only `glide-controls` ships a runtime entry (the `dist/glide/*.d.ts` files are
+types-only). Promoting `GlideSheet` to a consumer API needs a new package entry
+first.
 
 Read this before touching `GlideSheet`, the cell factories, or the playground
 "Data grid" section. Glide paints on a **canvas**: there is no DOM per cell,
@@ -11,15 +16,11 @@ hangs off.
 
 ## Consuming
 
-Two shapes, ONE grid runtime (the host always owns it):
+Two shapes, one runtime per page (Glide is never bundled twice):
 
 ```ts
-// A) A host that wants the kit's compact `GlideSheet` wrapper (the playground
-//    imports it from `src/glide` on this experiment branch):
-import { GlideSheet, textCell, kitButtonCell } from './src/glide';
-
-// B) A host that already runs its own Glide grid and only wants the painted
-//    control cells (the lemon_schedule app):
+// A) A host that already runs its own Glide grid and only wants the painted
+//    control cells (the lemon_schedule app — the published entry):
 import '@gabriel/ui-kit/ui-kit.css';
 import '@glideapps/glide-data-grid/dist/index.css'; // the host's fork
 import {
@@ -28,29 +29,48 @@ import {
   kitPickerCell,
   controlCellRenderers,
 } from '@gabriel/ui-kit/glide-controls';
+
+// B) The kit source/playground (or a future exported wrapper) using the
+//    compact `GlideSheet` — source import, NOT a package subpath:
+import { GlideSheet, textCell, kitGlyphCell } from './src/glide';
 ```
+
+`./glide-controls` is the only published glide entry. The rest of `src/glide`
+(`GlideSheet`, `textCell`, `createGlideCellEditor`, the theme helpers, the pure
+grid model) is exported from the kit's source barrel for the playground and the
+kit's own build, not from `@gabriel/ui-kit`.
 
 `./glide-controls` keeps `@glideapps/glide-data-grid` EXTERNAL — it ships the
 renderers and cell factories, never a second copy of Glide. The root entry does
 not export the glide module (importing a kit button must not pull a grid).
 
 The grid CSS is not optional — without Glide's root CSS the grid has **zero
-height** and no canvas is created (a silent blank grid). On this branch the
-playground imports it from `vendor/glide-data-grid/dist/index.css`; a host with
-its own runtime imports its own fork's CSS.
+height** and no canvas is created (a silent blank grid). The playground imports
+it from `vendor/glide-data-grid/dist/index.css`; a host with its own runtime
+imports its own fork's CSS.
 
 ## Files
 
 | File | Owns |
 | --- | --- |
-| `GlideSheet.tsx` | the grid wrapper: auto-fit OR scrollable columns, frozen columns + row markers, content/fixed height, trailing add row, editable tint, selection/cache, fill/paste/copy/cut/clear, DOM cells |
-| `cells.ts` | `textCell`, `seededTextCell`, `staticCell`, `actionGlyphCell`, `isSeededNoop`, copy/cut text |
-| `gridModel.ts` | pure geometry: selection → rect, range fill, paste, clear, clipboard parsing |
-| `customCells.tsx` | `kitButtonCell`, `kitBadgeCell`, `kitFieldCell` + renderers + the morph editor; the shared `drawIcon`/`roundRect`/`isDark` paint helpers |
-| `controlCells.tsx` | `kitPickerCell`, `kitGlyphCell`, `kitGlyphGroupCell` + renderers: painted affordances (no DOM) |
-| `controlGeometry.ts` | pure lane hit-test (`CONTROL_LANE`, `GLYPH_LANE`, `isControlHit`) |
-| `editors.tsx` | `createGlideCellEditor` (text + kit `PickerField` select; seeds painted picker cells) |
-| `theme.ts` | canvas `Theme` from the kit mode/accent + cell colours |
+| `GlideSheet.tsx` | the grid wrapper and its props/API: auto-fit OR scrollable columns, frozen columns + row markers, content/fixed height, trailing add row, editable tint, selection/cache, fill/paste/copy/cut/clear, `domCells` + `headerCells` |
+| `cells.ts` | `textCell`, `seededTextCell`, `staticCell`, `actionGlyphCell`, `isSeededNoop`, `buildCopyText`, `buildCutPlan` |
+| `gridModel.ts` | pure geometry: selection → rect, range fill, paste, clear, clipboard parsing (`effectiveGridRange`, `expandRangeFill`, `planGridPaste`, `planGridClear`, `parseClipboardGrid`) |
+| `customCells.tsx` | `kitBadgeCell`, `kitFieldCell` + renderers + the morph editor; the shared `drawIcon`/`roundRect`/`isDark` paint helpers. There is deliberately **no** `kitButtonCell` |
+| `controlCells.tsx` | `kitPickerCell`, `kitGlyphCell`, `kitGlyphGroupCell` + renderers and guards: painted affordances (no DOM) |
+| `controlGeometry.ts` | pure lane hit-test (`CONTROL_LANE`, `GLYPH_LANE`, `PRESS_MS`, `isControlHit`) |
+| `editors.tsx` | `createGlideCellEditor`, `useGlideEscapeCancel` (text + kit `PickerField` select; seeds painted picker cells) |
+| `pickerCell.tsx` | the legacy `PickerChevron` / `pickerDomCell` passthrough affordance for native picker cells |
+| `theme.ts` | canvas `Theme` from the kit mode/accent + cell colours (`createGlideTheme`, `useGlideTheme`, `glideCellColors`, `readGlideAccent`) |
+| `index.ts` / `controls.ts` | the source barrel and the published `@gabriel/ui-kit/glide-controls` entry (controls only, Glide external) |
+| `types.ts` | `GlideSheetColumn`, `GlideSheetEdit`, `GlideRange` |
+
+## API reference
+
+Every `GlideSheet` prop/default, the column/edit/range/DOM-cell types, the
+imperative `GlideSheetApi`, the full cell-factory field lists, the editor
+options and the published-vs-source exports live in **`docs/GLIDE-API.md`**.
+The behavior sections below assume those shapes.
 
 ## Cell kinds
 
@@ -59,61 +79,50 @@ its own runtime imports its own fork's CSS.
   `displayData` (a computed display value would open blank). `isSeededNoop`
   guards "open + Enter" so it never pins a spurious override.
 - **Read-only** — the cell's own `readonly` flag, not a grid option. Mix freely;
-  the editable wash only paints writable cells. `staticCell()` = no editor.
-- **`kitBadgeCell`** — a drawn status pill with kit tones (read-only).
+  the editable wash only paints writable cells. `staticCell(display, opts)` =
+  no editor, read-only, default cursor.
+- **`kitBadgeCell`** — a drawn status pill (read-only; kit tones). Field list in
+  the API reference.
 - **`kitPickerCell`** — a value + a painted 24px chevron lane. ONE click in the
   LANE calls the host's `onOpen` (normally `api.openCellEditor(row, colKey)` →
-  the column's `select` editor, the SAME `PickerField` a double-click opens);
-  a click on the body only selects; double-click/Enter activate through Glide.
+  the column's `select` editor, the SAME `PickerField` a double-click opens); a
+  click on the body only selects; double-click/Enter activate through Glide.
   The cell keeps `copyData`, the grid's selection and its native focus ring.
   The value uses Glide's own `drawTextCell` (same metrics/padding/baseline),
   clipped before the lane.
-- **`kitGlyphCell` / `kitGlyphGroupCell`** — painted buttons (trash / plus /
-  chevron / check) with NO DOM box: full-rect hover fill (`hoverBg` or the
-  tone's tint), a ~90ms painted press flash, `pointer` over the target, and
-  `readonly: true`. The group variant splits ONE cell into 2+ equal lanes, so
-  row actions need one column, not one per button (Enter fires the FIRST =
-  primary). The action fires exactly once: on a lane click via the renderer's
-  `onClick` (which `preventDefault`s the activation) or on Enter/Space via
-  `GlideSheet.onCellActivated`; the canvas keeps focus either way.
-- **Buttons** — mount a real kit `Button` with `domCells` when you need native
-  focus/tab order, text labels, or a compound layout of real controls.
+- **`kitGlyphCell`** — a painted button with NO DOM box. Icon-only (trash /
+  plus / chevron / check); the lane is a pixel strip at the right edge (factory
+  default `GLYPH_LANE = 28`) or `'full'` for a dedicated action column.
+  Full-target hover fill (`hoverBg` or the tone's tint), a ~90ms painted press
+  flash, `pointer` over the target, `readonly: true`. The action fires exactly
+  once: on a lane click via the renderer's `onClick` (which `preventDefault`s
+  activation) or on Enter/Space via `GlideSheet.onCellActivated`; the canvas
+  keeps focus either way. `label` is both the accessible name and the
+  press-flash key — keep it unique per row.
+- **`kitGlyphGroupCell`** — 2+ `KitGlyphButton`s split into equal lanes inside
+  ONE cell: row actions need one column, not one per button. Buttons render
+  left-to-right; the FIRST is primary (Enter/Space fires it, and it lights when
+  the cell is selected). Each button has its own hover, flash and hit-test.
+- **Buttons** — there is deliberately **no `kitButtonCell`**: an interactive
+  button with a text label is either a real kit `Button` mounted with
+  `domCells` (native focus/tab order) or a painted `kitGlyphCell` /
+  `kitGlyphGroupCell` (icon-only). `kitFieldCell` is the one-click morph face;
+  it is not a click handler.
 - **`kitFieldCell`** — the closed button face of a morph control; ONE click
-  opens the real `MorphSearchField` / `MorphActionField` in the overlay editor
-  (the cell sets `activationBehaviorOverride: 'single-click'`).
+  opens the real `MorphSearchField` (`mode: 'search'`) or `MorphActionField`
+  (`mode: 'action'`) in the overlay editor (the cell sets
+  `activationBehaviorOverride: 'single-click'`).
+- **`actionGlyphCell`** — a blank read-only filler the wrapper returns for a
+  missing row; it is not a row-action implementation. A row-action column is
+  the host's: add an `actions` column and return `kitGlyphCell` /
+  `kitGlyphGroupCell` from `getCellContent` (see §Spreadsheet plumbing).
 - **`domCells`** — see below.
 
 ## Real DOM headers (`headerCells`)
 
-Glide paints headers on the canvas too. `headerCells` pins a real control over
-each named column's header (the fork's `getDomHeaderCell`, measured with
-`getBounds(col, -1)` — frozen and scrolled columns included):
-
-```tsx
-<GlideSheet
-  headerCells={{ pages: <SortHeader label="Pages" … /> }}
-/>
-```
-
-- The header box is **click-through** (`pointer-events: none`): the canvas keeps
-  owning header clicks/selection. The node's own `pointer-events: auto` child
-  is the only thing that captures — the same contract as `pickerDomCell`.
-- The host node sits over the painted header; `GlideSheet` publishes the canvas
-  chrome as CSS variables so it matches: `--glide-header-bg`,
-  `--glide-header-fg`, `--glide-header-fg-selected`,
-  `--glide-header-hover-bg`, `--glide-header-focus-bg`.
-- Each header box carries `group`, `data-glide-header-focused` when the
-  selection covers its column (the whole RANGE, not just the current cell) and
-  `data-glide-header-selected` when the column itself is selected, so
-  `group-data-[…]:…` mirrors the canvas tint/text.
-- `drawHeader` reserves the control's lane (18px) when it repaints a title, so
-  a header with a button never draws its text underneath it.
-- Columns without an entry keep Glide's painted header (the row-marker gutter
-  and the action lane in the Breakdown).
-
-The Breakdown demo pins a small sort affordance at each header's right edge
-(the picker-chevron recipe): the label stays canvas-painted, the icon cycles
-none → ascending → descending.
+`headerCells` pins a real control over a column's painted header (keyed by
+column key). The click-through contract, the CSS variables and the
+`data-glide-header-*` states are in **`GLIDE-API.md` §Real DOM headers**.
 
 ## Real DOM inside a cell (`domCells`)
 
@@ -127,31 +136,27 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
 />
 ```
 
-- **Content-space boxes, compositor-scrolled bands.** A box is positioned ONCE
-  from the grid's own content geometry (`getContentBounds` — canvas-relative,
-  independent of the scroll position). Scrolling moves four clipped BANDS with a
-  single `translate3d` each — the frozen headers, the scrolled headers, the
-  frozen cells and the body cells — so a control cannot straddle two cells at any
-  speed, vertically or horizontally. There is **no** scroll heuristic and no
-  hiding/flash: the canvas and the overlay are painted from the same offsets in
-  the same frame.
-- **Same-frame painting is a fork change too**: `InfiniteScroller` commits its
-  visible-region update inside `flushSync`, so the canvas repaints in the scroll
-  pass instead of a React frame later. Without it the painted cells trail the
-  native scroll (and anything pinned to them) by one frame.
-- **Frozen columns and headers do not scroll on one axis**, which is why the
-  layer is split into bands rather than one mover. The frozen pane is the
-  row-marker gutter plus the frozen data columns. The **sticky trailing add row**
-  is handled structurally: the body bands end at `domCellBottomInset`, so boxes
-  never float on the add row.
-- The window of mounted body cells is the visible range **plus overscan** rows and
-  columns; it rebuilds as the range leaves that window. Scrolling never waits for
-  React to mount a control — the window is already a superset.
+`GlideDomCellSpec` = `{ row, colKey, node, passthrough?, bleed? }`. `colKey`
+must match a real column; an unknown key is ignored. `passthrough` and `bleed`
+are covered below.
+
+- **Content-space boxes, compositor-scrolled bands.** Boxes are positioned once
+  from content geometry (`getContentBounds`) and scrolling moves four clipped
+  bands (frozen headers / headers / frozen cells / body cells) with one
+  `translate3d` each — no scroll heuristic, no hiding/flash. The fork also
+  commits the scroller's visible region inside `flushSync`, so canvas + overlay
+  paint on the same offsets in the same frame; frozen panes simply pin, which is
+  why there are bands rather than one mover. The mounted window is the visible
+  range + overscan, so scrolling never waits for React.
+- **The sticky trailing add row is structural**: the body bands end at
+  `domCellBottomInset`, so boxes never float on the add row.
 - **The box IS the container** — the cell's width/height minus Glide's 4px cell
   inset (the same margin the drawn kit faces use), `overflow: visible`, content
   centred vertically (equal gap above and below at any row height). Lay out
   whatever fits: a row of buttons, a morph field beside an adder, a picker +
-  Apply, a Seg. Inner gaps/padding are the host's.
+  Apply, a Seg. Inner gaps/padding are the host's. **`bleed: true`** drops the
+  4px inset and the vertical centring: the node fills the whole cell edge to
+  edge (a full-cell button/link).
 - Controls keep **native focus, hover, CSS animation and tab order**; a morph
   expands in place instead of floating. The canvas cell underneath should
   return `staticCell('')`.
@@ -247,13 +252,15 @@ area, both of which surfaced as a tiny scrollbar inside the floating box.
 - **Build it ONCE per grid lifetime** (`useMemo(() => …, [])`) with live config
   in a ref. Recreating it builds new component types and **remounts the open
   editor**, dropping keystrokes.
-- `text` — a kit-styled input (Enter commits without moving the selection).
-- `select` — the kit's ONE value picker, `PickerField appearance="inline"`, with
-  `defaultOpen`/`autoFocus`/`panelMinWidth`; commits on close, Escape cancels.
-  It also serves painted `kitPickerCell`s: the seed comes from the cell payload
-  (`seedValue`/`value`) when the painted value is not the stored value.
-- `columnOffset` = 1 for grids with a row-marker column, 0 otherwise (the raw
-  column index is offset — the classic Glide trap).
+- `text` — a kit-styled input; Enter commits without moving the selection.
+- `select` — the kit's ONE value picker, `PickerField appearance="inline"`;
+  commits on close, Escape cancels. It also serves painted `kitPickerCell`s:
+  the seed comes from the cell payload (`seedValue`/`value`) when the painted
+  value is not the stored value.
+- `getEditor(row, colKey)` wins over `editors` when the options depend on the
+  row.
+- Field lists (`GlideTextEditor`, `GlideSelectEditor`, `GlideEditorOptions`)
+  and the `columnOffset` rule are in **`GLIDE-API.md` §Editors**.
 
 ## Spreadsheet plumbing (already in `GlideSheet`)
 
@@ -265,11 +272,21 @@ area, both of which surfaced as a tiny scrollbar inside the floating box.
 - **Paste interception**: Glide binds its own async paste handler at mount; the
   module's capture listener takes the event first and calls `onPaste`, so a
   paste never applies twice. `onPaste` returns `false` to stop Glide's own path.
-- **Row actions** are a synthetic trailing `actions` column drawn on the canvas
-  (glyph hit-test from `localEventX`); copy/cut skip it.
+- **Row actions have NO built-in column.** `GlideSheet` draws only the columns
+  you pass it. A row-action column is the host's: add an `actions` column,
+  return `kitGlyphCell` / `kitGlyphGroupCell` from `getCellContent` (or mount a
+  DOM button), and keep the key out of `editableKeys`; copy/cut already skip
+  any `actions` key. The app's Breakdown / Crew / Locations grids do exactly
+  this with the kit control cells.
+- **Writes are gated by `editableKeys`** for every path (edit, fill, paste,
+  cut, clear); `readOnly` forces every cell read-only + no overlay (Glide has
+  no grid-level readonly).
+- **`fillHandle={false}`** removes the drag-fill handle. **`disableClipboard`**
+  turns off paste interception and the Cmd/Ctrl C/X/V shortcuts (context-menu
+  Paste is disabled too; Copy/Cut stay available) — for a grid inside another
+  grid's editor.
 - **Selection memory** is keyed by `selectionKey` and survives a remount
   (switching page tabs).
-- `readOnly` is enforced per cell (Glide has no grid-level readonly).
 
 ## Scrolling, frozen columns, page scale
 
@@ -298,11 +315,6 @@ them. The opt-ins, all on `GlideSheet`:
   wrapper sets `columnOffset: 1` automatically — never hand-offset editors.
 - **`height={px}`** — a fixed viewport: the header stays pinned and rows scroll
   vertically. Omit it for the content-height card grids.
-- **`onAddRow` / `addRowHint`** — Glide's trailing add-row (sticky at the
-  bottom, labelled by the hint); the host appends the row and the trailing row
-  follows the data. It counts as an extra row in the content height, and the
-  fork hides DOM boxes the sticky row paints over (`domCellBottomInset`) —
-  otherwise a trash button would float on the add row.
 - **`smoothScroll`** — Glide's `smoothScrollX/Y`: the grid translates in pixels
   instead of snapping to cell edges. The Breakdown uses it.
 - **Safari scrollbars (fork).** Stock forces `overflow: scroll` on Safari; with
@@ -312,11 +324,15 @@ them. The opt-ins, all on `GlideSheet`:
   and a content-height sheet (no `height` prop) also carries `data-glide-fit`,
   which pins `overflow-y: hidden` — it can never legitimately scroll
   vertically. `scrollable` without a fixed height keeps horizontal scrolling.
-- **`overscrollY`** — extra scrollable space past the last row (Glide's
-  `overscrollY`). The fork flattens that band to the cell background: stock
-  paints full-height grid lines there, which reads as phantom empty rows.
-  `addRowSticky` (default false) pins the trailing add-row to the viewport
-  bottom instead of leaving it at the end of the scroll.
+
+### Bottom space (add row + overscroll)
+
+`onAddRow`/`addRowHint` add Glide's trailing row; `addRowSticky` pins it to the
+viewport bottom; `overscrollY` leaves extra scroll space below the last row.
+The three-way split, the sticky-row DOM-box inset and the fork's overscroll
+flattening are in **`GLIDE-API.md` §Bottom space**. A content-height sheet
+(`height` omitted) sizes itself to `header + rows + (onAddRow ? 1 : 0)`; a
+`height={px}` sheet scrolls inside a fixed viewport.
 
 The page-scale recreations are the playground's `#breakdown` and
 `#glide-native-cells` pages (full-window app tabs, not section cards): row
@@ -328,16 +344,25 @@ cells (one split action cell: add · trash). Both measure the grid's height from
 the flex remainder, so a wrapped toolbar shrinks the grid instead of pushing it
 off-screen.
 
+## Single-cell sheets
+
+A one-column, one-row `GlideSheet` with `baseHeaderHeight={0}` is a single cell
+(the wrapper marks it `data-glide-no-header`; the fork hides the 1px header
+canvas Glide still creates — vendor patch 7). Recipe, keyboard variants and
+caveats: **`GLIDE-API.md` §Single-cell shape**.
+
 ## The fork (we own the code now)
 
 - **Upstream fork:** https://github.com/gabathanasiou/glide-data-grid (real
   source + build config; use it for structural changes and to pull upstream
   fixes).
 - **What the kit runs:** `vendor/glide-data-grid/dist` — the published build's
-  readable ESM + types + CSS, vendored at `6.0.4-alpha24`. There is **no**
-  `@glideapps/glide-data-grid` in `package.json`; `scripts/glide-fork.mjs`
-  aliases the specifier to the vendored build in every config (kit build,
-  playground, Vitest). Types come from `tsconfig.json` `paths`.
+  readable ESM + types + CSS, vendored at `6.0.4-alpha24`.
+  `@glideapps/glide-data-grid` **is** a peer/dev dependency (`6.0.4-alpha24`,
+  the host-owned runtime), but nothing in the kit/playground resolves to the
+  npm build: `scripts/glide-fork.mjs` aliases the specifier to the vendored
+  build in every config (kit build, playground, Vitest). Types come from
+  `tsconfig.json` `paths`.
 - **Quick patches** edit `vendor/glide-data-grid/dist/esm/**` directly (plain
   ESM, names intact) with a `// fork:` comment. **Structural changes** are made
   in the GitHub fork, built, and re-vendored (steps in the vendor README). The
@@ -358,41 +383,18 @@ off-screen.
 - Accessibility is Glide's hidden ARIA mirror; custom cells expose `copyData`.
 - Upstream is quiet (last publish Oct 2025) — treat the pin as ours to move.
 
+## Exports
+
+Published `@gabriel/ui-kit/glide-controls` vs the kit source barrel, with the
+full list: **`GLIDE-API.md` §Exports**. In short: the package ships the three
+control-cell factories, `controlCellRenderers`, the guards, lane geometry and
+`pressControlCell`; everything else (`GlideSheet`, text/badge/field cells,
+editors, theme, pure helpers) is source-only.
+
 ## Playground
 
-Sections under "Data grid":
-
-- `#glide` — `glide-crew-demo` (crew card: real `PickerField` cells, overlay
-  picker on Report To, trash/undo), `glide-gallery-demo` (every cell kind),
-  `glide-layouts-demo` (arranged DOM cells), `glide-buttons-demo` (drawn
-  buttons + in-cell morph fields), `glide-notes`.
-- `#breakdown` (full page) — `glide-breakdown-demo`: the Breakdown tab at page
-  scale (`breakdown-freeze` Seg, `-scene-count`, `-add-scene`, `-undo`,
-  `-status`, `-commits`, `-back`; row-marker gutter + frozen columns + trailing
-  add row, smooth scrolling, no showroom chrome).
-- `#glide-native-cells` (full page) — `glide-native-cells-demo`: the painted
-  control cells at three scales (zone Seg): a 60-scene Breakdown with canvas
-  pickers + a 2-button action cell (add · trash) + freeze Seg; the crew card
-  embedded (canvas pickers/trash + Add role); the same card inside a kit
-  `Modal`. The action column is NOT frozen by default — the buttons live in the
-  scrolling body. Dev helper `window.__glideNativeCells`
-  (`chevronCenter`/`glyphCenter`/`cellBounds`) builds lane points from the
-  grid's `getBounds`, so the spec never hardcodes coordinates.
-
-- **Single cells** is a TAB of `#glide-native-cells` (not a page): header-less
-  sheets (`baseHeaderHeight={0}` → `data-glide-no-header`), each element with
-  no table chrome. Cases: Text (type → Enter commits), Picker (painted
-  chevron lane), Button (check glyph), Two buttons (split lane), Toggle
-  (boolean), Locked (static), **Rows ×3** (one column, three rows — Arrow
-  Up/Down + Enter) and **Columns ×3** (one row, three columns — Arrow
-  Left/Right + Enter) for keyboard navigation. Testids:
-  `glide-native-single-<kind>`, `-text-value`/`-text-status`,
-  `-picker-value`, `-button-clicks`, `-group-clicks`/`-group-last`,
-  `-toggle-value`, `-rows-value`/`-rows-status`,
-  `-columns-value`/`-columns-status`; dev helper
-  `singlePoint(key, row, colKey, where)`. A **Pop out ↗** button opens the
-  hidden `#glide-single-cell` route (not in the rail) in its own window.
-
-Specs: `playground/specs/glide.spec.ts` + `glide-native-cells.spec.ts`; pure
-math: `src/__tests__/glideGridModel.test.ts`, lane hit-test:
-`src/__tests__/controlGeometry.test.ts`.
+Section map, testids and the single-cell cases live in **`docs/PLAYGROUND.md`**
+(Data grid): `#glide`, `#breakdown`, `#glide-native-cells` and its **Single
+cells** tab / hidden `#glide-single-cell` pop-out. Specs:
+`glide.spec.ts` + `glide-native-cells.spec.ts`; pure math:
+`glideGridModel.test.ts`; lane hit-test: `controlGeometry.test.ts`.

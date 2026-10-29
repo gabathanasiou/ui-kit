@@ -99,9 +99,9 @@ page (body attrs too, so portals + overscroll match); surface stays a modal
 property. Runs under `<StrictMode>` (dev-only bugs reproduce — see the morph
 section). **Read `docs/PLAYGROUND.md` before adding/moving a demo or a spec**
 — section map, testids, theme/contrast rules and the CSS gotchas live there.
-**Experimental data grid** (`src/glide/**`): a canvas spreadsheet on our vendored
-Glide fork (`vendor/glide-data-grid`, aliased by `scripts/glide-fork.mjs`) —
-read `docs/GLIDE.md` (wiring, CSS, `domCells`, painted `controlCells.tsx`, frozen columns).
+**Data grid** (`src/glide/**`): a canvas spreadsheet on our vendored Glide fork
+(`vendor/glide-data-grid`, alias `scripts/glide-fork.mjs`) — read
+`docs/GLIDE.md` (behavior) + `docs/GLIDE-API.md` (full props/cells/API).
 
 Playground CSS gotchas (REQUIRED — the kit ships Tailwind classes the consumer
 provides): `playground.css` imports Tailwind v4 + `@source '../../src'` (without
