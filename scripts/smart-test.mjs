@@ -82,7 +82,9 @@ const RULES = [
   { g: 'src/numberInputMath.ts', s: ['number-input'] },
   { g: 'src/NumberInput.tsx', s: ['number-input'] },
   { g: 'src/index.ts', s: 'ALL' },
-  // Glide data grid — the canvas wrapper + its playground section
+  // Glide data grid — the canvas wrapper + its playground section. Painted
+  // control cells also drive the native-cells page.
+  { g: 'src/glide/control*', s: ['glide', 'glide-native-cells'] },
   { g: 'src/glide/**', s: GRID },
   { g: 'src/DatePicker.tsx', s: ['datepicker'] },
   // rich text

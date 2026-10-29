@@ -23,6 +23,7 @@ import { HeaderTabsSection } from './sections/HeaderTabsSection';
 import { SizingSection } from './sections/SizingSection';
 import { GlideSection } from './sections/GlideSection';
 import { BreakdownPage } from './breakdownDemo';
+import { GlideNativeCellsPage } from './glideNativeCellsDemo';
 
 /* ────────────────────────────────────────────────────────────────────────────
    ui-kit playground — the component zoo & debugging surfaces.
@@ -113,6 +114,7 @@ const SECTIONS: SectionDef[] = [
    fill the window (an app tab, not a card). `#breakdown` is the route. */
 const PAGES: NavSection[] = [
   { id: 'breakdown', group: 'Full pages', title: 'Breakdown' },
+  { id: 'glide-native-cells', group: 'Full pages', title: 'Canvas cell controls' },
 ];
 
 function pageFromHash(): string | null {
@@ -202,6 +204,8 @@ export function App() {
       <ThemeScope mode={mode} accent={accent} surface="accent" className="pg-app" style={{ minHeight: '100vh' }}>
         {page === 'breakdown' ? (
           <BreakdownPage onExit={() => { window.location.hash = 'glide'; }} />
+        ) : page === 'glide-native-cells' ? (
+          <GlideNativeCellsPage onExit={() => { window.location.hash = 'glide'; }} />
         ) : null}
       </ThemeScope>
     );
