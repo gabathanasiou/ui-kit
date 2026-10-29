@@ -49,14 +49,17 @@
 }
 /* Dropdown/entity editors (disablePadding) fill the cell box: the kit
    PickerField is height:100% of it, so the field is the cell's height. */
-/* fork: pinned DOM controls hide during a fast scroll (the canvas paint and the
-   overlay land in different frames — buttons would straddle rows). */
-[data-glide-dom-layer][data-glide-scrolling="true"] > * {
-    visibility: hidden;
-}
-
 /* fork: a DOM cell under the grid's selection rectangle shows the hover wash
    (its controls are DOM, so the canvas hover tint would otherwise be hidden). */
+/* fork: a content-height sheet (no fixed `height`) fits its rows exactly, so it
+   can never legitimately scroll VERTICALLY. Safari with always-visible
+   scrollbars latches both bars on after a content change — the vertical bar
+   steals width, the horizontal bar steals height, and neither ever clears.
+   Pin the vertical axis; the horizontal stays available for a `scrollable`
+   content-height sheet whose columns are wider than the card. */
+[data-glide-fit] .dvn-scroller {
+    overflow-y: hidden !important;
+}
 /* The canvas selection border sits UNDER an opaque DOM box, so those cells
    repaint it (same 1px accent rectangle the grid draws). Passthrough boxes are
    transparent over a NATIVE cell — the grid's own border shows through, so they

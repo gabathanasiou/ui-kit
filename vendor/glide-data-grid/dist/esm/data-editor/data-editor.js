@@ -2688,6 +2688,11 @@ const DataEditorImpl = (p, forwardedRef) => {
             }
             return gridRef.current?.getBounds((col ?? 0) + rowMarkerOffset, row);
         },
+        /* fork: content-space geometry (no scroll offset) for the DOM-cell
+           overlay — see getContentBoundsForItem in the data grid. */
+        getContentBounds: (col, row) => {
+            return gridRef.current?.getContentBounds((col ?? 0) + rowMarkerOffset, row);
+        },
         focus: () => gridRef.current?.focus(),
         /* fork: open a cell's overlay editor imperatively — the same path a
            double-click takes (a DOM dropdown button inside the cell can call

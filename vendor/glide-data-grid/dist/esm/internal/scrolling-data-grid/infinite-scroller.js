@@ -1,10 +1,16 @@
 import { styled } from "@linaria/react";
 import * as React from "react";
+import { flushSync } from "react-dom";
 import { useResizeDetector } from "../../common/resize-detector.js";
 import { browserIsSafari } from "../../common/browser-detect.js";
 import { useEventListener } from "../../common/utils.js";
 import useKineticScroll from "./use-kinetic-scroll.js";
-const _exp = /*#__PURE__*/() => p => p.isSafari ? "scroll" : "auto";
+/* fork: stock forces `overflow: scroll` in Safari. Always-visible scrollbars
+   reserve their gutter, which makes an exactly-sized grid overflow both axes
+   and shows phantom scrollbars on the inline (content-height) cards. `auto`
+   gives Safari the same contract as every other browser: scrollbars only when
+   the content really scrolls. */
+const _exp = /*#__PURE__*/() => () => "auto";
 const ScrollRegionStyle = /*#__PURE__*/styled('div')({
   name: "ScrollRegionStyle",
   class: "gdg-s1dgczr6",
@@ -163,13 +169,19 @@ export const InfiniteScroller = p => {
       setIsIdle(false);
       idleTimer.current = window.setTimeout(() => setIsIdle(true), 200);
     }
-    update({
+    /* fork: paint the grid in the scroll pass, before the frame is presented.
+       Stock defers this to React's next commit, so the canvas lands a frame
+       after the native scroll — a fast flick leaves the painted cells (and
+       anything pinned to them) trailing the scroll. flushSync commits the
+       visible-region update here, so the canvas and the DOM overlay move on
+       the same offsets in the same frame. */
+    flushSync(() => update({
       x: scrollLeft,
       y: virtualY,
       width: cWidth - paddingRight,
       height: cHeight - paddingBottom,
       paddingRight: rightWrapRef.current?.clientWidth ?? 0
-    });
+    }));
   }, [paddingBottom, paddingRight, scrollHeight, update, preventDiagonalScrolling, hasTouches]);
   useKineticScroll(kineticScrollPerfHack && browserIsSafari.value, onScroll, scroller);
   const onScrollRef = React.useRef(onScroll);

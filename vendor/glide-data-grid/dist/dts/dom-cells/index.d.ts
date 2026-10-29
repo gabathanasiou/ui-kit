@@ -22,8 +22,8 @@ export interface DomCellEditorProps extends DataEditorAllProps {
     getDomHeaderCell?: (col: number) => React.ReactNode | null | false;
     /** Extra class on each pinned box. */
     domCellClassName?: string;
-    /** Px at the bottom covered by a sticky row (the trailing add row): boxes
-     *  it paints over are hidden. */
+    /** Px at the bottom covered by a sticky row (the trailing add row): the
+     *  body bands end there, so boxes never float on the add row. */
     domCellBottomInset?: number;
 }
 

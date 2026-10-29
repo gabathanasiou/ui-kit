@@ -98,6 +98,32 @@ const DataGrid = (p, forwardedRef) => {
         mappedColumns,
         rowHeight,
     ]);
+    /* fork: a cell's rect in CONTENT space — canvas-relative, independent of
+       the scroll position — which is what a scroll-driven DOM overlay pins its
+       boxes from. `getBounds` answers with the last PAINTED offsets, so it is
+       stale for a frame during a fast scroll; this never is. */
+    const getContentBoundsForItem = React.useCallback((canvas, col, row) => {
+        const rect = canvas.getBoundingClientRect();
+        const scale = rect.width / width;
+        const result = computeBounds(col, row, width, height, groupHeaderHeight, totalHeaderHeight, freezeColumns, 0, 0, 0, rows, freezeColumns, freezeTrailingRows, mappedColumns, rowHeight);
+        if (scale !== 1) {
+            result.x *= scale;
+            result.y *= scale;
+            result.width *= scale;
+            result.height *= scale;
+        }
+        return result;
+    }, [
+        width,
+        height,
+        groupHeaderHeight,
+        totalHeaderHeight,
+        rows,
+        freezeColumns,
+        freezeTrailingRows,
+        mappedColumns,
+        rowHeight,
+    ]);
     const getMouseArgsForPosition = React.useCallback((canvas, posX, posY, ev) => {
         const rect = canvas.getBoundingClientRect();
         const scale = rect.width / width;
@@ -1056,6 +1082,12 @@ const DataGrid = (p, forwardedRef) => {
             }
             return getBoundsForItem(canvasRef.current, col ?? 0, row ?? -1);
         },
+        getContentBounds: (col, row) => {
+            if (canvasRef === undefined || canvasRef.current === null) {
+                return undefined;
+            }
+            return getContentBoundsForItem(canvasRef.current, col ?? 0, row ?? -1);
+        },
         damage,
         getMouseArgsForPosition: (posX, posY, ev) => {
             if (canvasRef === undefined || canvasRef.current === null) {
@@ -1063,7 +1095,7 @@ const DataGrid = (p, forwardedRef) => {
             }
             return getMouseArgsForPosition(canvasRef.current, posX, posY, ev);
         },
-    }), [canvasRef, damage, getBoundsForItem, getMouseArgsForPosition]);
+    }), [canvasRef, damage, getBoundsForItem, getContentBoundsForItem, getMouseArgsForPosition]);
     const lastFocusedSubdomNode = React.useRef();
     const accessibilityTree = useDebouncedMemo(() => {
         if (width < 50 || experimental?.disableAccessibilityTree === true)

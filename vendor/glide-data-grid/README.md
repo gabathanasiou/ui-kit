@@ -22,31 +22,38 @@ the npm package has no effect. CSS consumers import
 
 1. **`dom-cells/`** — new module exporting `DataEditorWithDomCells` (+
    `GetDomCell`/`DomCellEditorProps` types): mounts a click-through DOM layer
-   over the canvas and pins one box per visible cell from `getBounds`, refreshed
-   from `onVisibleRegionChanged`. Exported from `index.js` / `index.d.ts`.
-   The kit maps `GlideSheet.domCells` onto it.
+   over the canvas and keeps one box glued to each requested cell. Boxes are
+   positioned in CONTENT space (`getContentBounds`) and scrolling moves four
+   clipped bands (frozen headers / headers / frozen cells / body cells) with one
+   compositor `translate3d` each, so controls track the canvas on both axes with
+   no scroll heuristic. Frozen columns, the row-marker gutter and headers pin per
+   axis; the sticky trailing add row is a band inset (`domCellBottomInset`).
    Enter/Space on the selected cell activates its control when the DOM cell
-   holds exactly one focusable element. Frozen columns are measured on every
-   pass (the visible range starts at the first SCROLLED column) and
-   `freezeColumns` is forwarded to the inner editor. `domCellBottomInset` hides
-   boxes covered by a sticky trailing row. Box positions are also written
-   directly in the layout effect (same frame as the canvas paint); during a
-   fast scroll the boxes hide (`data-glide-scrolling`, cleared 90ms after the
-   last scroll) and re-pin on settle, so no button is ever seen straddling
-   rows.
-   `getDomHeaderCell` pins real controls
-   over column headers (frozen/scrolled aware); headers expose
-   `data-glide-header-focused` when the selection range covers their column.
-   The overscroll band past the last row is flattened to the cell background
-   (stock painted phantom row lines there).
-2. **Editor chrome** (`dist/index.css`, "fork: the overlay editor must look
+   holds exactly one focusable element. `getDomHeaderCell` pins real controls
+   over column headers; headers expose `data-glide-header-focused` when the
+   selection range covers their column and `data-glide-header-selected` when the
+   column itself is selected. The overscroll band past the last row is flattened
+   to the cell background (stock painted phantom row lines there).
+2. **Scroll pass paints the grid** (`internal/scrolling-data-grid/infinite-scroller`)
+   — the visible-region update is committed inside `flushSync`, so the canvas
+   repaints on the same offsets the scroll applied. Stock defers it to React's
+   next commit (a frame late; fast flicks left the paint behind the scroll).
+   The scroller is `overflow: auto` in Safari too (stock forces `scroll`, which
+   reserves a gutter with always-visible scrollbars); a content-height sheet
+   (`data-glide-fit`) additionally pins `overflow-y: hidden`, because its rows
+   always fit — otherwise Safari latches both scrollbars on after a row is added.
+3. **`getContentBounds`** (`internal/data-grid`) — a cell's rect in content
+   space (canvas-relative, scroll independent), exposed through the editor ref.
+   This is what the DOM-cell layer pins from; `getBounds` answers with the last
+   PAINTED offsets and is stale for a frame during a scroll.
+4. **Editor chrome** (`dist/index.css`, "fork: the overlay editor must look
    like the cell") — square corners, a crisp 1px inset accent rectangle, no
    drop shadow/fade, the cell's exact box/height/padding/font/line rhythm, and
    no inner scrollbar (stock's growing-entry top margin + sub-pixel rounding).
-3. **Header selection range** (`dist/esm/internal/data-grid/render/`) — stock
+5. **Header selection range** (`dist/esm/internal/data-grid/render/`) — stock
    tinted only the focused cell's column header; every column covered by the
    selection range now tints (`rangeStack` included), matching the range.
-4. **Source maps stripped** — `*.map` files and their `sourceMappingURL`
+6. **Source maps stripped** — `*.map` files and their `sourceMappingURL`
    comments are removed to keep the vendored tree small (Vite then logs no
    missing-map errors).
 

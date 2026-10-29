@@ -503,6 +503,11 @@ export interface DataEditorRef {
      */
     getBounds: DataGridRef["getBounds"];
     /**
+     * fork: gets the CONTENT-space bounds of the requested item (canvas
+     * relative, independent of the scroll position).
+     */
+    getContentBounds: DataGridRef["getContentBounds"];
+    /**
      * Triggers the data grid to focus itself or the correct accessibility element.
      */
     focus: DataGridRef["focus"];

@@ -225,6 +225,8 @@ type DamageUpdateList = readonly {
 export interface DataGridRef {
     focus: () => void;
     getBounds: (col?: number, row?: number) => Rectangle | undefined;
+    /** fork: content-space bounds (canvas relative, no scroll offset). */
+    getContentBounds: (col?: number, row?: number) => Rectangle | undefined;
     damage: (cells: DamageUpdateList) => void;
     getMouseArgsForPosition: (posX: number, posY: number, ev?: MouseEvent | TouchEvent) => GridMouseEventArgs | undefined;
 }
