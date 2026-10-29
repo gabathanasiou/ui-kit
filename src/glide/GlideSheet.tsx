@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import DataEditor, {
   CompactSelection,
   GridCellKind,
+  type CellActivatedEventArgs,
   type CellClickedEventArgs,
   type CustomRenderer,
   type DataEditorRef,
@@ -29,6 +30,7 @@ import {
 } from './gridModel';
 import { createGlideCellEditor, useGlideEscapeCancel, type GlideColumnEditor, type GlideEditorOptions } from './editors';
 import { KIT_GLIDE_RENDERERS } from './customCells';
+import { controlCellRenderers, isControlCell, isKitGlyphCell, isKitPickerCell, pressControlCell } from './controlCells';
 import type { GlideRange, GlideSheetColumn, GlideSheetEdit } from './types';
 
 /**
@@ -42,8 +44,9 @@ import type { GlideRange, GlideSheetColumn, GlideSheetEdit } from './types';
  *  - per-cell read-only is the CELL's own `readonly` flag — the host mixes
  *    locked and editable cells freely;
  *  - interactive controls are REAL DOM mounted over the cell (`domCells`) —
- *    buttons, pickers, morph fields — or kit panels opened from the overlay
- *    editor; badges are the only painted cell kind;
+ *    buttons, morph fields, compound layouts — or kit panels opened from the
+ *    overlay editor; simple affordances are PAINTED control cells
+ *    (`controlCells.tsx`: picker chevron + glyph buttons) with no DOM box;
  *  - selection, fill-down, copy/cut/paste/clear each commit ONCE through
  *    `onCommit`, so the host stores one undo entry per operation;
  *  - editable cells get the light-blue "type here" wash (deepening on the
@@ -87,6 +90,9 @@ export interface GlideRowMarkers {
 export interface GlideSheetApi {
   /** Opens the cell's overlay editor (the double-click path). */
   openCellEditor: (row: number, colKey: string) => void;
+  /** The cell's rect in VIEWPORT coordinates (agents/specs clicking a painted
+   *  lane, anchored pop-outs). Undefined when the column/cell is not visible. */
+  getCellBounds: (row: number, colKey: string) => { x: number; y: number; width: number; height: number } | undefined;
 }
 
 export interface GlideSheetProps {
@@ -117,6 +123,10 @@ export interface GlideSheetProps {
   customRenderers?: readonly CustomRenderer<any>[];
   /** Raw cell clicks (after the internal row-action hit test) — use for custom cells. */
   onCellClick?: (cell: Item, event: CellClickedEventArgs) => void;
+  /** Glide's activation hook (Enter/Space, double-click, type-to-edit). Painted
+   *  control cells resolve their `onOpen`/`onActivate` here exactly once; other
+   *  cells are left to Glide's own editor path. */
+  onCellActivated?: (cell: Item, event: CellActivatedEventArgs) => void;
   /** Stable key for the local selection memory (a remount restores it). */
   selectionKey?: string;
   /** Merged over the kit theme (a host's one-off palette tweak). */
@@ -260,6 +270,7 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
   getEditor,
   customRenderers,
   onCellClick,
+  onCellActivated,
   selectionKey,
   themeOverrides,
   fillHandle = true,
@@ -414,6 +425,10 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
         const col = COLUMNS.findIndex(c => c.key === colKey);
         if (col >= 0) gridRef.current?.openCellEditor(col, row);
       },
+      getCellBounds: (row, colKey) => {
+        const col = COLUMNS.findIndex(c => c.key === colKey);
+        return col >= 0 ? gridRef.current?.getBounds(col, row) : undefined;
+      },
     };
     return () => { apiRef.current = null; };
   }, [apiRef, COLUMNS]);
@@ -457,11 +472,21 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
     const cell = getCellContent(colDef, r, row);
     // A read-only sheet is enforced per cell: Glide has no grid-level flag.
     if (readOnlyRef.current) return { ...cell, readonly: true, allowOverlay: false } as GridCell;
-    // Custom cells paint their own face (button / badge / field trigger) — the
-    // editable wash belongs to plain text/boolean cells only.
-    if (cell.kind === GridCellKind.Custom) return cell;
-    const isReadonly = !!(cell as { readonly?: boolean }).readonly;
     const ownOverride = (cell as { themeOverride?: Record<string, string> }).themeOverride ?? {};
+    // Painted control cells keep the native row wash: a picker is an editable
+    // cell (blue "type here"), a glyph a read-only one (neutral hover). Every
+    // other custom cell paints its own face (button/field/badge).
+    if (cell.kind === GridCellKind.Custom) {
+      if (isKitPickerCell(cell)) {
+        const bg = hovered ? cellColors.editableHoverBg : cellColors.editableBg;
+        return { ...cell, themeOverride: { ...ownOverride, bgCell: bg, bgCellMedium: bg } } as GridCell;
+      }
+      if (isKitGlyphCell(cell) && hovered) {
+        return { ...cell, themeOverride: { ...ownOverride, bgCell: cellColors.readonlyHoverBg, bgCellMedium: cellColors.readonlyHoverBg } } as GridCell;
+      }
+      return cell;
+    }
+    const isReadonly = !!(cell as { readonly?: boolean }).readonly;
     if (!isReadonly) {
       const bg = hovered ? cellColors.editableHoverBg : cellColors.editableBg;
       return { ...cell, themeOverride: { ...ownOverride, bgCell: bg, bgCellMedium: bg } } as GridCell;
@@ -543,7 +568,37 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
 
   const onCellClicked = useCallback((cell: Item, event: CellClickedEventArgs) => {
     onCellClick?.(cell, event);
-  }, [onCellClick]);
+    const [col, row] = cell;
+    const colDef = COLUMNS[col];
+    const r = rowsRef.current[row];
+    if (!colDef || !r) return;
+    if (!isControlCell(getCellContent(colDef, r, row))) return;
+    // The renderer starts the press flash in its `onClick`, which runs AFTER
+    // this callback: repaint once on the next frame so the ~90ms animation
+    // plays even when the action itself changes no grid data.
+    requestAnimationFrame(() => gridRef.current?.updateCells([{ cell }]));
+  }, [COLUMNS, getCellContent, onCellClick]);
+
+  /** Glide's activation hook: Enter/Space, double-click and type-to-edit.
+   *  A painted glyph fires its action exactly once here and the canvas keeps
+   *  focus; a picker needs nothing (Glide's own reselect opens its overlay
+   *  editor, the ONE `select` editor). */
+  const handleCellActivated = useCallback((cell: Item, event: CellActivatedEventArgs) => {
+    const [col, row] = cell;
+    const colDef = COLUMNS[col];
+    const r = rowsRef.current[row];
+    const content = colDef && r ? getCellContent(colDef, r, row) : null;
+    if (content && isKitGlyphCell(content) && !readOnlyRef.current) {
+      pressControlCell(cell, content.data.label);
+      content.data.onActivate?.();
+      gridRef.current?.updateCells([{ cell }]);
+      onCellActivated?.(cell, event);
+      return;
+    }
+    // Only cells that can open an editor arm the Escape-cancel guard.
+    escapeCancel.onCellActivated();
+    onCellActivated?.(cell, event);
+  }, [COLUMNS, getCellContent, onCellActivated, escapeCancel]);
 
   /** Applies a set of planned edits as ONE commit. */
   const applyEdits = useCallback((edits: PlannedEdit[]) => {
@@ -706,7 +761,11 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
   }, [selectionKey]);
 
   const renderers = useMemo(
-    () => (customRenderers ? [...KIT_GLIDE_RENDERERS, ...customRenderers] : KIT_GLIDE_RENDERERS),
+    () => [
+      ...KIT_GLIDE_RENDERERS,
+      ...controlCellRenderers,
+      ...(customRenderers ?? []),
+    ],
     [customRenderers],
   );
 
@@ -760,6 +819,7 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
             onPaste={handlePaste}
             provideEditor={provideEditor}
             {...escapeCancel}
+            onCellActivated={handleCellActivated}
             getCellsForSelection={true}
             gridSelection={gridSelection}
             onGridSelectionChange={onGridSelectionChange}

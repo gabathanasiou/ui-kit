@@ -170,7 +170,12 @@ export function createGlideCellEditor(getOpts: () => GlideEditorOptions | null) 
         }
 
         // select — the kit's ONE value picker, in its inline cell appearance.
-        const seed = cfg.seedValue ?? cellValue?.data ?? '';
+        // A painted picker cell carries its seed on the custom payload (the
+        // painted value may be a name while the picker is id-keyed).
+        const custom = cellValue?.kind === GridCellKind.Custom
+          ? (cellValue.data as { seedValue?: string; value?: string } | undefined)
+          : undefined;
+        const seed = cfg.seedValue ?? (custom ? custom.seedValue ?? custom.value ?? '' : cellValue?.data ?? '');
         const handleChange = (values: string[]) => {
           committedRef.current = true;
           push(values[0] ?? '');
@@ -222,7 +227,11 @@ export function createGlideCellEditor(getOpts: () => GlideEditorOptions | null) 
     const columnOffset = opts.columnOffset ?? 0;
     if (readOnlyRef.current) return undefined;
     const loc = cellData?.location as Item | undefined;
-    if (!loc || cellData.kind !== GridCellKind.Text || cellData.readonly === true) return undefined;
+    // A painted picker cell opens the SAME column `select` editor as a text
+    // picker: the cell is only the closed face (see controlCells.tsx).
+    const isKitPicker = cellData?.kind === GridCellKind.Custom
+      && (cellData.data as { kind?: string } | undefined)?.kind === 'kit-picker';
+    if (!loc || (cellData.kind !== GridCellKind.Text && !isKitPicker) || cellData.readonly === true) return undefined;
     const [col, row] = loc;
     const colDef = columns[col - columnOffset];
     if (!colDef) return undefined;
@@ -233,7 +242,11 @@ export function createGlideCellEditor(getOpts: () => GlideEditorOptions | null) 
     if (!cfg && !alignedStock) return undefined;
 
     const stored = String(getValue(row, colKey) ?? '');
-    const selectAllOnOpen = stored === (cellData.data ?? '');
+    const pickerSeed = isKitPicker
+      ? String((cellData.data as { seedValue?: string; value?: string }).seedValue
+        ?? (cellData.data as { value?: string }).value ?? '')
+      : String(cellData.data ?? '');
+    const selectAllOnOpen = stored === pickerSeed;
     const { Editor, box } = editorFor(colKey);
     box.current = {
       cfg: cfg ?? null,
