@@ -616,6 +616,14 @@ export const GlideNativeCellsPage: React.FC<{ onExit: () => void }> = ({ onExit 
         </button>
         <div className="pg-page-title">IT&rsquo;S A WONDERFUL LIFE</div>
         <span className="pg-page-sub">Canvas controls</span>
+        <a
+          className="pg-page-back"
+          href="#glide-single-cell"
+          data-testid="glide-native-cells-single-link"
+          title="The minimal one-cell input loop"
+        >
+          Single cell →
+        </a>
         <span className="pg-page-stats" data-testid="glide-native-cells-rows">
           {rows} {zone === 'full' ? 'scenes' : 'crew'}
         </span>

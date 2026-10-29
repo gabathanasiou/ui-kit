@@ -60,6 +60,14 @@ export const SingleCellPage: React.FC<{ onExit: () => void }> = ({ onExit }) => 
         </button>
         <div className="pg-page-title">Single cell</div>
         <span className="pg-page-sub">Glide input</span>
+        <a
+          className="pg-page-back"
+          href="#glide-native-cells"
+          data-testid="glide-single-cell-native-link"
+          title="Painted picker chevrons and glyph buttons at three scales"
+        >
+          Canvas cells →
+        </a>
         <span className="pg-page-meta">
           <span className="pg-page-status" data-testid="glide-single-cell-status">{status}</span>
           <span className="pg-page-status" data-testid="glide-single-cell-commits">
