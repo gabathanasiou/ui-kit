@@ -94,3 +94,9 @@
     line-height: var(--gdg-line-height, 1.4);
     font-size: var(--gdg-editor-font-size);
 }
+
+/* fork: a zero-height header (the single-cell shape) leaves a 1px header
+   canvas painted over the first row; hide it. See GlideSheet data-glide-no-header. */
+[data-glide-no-header] .dvn-underlay > canvas:nth-child(2) {
+    display: none;
+}

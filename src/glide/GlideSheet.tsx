@@ -301,6 +301,9 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
 
   const rowH = baseRowHeight;
   const headerH = baseHeaderHeight;
+  // A zero header height is the "single cell" shape: Glide still creates a
+  // 1px header canvas over the first row, hidden by the fork CSS rule.
+  const headerless = headerH <= 0;
   const { ref: sizeRef, width: gridWidth } = useMeasuredWidth();
 
   const COLUMNS = useMemo(() => {
@@ -801,6 +804,7 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
       ref={wrapperRef}
       className={`relative ${className}`}
       {...(dataAttr ? { [dataAttr]: '' } : {})}
+      {...(headerless ? { 'data-glide-no-header': '' } : {})}
       data-glide-sheet={mode}
       /* A content-height sheet fits its rows exactly; it must never scroll.
          Safari (always-visible scrollbars) otherwise latches BOTH scrollbars on

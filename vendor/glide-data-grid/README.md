@@ -56,7 +56,10 @@ the npm package has no effect. CSS consumers import
 6. **Source maps stripped** — `*.map` files and their `sourceMappingURL`
    comments are removed to keep the vendored tree small (Vite then logs no
    missing-map errors).
-7. **Imperative `openCellEditor` column offset** (`dist/esm/data-editor`) — the
+7. **Zero-height header** (`dist/index.css`) — `data-glide-no-header` (a sheet
+   with `headerHeight: 0`, the one-cell shape) hides the 1px header canvas
+   Glide still creates, so the element is literally the cell.
+8. **Imperative `openCellEditor` column offset** (`dist/esm/data-editor`) — the
    API takes a DATA column, while `getMangledCellContent` and the overlay's
    `cell` are RAW (the row-marker gutter is column 0). Stock mixed the two: on
    a grid with row markers it opened the PREVIOUS column's content in the
