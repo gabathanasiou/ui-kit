@@ -103,6 +103,7 @@ const TextCell: React.FC<{ register: (api: GlideSheetApi | null) => void }> = ({
         onCommit={onCommit}
         editableKeys={new Set(['value'])}
         apiRef={apiRef}
+        deselectOnBlur
         selectionKey="pg:glide-single:text"
         baseRowHeight={30}
         baseHeaderHeight={0}
@@ -147,6 +148,7 @@ const PickerCell: React.FC<{ register: (api: GlideSheetApi | null) => void }> = 
         onCommit={edits => { if (edits[0]) setValue(edits[0].value); }}
         editableKeys={new Set(['value'])}
         apiRef={apiRef}
+        deselectOnBlur
         selectionKey="pg:glide-single:picker"
         baseRowHeight={30}
         baseHeaderHeight={0}
@@ -185,6 +187,7 @@ const ButtonCell: React.FC<{ register: (api: GlideSheetApi | null) => void }> = 
         onCommit={() => {}}
         editableKeys={NO_EDIT}
         apiRef={apiRef}
+        deselectOnBlur
         selectionKey="pg:glide-single:button"
         baseRowHeight={30}
         baseHeaderHeight={0}
@@ -222,6 +225,7 @@ const GroupCell: React.FC<{ register: (api: GlideSheetApi | null) => void }> = (
         onCommit={() => {}}
         editableKeys={NO_EDIT}
         apiRef={apiRef}
+        deselectOnBlur
         selectionKey="pg:glide-single:group"
         baseRowHeight={30}
         baseHeaderHeight={0}
@@ -258,6 +262,7 @@ const ToggleCell: React.FC<{ register: (api: GlideSheetApi | null) => void }> = 
         onCommit={edits => { if (edits[0]) setOn(edits[0].value === 'true'); }}
         editableKeys={new Set(['value'])}
         apiRef={apiRef}
+        deselectOnBlur
         selectionKey="pg:glide-single:toggle"
         baseRowHeight={30}
         baseHeaderHeight={0}
@@ -290,6 +295,7 @@ const LockedCell: React.FC<{ register: (api: GlideSheetApi | null) => void }> = 
         onCommit={() => {}}
         editableKeys={NO_EDIT}
         apiRef={apiRef}
+        deselectOnBlur
         selectionKey="pg:glide-single:locked"
         baseRowHeight={30}
         baseHeaderHeight={0}
@@ -330,6 +336,7 @@ const RowsCase: React.FC<{ register: (api: GlideSheetApi | null) => void }> = ({
         onCommit={onCommit}
         editableKeys={new Set(['value'])}
         apiRef={apiRef}
+        deselectOnBlur
         selectionKey="pg:glide-single:rows"
         baseRowHeight={28}
         baseHeaderHeight={0}
@@ -378,6 +385,7 @@ const ColumnsCase: React.FC<{ register: (api: GlideSheetApi | null) => void }> =
         onCommit={onCommit}
         editableKeys={COLUMN_EDITABLE}
         apiRef={apiRef}
+        deselectOnBlur
         selectionKey="pg:glide-single:columns"
         baseRowHeight={30}
         baseHeaderHeight={0}

@@ -192,9 +192,13 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
   to one cell. A row action that deletes its row calls it for the same index
   (the row below falls into the deleted slot; the new last row when it was the
   last), so the selection stays where the eye already is.
+- **`deselectOnBlur`** drops the selection when focus leaves the sheet (an
+  adjacent sheet or a page control); the overlay editor's portal counts as
+  "inside". `clearSelection()` is the imperative form. Used by the Single
+  cells cards so typing in one card deselects the last one.
 - **`baseHeaderHeight={0}`** makes a header-less sheet (one cell in an element):
   the wrapper sets `data-glide-no-header`, and the vendored CSS hides the 1px
-  header canvas Glide still creates at that height (vendor patch 8).
+  header canvas Glide still creates at that height (vendor patch 7).
 - `needsHoverPosition` gives `draw` a cell-LOCAL `hoverX/hoverY`; the renderer
   never paints a second focus rectangle (the grid owns selection), sets
   `overrideCursor('pointer')` over the lane only, and calls

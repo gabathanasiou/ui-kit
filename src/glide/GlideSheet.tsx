@@ -96,6 +96,8 @@ export interface GlideSheetApi {
   /** Moves the grid selection to one cell (a row action that removes its row
    *  points the selection at the row above). Focuses the canvas. */
   selectCell: (row: number, colKey: string) => void;
+  /** Drops the selection (the grid keeps focus). */
+  clearSelection: () => void;
 }
 
 export interface GlideSheetProps {
@@ -171,6 +173,9 @@ export interface GlideSheetProps {
   addRowSticky?: boolean;
   /** Animated (smooth) scrolling on both axes — Glide's smoothScrollX/Y. */
   smoothScroll?: boolean;
+  /** Drop the selection when focus leaves this sheet (another card/page
+   *  control). The grid's selection is otherwise sticky on purpose. */
+  deselectOnBlur?: boolean;
 }
 
 const DEFAULT_ROW_HEIGHT = 28;
@@ -294,6 +299,7 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
   addRowHint,
   addRowSticky = false,
   smoothScroll,
+  deselectOnBlur = false,
 }) => {
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
@@ -428,6 +434,12 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
     }
     return map;
   }, [domCells, COLUMNS]);
+  const clearSelection = useCallback(() => {
+    gridSelectionRef.current = EMPTY_SELECTION;
+    setGridSelection(EMPTY_SELECTION);
+    if (selectionKey) SELECTION_CACHE.delete(selectionKey);
+  }, [selectionKey]);
+
   const selectCell = useCallback((row: number, colKey: string) => {
     const col = COLUMNS.findIndex(c => c.key === colKey);
     if (col < 0 || row < 0) return;
@@ -456,9 +468,10 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
         return col >= 0 ? gridRef.current?.getBounds(col, row) : undefined;
       },
       selectCell,
+      clearSelection,
     };
     return () => { apiRef.current = null; };
-  }, [apiRef, COLUMNS, selectCell]);
+  }, [apiRef, COLUMNS, selectCell, clearSelection]);
 
   const getDomCell = useCallback(
     (col: number, row: number) => domCellMap.get(`${col}:${row}`) ?? null,
@@ -825,6 +838,14 @@ export const GlideSheet: React.FC<GlideSheetProps> = ({
         '--glide-header-hover-bg': theme.bgHeaderHovered,
         '--glide-header-focus-bg': theme.bgHeaderHasFocus,
       } as React.CSSProperties}
+      onBlur={e => {
+        if (!deselectOnBlur) return;
+        // Focus moving to the overlay editor (portaled) or another node inside
+        // this sheet is still "inside" — keep the selection.
+        const next = e.relatedTarget as Node | null;
+        if (next && (wrapperRef.current?.contains(next) || gridPortalRef.current?.contains(next))) return;
+        clearSelection();
+      }}
       onPointerLeave={() => {
         const prev = hoveredRowRef.current;
         if (prev == null) return;
