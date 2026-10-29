@@ -639,7 +639,12 @@ export function PickerField({
       query={searchQuery}
       onSelect={onSelect}
       closeOnSelect={mode === 'single'}
-      selectedId={mode === 'single' ? draft[0] : undefined}
+      selectedId={mode === 'single' && draft[0] !== undefined
+        // Resolve case-insensitively: a lowercased stored value ("night")
+        // must still mark/highlight its catalogue row (NIGHT), or Enter picks
+        // the first row (DAY).
+        ? resolvePickerSegment(draft[0], items, resolveBy)
+        : undefined}
       multiple={mode === 'multiple' ? {
         selectedIds: draft,
         mode: 'live',
