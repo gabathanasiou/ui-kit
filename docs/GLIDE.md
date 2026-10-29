@@ -188,6 +188,10 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
   coordinates. The playground's dev-only `window.__glideNativeCells`
   (`chevronCenter`/`glyphCenter`) builds lane click points from it, so specs
   never hardcode page coordinates.
+- **`GlideSheetApi.selectCell(row, colKey)`** — moves the selection (and focus)
+  to one cell. A row action that deletes its row calls it for the same index
+  (the row below falls into the deleted slot; the new last row when it was the
+  last), so the selection stays where the eye already is.
 - `needsHoverPosition` gives `draw` a cell-LOCAL `hoverX/hoverY`; the renderer
   never paints a second focus rectangle (the grid owns selection), sets
   `overrideCursor('pointer')` over the lane only, and calls
@@ -195,8 +199,12 @@ the FORK's `DataEditorWithDomCells` (`vendor/glide-data-grid/dist/esm/dom-cells`
   keyed by row + the button's accessible label, so labels must be unique per
   row ("Remove scene 12").
 - Hover fills are the WHOLE target rectangle (`hoverBg` or the tone's tint, no
-  inset pill). A group cell splits its lane into equal segments; each segment
-  has its own hover, flash and click hit-test.
+  inset pill), stopping at the cell's own 1px border line — the grid's damage
+  repaint clips that outer pixel, so a fill painted over it would never clear
+  (a stuck coloured border). A SELECTED glyph paints the same tone fill (the
+  grid's focus rectangle stays on top), so a keyboard-selected button never
+  reads as a neutral box. A group cell splits its lane into equal segments;
+  each segment has its own hover, flash and click hit-test.
 
 ## Editors (overlay)
 
@@ -345,6 +353,13 @@ Sections under "Data grid":
   scrolling body. Dev helper `window.__glideNativeCells`
   (`chevronCenter`/`glyphCenter`/`cellBounds`) builds lane points from the
   grid's `getBounds`, so the spec never hardcodes coordinates.
+
+- `#glide-single-cell` (full page) — `glide-single-cell-demo`: the minimal
+  input loop in one element — ONE editable cell (select → type → overlay text
+  editor → Enter commits), the host value shown beside it. The other
+  experiment's single-cell harness can be compared side by side.
+  Testids: `-back`, `-value`, `-status`, `-commits`; dev helper
+  `window.__glideSingleCell.cellBounds(row, colKey)`.
 
 Specs: `playground/specs/glide.spec.ts` + `glide-native-cells.spec.ts`; pure
 math: `src/__tests__/glideGridModel.test.ts`, lane hit-test:

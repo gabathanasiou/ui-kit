@@ -24,6 +24,7 @@ import { SizingSection } from './sections/SizingSection';
 import { GlideSection } from './sections/GlideSection';
 import { BreakdownPage } from './breakdownDemo';
 import { GlideNativeCellsPage } from './glideNativeCellsDemo';
+import { SingleCellPage } from './singleCellDemo';
 
 /* ────────────────────────────────────────────────────────────────────────────
    ui-kit playground — the component zoo & debugging surfaces.
@@ -115,6 +116,7 @@ const SECTIONS: SectionDef[] = [
 const PAGES: NavSection[] = [
   { id: 'breakdown', group: 'Full pages', title: 'Breakdown' },
   { id: 'glide-native-cells', group: 'Full pages', title: 'Canvas cell controls' },
+  { id: 'glide-single-cell', group: 'Full pages', title: 'Single cell input' },
 ];
 
 function pageFromHash(): string | null {
@@ -206,6 +208,8 @@ export function App() {
           <BreakdownPage onExit={() => { window.location.hash = 'glide'; }} />
         ) : page === 'glide-native-cells' ? (
           <GlideNativeCellsPage onExit={() => { window.location.hash = 'glide'; }} />
+        ) : page === 'glide-single-cell' ? (
+          <SingleCellPage onExit={() => { window.location.hash = 'glide'; }} />
         ) : null}
       </ThemeScope>
     );

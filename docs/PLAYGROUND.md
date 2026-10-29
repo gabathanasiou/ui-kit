@@ -165,6 +165,13 @@ The dev-only `window.__glideNativeCells` helper
 (`chevronCenter`/`glyphCenter`/`cellBounds`, from the grid's `getBounds`) is how
 the spec clicks a painted lane without hardcoding coordinates.
 
+`#glide-single-cell` (experimental) is the minimal edit loop in one element: a
+card with ONE editable Glide cell (select → type → the overlay text editor →
+Enter commits) and the host value beside it. Testids:
+`glide-single-cell-demo`, `-back`, `-value`, `-status`, `-commits`; dev helper
+`window.__glideSingleCell.cellBounds(row, colKey)`. It mirrors the other
+experiment's single-cell harness for a side-by-side canvas-vs-DOM comparison.
+
 ## Playground CSS gotchas (both REQUIRED for correct rendering)
 
 - `playground.css` imports Tailwind v4 + `@source '../../src'` — without the
