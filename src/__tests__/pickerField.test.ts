@@ -9,7 +9,7 @@ import {
   pickerSegments,
   resolvePickerSegment,
   resolvePickerText,
-  seedMultiQuery,
+  resolveMultiCommit,
   unknownPickerValues,
 } from '../pickerModel';
 
@@ -91,19 +91,22 @@ describe('pickerCommittedKeys', () => {
   });
 });
 
-describe('seedMultiQuery', () => {
-  it('keeps the committed list and appends the typed key as the query', () => {
-    expect(seedMultiQuery('SEQUENCE, SOUND', 'q')).toBe('SEQUENCE, SOUND, q');
-    expect(seedMultiQuery('SEQUENCE, ', 'q')).toBe('SEQUENCE, q');
+describe('resolveMultiCommit', () => {
+  it('keeps the committed values when a strict catalogue cannot resolve the typed key', () => {
+    expect(resolveMultiCommit('zz', PROPS, 'label', ['Mug'], false)).toEqual(['Mug']);
   });
 
-  it('seeds a bare query on an empty list', () => {
-    expect(seedMultiQuery('', 'q')).toBe('q');
-    expect(seedMultiQuery('   ', 'q')).toBe('q');
+  it('clears a strict list only when the field is emptied', () => {
+    expect(resolveMultiCommit('   ', PROPS, 'label', ['Mug'], false)).toEqual([]);
   });
 
-  it('leaves the list alone with no typed key', () => {
-    expect(seedMultiQuery('SEQUENCE, ', '')).toBe('SEQUENCE');
+  it('commits a typed value that IS in a strict catalogue (replace)', () => {
+    expect(resolveMultiCommit('prop gun', PROPS, 'label', ['Mug'], false)).toEqual(['Prop Gun']);
+  });
+
+  it('free text keeps unknown typed values (and clears when emptied)', () => {
+    expect(resolveMultiCommit('NEWBIE', PROPS, 'label', ['Mug'], true)).toEqual(['NEWBIE']);
+    expect(resolveMultiCommit('', PROPS, 'label', ['Mug'], true)).toEqual([]);
   });
 });
 

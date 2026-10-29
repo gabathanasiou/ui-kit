@@ -43,15 +43,17 @@ export declare function pickerSegments(text: string): string[];
 /** The live query while editing a comma list: the LAST segment. A trailing
  *  comma (the append position) means an empty query. */
 export declare function lastPickerSegment(text: string): string;
-/** Grid edit-on-type on a MULTI-value cell: the typed key is a live query for
- *  the LAST segment, not a replacement for the committed list. Keep the list
- *  (no trailing separator) and append the query. */
-export declare function seedMultiQuery(text: string, query: string): string;
 /** Resolve one typed segment to its catalogue key: an exact key wins, then a
  *  case-insensitive label; otherwise the typed text itself (a create). */
 export declare function resolvePickerSegment(segment: string, items: readonly PickerItem[], resolveBy?: PickerResolveBy): string;
 /** Parse edited text into deduped keys, preserving the typed order. */
 export declare function resolvePickerText(text: string, items: readonly PickerItem[], resolveBy?: PickerResolveBy): string[];
+/** MULTI commit against a catalogue. A strict catalogue (`allowFreeText`
+ *  false) never turns a live query into an empty list: a typed key that names
+ *  no entry — grid edit-on-type starts the field with just that key — keeps
+ *  the committed values instead of clearing them. Free-text pickers keep the
+ *  typed values, and an intentionally emptied field still clears. */
+export declare function resolveMultiCommit(text: string, items: readonly PickerItem[], resolveBy: PickerResolveBy, values: readonly string[], allowFreeText: boolean): string[];
 /** Parse edited text into the COMMITTED keys (the live query is not a value):
  *  a trailing comma commits the last segment; otherwise it is the query.
  *  `GEORGE, MARY, ` → both; `GEORGE, MAR` → GEORGE only. */

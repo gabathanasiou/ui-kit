@@ -12,8 +12,7 @@ import {
   pickerItemKey,
   pickerItemLabel,
   resolvePickerSegment,
-  resolvePickerText,
-  seedMultiQuery,
+  resolveMultiCommit,
   unknownPickerValues,
   type PickerDisplay,
   type PickerItem,
@@ -285,11 +284,7 @@ export function PickerField({
     if (open || readOnly || disabled) return;
     cancelledRef.current = false;
     editingRef.current = true;
-    // Multi: a typed key that OPENED the cell is a live query, not a
-    // replacement — keep the committed list and append the query segment.
-    const nextText = mode === 'multiple' && seedQuery
-      ? seedMultiQuery(editingText(values), seedQuery)
-      : editingText(values);
+    const nextText = editingText(values);
     textRef.current = nextText;
     draftRef.current = [...values];
     setDraft([...values]);
@@ -297,7 +292,7 @@ export function PickerField({
     setSingleQuery(seedQuery);
     setSeedQuery('');
     setOpen(true);
-  }, [open, readOnly, disabled, values, editingText, seedQuery, mode]);
+  }, [open, readOnly, disabled, values, editingText, seedQuery]);
 
   /* Focus + caret on the open edge; after a toggle, keep the caret at the end
      so typing appends the next segment. The button face has no text field —
@@ -441,7 +436,7 @@ export function PickerField({
           return [key];
         })()
       : orderByCatalogue(
-          resolvePickerText(currentText, items, resolveBy).filter(key => allowFreeText || known.has(key)),
+          resolveMultiCommit(currentText, items, resolveBy, values, allowFreeText),
           itemKeys,
         );
     draftRef.current = next;
