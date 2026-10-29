@@ -58,6 +58,16 @@ export function lastPickerSegment(text: string): string {
   return (parts[parts.length - 1] || '').trim();
 }
 
+/** Grid edit-on-type on a MULTI-value cell: the typed key is a live query for
+ *  the LAST segment, not a replacement for the committed list. Keep the list
+ *  (no trailing separator) and append the query. */
+export function seedMultiQuery(text: string, query: string): string {
+  const base = text.trim().replace(/,\s*$/, '');
+  const q = query.trim();
+  if (!q) return base;
+  return base ? `${base}, ${q}` : q;
+}
+
 /** Resolve one typed segment to its catalogue key: an exact key wins, then a
  *  case-insensitive label; otherwise the typed text itself (a create). */
 export function resolvePickerSegment(segment: string, items: readonly PickerItem[], resolveBy: PickerResolveBy = 'id'): string {

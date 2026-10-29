@@ -9,6 +9,7 @@ import {
   pickerSegments,
   resolvePickerSegment,
   resolvePickerText,
+  seedMultiQuery,
   unknownPickerValues,
 } from '../pickerModel';
 
@@ -87,6 +88,22 @@ describe('pickerCommittedKeys', () => {
 
   it('commits a typed create once a comma follows it', () => {
     expect(pickerCommittedKeys('GEORGE, NEWBIE, ', CAST)).toEqual(['1', 'NEWBIE']);
+  });
+});
+
+describe('seedMultiQuery', () => {
+  it('keeps the committed list and appends the typed key as the query', () => {
+    expect(seedMultiQuery('SEQUENCE, SOUND', 'q')).toBe('SEQUENCE, SOUND, q');
+    expect(seedMultiQuery('SEQUENCE, ', 'q')).toBe('SEQUENCE, q');
+  });
+
+  it('seeds a bare query on an empty list', () => {
+    expect(seedMultiQuery('', 'q')).toBe('q');
+    expect(seedMultiQuery('   ', 'q')).toBe('q');
+  });
+
+  it('leaves the list alone with no typed key', () => {
+    expect(seedMultiQuery('SEQUENCE, ', '')).toBe('SEQUENCE');
   });
 });
 

@@ -43,6 +43,10 @@ export declare function pickerSegments(text: string): string[];
 /** The live query while editing a comma list: the LAST segment. A trailing
  *  comma (the append position) means an empty query. */
 export declare function lastPickerSegment(text: string): string;
+/** Grid edit-on-type on a MULTI-value cell: the typed key is a live query for
+ *  the LAST segment, not a replacement for the committed list. Keep the list
+ *  (no trailing separator) and append the query. */
+export declare function seedMultiQuery(text: string, query: string): string;
 /** Resolve one typed segment to its catalogue key: an exact key wins, then a
  *  case-insensitive label; otherwise the typed text itself (a create). */
 export declare function resolvePickerSegment(segment: string, items: readonly PickerItem[], resolveBy?: PickerResolveBy): string;
