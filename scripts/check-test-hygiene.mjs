@@ -62,7 +62,10 @@ const SPEC_CAP = 19;
 // 120 = 116 + the breakdown page (the frozen Scene # edit after a sideways
 //       scroll, the add-row/undo one-commit contract, the full-page route, and
 //       the DOM header sort buttons).
-const TEST_CAP = 120;
+// 121 = 120 + DOM controls track a fast vertical AND horizontal scroll in the
+//       same frame (the drift regression: boxes are pinned from painted
+//       offsets, which are a frame stale at speed).
+const TEST_CAP = 121;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

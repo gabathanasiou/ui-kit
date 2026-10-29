@@ -6,11 +6,11 @@ import { test, expect, Page } from '@playwright/test';
    one-commit contract the host sees. Canvas painting is checked by eye. */
 
 const crewCell = (page: Page, row: number) =>
-  page.locator('[data-glide-crew] [data-glide-dom-layer] > div').nth(row);
+  page.locator('[data-glide-crew] [data-glide-dom-layer] [data-glide-dom-cell]').nth(row);
 
 // Each row mounts three DOM cells: kit button, morph search, text box.
 const buttonCell = (page: Page, colKey: 'search' | 'add', row: number) =>
-  page.locator('[data-glide-button-sheet] [data-glide-dom-layer] > div').nth(row * 3 + (colKey === 'search' ? 1 : 2));
+  page.locator('[data-glide-button-sheet] [data-glide-dom-layer] [data-glide-dom-cell]').nth(row * 3 + (colKey === 'search' ? 1 : 2));
 
 test.describe('Glide data grid', () => {
   test('crew card: the DOM dropdown button opens the cell editor like a double click', async ({ page }) => {
@@ -38,6 +38,9 @@ test.describe('Glide data grid', () => {
     const box = await gallery.boundingBox();
     if (!box) throw new Error('no gallery canvas');
     await page.mouse.click(box.x + 50, box.y + 32 + 17);
+    // The click must land before the arrow keys: the canvas takes focus on
+    // mousedown, and a key pressed in between is swallowed (one lost step).
+    await expect(gallery).toBeFocused();
     for (let i = 0; i < 5; i++) await page.keyboard.press('ArrowRight');
     await page.keyboard.press('Enter');
 
@@ -118,6 +121,49 @@ test.describe('Glide data grid', () => {
     await expect(pages).toHaveAttribute('data-sort', 'none');
   });
 
+  test('breakdown: DOM cells and header controls stay glued to a fast scroll', async ({ page }) => {
+    await page.goto('/#breakdown');
+    // Frozen columns off: the Actions column now lives in the scrolling band, so
+    // a sideways fling moves it; the header band moves too.
+    await page.getByTestId('breakdown-freeze').getByRole('button', { name: 'Off', exact: true }).click();
+    await expect(page.locator('[data-glide-dom-cell="0:3"]')).toHaveAttribute('data-glide-dom-band', 'body');
+
+    // Scripted fling: scroll, then read the control's screen position in the
+    // SAME frame. A control that is pinned from painted (one-frame-old) offsets
+    // drifts behind the scroll by exactly the step; a glued one tracks it.
+    const drift = await page.evaluate(async () => {
+      const scroller = document.querySelector<HTMLElement>('[data-glide-breakdown-sheet] .dvn-scroller');
+      const trash = document.querySelector<HTMLElement>('[data-glide-dom-cell="0:3"]');
+      const header = document.querySelector<HTMLElement>('[data-glide-dom-header="2"]');
+      if (!scroller || !trash || !header) throw new Error('grid not ready');
+      const frame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      const startX = scroller.scrollLeft;
+      const startY = scroller.scrollTop;
+      const trashStart = trash.getBoundingClientRect();
+      const headerStart = header.getBoundingClientRect();
+      let worst = 0;
+      for (let step = 1; step <= 10; step++) {
+        scroller.scrollLeft = startX + step * 12;
+        scroller.scrollTop = startY + step * 12;
+        await frame();
+        // Compare against the offset that ACTUALLY landed (the iPad viewport
+        // clamps the vertical range before the last step).
+        const dx = scroller.scrollLeft - startX;
+        const dy = scroller.scrollTop - startY;
+        const t = trash.getBoundingClientRect();
+        const h = header.getBoundingClientRect();
+        worst = Math.max(
+          worst,
+          Math.abs(trashStart.x - dx - t.x),
+          Math.abs(trashStart.y - dy - t.y),
+          Math.abs(headerStart.x - dx - h.x),
+        );
+      }
+      return worst;
+    });
+    expect(drift).toBeLessThan(2);
+  });
+
   test('breakdown: it is a full page, and Back returns to the showroom', async ({ page }) => {
     await page.goto('/#breakdown');
     await expect(page.getByTestId('glide-breakdown-demo')).toBeVisible();
@@ -135,14 +181,24 @@ test.describe('Glide data grid', () => {
     const count = page.getByTestId('breakdown-scene-count');
     const start = Number((await count.textContent())?.match(/\d+/)?.[0]);
     const add = page.getByTestId('breakdown-add-scene');
+    const scroller = page.locator('[data-glide-breakdown-sheet] .dvn-scroller');
     await add.scrollIntoViewIfNeeded();
 
     await add.click();
     await expect(count).toHaveText(`${start + 1} scenes`);
     await expect(page.getByTestId('breakdown-commits')).toHaveText('1 commit');
 
+    // The appended row is real: scrolling to it mounts its DOM control. (A
+    // mounted-cell window that isn't rebuilt on the row-count change left the
+    // new row without a trash button.)
+    await scroller.evaluate(el => { el.scrollTop = el.scrollHeight; });
+    const newRow = page.locator(`[data-glide-dom-cell="0:${start}"]`);
+    await expect(newRow).toBeVisible();
+    await expect(newRow.locator('button')).toBeVisible();
+
     await page.getByTestId('breakdown-undo').click();
     await expect(count).toHaveText(`${start} scenes`);
+    await expect(page.locator(`[data-glide-dom-cell="0:${start}"]`)).toHaveCount(0);
   });
 
   test('field cells: the create/text box lives in the cell and submits in place', async ({ page }) => {
