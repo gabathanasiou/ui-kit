@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useKitTheme } from '../../src/index';
 import {
   GlideSheet,
   GridCellKind,
@@ -8,13 +9,12 @@ import {
   kitPickerCell,
   seededTextCell,
   staticCell,
-  useKitTheme,
   type GlideColumnEditor,
   type GlideSheetApi,
   type GlideSheetColumn,
   type GlideSheetEdit,
   type GridCell,
-} from '../../src/index';
+} from '../../src/glide';
 
 /**
  * Single cells — the smallest real element, with NO header row.

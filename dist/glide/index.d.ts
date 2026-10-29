@@ -9,6 +9,10 @@ export { effectiveGridRange, expandRangeFill, planGridPaste, planGridClear, pars
 export type { PlannedEdit } from './gridModel';
 export { kitBadgeCell, kitFieldCell, kitCellRenderers, KIT_GLIDE_RENDERERS, } from './customCells';
 export type { KitButtonIcon, KitButtonVariant, KitBadgeCell, KitBadgeCellData, KitFieldCell, KitFieldCellData, } from './customCells';
+export { kitPickerCell, kitGlyphCell, kitGlyphGroupCell, controlCellRenderers, isControlCell, isKitGlyphCell, isKitGlyphGroupCell, isKitPickerCell, pressControlCell, } from './controlCells';
+export type { KitGlyphButton, KitGlyphCell, KitGlyphCellData, KitGlyphGroupCell, KitGlyphGroupCellData, KitGlyphIcon, KitGlyphTone, KitPickerCell, KitPickerCellData, } from './controlCells';
+export { CONTROL_LANE, GLYPH_LANE, PRESS_MS, isControlHit } from './controlGeometry';
+export type { ControlLane } from './controlGeometry';
 export { createGlideCellEditor, useGlideEscapeCancel } from './editors';
 export { PickerChevron, pickerDomCell } from './pickerCell';
 export type { PickerDomCellOptions } from './pickerCell';

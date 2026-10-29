@@ -11,19 +11,33 @@ hangs off.
 
 ## Consuming
 
+Two shapes, ONE grid runtime (the host always owns it):
+
 ```ts
-// once, next to the kit stylesheet
+// A) A host that wants the kit's compact `GlideSheet` wrapper (the playground
+//    imports it from `src/glide` on this experiment branch):
+import { GlideSheet, textCell, kitButtonCell } from './src/glide';
+
+// B) A host that already runs its own Glide grid and only wants the painted
+//    control cells (the lemon_schedule app):
 import '@gabriel/ui-kit/ui-kit.css';
-// REQUIRED: canvas sizing + overlay chrome (vendored; shipped with the kit)
-import '@gabriel/ui-kit/glide.css';
-import { GlideSheet, textCell, kitButtonCell } from '@gabriel/ui-kit';
+import '@glideapps/glide-data-grid/dist/index.css'; // the host's fork
+import {
+  kitGlyphCell,
+  kitGlyphGroupCell,
+  kitPickerCell,
+  controlCellRenderers,
+} from '@gabriel/ui-kit/glide-controls';
 ```
 
-The grid CSS is not optional — without it Glide's root has **zero height** and
-no canvas is created (a silent blank grid). This bit the playground once. On
-this branch the playground imports it from
-`vendor/glide-data-grid/dist/index.css`; promoting the module means exporting
-that file as `./glide.css` from the package.
+`./glide-controls` keeps `@glideapps/glide-data-grid` EXTERNAL — it ships the
+renderers and cell factories, never a second copy of Glide. The root entry does
+not export the glide module (importing a kit button must not pull a grid).
+
+The grid CSS is not optional — without Glide's root CSS the grid has **zero
+height** and no canvas is created (a silent blank grid). On this branch the
+playground imports it from `vendor/glide-data-grid/dist/index.css`; a host with
+its own runtime imports its own fork's CSS.
 
 ## Files
 

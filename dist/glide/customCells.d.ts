@@ -44,6 +44,8 @@ export type KitFieldCell = CustomCell<KitFieldCellData>;
 /** A button-face cell whose ONE click opens a real kit field (morph search or
  *  create/text box) in Glide's overlay editor. */
 export declare function kitFieldCell(data: Omit<KitFieldCellData, 'kind'>): KitFieldCell;
+/** Canvas theme dark/light discriminator (shared by every painted cell kind). */
+export { isDark, roundRect, drawIcon } from './paint';
 /** The renderer list `GlideSheet` always registers. */
 export declare const kitCellRenderers: readonly CustomRenderer<any>[];
 /** Alias kept for hosts that prefer the upper-case constant. */

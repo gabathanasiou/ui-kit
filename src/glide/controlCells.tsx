@@ -7,7 +7,7 @@ import {
   type Item,
   type Theme,
 } from '@glideapps/glide-data-grid';
-import { drawIcon, isDark } from './customCells';
+import { drawIcon, isDark } from './paint';
 import { CONTROL_LANE, GLYPH_LANE, PRESS_MS, isControlHit, type ControlLane } from './controlGeometry';
 
 /**

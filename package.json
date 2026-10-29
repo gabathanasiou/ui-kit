@@ -14,7 +14,12 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./ui-kit.css": "./dist/ui-kit.css"
+    "./ui-kit.css": "./dist/ui-kit.css",
+    "./glide-controls": {
+      "types": "./dist/glide/controls.d.ts",
+      "import": "./dist/glide-controls.js",
+      "require": "./dist/glide-controls.cjs"
+    }
   },
   "files": [
     "dist"
@@ -24,7 +29,8 @@
   ],
   "scripts": {
     "prepare": "npm run build",
-    "build": "npm run build:js && npm run build:types && npm run build:css",
+    "build": "npm run build:js && npm run build:controls && npm run build:types && npm run build:css",
+    "build:controls": "vite build -c vite.controls.config.ts",
     "build:js": "vite build",
     "build:types": "tsc -p tsconfig.build.json",
     "build:css": "cp src/styles/tokens.css dist/ui-kit.css",
@@ -40,6 +46,7 @@
   },
   "peerDependencies": {
     "@floating-ui/react-dom": "^2.1.8",
+    "@glideapps/glide-data-grid": "6.0.4-alpha24",
     "@radix-ui/react-dialog": "^1.1.16",
     "@radix-ui/react-dropdown-menu": "^2.1.17",
     "@tiptap/extension-color": "^3.30.1",

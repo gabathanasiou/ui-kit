@@ -5,6 +5,9 @@ import {
   Checkbox,
   PickerField,
   Seg,
+  useKitTheme,
+} from '../../src/index';
+import {
   GlideSheet,
   GridCellKind,
   kitBadgeCell,
@@ -18,8 +21,7 @@ import {
   type GlideColumnEditor,
   type GlideDomCellSpec,
   type GlideSheetApi,
-  useKitTheme,
-} from '../../src/index';
+} from '../../src/glide';
 import { MorphActionField } from '../../src/MorphActionField';
 import { MorphSearchField } from '../../src/MorphSearchField';
 import { inputCls } from '../../src/input';

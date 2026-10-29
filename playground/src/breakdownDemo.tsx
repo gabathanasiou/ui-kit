@@ -2,17 +2,19 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowDown, ArrowUp, ArrowUpDown, Plus, Trash2, Undo2 } from 'lucide-react';
 import {
   Button,
-  GlideSheet,
   Seg,
+  useKitTheme,
+} from '../../src/index';
+import {
+  GlideSheet,
   glideCellColors,
   seededTextCell,
   staticCell,
-  useKitTheme,
   type GlideColumnEditor,
   type GlideDomCellSpec,
   type GlideSheetColumn,
   type GlideSheetEdit,
-} from '../../src/index';
+} from '../../src/glide';
 
 /**
  * Breakdown — the main app's Glide Breakdown tab rebuilt at page scale.

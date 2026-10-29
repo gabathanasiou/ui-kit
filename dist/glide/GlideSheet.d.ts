@@ -1,5 +1,5 @@
 import React from 'react';
-import { type CellClickedEventArgs, type CustomRenderer, type GridCell, type Item, type Theme } from '@glideapps/glide-data-grid';
+import { type CellActivatedEventArgs, type CellClickedEventArgs, type CustomRenderer, type GridCell, type Item, type Theme } from '@glideapps/glide-data-grid';
 import { type GlideColumnEditor } from './editors';
 import type { GlideSheetColumn, GlideSheetEdit } from './types';
 /**
@@ -13,8 +13,9 @@ import type { GlideSheetColumn, GlideSheetEdit } from './types';
  *  - per-cell read-only is the CELL's own `readonly` flag — the host mixes
  *    locked and editable cells freely;
  *  - interactive controls are REAL DOM mounted over the cell (`domCells`) —
- *    buttons, pickers, morph fields — or kit panels opened from the overlay
- *    editor; badges are the only painted cell kind;
+ *    buttons, morph fields, compound layouts — or kit panels opened from the
+ *    overlay editor; simple affordances are PAINTED control cells
+ *    (`controlCells.tsx`: picker chevron + glyph buttons) with no DOM box;
  *  - selection, fill-down, copy/cut/paste/clear each commit ONCE through
  *    `onCommit`, so the host stores one undo entry per operation;
  *  - editable cells get the light-blue "type here" wash (deepening on the
@@ -54,6 +55,19 @@ export interface GlideRowMarkers {
 export interface GlideSheetApi {
     /** Opens the cell's overlay editor (the double-click path). */
     openCellEditor: (row: number, colKey: string) => void;
+    /** The cell's rect in VIEWPORT coordinates (agents/specs clicking a painted
+     *  lane, anchored pop-outs). Undefined when the column/cell is not visible. */
+    getCellBounds: (row: number, colKey: string) => {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    } | undefined;
+    /** Moves the grid selection to one cell (a row action that removes its row
+     *  points the selection at the row above). Focuses the canvas. */
+    selectCell: (row: number, colKey: string) => void;
+    /** Drops the selection (the grid keeps focus). */
+    clearSelection: () => void;
 }
 export interface GlideSheetProps {
     columns: GlideSheetColumn[];
@@ -83,6 +97,10 @@ export interface GlideSheetProps {
     customRenderers?: readonly CustomRenderer<any>[];
     /** Raw cell clicks (after the internal row-action hit test) — use for custom cells. */
     onCellClick?: (cell: Item, event: CellClickedEventArgs) => void;
+    /** Glide's activation hook (Enter/Space, double-click, type-to-edit). Painted
+     *  control cells resolve their `onOpen`/`onActivate` here exactly once; other
+     *  cells are left to Glide's own editor path. */
+    onCellActivated?: (cell: Item, event: CellActivatedEventArgs) => void;
     /** Stable key for the local selection memory (a remount restores it). */
     selectionKey?: string;
     /** Merged over the kit theme (a host's one-off palette tweak). */
@@ -124,6 +142,9 @@ export interface GlideSheetProps {
     addRowSticky?: boolean;
     /** Animated (smooth) scrolling on both axes — Glide's smoothScrollX/Y. */
     smoothScroll?: boolean;
+    /** Drop the selection when focus leaves this sheet (another card/page
+     *  control). The grid's selection is otherwise sticky on purpose. */
+    deselectOnBlur?: boolean;
 }
 export declare const GlideSheet: React.FC<GlideSheetProps>;
 export default GlideSheet;

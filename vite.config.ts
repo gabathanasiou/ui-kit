@@ -22,6 +22,9 @@ export default defineConfig({
         'react-dom/client',
         'react-dom/server',
         'react/jsx-runtime',
+        // The grid runtime is the HOST's: the kit wraps Glide but never ships
+        // a second copy of it (the app aliases its vendored fork).
+        '@glideapps/glide-data-grid',
         '@radix-ui/react-dialog',
         '@radix-ui/react-dropdown-menu',
         'lucide-react',

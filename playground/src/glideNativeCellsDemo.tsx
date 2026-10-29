@@ -2,9 +2,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Plus } from 'lucide-react';
 import {
   Button,
-  GlideSheet,
   Modal,
   Seg,
+  useKitTheme,
+} from '../../src/index';
+import {
+  GlideSheet,
   CONTROL_LANE,
   GLYPH_LANE,
   glideCellColors,
@@ -13,12 +16,11 @@ import {
   kitPickerCell,
   seededTextCell,
   staticCell,
-  useKitTheme,
   type GlideColumnEditor,
   type GlideSheetApi,
   type GlideSheetColumn,
   type GlideSheetEdit,
-} from '../../src/index';
+} from '../../src/glide';
 import { SingleCellsZone, type SingleCellKey } from './singleCellDemo';
 
 /**
