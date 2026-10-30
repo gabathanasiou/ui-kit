@@ -49,6 +49,7 @@ test('dropdown: tap 1 opens; a tap outside closes', async ({ page }) => {
 test('submenu on touch: accordion — only the header stays, the panel expands beneath it (182)', async ({ page }) => {
   await open(page);
   const tile = caseOf(page, 'dropdown');
+  await tile.getByRole('button', { name: 'Accordion', exact: true }).tap();
   await tile.getByRole('button', { name: 'Menu' }).tap();
   const parent = page.locator('[role="menu"]').first();
   await expect(parent).toBeVisible();
@@ -80,6 +81,22 @@ test('submenu on touch: accordion — only the header stays, the panel expands b
   await expect(page.locator('[data-submenu-panel]')).toHaveCount(0);
   await expect(page.getByRole('menuitem', { name: 'Nested A' })).toBeHidden();
   await expect(page.getByRole('menuitem', { name: 'First item' })).toBeVisible();
+});
+
+test('submenu default: phones use in-place, iPad uses the accordion', async ({ page }) => {
+  await open(page);
+  await caseOf(page, 'dropdown').getByRole('button', { name: 'Menu' }).tap();
+  await page.getByRole('menuitem', { name: 'More…' }).tap();
+  const isPhone = (page.viewportSize()?.width ?? 999) <= 600;
+  if (isPhone) {
+    const card = page.locator('[data-submenu-presentation="replace"]');
+    await expect(card).toBeVisible();
+    await expect(card.locator('[data-submenu-back]')).toBeVisible();
+    await expect(page.locator('[data-submenu-panel]')).toHaveCount(0);
+  } else {
+    await expect(page.locator('[data-submenu-panel]')).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'First item' })).toBeHidden();
+  }
 });
 
 test('submenu switch: the earlier in-place presentation still works', async ({ page }) => {

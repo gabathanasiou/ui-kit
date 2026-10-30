@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import {
-  Button, Checkbox, Checklist, RadioList, NumberInput, Seg, FloatingToggle, Modal, ModalFooter,
+  Button, Checkbox, Checklist, RadioList, NumberInput, Seg, FloatingToggle, Modal, ModalFooter, isPhoneViewport,
   ModalFooterButton, DropdownMenu, DropdownItem, DropdownSubmenu, ContextMenu, ContextMenuItem,
   SearchMenu, PickerField, Tooltip, MorphActionField, MorphSearchField, SelectionCheck,
   SelectionFooter, RichTextEditor, FormatToolbar, RICH_TEXT_STATE_IDLE, useDialog,
@@ -50,10 +50,10 @@ function MenuCases() {
   const [open, setOpen] = useState(false);
   const [pick, setPick] = useState('—');
   const [searchOpen, setSearchOpen] = useState(false);
-  const [presentation, setPresentation] = useState<'accordion' | 'replace'>('accordion');
+  const [presentation, setPresentation] = useState<'accordion' | 'replace'>(() => (isPhoneViewport() ? 'replace' : 'accordion'));
   return (
     <>
-      <TouchCase id="dropdown" label="Dropdown menu" hint="Tap 1 opens; tap a row selects; tap outside closes. Nested menu: accordion (header stays, panel expands below) or in place." state={`pick: ${pick} · menu: ${presentation}`}>
+      <TouchCase id="dropdown" label="Dropdown menu" hint="Tap 1 opens; tap a row selects; tap outside closes. Nested menu default: In place on phones, Accordion on iPad — the switch forces either." state={`pick: ${pick} · menu: ${presentation}`}>
         <Seg
           options={[{ v: 'accordion', l: 'Accordion' }, { v: 'replace', l: 'In place' }]}
           value={presentation}

@@ -9,10 +9,11 @@ export interface DropdownSubmenuProps {
     /** Extra classes on the sub content (e.g. lifting it above a context
      *  menu's z-index). */
     contentClassName?: string;
-    /** Coarse-pointer presentation (roadmaps 182/331). `accordion` (default)
-     *  keeps ONLY the trigger row visible and expands the child directly beneath
-     *  it, like an accordion panel — tapping the header again collapses it.
-     *  `replace` covers the parent card exactly (the earlier audit pass).
+    /** Coarse-pointer presentation (roadmaps 182/331). DEFAULT is viewport-
+     *  aware: phones (≤600px) use `replace` — the child card covers the parent
+     *  exactly, with a Back row (the original audit version) — while wider
+     *  coarse devices (iPad) use `accordion`: only the trigger row survives and
+     *  the child panel expands beneath it. Pass an explicit value to force one.
      *  Desktop always keeps the Radix side placement. */
     touchPresentation?: 'accordion' | 'replace';
 }

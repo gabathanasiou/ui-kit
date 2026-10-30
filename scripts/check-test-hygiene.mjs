@@ -79,7 +79,10 @@ const SPEC_CAP = 21;
 //       morph fields, picker, rich text).
 // 141 = 140 + the accordion-vs-in-place submenu switch case (182) and the
 //       morph-field focus case.
-const TEST_CAP = 141;
+// 142 = 141 + the modal footer hero case merged from the 332 theme work.
+// 143 = 142 + the device-default submenu presentation case (phone in place /
+//       iPad accordion, 331/182).
+const TEST_CAP = 143;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

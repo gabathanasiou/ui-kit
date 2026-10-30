@@ -1,5 +1,9 @@
 export declare const IS_COARSE: boolean;
 export declare const IS_TOUCH_CAPABLE: boolean;
+/** Phone-class viewport (≤600px, the app's phone-shell breakpoint). Nested
+ *  menus use the in-place card on phones and the accordion on wider coarse
+ *  devices (iPad); see `DropdownSubmenu`'s `touchPresentation` default. */
+export declare function isPhoneViewport(): boolean;
 export declare function setCoarseScale(n: number): void;
 export declare function getCoarseScale(): number;
 /** Reactive coarse flag — TRUE only on coarse devices WITH the scale on

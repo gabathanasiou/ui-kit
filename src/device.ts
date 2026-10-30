@@ -5,6 +5,13 @@ const IS_BROWSER = typeof window !== 'undefined';
 export const IS_COARSE = IS_BROWSER && window.matchMedia('(pointer: coarse)').matches;
 export const IS_TOUCH_CAPABLE = IS_BROWSER && (window.matchMedia('(any-pointer: coarse)').matches || navigator.maxTouchPoints > 0);
 
+/** Phone-class viewport (≤600px, the app's phone-shell breakpoint). Nested
+ *  menus use the in-place card on phones and the accordion on wider coarse
+ *  devices (iPad); see `DropdownSubmenu`'s `touchPresentation` default. */
+export function isPhoneViewport(): boolean {
+  return IS_BROWSER && window.matchMedia('(max-width: 600px)').matches;
+}
+
 /* Global coarse-scaling knob (0…1, default 0.5). The kit's components pick
    touch-sized classes when the device is coarse; 0.5 (50%) is the DEFAULT —
    halfway to the full coarse bump, big enough for touch without blowing up.

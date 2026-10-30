@@ -5,7 +5,7 @@ import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useDropdownTheme, useDropdownThemeAttrs, SubmenuContext, MenuHighlightContext, useMenuHighlight, useMenuHighlightState, useMenuKeys, useMenuKeyLock, useMenuWheel } from './DropdownMenu';
 import type { MenuHighlightItem } from './DropdownMenu';
-import { IS_COARSE, useCoarseScale, coarsePx } from './device';
+import { IS_COARSE, isPhoneViewport, useCoarseScale, coarsePx } from './device';
 import { usePortalTarget } from './popout';
 import { useOverlayMorph } from './overlayMorph';
 import { revealRowInScroller } from './revealInScroller';
@@ -21,10 +21,11 @@ export interface DropdownSubmenuProps {
   /** Extra classes on the sub content (e.g. lifting it above a context
    *  menu's z-index). */
   contentClassName?: string;
-  /** Coarse-pointer presentation (roadmaps 182/331). `accordion` (default)
-   *  keeps ONLY the trigger row visible and expands the child directly beneath
-   *  it, like an accordion panel — tapping the header again collapses it.
-   *  `replace` covers the parent card exactly (the earlier audit pass).
+  /** Coarse-pointer presentation (roadmaps 182/331). DEFAULT is viewport-
+   *  aware: phones (≤600px) use `replace` — the child card covers the parent
+   *  exactly, with a Back row (the original audit version) — while wider
+   *  coarse devices (iPad) use `accordion`: only the trigger row survives and
+   *  the child panel expands beneath it. Pass an explicit value to force one.
    *  Desktop always keeps the Radix side placement. */
   touchPresentation?: 'accordion' | 'replace';
 }
@@ -38,7 +39,7 @@ type TouchGeom = {
   childZ: number;
 };
 
-export default function DropdownSubmenu({ id, label, icon, width, side = 'right', children, contentClassName, touchPresentation = 'accordion' }: DropdownSubmenuProps) {
+export default function DropdownSubmenu({ id, label, icon, width, side = 'right', children, contentClassName, touchPresentation }: DropdownSubmenuProps) {
   const { chain, setChain, morph, keyboardOpened, setKeyboardOpened } = useContext(SubmenuContext);
   const subOpen = chain.includes(id);
   /* A surface owns the keyboard only when it is the TOPMOST open one (a
@@ -152,7 +153,10 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
      positioning, no off-screen risk; tapping the header toggles it closed).
      `replace` keeps the Radix portal card and re-anchors it over the parent;
      desktop always keeps the Radix side placement. */
-  const accordion = IS_COARSE && touchPresentation === 'accordion';
+  /* Phone → in-place card; iPad/other coarse → accordion. The explicit prop
+     (the playground switch) wins. */
+  const resolvedTouchPresentation = touchPresentation ?? (isPhoneViewport() ? 'replace' : 'accordion');
+  const accordion = IS_COARSE && resolvedTouchPresentation === 'accordion';
   useEffect(() => {
     if (!accordion || !subOpen) return undefined;
     const trigger = subTriggerRef.current;
@@ -188,7 +192,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
     });
     parent.dataset.submenuOpen = 'replace';
     return () => { delete parent.dataset.submenuOpen; };
-  }, [subOpen, touchPresentation]);
+  }, [subOpen, resolvedTouchPresentation]);
 
   /* Keep the highlighted row visible when arrows/typeahead scroll it out —
      never for a pointer-driven highlight (the hovered row must not move). */
