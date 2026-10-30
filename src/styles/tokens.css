@@ -575,6 +575,25 @@
   --ui-check-hover-border: var(--ui-text-muted);
 }
 
+/* Primary CTA identity — the app-header step. Set by the IDENTITY accent,
+   never `data-accent`, so a neutral surface keeps the project colour on its
+   ONE main action while every other state stays neutral. */
+:root,
+[data-identity-accent="zinc"] {
+  --ui-btn-primary-bg: #09090b;
+  --ui-btn-primary-hover-bg: #18181b;
+}
+
+[data-identity-accent="blue"] {
+  --ui-btn-primary-bg: #172554;
+  --ui-btn-primary-hover-bg: #1e3a8a;
+}
+
+[data-identity-accent="emerald"] {
+  --ui-btn-primary-bg: #022c22;
+  --ui-btn-primary-hover-bg: #064e3b;
+}
+
 [data-mode="light"][data-accent] {
   --ui-accent-selected-bg: var(--ui-accent-200);
   --ui-accent-selected-text: var(--ui-accent-900);
@@ -689,10 +708,12 @@
   --ui-card-border: var(--ui-border-strong);
   --ui-card-band: #f4f4f5;
   --ui-card-hover: color-mix(in oklab, var(--ui-accent-600) 6%, transparent);
-  --ui-footer-hero-bg: var(--ui-accent-action);
-  --ui-footer-hero-hover-bg: var(--ui-accent-action-hover);
-  --ui-footer-hero-border: var(--ui-accent-action);
-  --ui-footer-hero-hover-border: var(--ui-accent-action-hover);
+  /* The default hero on an accent surface is the app-header step too, so a
+     footer action and a `Button variant="primary"` read as the same colour. */
+  --ui-footer-hero-bg: var(--ui-accent-950);
+  --ui-footer-hero-hover-bg: var(--ui-accent-900);
+  --ui-footer-hero-border: var(--ui-accent-950);
+  --ui-footer-hero-hover-border: var(--ui-accent-900);
   --ui-footer-ghost-hover-bg: var(--ui-accent-hover-bg);
 }
 
@@ -743,10 +764,12 @@
   --ui-card-border: var(--ui-border-strong);
   --ui-card-band: #232327;
   --ui-card-hover: color-mix(in oklab, var(--ui-accent-400) 8%, transparent);
-  --ui-footer-hero-bg: var(--ui-accent-action);
-  --ui-footer-hero-hover-bg: var(--ui-accent-action-hover);
-  --ui-footer-hero-border: var(--ui-accent-action);
-  --ui-footer-hero-hover-border: var(--ui-accent-action-hover);
+  /* The default hero on an accent surface is the app-header step too, so a
+     footer action and a `Button variant="primary"` read as the same colour. */
+  --ui-footer-hero-bg: var(--ui-accent-950);
+  --ui-footer-hero-hover-bg: var(--ui-accent-900);
+  --ui-footer-hero-border: var(--ui-accent-950);
+  --ui-footer-hero-hover-border: var(--ui-accent-900);
   --ui-footer-ghost-hover-bg: var(--ui-accent-hover-bg);
 }
 

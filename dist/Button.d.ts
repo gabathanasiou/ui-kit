@@ -5,8 +5,10 @@ import React from 'react';
  *
  * Variants:
  *  - `subtle`      — quiet toolbar button (menu triggers, secondary actions)
- *  - `primary`     — solid call-to-action (Save, Add, Print); light theme
- *                    supports cloud-project coloring via the `cloud` prop
+ *  - `primary`     — solid call-to-action (Save, Add, Print); the fill is the
+ *                    project identity's HEADER step and deliberately survives
+ *                    a neutral surface (see `identityAccent`); `cloud` forces
+ *                    Drive blue / shared emerald where the scope has no identity
  *  - `outline`     — the quiet button WITH a visible outline: same box and
  *                    text weight as `subtle`, a 1px border painted as an inset
  *                    shadow (so it never changes the button's size), and the

@@ -2,7 +2,7 @@
 import React from 'react';
 import { IS_COARSE, useCoarseScale, useCoarseSize, coarsePx } from './device';
 import { TabFace } from './TabFace';
-import { useKitTheme, buttonCloudOf } from './ThemeScope';
+import { useKitTheme, buttonCloudOf, type KitAccent } from './ThemeScope';
 
 /**
  * Toolbar/action button — the shared button recipe so consumer toolbars stop
@@ -10,8 +10,10 @@ import { useKitTheme, buttonCloudOf } from './ThemeScope';
  *
  * Variants:
  *  - `subtle`      — quiet toolbar button (menu triggers, secondary actions)
- *  - `primary`     — solid call-to-action (Save, Add, Print); light theme
- *                    supports cloud-project coloring via the `cloud` prop
+ *  - `primary`     — solid call-to-action (Save, Add, Print); the fill is the
+ *                    project identity's HEADER step and deliberately survives
+ *                    a neutral surface (see `identityAccent`); `cloud` forces
+ *                    Drive blue / shared emerald where the scope has no identity
  *  - `outline`     — the quiet button WITH a visible outline: same box and
  *                    text weight as `subtle`, a 1px border painted as an inset
  *                    shadow (so it never changes the button's size), and the
@@ -206,7 +208,10 @@ export default function Button({
   const VARIANTS: Record<'light' | 'dark', Record<BaseVariant, { base: string; open: string }>> = {
     light: {
       subtle: { base: `${PAD} text-zinc-600 hover:bg-[var(--ui-btn-hover-bg)]`, open: 'bg-[var(--ui-btn-hover-bg)]! text-zinc-900' },
-      primary: { base: `${PAD_PRIMARY} bg-zinc-900 hover:bg-zinc-800 text-white`, open: 'bg-zinc-800!' },
+      /* The primary fill is the identity header step, mode-independent (the
+         app header is always dark chrome). Read from the `data-identity-accent`
+         block the button carries, so a neutral modal keeps its project CTA. */
+      primary: { base: `${PAD_PRIMARY} bg-[var(--ui-btn-primary-bg)] hover:bg-[var(--ui-btn-primary-hover-bg)] text-white`, open: 'bg-[var(--ui-btn-primary-hover-bg)]!' },
       /* The outline is painted as an INSET SHADOW, not a border: the button
          keeps `subtle`'s exact box (same padding + height), so the two can sit
          side by side in a toolbar without a 2px step. */
@@ -218,18 +223,13 @@ export default function Button({
     },
     dark: {
       subtle: { base: `${PAD} text-zinc-400 hover:text-zinc-200 hover:bg-[var(--ui-btn-hover-bg)]`, open: 'bg-[var(--ui-btn-hover-bg)]! text-zinc-200' },
-      primary: { base: `${PAD_PRIMARY} bg-zinc-800 hover:bg-zinc-700 text-white`, open: 'bg-zinc-700!' },
+      primary: { base: `${PAD_PRIMARY} bg-[var(--ui-btn-primary-bg)] hover:bg-[var(--ui-btn-primary-hover-bg)] text-white`, open: 'bg-[var(--ui-btn-primary-hover-bg)]!' },
       outline: {
         base: `${PAD} text-zinc-300 shadow-[inset_0_0_0_1px_var(--ui-border-strong)] hover:bg-[var(--ui-btn-hover-bg)] hover:text-zinc-100`,
         open: 'bg-[var(--ui-btn-hover-bg)]! text-zinc-100',
       },
       'danger-ghost': { base: `${PAD} text-red-400 hover:bg-rose-950/40`, open: 'bg-rose-950/40!' },
     },
-  };
-
-  const CLOUD_PRIMARY: Record<CloudTone, { base: string; open: string }> = {
-    blue: { base: `${PAD_PRIMARY} bg-[var(--ui-accent-solid)] hover:bg-[var(--ui-accent-solid-hover)] text-[color:var(--ui-accent-action-text)]`, open: 'bg-[var(--ui-accent-solid-hover)]!' },
-    emerald: { base: `${PAD_PRIMARY} bg-[var(--ui-accent-solid)] hover:bg-[var(--ui-accent-solid-hover)] text-[color:var(--ui-accent-action-text)]`, open: 'bg-[var(--ui-accent-solid-hover)]!' },
   };
 
   const isOpen = (rest as { 'data-state'?: string })['data-state'] === 'open';
@@ -244,6 +244,13 @@ export default function Button({
   const gap = coarsePx(6, 8, useCoarseScale());
   const iconDim = coarsePx(28, 40, useCoarseScale());
   const tone: CloudTone | null = cloud === 'emerald' ? 'emerald' : cloud ? 'blue' : null;
+  /* The primary CTA reads the IDENTITY accent (not the neutralised kit.accent),
+     so a Drive/shared main action keeps the project colour inside a neutral
+     surface. An explicit `cloud` prop still forces blue/emerald. */
+  const identityAccent: KitAccent =
+    cloudProp === 'emerald' ? 'emerald'
+      : cloudProp ? 'blue'
+        : kit?.identityAccent ?? 'zinc';
   /* Toggled state: accent fill + white text (dark) / blue text (light). The
      `!` overrides beat the variant's base/`open` colors; no outline. */
   const ACTIVE = 'bg-[var(--ui-btn-active-bg)]! text-[color:var(--ui-btn-active-text)]!';
@@ -268,12 +275,8 @@ export default function Button({
     cls = `${TAB_RADIUS} ${fill} ${isOpen ? (tone ? CLOUD_HEADER[tone].open : TAB_HEADER.open) : ''}`;
   } else {
     cls = `${CONTROL_RADIUS} ${spec.base} ${isOpen ? spec.open : ''}`;
-    if (variant === 'primary' && tone) {
-      const cp = CLOUD_PRIMARY[tone];
-      cls = `${CONTROL_RADIUS} ${isOpen ? `${cp.base} ${cp.open}` : cp.base}`;
-    }
-    /* Applied AFTER the cloud-primary fill so a primary toggle's ON tone is
-       never wiped by the project accent. */
+    /* Applied AFTER the primary fill so a primary toggle's ON tone is never
+       wiped by the project accent. */
     if (active) cls = `${cls} ${activeTone === 'neutral' ? ACTIVE : ACTIVE_TONES[activeTone]}`;
   }
   /* Icon-first collapse (roadmap 258) — the mechanics live in the shared
@@ -291,6 +294,7 @@ export default function Button({
       type={type}
       data-mode={theme}
       data-accent={kit?.accent}
+      data-identity-accent={identityAccent}
       className={`${BASE} ${iconOnly ? 'justify-center' : ''} ${collapsible ? 'group' : ''} ${cls} ${className}`}
       /* A toggled base-variant button is a PRESSED toggle: expose it to AT
          (tabs are selections and use aria-selected/current instead). */

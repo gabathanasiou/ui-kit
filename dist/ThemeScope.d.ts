@@ -34,7 +34,12 @@ export type KitContext = 'chrome' | 'surface';
 export type KitMenuTheme = 'light' | 'dark' | 'blue' | 'emerald';
 export interface KitTheme {
     mode: KitMode;
+    /** The EFFECTIVE accent: neutralised to zinc inside a neutral surface. */
     accent: KitAccent;
+    /** The project identity, kept even when `accent` is neutralised. The
+     *  primary CTA reads this so a normal (neutral) modal's main action still
+     *  wears the project colour. */
+    identityAccent: KitAccent;
     surface: KitSurface;
     context: KitContext;
 }

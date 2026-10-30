@@ -37,7 +37,12 @@ export type KitMenuTheme = 'light' | 'dark' | 'blue' | 'emerald';
 
 export interface KitTheme {
   mode: KitMode;
+  /** The EFFECTIVE accent: neutralised to zinc inside a neutral surface. */
   accent: KitAccent;
+  /** The project identity, kept even when `accent` is neutralised. The
+   *  primary CTA reads this so a normal (neutral) modal's main action still
+   *  wears the project colour. */
+  identityAccent: KitAccent;
   surface: KitSurface;
   context: KitContext;
 }
@@ -66,7 +71,7 @@ export function resolveKitTheme(
   const identityAccent = input.accent ?? parent?.accent ?? 'zinc';
   const localOverride = input.accent !== undefined && input.surface === undefined && input.context === undefined;
   const accentApplies = context === 'chrome' || surface === 'accent' || localOverride;
-  return { mode, accent: accentApplies ? identityAccent : 'zinc', surface, context };
+  return { mode, accent: accentApplies ? identityAccent : 'zinc', identityAccent, surface, context };
 }
 
 /** Publish an already-resolved theme (Modal/ThemeScope use this so their
