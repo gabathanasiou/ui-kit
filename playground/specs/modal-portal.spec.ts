@@ -33,7 +33,8 @@ async function modalSurfaceColours(page: Page): Promise<string[]> {
       grab(dialog.querySelector('[data-testid="modal-body"]')),
       grab(body.querySelector('.ui-card')),
       grab(body.querySelector('.ui-card > div:first-child')),
-      grab(byText('Add scene')),
+      /* `Add scene` is the deliberate exception (the ONE primary action keeps
+         the identity header step); asserted separately below. */
       grab(byText('Save day')),
       grab(body.querySelector('[data-testid="theme-lab-main-seg"] span[aria-hidden]')),
       grab(body.querySelector('.ui-checklist-item-checked')),
@@ -162,6 +163,11 @@ test('theme lab: accent chrome tints the modal header, neutral does not', async 
   expect(accentBg).not.toBe(neutralBg);
   for (const c of await modalSurfaceColours(page)) expect(isNeutral(c), c).toBe(true);
 
+  /* The ONE primary action is the deliberate exception to neutralisation: it
+     keeps the project identity's header step (emerald-950 in this lab). */
+  const neutralPrimary = await page.getByRole('button', { name: 'Add scene' }).evaluate(el => getComputedStyle(el).backgroundColor);
+  expect(neutralPrimary).toBe('rgb(2, 44, 34)');
+
   /* A manual (Lego) accent inside the neutral modal still colours its subtree. */
   const lego = page.getByTestId('theme-lab-modal-lego');
   await expect(lego.locator('[role="group"]')).toHaveAttribute('data-accent', 'blue');
@@ -176,6 +182,9 @@ test('theme lab: accent chrome tints the modal header, neutral does not', async 
   const zincDialog = page.getByRole('dialog');
   await expect(zincDialog).toHaveAttribute('data-accent', 'zinc');
   for (const c of await modalSurfaceColours(page)) expect(isNeutral(c), c).toBe(true);
+  /* Identity zinc = the app header's near-black step. */
+  const zincPrimary = await page.getByRole('button', { name: 'Add scene' }).evaluate(el => getComputedStyle(el).backgroundColor);
+  expect(zincPrimary).toBe('rgb(9, 9, 11)');
 });
 
 test('theme lab: light mode renders a light shell', async ({ page }) => {

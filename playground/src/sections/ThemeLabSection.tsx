@@ -150,7 +150,7 @@ export function ThemeLabSection({ mode, accent, surface, setMode, setAccent, set
               <div className="flex flex-wrap items-center gap-1.5">
                 <Button>Subtle</Button>
                 <Button variant="outline">Outline</Button>
-                <Button variant="primary">Primary</Button>
+                <Button data-testid="theme-lab-primary" variant="primary">Primary</Button>
                 <Button variant="danger-ghost">Danger</Button>
                 <Tooltip content="Tooltips portal — they carry the theme scope themselves">
                   <Button iconOnly aria-label="About this theme" data-testid="theme-lab-tooltip"><Palette size={14} /></Button>
