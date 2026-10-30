@@ -762,6 +762,24 @@
 
 /* ── Shared interaction rules ─────────────────────────────────────────── */
 
+/* Touch semantics for every interactive control. Without this, iOS Safari
+   waits ~300ms for a possible double-tap zoom before delivering the click —
+   the "why is this button slow?" delay. The app has always masked it with a
+   global rule; the kit must not depend on its consumer. Gesture surfaces
+   (canvas, drag handles, sliders) override with `touch-action: none` at a
+   higher specificity. */
+button,
+a,
+input,
+textarea,
+select,
+[role="button"],
+[role="menuitem"],
+[role="option"],
+[role="tab"] {
+  touch-action: manipulation;
+}
+
 .ui-interactive {
   touch-action: manipulation;
 }
@@ -785,6 +803,57 @@
   font-family: Helvetica Neue, Helvetica, system-ui, sans-serif;
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* Coarse pointer: a submenu replaces, stacks on, or accordions under its
+   parent card in place (DropdownSubmenu sets the attribute on touch).
+   `accordion` keeps only the header row and expands the child panel directly
+   beneath it; `replace` covers the parent exactly. */
+.ui-menu[data-submenu-open] {
+  opacity: 0.25;
+  transform: scale(0.96);
+  transform-origin: top center;
+  transition: opacity 120ms ease-out, transform 120ms ease-out;
+}
+/* Accordion: the header row reorders to the top and every other row hides;
+   the inline panel supplies the visible body underneath. The selector covers
+   both the root card (`.ui-menu`) and a nested inline panel, so deeper levels
+   accordion inside their parent panel too. */
+:is(.ui-menu, [data-submenu-panel])[data-submenu-open="accordion"] > [data-submenu-header] {
+  order: -1;
+}
+:is(.ui-menu, [data-submenu-panel])[data-submenu-open="accordion"] > *:not([data-submenu-header]):not([data-submenu-panel]) {
+  display: none;
+}
+.ui-menu[data-submenu-open="accordion"] {
+  opacity: 1;
+  transform: none;
+}
+/* The panel itself: a short slide/fade, like an accordion body. */
+.ui-submenu-panel {
+  display: flex;
+  flex-direction: column;
+  animation: ui-accordion-in 160ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+@keyframes ui-accordion-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-menu[data-submenu-open] {
+    transition: none;
+  }
+  .ui-submenu-panel {
+    animation: none;
+  }
+}
+
+
+/* The submenu's back row (coarse pointers): the parent card's title, tapping
+   it closes the child. */
+.ui-submenu-back:hover {
+  color: var(--ui-text-strong);
+  background: var(--ui-item-hover-bg);
 }
 
 /* ── Section cards (CardSection) ─────────────────────────────────────── */
@@ -847,7 +916,7 @@
    open. Unlayered so it beats the variant's utility classes at rest; the
    :not(…) guards hand those classes straight back on interaction. Pair with
    `Button collapse` (icon-only at rest → the label rides the reveal out). */
-.ui-reveal:not(:hover):not(:focus-visible):not([data-state="open"]):not([data-active]) {
+.ui-reveal:not(:hover):not(:focus-visible):not(:active):not([data-state="open"]):not([data-active]) {
   background-color: transparent !important;
   box-shadow: none !important;
   border-color: transparent !important;
@@ -1536,7 +1605,9 @@
 }
 .group:hover .hover-reveal,
 .group:focus-within .hover-reveal,
-:hover > .hover-reveal {
+.group:active .hover-reveal,
+:hover > .hover-reveal,
+:active > .hover-reveal {
   opacity: 1;
 }
 

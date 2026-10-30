@@ -134,13 +134,17 @@ export function MorphSearchField({
 
   const expand = useCallback(() => {
     setOpen(true);
-    requestAnimationFrame(() => {
-      const input = inputRef.current;
-      if (!input) return;
-      input.focus();
+    /* iOS Safari only raises the keyboard when focus() happens INSIDE the
+       gesture task — a requestAnimationFrame/setTimeout loses the user
+       activation and the field opens without a keyboard. The field layer is
+       always mounted (opacity 0 while collapsed), so focus it synchronously;
+       the morph animation then plays around an already-focused input. */
+    const input = inputRef.current;
+    if (input) {
+      input.focus({ preventScroll: true });
       const end = input.value.length;
       input.setSelectionRange(end, end);
-    });
+    }
   }, [setOpen]);
 
   // Focus the field on mount when the caller wants it open (e.g. a keyboard
@@ -297,7 +301,8 @@ export function MorphSearchField({
                 tabIndex={expanded ? 0 : -1}
                 onClick={() => {
                   onChange('');
-                  requestAnimationFrame(() => inputRef.current?.focus());
+                  /* Focus inside the tap's task (iOS keyboard). */
+                  inputRef.current?.focus({ preventScroll: true });
                 }}
                 style={{ width: iconBtn.box, height: iconBtn.box }}
                 className="flex items-center justify-center rounded text-zinc-400 hover:text-zinc-700"

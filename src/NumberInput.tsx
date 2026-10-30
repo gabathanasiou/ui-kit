@@ -149,7 +149,11 @@ export default function NumberInput({
     tabIndex: -1,
     'aria-label': dir === 1 ? 'Increase' : 'Decrease',
     disabled: !!disabled || !!readOnly || (dir === 1 ? current >= max : current <= min),
-    onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => e.preventDefault(),
+    /* Keep the input's focus (desktop) WITHOUT killing the tap: WebKit
+       suppresses the click when a pointerdown's default is cancelled, so an
+       iPhone/iPad stepper tap went dead. `mousedown` preserves the focus but
+       does not cancel the click. */
+    onMouseDown: (e: React.MouseEvent<HTMLButtonElement>) => e.preventDefault(),
     onClick: () => stepBy(dir),
   });
 

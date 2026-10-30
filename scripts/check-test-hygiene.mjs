@@ -60,7 +60,9 @@ const WAIT_BASELINE = 9;
 // 20 = 19 + glide-native-cells.spec.ts (roadmap 326: painted picker lanes,
 //      glyph click/Enter exactly-once, the split action cell, the crew card
 //      and the same card inside a Modal — pointer paths the canvas hides).
-const SPEC_CAP = 20;
+// 21 = 20 + iphone-touch.spec.ts (roadmap 331/182: the phone touch-audit
+//      matrix — every primitive, plus the coarse submenu replace-in-place).
+const SPEC_CAP = 21;
 // 116 = 111 + the five glide grid cases (incl. Enter → button).
 // 120 = 116 + the breakdown page (the frozen Scene # edit after a sideways
 //       scroll, the add-row/undo one-commit contract, the full-page route, and
@@ -72,7 +74,12 @@ const SPEC_CAP = 20;
 //       double-click, glyph click + Enter exactly-once, Add role, Modal), the
 //       single-cell input tab (type → overlay editor → Enter commits) and the
 //       Rows/Columns keyboard walk (ArrowDown/Right + Enter edits in place).
-const TEST_CAP = 130;
+// 140 = 130 + the ten touch-audit cases (menus/submenus, NumberInput steppers,
+//       SearchMenu clear, tooltip dismissal, one-tap controls, modal/dialog,
+//       morph fields, picker, rich text).
+// 141 = 140 + the accordion-vs-in-place submenu switch case (182) and the
+//       morph-field focus case.
+const TEST_CAP = 141;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

@@ -37,7 +37,10 @@ test('context menu: arrows/typeahead/Enter work with the focus elsewhere (key lo
   await expect(page.getByRole('menuitem', { name: /Plain item/ })).toHaveCount(0, { timeout: 5000 });
 });
 
-test('context menu: nested subs coexist and the parent survives', async ({ page }) => {
+test('context menu: nested subs coexist and the parent survives', async ({ page, isMobile }) => {
+  /* Desktop flyout path. On coarse pointers (iPad/iPhone) the shared submenu
+     is the accordion — covered by iphone-touch.spec.ts. */
+  test.skip(!!isMobile, 'desktop flyout; coarse pointers use the accordion');
   await openCtx(page);
   // open More… → Deeper… — the chain holds both
   await page.getByRole('menuitem', { name: /More…/ }).hover();

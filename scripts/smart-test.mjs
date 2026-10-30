@@ -33,6 +33,9 @@ const SEARCH = ['searchable-dropdown', 'search-menu-morph', 'morph-action-field'
 const RICH = ['rich-text-formatting', 'rich-text-staged-tokens'];
 const CANARY = ['dropdown-menu', 'overlay-morph'];
 const GRID = ['glide'];
+/* Roadmap 331/182 — the phone touch matrix. Any primitive change runs it; the
+   desktop project skips it, the iPad project runs it too (coarse placement). */
+const TOUCH = ['iphone-touch'];
 
 // ---- Source -> specs map. First match wins per file. s: 'ALL' = full suite. ----
 const RULES = [
@@ -58,29 +61,33 @@ const RULES = [
   { g: 'vitest.config.*', s: 'ALL' },
   { g: 'tsconfig*.json', s: 'ALL' },
   // menus / positioning / modality
-  { g: 'src/DropdownSubmenu.tsx', s: MENUS },
-  { g: 'src/ContextMenu.tsx', s: ['context-menu'] },
+  { g: 'src/DropdownSubmenu.tsx', s: [...MENUS, ...TOUCH] },
+  { g: 'src/ContextMenu.tsx', s: ['context-menu', ...TOUCH] },
   { g: 'src/useDropdownPosition.ts', s: ['dropdown-flip', 'dropdown-highlight', 'searchable-dropdown', 'search-menu-morph', 'context-menu'] },
-  { g: 'src/SearchMenu.tsx', s: SEARCH },
+  { g: 'src/SearchMenu.tsx', s: [...SEARCH, ...TOUCH] },
   { g: 'src/searchMenuModel.ts', s: SEARCH },
-  { g: 'src/MorphSearchField.tsx', s: SEARCH },
-  { g: 'src/MorphActionField.tsx', s: SEARCH },
+  { g: 'src/MorphSearchField.tsx', s: [...SEARCH, ...TOUCH] },
+  { g: 'src/MorphActionField.tsx', s: [...SEARCH, ...TOUCH] },
   { g: 'src/useLongPressMenu.tsx', s: ['context-menu', 'modal-drag-dismiss'] },
-  { g: 'src/Modal.tsx', s: ['modal-portal', 'modal-drag-dismiss', 'dialog'] },
+  { g: 'src/Modal.tsx', s: ['modal-portal', 'modal-drag-dismiss', 'dialog', ...TOUCH] },
   { g: 'src/ModalFooterButton.tsx', s: ['dialog', 'modal-portal'] },
-  { g: 'src/Dialog.tsx', s: ['dialog'] },
-  { g: 'src/Button.tsx', s: [...MENUS, 'seg', 'header-tabs'] },
+  { g: 'src/Dialog.tsx', s: ['dialog', ...TOUCH] },
+  { g: 'src/Button.tsx', s: [...MENUS, 'seg', 'header-tabs', ...TOUCH] },
   { g: 'src/slidingPill.ts', s: ['seg', 'header-tabs'] },
-  { g: 'src/Checkbox.tsx', s: ['dialog', 'theme-lab'] },
-  { g: 'src/RadioList.tsx', s: ['theme-lab'] },
-  { g: 'src/styles/**', s: ['theme-lab'] },
+  { g: 'src/Checkbox.tsx', s: ['dialog', 'theme-lab', ...TOUCH] },
+  { g: 'src/RadioList.tsx', s: ['theme-lab', ...TOUCH] },
+  { g: 'src/styles/**', s: ['theme-lab', ...TOUCH] },
   // switches / track chrome
-  { g: 'src/FloatingToggle.tsx', s: ['seg'] },
-  { g: 'src/Checklist.tsx', s: ['seg'] },
+  { g: 'src/FloatingToggle.tsx', s: ['seg', ...TOUCH] },
+  { g: 'src/Checklist.tsx', s: ['seg', ...TOUCH] },
   // inputs
   { g: 'src/input.ts', s: ['searchable-dropdown', 'dialog', 'search-menu-morph', 'morph-action-field'] },
   { g: 'src/numberInputMath.ts', s: ['number-input'] },
-  { g: 'src/NumberInput.tsx', s: ['number-input'] },
+  { g: 'src/NumberInput.tsx', s: ['number-input', ...TOUCH] },
+  { g: 'src/Tooltip.tsx', s: TOUCH },
+  { g: 'src/PickerField.tsx', s: TOUCH },
+  { g: 'src/SelectionControls.tsx', s: TOUCH },
+  { g: 'src/TabFace.tsx', s: [...TOUCH, 'header-tabs'] },
   { g: 'src/index.ts', s: 'ALL' },
   // Glide data grid — the canvas wrapper + its playground section. Painted
   // control cells also drive the native-cells page.
@@ -91,8 +98,8 @@ const RULES = [
   { g: 'src/richText.ts', s: RICH },
   { g: 'src/tokenText.ts', s: RICH },
   { g: 'src/TokenExtension.tsx', s: RICH },
-  { g: 'src/RichTextEditor.tsx', s: RICH },
-  { g: 'src/FormatToolbar.tsx', s: RICH },
+  { g: 'src/RichTextEditor.tsx', s: [...RICH, ...TOUCH] },
+  { g: 'src/FormatToolbar.tsx', s: [...RICH, ...TOUCH] },
   { g: 'src/RichTextSuggestionPopup.tsx', s: RICH },
   { g: 'src/EditorChrome.tsx', s: [...RICH, 'seg'] },
 ];

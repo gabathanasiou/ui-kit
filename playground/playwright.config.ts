@@ -70,5 +70,17 @@ export default defineConfig({
         hasTouch: true,
       },
     },
+    {
+      /* Roadmap 331: the phone profile. Scoped to the touch-audit matrix spec
+         (the desktop/iPad projects also run it and skip themselves) — the
+         playground is not otherwise a phone surface. */
+      name: 'iphone',
+      testMatch: /iphone-touch\.spec\.ts/,
+      use: {
+        ...devices['iPhone 14 Pro'],
+        browserName: 'webkit',
+        hasTouch: true,
+      },
+    },
   ],
 });

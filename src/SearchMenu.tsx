@@ -559,11 +559,12 @@ export function SearchMenu({
     resumeNeighborRef.current = null;
   }, [open, query]);
 
-  // Expandable: focus the field once it mounts.
-  useEffect(() => {
+  // Expandable: focus the field once it mounts. LAYOUT effect: it runs in the
+  // same task as the opening tap, so iOS Safari still counts it as a user
+  // gesture and raises the keyboard (a passive effect / rAF loses it).
+  useLayoutEffect(() => {
     if (mode !== 'expandable' || !expanded || !open || !autoFocus) return;
-    const raf = requestAnimationFrame(() => inputRef.current?.focus());
-    return () => cancelAnimationFrame(raf);
+    inputRef.current?.focus({ preventScroll: true });
   }, [mode, expanded, open, autoFocus]);
 
   // Outside click closes the surface.
@@ -856,7 +857,11 @@ export function SearchMenu({
           type="button"
           aria-label="Clear search"
           tabIndex={expanded ? 0 : -1}
-          onPointerDown={event => event.preventDefault()}
+          /* `mousedown`, not `pointerdown`: WebKit suppresses the click when
+             pointerdown's default is cancelled, which made this button dead
+             on iPhone/iPad. mousedown keeps the field's focus without
+             cancelling the tap. */
+          onMouseDown={event => event.preventDefault()}
           onClick={onClear}
           style={{ width: iconBtn.box, height: iconBtn.box }}
           className="ui-icon-btn flex items-center justify-center rounded"

@@ -41,9 +41,9 @@ export interface TabFaceProps {
 }
 
 const MOTION = 'transition-[grid-template-columns] ease-out duration-150 group-hover:duration-200 motion-reduce:transition-none';
-const LABEL_STATES = 'group-hover:grid-cols-[1fr] group-focus-visible:grid-cols-[1fr] group-data-[state=open]:grid-cols-[1fr]';
-const ICON_HIDDEN_STATES = 'group-hover:grid-cols-[0fr] group-focus-visible:grid-cols-[0fr] group-data-[state=open]:grid-cols-[0fr]';
-const LABEL_SHOWN_STATES = 'group-hover:opacity-100 group-focus-visible:opacity-100 group-data-[state=open]:opacity-100';
+const LABEL_STATES = 'group-hover:grid-cols-[1fr] group-focus-visible:grid-cols-[1fr] group-active:grid-cols-[1fr] group-data-[state=open]:grid-cols-[1fr]';
+const ICON_HIDDEN_STATES = 'group-hover:grid-cols-[0fr] group-focus-visible:grid-cols-[0fr] group-active:grid-cols-[0fr] group-data-[state=open]:grid-cols-[0fr]';
+const LABEL_SHOWN_STATES = 'group-hover:opacity-100 group-focus-visible:opacity-100 group-active:opacity-100 group-data-[state=open]:opacity-100';
 
 /** Stable-enough identity for a React icon node: a new element object is
  *  created on every render, so a reference check would re-animate constantly.
@@ -124,7 +124,7 @@ export function TabFace({ icon, collapse = false, iconWithLabel = true, active =
         <span className="min-w-0 overflow-hidden">
           <span
             className={`flex min-w-0 items-center whitespace-nowrap transition-[opacity,padding-left] duration-100 group-hover:duration-150 motion-reduce:transition-none ${active ? 'opacity-100' : `opacity-0 ${LABEL_SHOWN_STATES}`} ${swap
-              ? `pl-[var(--kit-collapse-gap)] group-hover:pl-0! group-focus-visible:pl-0! group-data-[state=open]:pl-0! ${active ? 'pl-0!' : ''}`
+              ? `pl-[var(--kit-collapse-gap)] group-hover:pl-0! group-focus-visible:pl-0! group-active:pl-0! group-data-[state=open]:pl-0! ${active ? 'pl-0!' : ''}`
               : ''}`}
             style={swap ? ({ '--kit-collapse-gap': `${gap}px` } as React.CSSProperties) : { paddingLeft: gap }}
           >

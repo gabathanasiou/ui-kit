@@ -20,6 +20,7 @@ import { DialogsSection } from './sections/DialogsSection';
 import { PanelsSection } from './sections/PanelsSection';
 import { RichTextSection } from './sections/RichTextSection';
 import { HeaderTabsSection } from './sections/HeaderTabsSection';
+import { TouchAuditPage } from './sections/TouchAuditSection';
 import { SizingSection } from './sections/SizingSection';
 import { GlideSection } from './sections/GlideSection';
 import { BreakdownPage } from './breakdownDemo';
@@ -114,6 +115,7 @@ const SECTIONS: SectionDef[] = [
 /* Standalone pages: the showroom's rail entries that LEAVE the section list and
    fill the window (an app tab, not a card). `#breakdown` is the route. */
 const PAGES: NavSection[] = [
+  { id: 'touch', group: 'Full pages', title: 'Touch audit' },
   { id: 'breakdown', group: 'Full pages', title: 'Breakdown' },
   { id: 'glide-native-cells', group: 'Full pages', title: 'Canvas cell controls' },
 ];
@@ -155,7 +157,7 @@ function Intro({ count }: { count: number }) {
       </ul>
       <div className="pg-hero-tags">
         <span>{count} sections</span>
-        <span>desktop + iPad</span>
+        <span>desktop + iPad + iPhone</span>
         <span>runs straight from <code>src/</code></span>
         <span>grouped by surface</span>
       </div>
@@ -207,7 +209,9 @@ export function App() {
   if (page !== null) {
     return (
       <ThemeScope mode={mode} accent={accent} surface="accent" className="pg-app" style={{ minHeight: '100vh' }}>
-        {page === 'breakdown' ? (
+        {page === 'touch' ? (
+          <TouchAuditPage onExit={() => { window.location.hash = 'buttons'; }} />
+        ) : page === 'breakdown' ? (
           <BreakdownPage onExit={() => { window.location.hash = 'glide'; }} />
         ) : page === 'glide-native-cells' ? (
           <GlideNativeCellsPage onExit={() => { window.location.hash = 'glide'; }} />

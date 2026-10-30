@@ -51,6 +51,19 @@ export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> =
     return () => currentWindow?.removeEventListener('scroll', updatePos, true);
   }, [show]);
 
+  /* Touch dismissal: iOS keeps the tap's :hover sticky, so without this the
+     bubble can outlive the tap that revealed it. Any tap OUTSIDE the trigger
+     hides it (the first tap shows it, a tap anywhere else clears it). */
+  useEffect(() => {
+    if (!show) return undefined;
+    const doc = ref.current?.ownerDocument ?? document;
+    const onPointerDown = (event: PointerEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setShow(false);
+    };
+    doc.addEventListener('pointerdown', onPointerDown, true);
+    return () => doc.removeEventListener('pointerdown', onPointerDown, true);
+  }, [show]);
+
   const labelProps = tooltipAriaLabel(children, content);
   const trigger = Object.keys(labelProps).length > 0
     ? React.cloneElement(children as React.ReactElement<Record<string, unknown>>, labelProps)
