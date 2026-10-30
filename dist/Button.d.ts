@@ -9,6 +9,10 @@ import React from 'react';
  *                    project identity's HEADER step and deliberately survives
  *                    a neutral surface (see `identityAccent`); `cloud` forces
  *                    Drive blue / shared emerald where the scope has no identity
+ *  - `solid`       — the raised, bordered modal primary (the footer-hero
+ *                    recipe): mode-aware zinc by default, project accent on an
+ *                    accent surface. Use it for a primary action INSIDE a
+ *                    modal body; footers use `ModalFooterButton` (same tokens)
  *  - `outline`     — the quiet button WITH a visible outline: same box and
  *                    text weight as `subtle`, a 1px border painted as an inset
  *                    shadow (so it never changes the button's size), and the
@@ -39,7 +43,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     /** React 19 ref-as-prop: the ref lands on the underlying `<button>` (tab
      *  rows measure their buttons for the sliding pill). */
     ref?: React.Ref<HTMLButtonElement>;
-    variant?: 'subtle' | 'primary' | 'outline' | 'danger-ghost' | 'tab' | 'tab-header';
+    variant?: 'subtle' | 'primary' | 'solid' | 'outline' | 'danger-ghost' | 'tab' | 'tab-header';
     theme?: 'light' | 'dark';
     /** Colored project-chrome accent: `true` = blue (Drive/cloud projects),
      *  `'emerald'` = the shared/collaborative green. Affects the light

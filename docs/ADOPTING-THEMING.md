@@ -104,7 +104,7 @@ than hand-writing the rules.
 | Tooltip | Carries mode + effective accent itself (portal). |
 | Inputs / NumberInput | Transparent; inherit the surface. Hover = neutral lift; focus = neutral border. Never accent-filled. |
 | Button primary | The IDENTITY header step on every surface — the ONE deliberate exception to neutralisation (`data-identity-accent`), so a neutral modal's primary keeps the project colour. |
-| Modal footer hero | The familiar bordered ZINC recipe on every surface; `tone="accent"` opts into the accent. Footer heroes are not primary `Button`s. |
+| Modal footer hero / `Button variant="solid"` | The registered raised (bordered) modal primary: mode zinc, project accent on an accent surface. Use `solid` for a body primary; the footer hero shares its tokens. |
 | Cards / calendar | Accent header/body on an accent surface; neutral shell on a neutral surface. Calendar body/footer are always neutral. |
 | Checkbox / Checklist / Radio | Neutral panel; selected row/box uses the accent roles only where the accent applies. |
 | Seg | Neutral outline/labels; accent pill only on chrome/accent surfaces or a local override. |

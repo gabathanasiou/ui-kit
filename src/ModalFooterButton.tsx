@@ -7,9 +7,9 @@ import { useCoarseSize } from './device';
  * consumer modal footers stop hand-writing bespoke styles.
  *
  * Variants:
- *  - `hero`          — the ONE primary action (solid zinc-800, bordered; the
- *                      recipe stays neutral on every modal surface — pass
- *                      `tone="accent"` to opt into the project colour)
+ *  - `hero`          — the ONE primary action (the registered `solid` recipe:
+ *                      raised, bordered; mode-aware zinc, project accent on an
+ *                      accent surface). Same tokens as `Button variant="solid"`.
  *  - `ghost`         — every other button (Cancel, secondary actions, Import)
  *  - `danger`        — destructive action in text+ghost form (Delete, left-aligned)
  *  - `danger-solid`  — destructive CONFIRM (red solid; Delete Selected, Wipe)
@@ -33,7 +33,7 @@ const BASE = `inline-flex items-center gap-2 rounded-lg text-xs transition curso
    than the fill on hover so the button never loses its edge (bg-zinc-700 on
    a zinc-700 border used to vanish). */
 const HERO_TONES: Record<NonNullable<ModalFooterButtonProps['tone']>, string> = {
-  zinc: 'bg-[var(--ui-footer-hero-bg)] text-[color:var(--ui-footer-hero-text)] font-semibold border border-[color:var(--ui-footer-hero-border)] hover:bg-[var(--ui-footer-hero-hover-bg)] hover:border-[color:var(--ui-footer-hero-hover-border)] disabled:opacity-40 disabled:cursor-not-allowed',
+  zinc: 'bg-[var(--ui-btn-solid-bg)] text-[color:var(--ui-btn-solid-text)] font-semibold border border-[color:var(--ui-btn-solid-border)] hover:bg-[var(--ui-btn-solid-hover-bg)] hover:border-[color:var(--ui-btn-solid-hover-border)] disabled:opacity-40 disabled:cursor-not-allowed',
   accent: 'bg-[var(--ui-accent-solid)] text-[color:var(--ui-accent-action-text)] font-semibold border border-transparent hover:bg-[var(--ui-accent-solid-hover)] disabled:opacity-40 disabled:cursor-not-allowed',
   danger: 'bg-[var(--ui-danger-solid)] text-white font-semibold border border-[color:var(--ui-danger-solid)] hover:bg-[var(--ui-danger-solid-hover)] disabled:opacity-40 disabled:cursor-not-allowed',
 };

@@ -14,6 +14,10 @@ import { useKitTheme, buttonCloudOf, type KitAccent } from './ThemeScope';
  *                    project identity's HEADER step and deliberately survives
  *                    a neutral surface (see `identityAccent`); `cloud` forces
  *                    Drive blue / shared emerald where the scope has no identity
+ *  - `solid`       — the raised, bordered modal primary (the footer-hero
+ *                    recipe): mode-aware zinc by default, project accent on an
+ *                    accent surface. Use it for a primary action INSIDE a
+ *                    modal body; footers use `ModalFooterButton` (same tokens)
  *  - `outline`     — the quiet button WITH a visible outline: same box and
  *                    text weight as `subtle`, a 1px border painted as an inset
  *                    shadow (so it never changes the button's size), and the
@@ -44,7 +48,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   /** React 19 ref-as-prop: the ref lands on the underlying `<button>` (tab
    *  rows measure their buttons for the sliding pill). */
   ref?: React.Ref<HTMLButtonElement>;
-  variant?: 'subtle' | 'primary' | 'outline' | 'danger-ghost' | 'tab' | 'tab-header';
+  variant?: 'subtle' | 'primary' | 'solid' | 'outline' | 'danger-ghost' | 'tab' | 'tab-header';
   theme?: 'light' | 'dark';
   /** Colored project-chrome accent: `true` = blue (Drive/cloud projects),
    *  `'emerald'` = the shared/collaborative green. Affects the light
@@ -204,7 +208,9 @@ export default function Button({
     },
   };
 
-  type BaseVariant = 'subtle' | 'primary' | 'outline' | 'danger-ghost';
+  type BaseVariant = 'subtle' | 'primary' | 'solid' | 'outline' | 'danger-ghost';
+  /* The registered raised primary — shared with ModalFooterButton's hero. */
+  const SOLID = { base: `${PAD_PRIMARY} bg-[var(--ui-btn-solid-bg)] hover:bg-[var(--ui-btn-solid-hover-bg)] border border-[color:var(--ui-btn-solid-border)] hover:border-[color:var(--ui-btn-solid-hover-border)] text-[color:var(--ui-btn-solid-text)]`, open: 'bg-[var(--ui-btn-solid-hover-bg)]!' };
   const VARIANTS: Record<'light' | 'dark', Record<BaseVariant, { base: string; open: string }>> = {
     light: {
       subtle: { base: `${PAD} text-zinc-600 hover:bg-[var(--ui-btn-hover-bg)]`, open: 'bg-[var(--ui-btn-hover-bg)]! text-zinc-900' },
@@ -212,6 +218,7 @@ export default function Button({
          app header is always dark chrome). Read from the `data-identity-accent`
          block the button carries, so a neutral modal keeps its project CTA. */
       primary: { base: `${PAD_PRIMARY} bg-[var(--ui-btn-primary-bg)] hover:bg-[var(--ui-btn-primary-hover-bg)] text-white`, open: 'bg-[var(--ui-btn-primary-hover-bg)]!' },
+      solid: SOLID,
       /* The outline is painted as an INSET SHADOW, not a border: the button
          keeps `subtle`'s exact box (same padding + height), so the two can sit
          side by side in a toolbar without a 2px step. */
@@ -224,6 +231,7 @@ export default function Button({
     dark: {
       subtle: { base: `${PAD} text-zinc-400 hover:text-zinc-200 hover:bg-[var(--ui-btn-hover-bg)]`, open: 'bg-[var(--ui-btn-hover-bg)]! text-zinc-200' },
       primary: { base: `${PAD_PRIMARY} bg-[var(--ui-btn-primary-bg)] hover:bg-[var(--ui-btn-primary-hover-bg)] text-white`, open: 'bg-[var(--ui-btn-primary-hover-bg)]!' },
+      solid: SOLID,
       outline: {
         base: `${PAD} text-zinc-300 shadow-[inset_0_0_0_1px_var(--ui-border-strong)] hover:bg-[var(--ui-btn-hover-bg)] hover:text-zinc-100`,
         open: 'bg-[var(--ui-btn-hover-bg)]! text-zinc-100',
@@ -234,7 +242,7 @@ export default function Button({
 
   const isOpen = (rest as { 'data-state'?: string })['data-state'] === 'open';
   const spec = VARIANTS[theme][variant as BaseVariant];
-  const variantSize = variant === 'primary' ? primarySize : variant.startsWith('tab') ? tabSize : subtleSize;
+  const variantSize = variant === 'primary' || variant === 'solid' ? primarySize : variant.startsWith('tab') ? tabSize : subtleSize;
   /* Exact text-input box: `inputCls` uses IS_COARSE (not the coarse scale), so
      this intentionally follows the same switch (a 1px transparent border keeps
      the box model identical). */
@@ -294,6 +302,7 @@ export default function Button({
       type={type}
       data-mode={theme}
       data-accent={kit?.accent}
+      data-surface={kit?.surface}
       data-identity-accent={identityAccent}
       className={`${BASE} ${iconOnly ? 'justify-center' : ''} ${collapsible ? 'group' : ''} ${cls} ${className}`}
       /* A toggled base-variant button is a PRESSED toggle: expose it to AT

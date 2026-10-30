@@ -24,6 +24,24 @@ test('primary fill is the identity header step — including on a neutral surfac
   await expect(primary).toHaveCSS('background-color', 'rgb(23, 37, 84)');
 });
 
+/* The registered modal primary (Button solid / ModalFooterButton hero):
+   raised zinc in the mode, project accent on an accent surface. */
+test('solid primary themes with the surface', async ({ page }) => {
+  await page.goto('/');
+  const solid = page.getByTestId('theme-lab-solid');
+
+  /* dark + emerald + accent surface → emerald-800 */
+  await expect(solid).toHaveCSS('background-color', 'rgb(6, 95, 70)');
+
+  /* neutral surface → the dark mode's raised zinc */
+  await page.getByTestId('theme-chrome-toggle').click();
+  await expect(solid).toHaveCSS('background-color', 'rgb(39, 39, 42)');
+
+  /* light mode → the light mode's raised zinc */
+  await page.getByTestId('theme-mode-light').click();
+  await expect(solid).toHaveCSS('background-color', 'rgb(24, 24, 27)');
+});
+
 test('dark + zinc: checked checkbox and radio are black with white marks', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('theme-mode-dark').click();
