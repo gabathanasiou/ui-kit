@@ -68,7 +68,10 @@ export function resolveKitTheme(
   const mode = input.mode ?? parent?.mode ?? 'dark';
   const surface = input.surface ?? parent?.surface ?? 'neutral';
   const context = input.context ?? parent?.context ?? 'surface';
-  const identityAccent = input.accent ?? parent?.accent ?? 'zinc';
+  /* Identity propagates through neutral layers: a nested neutral scope that
+     does not name an accent must NOT drop the project identity (the primary
+     CTA and any later explicit accent still see it). */
+  const identityAccent = input.accent ?? parent?.identityAccent ?? 'zinc';
   const localOverride = input.accent !== undefined && input.surface === undefined && input.context === undefined;
   const accentApplies = context === 'chrome' || surface === 'accent' || localOverride;
   return { mode, accent: accentApplies ? identityAccent : 'zinc', identityAccent, surface, context };
