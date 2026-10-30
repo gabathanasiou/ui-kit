@@ -1,6 +1,6 @@
 "use client";
 import { jsx as h, jsxs as R, Fragment as lt } from "react/jsx-runtime";
-import st, { createContext as Gt, useContext as Xt, useState as oe, useEffect as ce, useRef as v, useCallback as ie, useLayoutEffect as at, useMemo as nt, useId as Fl, useImperativeHandle as Wo } from "react";
+import st, { createContext as Ut, useContext as Gt, useState as oe, useEffect as ce, useRef as v, useCallback as ie, useLayoutEffect as at, useMemo as nt, useId as Fl, useImperativeHandle as Wo } from "react";
 import * as De from "@radix-ui/react-dropdown-menu";
 import { Minus as Bl, Check as sr, Search as Pn, X as Tn, Pencil as Hl, CopyPlus as qo, Trash2 as mi, RotateCcw as Ko, Plus as Wr, ChevronRight as Ar, ChevronLeft as jl, ArrowUp as _l, ArrowDown as Wl, ChevronDown as mn, Underline as ql, Strikethrough as Kl, RemoveFormatting as Jl, Link as Vl, ChevronUp as Yl, Anchor as Ul } from "lucide-react";
 import { computePosition as Gl, offset as Jo, flip as Vo, shift as Yo, size as Xl, useFloating as Ql, autoUpdate as Zl } from "@floating-ui/react-dom";
@@ -18,9 +18,9 @@ import pc from "@tiptap/extension-underline";
 import mc from "@tiptap/suggestion";
 import { Mention as gc } from "@tiptap/extension-mention";
 import { createRoot as yc } from "react-dom/client";
-const xc = Gt(null);
+const xc = Ut(null);
 function Ei() {
-  return Xt(xc);
+  return Gt(xc);
 }
 function Kn() {
   const n = Ei();
@@ -360,7 +360,7 @@ function rs(n) {
     In === n && (In = null);
   };
 }
-const is = Gt(null);
+const is = Ut(null);
 function $i(n, e) {
   const t = n.mode ?? (e == null ? void 0 : e.mode) ?? "dark", r = n.surface ?? (e == null ? void 0 : e.surface) ?? "neutral", i = n.context ?? (e == null ? void 0 : e.context) ?? "surface", o = n.accent ?? (e == null ? void 0 : e.identityAccent) ?? "zinc", s = n.accent !== void 0 && n.surface === void 0 && n.context === void 0;
   return { mode: t, accent: i === "chrome" || r === "accent" || s ? o : "zinc", identityAccent: o, surface: r, context: i };
@@ -369,11 +369,11 @@ function zi({ theme: n, children: e }) {
   return /* @__PURE__ */ h(is.Provider, { value: n, children: e });
 }
 function bh({ mode: n, accent: e, surface: t, context: r, children: i }) {
-  const o = Yt();
+  const o = Xt();
   return /* @__PURE__ */ h(zi, { theme: $i({ mode: n, accent: e, surface: t, context: r }, o), children: i });
 }
 function vh({ mode: n, accent: e, surface: t, context: r, children: i, className: o, style: s }) {
-  const l = Yt(), c = $i({ mode: n, accent: e, surface: t, context: r }, l);
+  const l = Xt(), c = $i({ mode: n, accent: e, surface: t, context: r }, l);
   return /* @__PURE__ */ h(zi, { theme: c, children: /* @__PURE__ */ h(
     "div",
     {
@@ -387,8 +387,8 @@ function vh({ mode: n, accent: e, surface: t, context: r, children: i, className
     }
   ) });
 }
-function Yt() {
-  return Xt(is);
+function Xt() {
+  return Gt(is);
 }
 function Tc(n, e = "dark") {
   return n ? n.context === "surface" ? n.mode : n.mode === "light" ? "light" : n.accent === "emerald" ? "emerald" : n.accent === "blue" ? "blue" : "dark" : e;
@@ -552,7 +552,7 @@ function cs(n) {
     groupState: E
   };
 }
-const as = Gt(null), $c = () => Xt(as), us = Rc;
+const as = Ut(null), $c = () => Gt(as), us = Rc;
 function Di({ checked: n, size: e, tone: t = "accent", indeterminate: r = !1 }) {
   return /* @__PURE__ */ h(
     "span",
@@ -655,7 +655,7 @@ function zt({
   children: b,
   ...x
 }) {
-  const $ = Yt(), C = e ?? ($ == null ? void 0 : $.mode) ?? "light", S = t ?? Ec($), N = gn({ px: 10, py: 6, fs: 12 }, { px: 14, py: 9, fs: 14 }), T = gn({ px: 12, py: 6, fs: 12 }, { px: 16, py: 9, fs: 14 }), H = gn({ px: 12, py: 6, fs: 12 }, { px: 16, py: 10, fs: 14 }), q = "", E = "", K = `${l ? "ui-reveal " : ""}ui-press inline-flex items-center font-semibold transition-colors cursor-pointer select-none whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed`, w = "rounded", z = "rounded-[var(--ui-radius-btn)]", F = {
+  const $ = Xt(), C = e ?? ($ == null ? void 0 : $.mode) ?? "light", S = t ?? Ec($), N = gn({ px: 10, py: 6, fs: 12 }, { px: 14, py: 9, fs: 14 }), T = gn({ px: 12, py: 6, fs: 12 }, { px: 16, py: 9, fs: 14 }), H = gn({ px: 12, py: 6, fs: 12 }, { px: 16, py: 10, fs: 14 }), q = "", E = "", K = `${l ? "ui-reveal " : ""}ui-press inline-flex items-center font-semibold transition-colors cursor-pointer select-none whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed`, w = "rounded", z = "rounded-[var(--ui-radius-btn)]", F = {
     light: {
       active: "text-white",
       inactive: "text-zinc-500 hover:text-zinc-900"
@@ -857,7 +857,7 @@ function fs({
     }
   );
 }
-const Pi = Gt("dark"), hs = () => Xt(Pi), Li = Gt({ "data-theme": "dark" }), Fc = () => Xt(Li);
+const Pi = Ut("dark"), hs = () => Gt(Pi), Li = Ut({ "data-theme": "dark" }), Fc = () => Gt(Li);
 function Oi() {
   const n = Oe();
   return {
@@ -925,10 +925,10 @@ function ms(n) {
     }
   }), e.join(" ").trim();
 }
-const Fi = Gt({ chain: [], setChain: () => {
+const Fi = Ut({ chain: [], setChain: () => {
 }, morph: !0, keyboardOpened: null, setKeyboardOpened: () => {
-} }), ar = Gt(null), Bi = () => Xt(ar), gs = Gt({ query: "", setQuery: () => {
-} }), jc = () => Xt(gs), ys = Gt(null), _c = () => Xt(ys), Wc = () => !0;
+} }), ar = Ut(null), Bi = () => Gt(ar), gs = Ut({ query: "", setQuery: () => {
+} }), jc = () => Gt(gs), ys = Ut(null), _c = () => Gt(ys), Wc = () => !0;
 function Yr(n) {
   const e = v([]), [t, r] = oe(-1), [i, o] = oe(!1), [s, l] = oe(0), c = ie((f) => (e.current = [...e.current, f], l((p) => p + 1), () => {
     e.current = e.current.filter((p) => p !== f), l((p) => p + 1);
@@ -1079,7 +1079,7 @@ function Ur({
   onSearchValueChange: b,
   multiple: x
 }) {
-  const $ = Yt(), C = ss(s, $), S = C.theme, [N, T] = oe([]), [H, q] = oe(null), E = Kn(), K = Mi(), w = v(null), z = v(null), F = v(n);
+  const $ = Xt(), C = ss(s, $), S = C.theme, [N, T] = oe([]), [H, q] = oe(null), E = Kn(), K = Mi(), w = v(null), z = v(null), F = v(n);
   F.current = n;
   const [V, _] = oe(n), [M, W] = oe(""), J = f && g !== void 0, fe = J ? g : M, ve = J ? b ?? (() => {
   }) : W, A = v(g ?? "");
@@ -1837,7 +1837,7 @@ function qc({
   ] });
 }
 function Kc({ id: n, label: e, icon: t, width: r, side: i = "right", children: o, contentClassName: s }) {
-  const { chain: l, setChain: c, morph: a, keyboardOpened: u, setKeyboardOpened: d } = Xt(Fi), f = l.includes(n), p = l[l.length - 1] === n;
+  const { chain: l, setChain: c, morph: a, keyboardOpened: u, setKeyboardOpened: d } = Gt(Fi), f = l.includes(n), p = l[l.length - 1] === n;
   hs();
   const m = Fc(), g = Kn(), b = v(null), x = v(null), [$, C] = oe(f), S = !f && $;
   ce(() => {
@@ -1949,7 +1949,7 @@ function Kc({ id: n, label: e, icon: t, width: r, side: i = "right", children: o
   ] });
 }
 const Yn = 8, Sh = ({ open: n, x: e, y: t, onClose: r, children: i, containerRef: o, theme: s, morph: l = !0 }) => {
-  const c = Yt(), a = s ? { theme: s, attrs: { "data-theme": s } } : c ? ss(void 0, c) : { theme: "light", attrs: { "data-theme": "light" } }, { theme: u } = a, d = Oe(), f = P(12, 14, d), p = v(null), m = lr(), [g, b] = oe(!1), [x, $] = oe([]), [C, S] = oe(null), N = Yr();
+  const c = Xt(), a = s ? { theme: s, attrs: { "data-theme": s } } : c ? ss(void 0, c) : { theme: "light", attrs: { "data-theme": "light" } }, { theme: u } = a, d = Oe(), f = P(12, 14, d), p = v(null), m = lr(), [g, b] = oe(!1), [x, $] = oe([]), [C, S] = oe(null), N = Yr();
   ce(() => {
     if (n)
       return N.setHighlighted(-1, "keyboard"), rs(r);
@@ -2104,7 +2104,7 @@ function Vc({
   surface: p,
   accent: m
 }) {
-  const g = Yt(), b = $i(
+  const g = Xt(), b = $i(
     { mode: f, accent: m, surface: p, context: "surface" },
     g
   ), x = b.mode, $ = b.surface, C = b.accent, S = v(null), N = v(null), T = v(null), H = Oe(), q = P(20, 24, H), E = P(10, 12, H), K = P(12, 14, H), w = P(14, 16, H), z = P(20, 24, H), F = P(20, 24, H), V = P(20, 24, H), _ = P(14, 16, H), M = P(16, 20, H), W = P(10, 12, H), J = P(12, 14, H), fe = P(8, 10, H), ve = P(4, 6, H), A = { padding: `${E}px ${q}px` }, me = { fontSize: K }, ge = { padding: `${F}px ${z}px 16px ${z}px` }, Q = { fontSize: w }, te = { padding: `0 ${z}px 16px` }, Y = { padding: `${V}px ${z}px` }, ye = { fontSize: W, padding: `${ve}px ${fe}px` }, [se, B] = oe(!1), L = ie((k) => {
@@ -2246,11 +2246,11 @@ function Vc({
         re = 0;
         const Rt = S.current;
         if (!Rt) return;
-        const gt = fn(Te.current ?? null), $e = Rt.getBoundingClientRect(), Ut = ((Rn = Te.current) == null ? void 0 : Rn.innerWidth) ?? 0, Zt = (k == null ? void 0 : k.innerHeight) ?? 0, vn = gt.height < Zt - le || Zt < Fe.current.h - le && (k == null ? void 0 : k.innerWidth) === Fe.current.w;
+        const gt = fn(Te.current ?? null), $e = Rt.getBoundingClientRect(), Yt = ((Rn = Te.current) == null ? void 0 : Rn.innerWidth) ?? 0, Zt = (k == null ? void 0 : k.innerHeight) ?? 0, vn = gt.height < Zt - le || Zt < Fe.current.h - le && (k == null ? void 0 : k.innerWidth) === Fe.current.w;
         Fe.current = { w: (k == null ? void 0 : k.innerWidth) ?? 0, h: Zt };
         const Ne = $e.top >= gt.top + ze && $e.bottom <= gt.bottom - ze, cn = () => {
           We({
-            left: Math.max(ze, Math.min((Ut - $e.width) / 2, Ut - $e.width - ze)),
+            left: Math.max(ze, Math.min((Yt - $e.width) / 2, Yt - $e.width - ze)),
             top: Math.max(gt.top + ze, Math.min(gt.top + (gt.height - $e.height) / 2, gt.bottom - $e.height - ze))
           });
         };
@@ -2411,10 +2411,7 @@ function Eh({ children: n }) {
 }
 const Yc = "inline-flex items-center gap-2 rounded-lg text-xs transition cursor-pointer select-none whitespace-nowrap active:shadow-[inset_0_0_0_2px_var(--ui-panel-bg)]", Uc = {
   zinc: "bg-[var(--ui-footer-hero-bg)] text-[color:var(--ui-footer-hero-text)] font-semibold border border-[color:var(--ui-footer-hero-border)] hover:bg-[var(--ui-footer-hero-hover-bg)] hover:border-[color:var(--ui-footer-hero-hover-border)] disabled:opacity-40 disabled:cursor-not-allowed",
-  /* The accent hero is the same identity fill as `Button variant="primary"` —
-     the project header step, carried on the button so it survives a neutral
-     surface (where `data-accent` has been neutralised to zinc). */
-  accent: "bg-[var(--ui-btn-primary-bg)] text-white font-semibold border border-transparent hover:bg-[var(--ui-btn-primary-hover-bg)] disabled:opacity-40 disabled:cursor-not-allowed",
+  accent: "bg-[var(--ui-accent-solid)] text-[color:var(--ui-accent-action-text)] font-semibold border border-transparent hover:bg-[var(--ui-accent-solid-hover)] disabled:opacity-40 disabled:cursor-not-allowed",
   danger: "bg-[var(--ui-danger-solid)] text-white font-semibold border border-[color:var(--ui-danger-solid)] hover:bg-[var(--ui-danger-solid-hover)] disabled:opacity-40 disabled:cursor-not-allowed"
 }, Gc = {
   /* Transparent border on every variant — auto-height buttons add the border
@@ -2430,13 +2427,12 @@ function yr({
   type: r = "button",
   ...i
 }) {
-  const o = gn({ px: 24, py: 8, fs: 12 }, { px: 28, py: 10, fs: 14 }), s = Yt();
+  const o = gn({ px: 24, py: 8, fs: 12 }, { px: 28, py: 10, fs: 14 });
   return /* @__PURE__ */ h(
     "button",
     {
       type: r,
       style: o,
-      "data-identity-accent": (s == null ? void 0 : s.identityAccent) ?? "zinc",
       className: `${Yc} ${n === "hero" ? Uc[e] : Gc[n]} ${t}`,
       ...i
     }
@@ -2449,9 +2445,9 @@ function zr(n = "md") {
 function ws(n = "md") {
   return n === "sm" ? gn({ px: 8, py: 6, fs: 12 }, { px: 12, py: 8, fs: 14 }) : gn({ px: 10, py: 5, fs: 12 }, { px: 14, py: 9, fs: 14 });
 }
-const ks = Gt(null);
+const ks = Ut(null);
 function Mh() {
-  const n = Xt(ks);
+  const n = Gt(ks);
   if (!n) throw new Error("useDialog must be used within DialogProvider");
   return n;
 }
@@ -2733,7 +2729,7 @@ function aa(n, e, t) {
   return `${n}-${String(e + 1).padStart(2, "0")}-${String(t).padStart(2, "0")}`;
 }
 function Dh({ selected: n, onChange: e, theme: t, showChips: r = !0, className: i = "", initialView: o }) {
-  const s = Yt(), l = t ?? (s == null ? void 0 : s.mode) ?? "light", c = /* @__PURE__ */ new Date(), a = (() => {
+  const s = Xt(), l = t ?? (s == null ? void 0 : s.mode) ?? "light", c = /* @__PURE__ */ new Date(), a = (() => {
     if (!o) return c;
     const L = /* @__PURE__ */ new Date(o + "T00:00:00");
     return isNaN(L.getTime()) ? c : L;
@@ -3060,7 +3056,7 @@ function ua(n, e) {
   return o ? { "aria-label": o } : {};
 }
 const zn = ({ content: n, children: e }) => {
-  const t = Yt(), r = Oe(), i = P(10, 12, r), o = P(6, 6, r), s = P(10, 12, r), l = { padding: `${o}px ${i}px`, fontSize: s }, c = Kn(), a = lr(), [u, d] = oe(!1), [f, p] = oe({ x: 0, y: 0 }), m = v(null), g = v(null), b = () => {
+  const t = Xt(), r = Oe(), i = P(10, 12, r), o = P(6, 6, r), s = P(10, 12, r), l = { padding: `${o}px ${i}px`, fontSize: s }, c = Kn(), a = lr(), [u, d] = oe(!1), [f, p] = oe({ x: 0, y: 0 }), m = v(null), g = v(null), b = () => {
     if (!m.current) return;
     const C = m.current.getBoundingClientRect();
     p({ x: C.left + C.width / 2, y: C.top });
@@ -3154,7 +3150,7 @@ const Fh = it ? "text-xs font-semibold text-zinc-600 uppercase tracking-wider sh
   active: "text-[color:var(--ui-accent-pill-text)]",
   idle: "text-[color:var(--ui-text-muted)] hover:text-[color:var(--ui-text-strong)] hover:bg-[var(--ui-seg-hover)]"
 }, Wh = ({ value: n, options: e, onChange: t, disabled: r, active: i, stretch: o, dense: s, variant: l = "chrome", theme: c, tablist: a, iconCollapse: u = !1, iconWithLabel: d = !0, ariaLabel: f }) => {
-  const p = Yt(), m = c ?? Cc(p), g = c === "blue" || c === "emerald" ? c : (p == null ? void 0 : p.accent) ?? "zinc", b = { "data-mode": m === "dark" ? "dark" : "light", "data-accent": g }, x = Gr(), $ = Oe(), C = s && !it ? 24 : x.control.height, S = gn({ px: 12, py: 6, fs: 12 }, { px: 16, py: 10, fs: 14 }), N = it ? S : { padding: "0 12px", fontSize: 12, height: s ? 20 : 24 }, T = (w) => i ? i(w) : n === w, H = st.useRef(null), q = st.useRef([]), E = Math.max(0, e.findIndex((w) => T(w.v))), K = fa(H, q, E);
+  const p = Xt(), m = c ?? Cc(p), g = c === "blue" || c === "emerald" ? c : (p == null ? void 0 : p.accent) ?? "zinc", b = { "data-mode": m === "dark" ? "dark" : "light", "data-accent": g }, x = Gr(), $ = Oe(), C = s && !it ? 24 : x.control.height, S = gn({ px: 12, py: 6, fs: 12 }, { px: 16, py: 10, fs: 14 }), N = it ? S : { padding: "0 12px", fontSize: 12, height: s ? 20 : 24 }, T = (w) => i ? i(w) : n === w, H = st.useRef(null), q = st.useRef([]), E = Math.max(0, e.findIndex((w) => T(w.v))), K = fa(H, q, E);
   return l === "track" ? /* @__PURE__ */ R(
     "div",
     {
@@ -11169,13 +11165,13 @@ function Wf({
   ), tt = !!d || g && !pe.trim(), Rt = nt(
     () => dt.map((y, I) => ({ row: y, index: I })).filter((y) => !(y.row.kind === "empty" || y.row.kind === "item" && y.row.hidden || y.row.kind === "group" && !tt)),
     [dt, tt]
-  ), gt = (g || b) && !pe.trim(), $e = !!A, Ut = nt(
+  ), gt = (g || b) && !pe.trim(), $e = !!A, Yt = nt(
     () => n.filter((y) => y.checkable !== !1).map((y) => y.id),
     [n]
-  ), Zt = nt(() => pe.trim() ? Dl(n, e, pe).hits.filter((y) => y.item.checkable !== !1).map((y) => y.item.id) : Ut, [n, e, pe, Ut]), vn = nt(() => new Set(Zt), [Zt]), Ne = cs({
+  ), Zt = nt(() => pe.trim() ? Dl(n, e, pe).hits.filter((y) => y.item.checkable !== !1).map((y) => y.item.id) : Yt, [n, e, pe, Yt]), vn = nt(() => new Set(Zt), [Zt]), Ne = cs({
     mode: (A == null ? void 0 : A.mode) ?? "draft",
     selectedIds: (A == null ? void 0 : A.selectedIds) ?? us,
-    itemIds: Ut,
+    itemIds: Yt,
     visibleIds: Zt,
     max: A == null ? void 0 : A.max,
     disabledIds: A == null ? void 0 : A.disabledIds,
@@ -11969,7 +11965,7 @@ function tp({
   browse: pe,
   groupToken: We
 }) {
-  const Ee = Yt(), Pe = E ?? (Ee == null ? void 0 : Ee.mode) ?? "light", Le = Oe(), ne = ie((O) => yn(O, i), [i]), Fe = nt(() => t.map(ne), [t, ne]), ke = nt(() => new Map(t.map((O) => [ne(O), O])), [t, ne]), Qe = ie((O) => Pl(O, t, i), [t, i]), vt = nt(() => new Set([...m ?? []].map((O) => O.toLowerCase())), [m]), [we, Ke] = oe(!1), [pt, Ie] = oe(""), [Qt, qt] = oe(() => {
+  const Ee = Xt(), Pe = E ?? (Ee == null ? void 0 : Ee.mode) ?? "light", Le = Oe(), ne = ie((O) => yn(O, i), [i]), Fe = nt(() => t.map(ne), [t, ne]), ke = nt(() => new Map(t.map((O) => [ne(O), O])), [t, ne]), Qe = ie((O) => Pl(O, t, i), [t, i]), vt = nt(() => new Set([...m ?? []].map((O) => O.toLowerCase())), [m]), [we, Ke] = oe(!1), [pt, Ie] = oe(""), [Qt, qt] = oe(() => {
     const O = V ?? "";
     return H ? O.toUpperCase() : O;
   }), [Ft, Ct] = oe(Qt), [Me, qe] = oe(() => [...n]), [wt, At] = oe(null), [ot, It] = oe(!1), Be = v(null), Ze = v(null), $t = v(null), mt = v(null), Et = v(null), Bt = v(n.join("\0")), He = v(!1), D = v(/* @__PURE__ */ new Set()), X = v(!1), he = v(!1), Ue = v(!1), et = v(0), kt = v(""), Mt = v([...n]), k = n.join("\0"), Z = nt(
@@ -12075,7 +12071,7 @@ function tp({
     Mt.current = Ge, qe(Ge), Ct(""), Ke(!1), tt(Ge), O && !he.current && (Q == null || Q());
   }, [x, C, o, t, i, Fe, q, n, tt, Q]), $e = ie((O) => {
     Ke(O), O || gt();
-  }, [gt]), Ut = ie(() => {
+  }, [gt]), Yt = ie(() => {
     He.current = !0, X.current = !1;
     const O = le(n);
     kt.current = O, Mt.current = [...n], qe([...n]), Ie(O), Ct(""), Ke(!1), te == null || te();
@@ -12086,10 +12082,10 @@ function tp({
     const ue = (((Ge = $t.current) == null ? void 0 : Ge.ownerDocument) ?? document).defaultView;
     if (!ue) return;
     const xe = (Je) => {
-      Je.key === "Escape" && (Je.preventDefault(), Je.stopImmediatePropagation(), Ut());
+      Je.key === "Escape" && (Je.preventDefault(), Je.stopImmediatePropagation(), Yt());
     };
     return ue.addEventListener("keydown", xe, !0), () => ue.removeEventListener("keydown", xe, !0);
-  }, [we, Ut]);
+  }, [we, Yt]);
   const Zt = ie((O) => {
     const ue = jt(O, Fe), xe = le(ue);
     Mt.current = ue, kt.current = xe, qe(ue), Ue.current = !0, Ie(xe);
@@ -12101,7 +12097,7 @@ function tp({
   }, [Qe, tt, Q]), Ne = (O) => {
     var ue, xe, Ge, Je, tn;
     if (O.key === "Escape") {
-      O.preventDefault(), Ut();
+      O.preventDefault(), Yt();
       return;
     }
     if (O.key === "Tab") {
@@ -12512,7 +12508,7 @@ export {
   xh as useHardwareKeyboard,
   ws as useInputSize,
   Oi as useItemSize,
-  Yt as useKitTheme,
+  Xt as useKitTheme,
   vc as useLastPointerType,
   Ah as useLongPressOptOut,
   Bi as useMenuHighlight,

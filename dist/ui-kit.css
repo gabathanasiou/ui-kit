@@ -708,12 +708,8 @@
   --ui-card-border: var(--ui-border-strong);
   --ui-card-band: #f4f4f5;
   --ui-card-hover: color-mix(in oklab, var(--ui-accent-600) 6%, transparent);
-  /* The default hero on an accent surface is the app-header step too, so a
-     footer action and a `Button variant="primary"` read as the same colour. */
-  --ui-footer-hero-bg: var(--ui-accent-950);
-  --ui-footer-hero-hover-bg: var(--ui-accent-900);
-  --ui-footer-hero-border: var(--ui-accent-950);
-  --ui-footer-hero-hover-border: var(--ui-accent-900);
+  /* Footer hero keeps the neutral zinc recipe inside a modal (the familiar
+     bordered button); `tone="accent"` is the explicit accent opt-in. */
   --ui-footer-ghost-hover-bg: var(--ui-accent-hover-bg);
 }
 
@@ -764,12 +760,8 @@
   --ui-card-border: var(--ui-border-strong);
   --ui-card-band: #232327;
   --ui-card-hover: color-mix(in oklab, var(--ui-accent-400) 8%, transparent);
-  /* The default hero on an accent surface is the app-header step too, so a
-     footer action and a `Button variant="primary"` read as the same colour. */
-  --ui-footer-hero-bg: var(--ui-accent-950);
-  --ui-footer-hero-hover-bg: var(--ui-accent-900);
-  --ui-footer-hero-border: var(--ui-accent-950);
-  --ui-footer-hero-hover-border: var(--ui-accent-900);
+  /* Footer hero keeps the neutral zinc recipe inside a modal (the familiar
+     bordered button); `tone="accent"` is the explicit accent opt-in. */
   --ui-footer-ghost-hover-bg: var(--ui-accent-hover-bg);
 }
 

@@ -33,12 +33,14 @@ A nested `ThemeScope`/`ThemeProvider` that sets only `accent` is a manual
 override and keeps it even inside a neutral surface. Declaring
 `surface="neutral"` explicitly re-neutralises.
 
-**The one exception — the primary CTA.** `Button variant="primary"` and
-`ModalFooterButton tone="accent"` read `data-identity-accent` (the raw accent,
-kept on `KitTheme.identityAccent`) and paint `--ui-btn-primary-bg`, the
-app-header step. A neutral modal therefore keeps its project colour on its ONE
-main action while every other accent state is suppressed. Everything else
-still follows the table above.
+**The one exception — the primary CTA.** `Button variant="primary"` reads
+`data-identity-accent` (the raw accent, kept on `KitTheme.identityAccent`) and
+paints `--ui-btn-primary-bg`, the app-header step. A neutral modal therefore
+keeps its project colour on its primary action while every other accent state
+is suppressed. The MODAL FOOTER HERO is deliberately not part of this: the
+familiar bordered zinc `ModalFooterButton` recipe stays inside modals on every
+surface; `tone="accent"` is the explicit accent opt-in. Everything else still
+follows the table above.
 
 ## ThemeScope / ThemeProvider
 
@@ -147,8 +149,8 @@ resolve to the neutral ladder.
 
 | Role | Light | Dark | Used by |
 | --- | --- | --- | --- |
-| `--ui-btn-primary-bg` / `-hover` | A950 / A900, white text | A950 / A900 | the ONE primary CTA (`Button variant="primary"`, `ModalFooterButton tone="accent"`); keyed by `data-identity-accent`, so it survives a neutral surface |
-| `--ui-accent-action` / `-hover` | A800 / A700, white text | A800 / A700 | legacy accent action fills (`--ui-accent-solid`) |
+| `--ui-btn-primary-bg` / `-hover` | A950 / A900, white text | A950 / A900 | `Button variant="primary"` only; keyed by `data-identity-accent`, so it survives a neutral surface |
+| `--ui-accent-action` / `-hover` | A800 / A700, white text | A800 / A700 | `ModalFooterButton tone="accent"` + the `--ui-accent-solid` aliases |
 | `--ui-accent-selected-bg` / `-text` | A200 / A900 | A400 @ 26% / white | menu selected, row active, checklist/radio checked, date chips, selected date |
 | `--ui-accent-hover-bg` / `-text` | A600 @ 6% / strong text | A400 @ 8% / white | menu/row/cell/seg hover |
 | `--ui-accent-highlight-bg` / `-text` | soft (cursor) / strong text | A400 @ 12% / white | pointer + keyboard cursor on an UNSELECTED row |

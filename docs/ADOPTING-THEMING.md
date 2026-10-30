@@ -103,7 +103,8 @@ than hand-writing the rules.
 | Dropdown / ContextMenu | Neutral panel; items use the **soft button hover**, selected uses the selected role, selected+hover lifts. On a neutral surface all of it is neutral; on an accent surface, accent states. **Do not pass `theme`** unless forcing a preset. |
 | Tooltip | Carries mode + effective accent itself (portal). |
 | Inputs / NumberInput | Transparent; inherit the surface. Hover = neutral lift; focus = neutral border. Never accent-filled. |
-| Button primary | The IDENTITY header step on every surface — the ONE deliberate exception to neutralisation (`data-identity-accent`), so a neutral modal's main action keeps the project colour. |
+| Button primary | The IDENTITY header step on every surface — the ONE deliberate exception to neutralisation (`data-identity-accent`), so a neutral modal's primary keeps the project colour. |
+| Modal footer hero | The familiar bordered ZINC recipe on every surface; `tone="accent"` opts into the accent. Footer heroes are not primary `Button`s. |
 | Cards / calendar | Accent header/body on an accent surface; neutral shell on a neutral surface. Calendar body/footer are always neutral. |
 | Checkbox / Checklist / Radio | Neutral panel; selected row/box uses the accent roles only where the accent applies. |
 | Seg | Neutral outline/labels; accent pill only on chrome/accent surfaces or a local override. |

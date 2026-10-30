@@ -117,6 +117,9 @@ const [i, setI] = useState(0);
 - Never hand-write a button shell: `Button` (and `ModalFooterButton` inside
   modal footers) owns the box, hover/open/active, radius and focus.
 - Modal footer = exactly ONE hero; every other footer button is `ghost`.
+- The footer hero keeps the familiar bordered ZINC `ModalFooterButton` recipe on
+  every modal surface (it is not `Button variant="primary"`); `tone="accent"`
+  is the explicit project-accent opt-in.
 - An icon-only button MUST carry `aria-label` (tooltip via `title`).
 - `collapse`/`revealOnHover` are FACE props: they never change the action,
   routing or the value model. Navigation tabs stay `tab`/`tab-header` and
