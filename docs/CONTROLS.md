@@ -25,6 +25,7 @@ margins — if a row looks tight, fix the row.
 |---|---|---|---|
 | `subtle` (default) | text only | shared hover wash | quiet toolbar actions, menu triggers |
 | `primary` | the project identity's HEADER step (`--ui-btn-primary-bg`: zinc `#09090b`, Drive `#172554`, shared `#022c22`) | `--ui-btn-primary-hover-bg` | the ONE hero action per surface — keeps the identity even on a neutral surface |
+| `solid` | raised, bordered fill (`--ui-btn-solid-*`): mode zinc; accent surfaces use the project colour | one step deeper | a primary action INSIDE a modal body; the footer hero uses the same tokens |
 | `outline` | transparent + 1px inset edge | wash | a secondary action that must read as a button at rest |
 | `danger-ghost` | text in the danger colour | danger wash | destructive actions |
 | `tab` | text only; the ROW paints the sliding pill (`TAB_PILL`) | text colour change | navigation — PageToolbar mini tabs |
@@ -117,9 +118,10 @@ const [i, setI] = useState(0);
 - Never hand-write a button shell: `Button` (and `ModalFooterButton` inside
   modal footers) owns the box, hover/open/active, radius and focus.
 - Modal footer = exactly ONE hero; every other footer button is `ghost`.
-- The footer hero keeps the familiar bordered ZINC `ModalFooterButton` recipe on
-  every modal surface (it is not `Button variant="primary"`); `tone="accent"`
-  is the explicit project-accent opt-in.
+- The footer hero is the registered `solid` recipe — the same tokens as
+  `Button variant="solid"`, so a body primary and the footer primary agree. It
+  is not the identity `Button variant="primary"`; `tone="accent"` forces the
+  accent fill explicitly.
 - An icon-only button MUST carry `aria-label` (tooltip via `title`).
 - `collapse`/`revealOnHover` are FACE props: they never change the action,
   routing or the value model. Navigation tabs stay `tab`/`tab-header` and

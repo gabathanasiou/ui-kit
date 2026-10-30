@@ -4,9 +4,9 @@ import React from 'react';
  * consumer modal footers stop hand-writing bespoke styles.
  *
  * Variants:
- *  - `hero`          — the ONE primary action (solid zinc-800, bordered; the
- *                      recipe stays neutral on every modal surface — pass
- *                      `tone="accent"` to opt into the project colour)
+ *  - `hero`          — the ONE primary action (the registered `solid` recipe:
+ *                      raised, bordered; mode-aware zinc, project accent on an
+ *                      accent surface). Same tokens as `Button variant="solid"`.
  *  - `ghost`         — every other button (Cancel, secondary actions, Import)
  *  - `danger`        — destructive action in text+ghost form (Delete, left-aligned)
  *  - `danger-solid`  — destructive CONFIRM (red solid; Delete Selected, Wipe)

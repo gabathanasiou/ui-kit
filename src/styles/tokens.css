@@ -155,11 +155,19 @@
   --ui-seg-track-bg: #09090b;
 
   /* Footer hero (the one primary action) + project accent. */
-  --ui-footer-hero-bg: #27272a;
-  --ui-footer-hero-hover-bg: #3f3f46;
-  --ui-footer-hero-border: #3f3f46;
-  --ui-footer-hero-hover-border: #71717a;
-  --ui-footer-hero-text: var(--ui-accent-action-text, #ffffff);
+  /* The registered "solid" primary (modal footer hero + Button variant=solid).
+     Mode-aware by default; accent surfaces retheme it (below). */
+  --ui-btn-solid-bg: #27272a;
+  --ui-btn-solid-hover-bg: #3f3f46;
+  --ui-btn-solid-border: #3f3f46;
+  --ui-btn-solid-hover-border: #71717a;
+  --ui-btn-solid-text: #ffffff;
+  /* Legacy aliases kept for consumers reading the footer-hero names. */
+  --ui-footer-hero-bg: var(--ui-btn-solid-bg);
+  --ui-footer-hero-hover-bg: var(--ui-btn-solid-hover-bg);
+  --ui-footer-hero-border: var(--ui-btn-solid-border);
+  --ui-footer-hero-hover-border: var(--ui-btn-solid-hover-border);
+  --ui-footer-hero-text: var(--ui-btn-solid-text);
   --ui-footer-ghost-hover-bg: #27272a;
   --ui-accent-solid: #2563eb;
   --ui-accent-solid-hover: #3b82f6;
@@ -305,11 +313,16 @@
   --ui-border-strong: #d4d4d8;
   --ui-seg-track-bg: transparent;
 
-  --ui-footer-hero-bg: #18181b;
-  --ui-footer-hero-hover-bg: #27272a;
-  --ui-footer-hero-border: #18181b;
-  --ui-footer-hero-hover-border: #3f3f46;
-  --ui-footer-hero-text: var(--ui-accent-action-text, #ffffff);
+  --ui-btn-solid-bg: #18181b;
+  --ui-btn-solid-hover-bg: #27272a;
+  --ui-btn-solid-border: #18181b;
+  --ui-btn-solid-hover-border: #3f3f46;
+  --ui-btn-solid-text: #ffffff;
+  --ui-footer-hero-bg: var(--ui-btn-solid-bg);
+  --ui-footer-hero-hover-bg: var(--ui-btn-solid-hover-bg);
+  --ui-footer-hero-border: var(--ui-btn-solid-border);
+  --ui-footer-hero-hover-border: var(--ui-btn-solid-hover-border);
+  --ui-footer-hero-text: var(--ui-btn-solid-text);
   --ui-footer-ghost-hover-bg: #e4e4e7;
   --ui-accent-solid: #2563eb;
   --ui-accent-solid-hover: #3b82f6;
@@ -708,8 +721,13 @@
   --ui-card-border: var(--ui-border-strong);
   --ui-card-band: #f4f4f5;
   --ui-card-hover: color-mix(in oklab, var(--ui-accent-600) 6%, transparent);
-  /* Footer hero keeps the neutral zinc recipe inside a modal (the familiar
-     bordered button); `tone="accent"` is the explicit accent opt-in. */
+  /* The registered solid primary keeps its raised shape but takes the project
+     colour on an accent surface; the footer hero aliases follow. */
+  --ui-btn-solid-bg: var(--ui-accent-action);
+  --ui-btn-solid-hover-bg: var(--ui-accent-action-hover);
+  --ui-btn-solid-border: var(--ui-accent-action);
+  --ui-btn-solid-hover-border: var(--ui-accent-action-hover);
+  --ui-btn-solid-text: var(--ui-accent-action-text);
   --ui-footer-ghost-hover-bg: var(--ui-accent-hover-bg);
 }
 
@@ -760,8 +778,13 @@
   --ui-card-border: var(--ui-border-strong);
   --ui-card-band: #232327;
   --ui-card-hover: color-mix(in oklab, var(--ui-accent-400) 8%, transparent);
-  /* Footer hero keeps the neutral zinc recipe inside a modal (the familiar
-     bordered button); `tone="accent"` is the explicit accent opt-in. */
+  /* The registered solid primary keeps its raised shape but takes the project
+     colour on an accent surface; the footer hero aliases follow. */
+  --ui-btn-solid-bg: var(--ui-accent-action);
+  --ui-btn-solid-hover-bg: var(--ui-accent-action-hover);
+  --ui-btn-solid-border: var(--ui-accent-action);
+  --ui-btn-solid-hover-border: var(--ui-accent-action-hover);
+  --ui-btn-solid-text: var(--ui-accent-action-text);
   --ui-footer-ghost-hover-bg: var(--ui-accent-hover-bg);
 }
 

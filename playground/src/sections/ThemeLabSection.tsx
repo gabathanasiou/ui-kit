@@ -151,6 +151,7 @@ export function ThemeLabSection({ mode, accent, surface, setMode, setAccent, set
                 <Button>Subtle</Button>
                 <Button variant="outline">Outline</Button>
                 <Button data-testid="theme-lab-primary" variant="primary">Primary</Button>
+                <Button data-testid="theme-lab-solid" variant="solid">Solid</Button>
                 <Button variant="danger-ghost">Danger</Button>
                 <Tooltip content="Tooltips portal — they carry the theme scope themselves">
                   <Button iconOnly aria-label="About this theme" data-testid="theme-lab-tooltip"><Palette size={14} /></Button>
