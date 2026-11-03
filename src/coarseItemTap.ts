@@ -107,8 +107,11 @@ export function useCoarseItemTap(activate: () => void, disabled = false): Coarse
   const downRef = useRef<{ x: number; y: number; t: number; doc: Document } | null>(null);
   const activatedAtRef = useRef(0);
 
-  /** Swallow the next click on this gesture's document (once). */
-  const swallowNextClick = (doc: Document) => {
+  /** Swallow the native click of THIS gesture (once): it must land at the tap
+   *  point. A programmatic/assistive click (no coordinates, `detail 0`) or a
+   *  click elsewhere must pass — swallowing every click for 600ms ate
+   *  VoiceOver activations that followed a tap. */
+  const swallowNextClick = (doc: Document, x: number, y: number) => {
     let timer = 0;
     const cleanup = () => {
       doc.removeEventListener('click', swallow, true);
@@ -116,6 +119,7 @@ export function useCoarseItemTap(activate: () => void, disabled = false): Coarse
       if (timer) window.clearTimeout(timer);
     };
     const swallow = (event: MouseEvent) => {
+      if (Math.hypot(event.clientX - x, event.clientY - y) > 14) { cleanup(); return; }
       event.preventDefault();
       event.stopImmediatePropagation();
       cleanup();
@@ -140,7 +144,7 @@ export function useCoarseItemTap(activate: () => void, disabled = false): Coarse
        browser may still synthesize after the drag (it would otherwise switch
        a tab / press a control the finger was scrolling past). */
     if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > MOVE_TOLERANCE) {
-      swallowNextClick(down.doc);
+      swallowNextClick(down.doc, e.clientX, e.clientY);
       return;
     }
     if (Date.now() - down.t > MAX_PRESS_MS) return;
@@ -153,7 +157,7 @@ export function useCoarseItemTap(activate: () => void, disabled = false): Coarse
        default. Then swallow the browser's real click — by now the row may be
        unmounted and it would land on the app underneath. */
     el.click();
-    swallowNextClick(down.doc);
+    swallowNextClick(down.doc, e.clientX, e.clientY);
   };
 
   const onPointerCancel = () => { downRef.current = null; };

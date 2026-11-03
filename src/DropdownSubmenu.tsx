@@ -90,7 +90,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
   /** Swallow the one click that follows a touch pointerup open: the parent
    *  card hides in the same frame, so that click would otherwise land on the
    *  app (or an outside-dismiss layer) and close the whole menu. */
-  const suppressNextClick = () => {
+  const suppressNextClick = (x: number, y: number) => {
     const doc = subTriggerRef.current?.ownerDocument;
     if (!doc) return;
     let timer = 0;
@@ -100,6 +100,9 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
       if (timer) window.clearTimeout(timer);
     };
     const swallow = (event: MouseEvent) => {
+      /* Only the click of THIS tap (same point): a programmatic/AT click
+         (0,0) elsewhere must pass. */
+      if (Math.hypot(event.clientX - x, event.clientY - y) > 14) { cleanup(); return; }
       const target = event.target as Element | null;
       /* Menu ROWS own their own click semantics (the per-row ghost guard in
          coarseItemTap): a deferred click that lands on a row must reach that
@@ -378,7 +381,7 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
             if (!down || subOpen) return;
             if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) return;
             setKeyboardOpened(null);
-            suppressNextClick();
+            suppressNextClick(e.clientX, e.clientY);
             setChain(c => c.includes(id) ? c : [...c, id]);
           }}
           onPointerCancel={() => { triggerDownRef.current = null; }}
