@@ -3,6 +3,7 @@ import React from 'react';
 import { IS_COARSE, useCoarseScale, useCoarseSize, coarsePx } from './device';
 import { TabFace } from './TabFace';
 import { useKitTheme, buttonCloudOf, type KitAccent } from './ThemeScope';
+import { useCoarseItemTap } from './coarseItemTap';
 
 /**
  * Toolbar/action button — the shared button recipe so consumer toolbars stop
@@ -76,6 +77,10 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
    *  "icon → button" reveal (the label rides out with the box). An ACTIVE
    *  (lit) button keeps its box so a toggle still reads as on. */
   revealOnHover?: boolean;
+  /** Coarse pointers: allow the hover/active label morph (delayed 200ms so it
+   *  starts after the pointerup activation). Default true — this Button owns
+   *  its coarse activation. Direct `TabFace` consumers keep it false. */
+  touchReveal?: boolean;
   /** With `collapse` + `active`: whether the label stays open while lit.
    *  Default false — a toggle collapses back to its icon after the press.
    *  Pass true for a mode toggle whose ON label must stay readable; tab
@@ -130,9 +135,15 @@ export default function Button({
   icon,
   collapse = false,
   iconWithLabel = true,
+  touchReveal = true,
   className = '',
   type = 'button',
   children,
+  onClick,
+  onPointerDown,
+  onPointerUp,
+  onPointerCancel,
+  disabled,
   ...rest
 }: ButtonProps) {
   /* Ambient defaults: a surrounding ThemeScope owns the mode and the project
@@ -297,6 +308,14 @@ export default function Button({
     : sizeProp === 'minimal'
       ? { ...minimalSize, gap: collapsible ? 0 : gap }
       : { ...variantSize, gap: collapsible ? 0 : gap };
+  /* Coarse pointers: the button ACTIVATES ON THE TAP (pointerup), never on the
+     click (roadmap 338). iOS drops clicks on toolbar controls intermittently —
+     no movement, no overlay, no long task — which read as "the button needs a
+     few presses". The hook's synthetic `.click()` runs this button's own
+     onClick synchronously (exactly once), a >14px drag is a scroll (never a
+     press), and the browser's real click is swallowed so it cannot fire twice.
+     Desktop/keyboard are untouched (the hook is touch-only). */
+  const coarseTap = useCoarseItemTap(() => {}, disabled);
   return (
     <button
       type={type}
@@ -310,6 +329,11 @@ export default function Button({
       aria-pressed={active && !variant.startsWith('tab') ? true : undefined}
       data-active={active || undefined}
       style={sizing}
+      disabled={disabled}
+      onPointerDown={(e) => { coarseTap.onPointerDown(e); onPointerDown?.(e); }}
+      onPointerUp={(e) => { coarseTap.onPointerUp(e); onPointerUp?.(e); }}
+      onPointerCancel={(e) => { coarseTap.onPointerCancel(); onPointerCancel?.(e); }}
+      onClick={(e) => onClick?.(e)}
       {...rest}
     >
       {iconOnly
@@ -319,6 +343,7 @@ export default function Button({
             icon={icon}
             collapse={collapse}
             iconWithLabel={iconWithLabel}
+            coarseReveal={touchReveal}
             active={active && (variant.startsWith('tab') || keepLabelOnActive)}
             gap={gap}
             reserve={reserveLabel}

@@ -9,6 +9,8 @@ export type { ContextMenuProps } from './ContextMenu';
 export { DialogProvider, useDialog } from './Dialog';
 export { default as Modal, ModalFooter } from './Modal';
 export { useOverlayMorph, overlayMorphEnabled, nearestOverlayOrigin, playOverlayOpen, playOverlayClose, cloneOverlayClose, MORPH_MS, MORPH_EASE, MORPH_OPACITY_MS, ZOOM_FROM } from './overlayMorph';
+export { useCoarseItemTap } from './coarseItemTap';
+export type { CoarseItemTap } from './coarseItemTap';
 export type { OverlayRect } from './overlayMorph';
 export type { ModalProps } from './Modal';
 export { LongPressMenuProvider, useLongPressOptOut, isInteractiveElement } from './useLongPressMenu';

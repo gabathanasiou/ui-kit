@@ -71,6 +71,10 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
      *  "icon → button" reveal (the label rides out with the box). An ACTIVE
      *  (lit) button keeps its box so a toggle still reads as on. */
     revealOnHover?: boolean;
+    /** Coarse pointers: allow the hover/active label morph (delayed 200ms so it
+     *  starts after the pointerup activation). Default true — this Button owns
+     *  its coarse activation. Direct `TabFace` consumers keep it false. */
+    touchReveal?: boolean;
     /** With `collapse` + `active`: whether the label stays open while lit.
      *  Default false — a toggle collapses back to its icon after the press.
      *  Pass true for a mode toggle whose ON label must stay readable; tab
@@ -105,4 +109,4 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
  *  + the tabs' refs) so the selection box glides. On a `dark` toolbar
  *  `plain` is white — a zinc-950 pill vanished into the bar. */
 export declare const TAB_PILL: Record<'light' | 'dark', Record<'plain' | 'blue' | 'emerald', string>>;
-export default function Button({ variant, theme: themeProp, cloud: cloudProp, active, activeTone, iconOnly, size: sizeProp, revealOnHover, keepLabelOnActive, reserveLabel, iconRoll, icon, collapse, iconWithLabel, className, type, children, ...rest }: ButtonProps): React.JSX.Element;
+export default function Button({ variant, theme: themeProp, cloud: cloudProp, active, activeTone, iconOnly, size: sizeProp, revealOnHover, keepLabelOnActive, reserveLabel, iconRoll, icon, collapse, iconWithLabel, touchReveal, className, type, children, onClick, onPointerDown, onPointerUp, onPointerCancel, disabled, ...rest }: ButtonProps): React.JSX.Element;

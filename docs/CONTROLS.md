@@ -245,14 +245,17 @@ Any node can be a `DropdownMenu` trigger, including a collapsing icon Button:
   a nested menu in an emerald project stays emerald. Never give a submenu its
   own theme preset.
 
-### Touch: rows act on the tap, ghosts never act (roadmap 338)
+### Touch: controls act on the tap, ghosts never act (roadmap 338)
 
-`coarseItemTap.ts` owns the touch contract, shared by `DropdownItem`, the item
-manager rows and `ContextMenuItem`:
+`coarseItemTap.ts` owns the touch contract, shared by `Button`, `DropdownItem`,
+the item manager rows and `ContextMenuItem`:
 
-- **A row acts on `pointerup`** (still press, <8px move, <900ms). The action
-  runs, a synthetic `el.click()` lets Radix close the surface, and the real
-  click is swallowed once. A swallowed/late click never costs a second tap.
+- **A control acts on `pointerup`** (still press, <14px move, <900ms). For
+  rows the action runs, a synthetic `el.click()` lets Radix close the surface,
+  and the real click is swallowed once. For `Button` the synthetic click is
+  the activation itself (the consumer's own onClick), so **every kit button
+  works even when iOS never dispatches a click** — the trace showed dropped
+  clicks with identical coordinates, no movement and no blocked main thread.
 - **A click only acts if that same row received this gesture's pointerdown**
   (`useGhostClick`). iOS may deliver a tap's click LATE — after its
   tap-to-hover deferral, or after hit-testing changed because the nested card
@@ -269,6 +272,12 @@ manager rows and `ContextMenuItem`:
   dismissal either: on touch Radix defers outside-dismissal to the click, and
   that deferred click closed a just-reopened menu (the other half of "tap,
   nothing happens, tap again").
+- **Label morph on touch is opt-in.** `TabFace` defaults to state-driven
+  reveals only (`fine:`-gated hover geometry) because a hover reflow can drop
+  a click. `Button` passes `coarseReveal` (its own `touchReveal`, default
+  true) because it activates on pointerup and is therefore immune; the morph
+  keeps its 200ms coarse delay. A direct `TabFace` consumer with click-based
+  activation must leave it false.
 
 Regressions: playground `iphone-touch.spec.ts` §"ghost clicks and reopen races
 (338)" (motion ON) + the app's `e2e/iphone-touch.spec.ts` cases 338.

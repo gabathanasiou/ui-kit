@@ -6,6 +6,18 @@
 @source '../../src';
 @import '../../src/styles/tokens.css';
 
+/* Geometry-changing hover is DESKTOP-ONLY (roadmap 337): iOS drops a tap's
+   click when the page reflows mid-gesture. The collapsing tab faces
+   (`TabFace`, and everything built on `Button collapse`) reveal on hover only
+   behind this variant. Consumers must define it too — the app's index.css
+   does. (The app also makes `hover:` un-gated for iOS tap-to-hover; the
+   playground keeps Tailwind's default.) */
+@custom-variant fine {
+  @media (pointer: fine) {
+    @slot;
+  }
+}
+
 /* The app's recipe: kit menus portal to document.body at z-[200] — beneath
    the modal overlay (z-9999) — so any dropdown opened inside a Modal would
    be unclickable. Raise to the in-modal menu layer (app index.css does the

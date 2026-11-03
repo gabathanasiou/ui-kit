@@ -66,8 +66,7 @@ future apps). The kit ships a committed `dist/`; consumers pin a github tag.
   reflows. Colour/opacity is fine; width/height/padding/grid-track is not.
   TabFace delays its `0fr↔1fr` reveal 200ms on coarse (`delay-200`); app geometry
   reveals use the `fine:` variant.
-- **Menu rows act on the TAP** (`coarseItemTap.ts`): pointerup fires the action,
-  a synthetic click closes via Radix, the real click is swallowed once.
+- **Every control acts on the TAP** (`coarseItemTap.ts`): coarse pointerup activates (14px slop, click swallowed); rows let Radix close.
 - **Ghost clicks (338)**: a click acts only if the SAME row got this gesture's
   pointerdown (iOS may deliver it late, after a nested card replaced the row
   under the finger); reopens during a close morph end at the natural state.

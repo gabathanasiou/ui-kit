@@ -29,7 +29,10 @@ import { IS_COARSE } from './device';
  * pointer-up activation is gated on pointerType === 'touch'. A drag larger
  * than 8px is a scroll, never a row action. */
 
-const MOVE_TOLERANCE = 8;
+/* Tap slop: a finger tap drifts. 8px was too strict — a 10px drift read as a
+ * scroll, so the control never activated (and the click was swallowed). 14px
+ * still separates a real swipe/scroll. */
+const MOVE_TOLERANCE = 14;
 const MAX_PRESS_MS = 900;
 /** A click arriving later than this is a new gesture, not the same tap. */
 const CLICK_WINDOW_MS = 1000;
@@ -104,6 +107,25 @@ export function useCoarseItemTap(activate: () => void, disabled = false): Coarse
   const downRef = useRef<{ x: number; y: number; t: number; doc: Document } | null>(null);
   const activatedAtRef = useRef(0);
 
+  /** Swallow the next click on this gesture's document (once). */
+  const swallowNextClick = (doc: Document) => {
+    let timer = 0;
+    const cleanup = () => {
+      doc.removeEventListener('click', swallow, true);
+      doc.removeEventListener('pointerdown', onNextPointerDown, true);
+      if (timer) window.clearTimeout(timer);
+    };
+    const swallow = (event: MouseEvent) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      cleanup();
+    };
+    const onNextPointerDown = () => cleanup();
+    doc.addEventListener('click', swallow, true);
+    doc.addEventListener('pointerdown', onNextPointerDown, true);
+    timer = window.setTimeout(cleanup, 600);
+  };
+
   const onPointerDown = (e: React.PointerEvent) => {
     if (!IS_COARSE || disabled || e.pointerType !== 'touch') return;
     downRef.current = { x: e.clientX, y: e.clientY, t: Date.now(), doc: e.currentTarget.ownerDocument };
@@ -113,8 +135,15 @@ export function useCoarseItemTap(activate: () => void, disabled = false): Coarse
     if (!IS_COARSE || disabled || e.pointerType !== 'touch') return;
     const down = downRef.current;
     downRef.current = null;
-    if (!down || Date.now() - down.t > MAX_PRESS_MS) return;
-    if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > MOVE_TOLERANCE) return;
+    if (!down) return;
+    /* A drag is a SCROLL: never act on pointerup, and eat the click the
+       browser may still synthesize after the drag (it would otherwise switch
+       a tab / press a control the finger was scrolling past). */
+    if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > MOVE_TOLERANCE) {
+      swallowNextClick(down.doc);
+      return;
+    }
+    if (Date.now() - down.t > MAX_PRESS_MS) return;
     activatedAtRef.current = Date.now();
     const el = e.currentTarget as HTMLElement;
     activate();
@@ -124,21 +153,7 @@ export function useCoarseItemTap(activate: () => void, disabled = false): Coarse
        default. Then swallow the browser's real click — by now the row may be
        unmounted and it would land on the app underneath. */
     el.click();
-    let timer = 0;
-    const cleanup = () => {
-      down.doc.removeEventListener('click', swallow, true);
-      down.doc.removeEventListener('pointerdown', onNextPointerDown, true);
-      if (timer) window.clearTimeout(timer);
-    };
-    const swallow = (event: MouseEvent) => {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      cleanup();
-    };
-    const onNextPointerDown = () => cleanup();
-    down.doc.addEventListener('click', swallow, true);
-    down.doc.addEventListener('pointerdown', onNextPointerDown, true);
-    timer = window.setTimeout(cleanup, 600);
+    swallowNextClick(down.doc);
   };
 
   const onPointerCancel = () => { downRef.current = null; };

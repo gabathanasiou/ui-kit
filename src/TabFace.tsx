@@ -29,6 +29,11 @@ export interface TabFaceProps {
   collapse?: boolean;
   iconWithLabel?: boolean;
   active?: boolean;
+  /** Opt back into the hover/active label morph on COARSE pointers (delayed
+   *  200ms so it starts after the tap is handled). Only pass this when the
+   *  control activates on pointerup (the kit `Button` does) — a click-only
+   *  control must keep the safe state-driven reveal. */
+  coarseReveal?: boolean;
   /** Icon ↔ label gap in px (the caller's coarse-scaled value). */
   gap?: number;
   /** Width shim: rendered invisibly beside the label so the tab keeps the
@@ -41,15 +46,20 @@ export interface TabFaceProps {
   children?: React.ReactNode;
 }
 
-const MOTION = 'transition-[grid-template-columns] ease-out duration-150 group-hover:duration-200 motion-reduce:transition-none';
-/* Coarse pointers (iPhone): iOS suppresses a tap's click when the page
-   REFLOWS during its synthetic mousemove. The label/icon grid changes are
-   layout, so hold them for 200ms — the tap acts first, then the reveal
-   animates. The icon → hover text → click text model is unchanged. */
-const LAYOUT_DELAY = IS_COARSE ? ' delay-200' : '';
-const LABEL_STATES = 'group-hover:grid-cols-[1fr] group-focus-visible:grid-cols-[1fr] group-active:grid-cols-[1fr] group-data-[state=open]:grid-cols-[1fr]';
-const ICON_HIDDEN_STATES = 'group-hover:grid-cols-[0fr] group-focus-visible:grid-cols-[0fr] group-active:grid-cols-[0fr] group-data-[state=open]:grid-cols-[0fr]';
-const LABEL_SHOWN_STATES = 'group-hover:opacity-100 group-focus-visible:opacity-100 group-active:opacity-100 group-data-[state=open]:opacity-100';
+const MOTION = 'transition-[grid-template-columns] ease-out duration-150 motion-reduce:transition-none';
+/* Coarse pointers and geometry (roadmap 337/338). A label that expands on
+   :hover/:active reflows the page mid-gesture, and iOS drops the tap's click
+   when that happens — so the SAFE default is `fine:`-only hover geometry
+   (state-driven reveals only). A consumer whose activation no longer depends
+   on the click (the kit `Button` activates on pointerup) can opt back into the
+   touch morph with `coarseReveal`: same reveal, but delayed 200ms so it starts
+   after the tap has already been handled. */
+const LABEL_STATES_SAFE = 'group-focus-visible:grid-cols-[1fr] group-data-[state=open]:grid-cols-[1fr] fine:group-hover:grid-cols-[1fr] fine:group-active:grid-cols-[1fr]';
+const ICON_HIDDEN_STATES_SAFE = 'group-focus-visible:grid-cols-[0fr] group-data-[state=open]:grid-cols-[0fr] fine:group-hover:grid-cols-[0fr] fine:group-active:grid-cols-[0fr]';
+const LABEL_SHOWN_STATES_SAFE = 'group-focus-visible:opacity-100 group-data-[state=open]:opacity-100 fine:group-hover:opacity-100 fine:group-active:opacity-100';
+const LABEL_STATES_COARSE = 'group-hover:grid-cols-[1fr] group-focus-visible:grid-cols-[1fr] group-active:grid-cols-[1fr] group-data-[state=open]:grid-cols-[1fr]';
+const ICON_HIDDEN_STATES_COARSE = 'group-hover:grid-cols-[0fr] group-focus-visible:grid-cols-[0fr] group-active:grid-cols-[0fr] group-data-[state=open]:grid-cols-[0fr]';
+const LABEL_SHOWN_STATES_COARSE = 'group-hover:opacity-100 group-focus-visible:opacity-100 group-active:opacity-100 group-data-[state=open]:opacity-100';
 
 /** Stable-enough identity for a React icon node: a new element object is
  *  created on every render, so a reference check would re-animate constantly.
@@ -62,8 +72,13 @@ function iconSignature(node: React.ReactNode): string {
   return `${name}|${props.className ?? ''}|${props.size ?? ''}`;
 }
 
-export function TabFace({ icon, collapse = false, iconWithLabel = true, active = false, gap = 6, reserve, roll = 'up', children }: TabFaceProps) {
+export function TabFace({ icon, collapse = false, iconWithLabel = true, active = false, gap = 6, reserve, roll = 'up', coarseReveal = false, children }: TabFaceProps) {
   const collapsible = !!collapse && !!icon;
+  const touchMorph = coarseReveal && IS_COARSE;
+  const LAYOUT_DELAY = touchMorph ? ' delay-200' : '';
+  const LABEL_STATES = touchMorph ? LABEL_STATES_COARSE : LABEL_STATES_SAFE;
+  const ICON_HIDDEN_STATES = touchMorph ? ICON_HIDDEN_STATES_COARSE : ICON_HIDDEN_STATES_SAFE;
+  const LABEL_SHOWN_STATES = touchMorph ? LABEL_SHOWN_STATES_COARSE : LABEL_SHOWN_STATES_SAFE;
   const swap = collapsible && !iconWithLabel;
   const showIcon = !!icon && (iconWithLabel || collapsible);
 
@@ -130,7 +145,7 @@ export function TabFace({ icon, collapse = false, iconWithLabel = true, active =
         <span className="min-w-0 overflow-hidden">
           <span
             className={`flex min-w-0 items-center whitespace-nowrap transition-[opacity,padding-left] duration-100 group-hover:duration-150 motion-reduce:transition-none ${active ? 'opacity-100' : `opacity-0 ${LABEL_SHOWN_STATES}`} ${swap
-              ? `pl-[var(--kit-collapse-gap)] group-hover:pl-0! group-focus-visible:pl-0! group-active:pl-0! group-data-[state=open]:pl-0! ${active ? 'pl-0!' : ''}`
+              ? `pl-[var(--kit-collapse-gap)] group-focus-visible:pl-0! group-data-[state=open]:pl-0! ${touchMorph ? 'group-hover:pl-0! group-active:pl-0!' : 'fine:group-hover:pl-0! fine:group-active:pl-0!'} ${active ? 'pl-0!' : ''}`
               : ''}`}
             style={swap ? ({ '--kit-collapse-gap': `${gap}px` } as React.CSSProperties) : { paddingLeft: gap }}
           >

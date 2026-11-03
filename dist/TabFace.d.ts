@@ -26,6 +26,11 @@ export interface TabFaceProps {
     collapse?: boolean;
     iconWithLabel?: boolean;
     active?: boolean;
+    /** Opt back into the hover/active label morph on COARSE pointers (delayed
+     *  200ms so it starts after the tap is handled). Only pass this when the
+     *  control activates on pointerup (the kit `Button` does) — a click-only
+     *  control must keep the safe state-driven reveal. */
+    coarseReveal?: boolean;
     /** Icon ↔ label gap in px (the caller's coarse-scaled value). */
     gap?: number;
     /** Width shim: rendered invisibly beside the label so the tab keeps the
@@ -37,4 +42,4 @@ export interface TabFaceProps {
     roll?: 'up' | 'down';
     children?: React.ReactNode;
 }
-export declare function TabFace({ icon, collapse, iconWithLabel, active, gap, reserve, roll, children }: TabFaceProps): React.JSX.Element;
+export declare function TabFace({ icon, collapse, iconWithLabel, active, gap, reserve, roll, coarseReveal, children }: TabFaceProps): React.JSX.Element;
