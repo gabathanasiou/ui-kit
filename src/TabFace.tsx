@@ -73,14 +73,22 @@ function iconSignature(node: React.ReactNode): string {
 }
 
 export function TabFace({ icon, collapse = false, iconWithLabel = true, active = false, gap = 6, reserve, roll = 'up', coarseReveal = false, children }: TabFaceProps) {
-  const collapsible = !!collapse && !!icon;
+  const hasIcon = !!icon;
   const touchMorph = coarseReveal && IS_COARSE;
   const LAYOUT_DELAY = touchMorph ? ' delay-200' : '';
   const LABEL_STATES = touchMorph ? LABEL_STATES_COARSE : LABEL_STATES_SAFE;
   const ICON_HIDDEN_STATES = touchMorph ? ICON_HIDDEN_STATES_COARSE : ICON_HIDDEN_STATES_SAFE;
   const LABEL_SHOWN_STATES = touchMorph ? LABEL_SHOWN_STATES_COARSE : LABEL_SHOWN_STATES_SAFE;
-  const swap = collapsible && !iconWithLabel;
-  const showIcon = !!icon && (iconWithLabel || collapsible);
+  /* Dock/undock is a CONTINUOUS grid transition (roadmap 258): the SAME
+     label/icon columns exist whether `collapse` is on or off, so flipping the
+     toolbar into icon mode animates instead of swapping the DOM and snapping.
+     `collapse` only decides the label's resting state:
+       - undocked: the label is pinned open (the icon hides in swap mode);
+       - docked:   the label opens for active/hover/focus/open intents. */
+  const swap = hasIcon && !iconWithLabel;
+  const docked = !!collapse;
+  const labelOpen = active || !docked;
+  const iconOpen = !swap || (docked && !active);
 
   /* Icon-change animation: when the icon node MEANINGFULLY changes (Pencil →
      Check) the old glyph rolls out and the new one rolls in. Driven from a
@@ -121,31 +129,23 @@ export function TabFace({ icon, collapse = false, iconWithLabel = true, active =
     </span>
   );
 
-  /* No collapsing surface: the shell's own flex layout draws the face
-     (plain labeled buttons keep their exact previous DOM). */
-  if (!collapsible) {
-    return (
-      <>
-        {showIcon && <span data-kit-icon className="shrink-0 inline-flex items-center justify-center">{icon}</span>}
-        {children}
-      </>
-    );
-  }
+  /* No icon: the shell's own flex layout draws the face. */
+  if (!hasIcon) return <>{children}</>;
 
   return (
     <>
-      {showIcon && (swap ? (
-        <span data-kit-icon className={`grid min-w-0 ${MOTION}${LAYOUT_DELAY} ${active ? 'grid-cols-[0fr]' : `grid-cols-[1fr] ${ICON_HIDDEN_STATES}`}`}>
+      {swap ? (
+        <span data-kit-icon className={`grid min-w-0 ${MOTION}${LAYOUT_DELAY} ${iconOpen ? `grid-cols-[1fr] ${ICON_HIDDEN_STATES}` : 'grid-cols-[0fr]'}`}>
           <span className="inline-flex min-w-0 items-center overflow-hidden">{iconFace}</span>
         </span>
       ) : (
         <span data-kit-icon className="shrink-0 inline-flex items-center justify-center">{iconFace}</span>
-      ))}
-      <span data-kit-label className={`grid min-w-0 ${MOTION}${LAYOUT_DELAY} ${active ? 'grid-cols-[1fr]' : `grid-cols-[0fr] ${LABEL_STATES}`}`}>
+      )}
+      <span data-kit-label className={`grid min-w-0 ${MOTION}${LAYOUT_DELAY} ${labelOpen ? 'grid-cols-[1fr]' : `grid-cols-[0fr] ${LABEL_STATES}`}`}>
         <span className="min-w-0 overflow-hidden">
           <span
-            className={`flex min-w-0 items-center whitespace-nowrap transition-[opacity,padding-left] duration-100 group-hover:duration-150 motion-reduce:transition-none ${active ? 'opacity-100' : `opacity-0 ${LABEL_SHOWN_STATES}`} ${swap
-              ? `pl-[var(--kit-collapse-gap)] group-focus-visible:pl-0! group-data-[state=open]:pl-0! ${touchMorph ? 'group-hover:pl-0! group-active:pl-0!' : 'fine:group-hover:pl-0! fine:group-active:pl-0!'} ${active ? 'pl-0!' : ''}`
+            className={`flex min-w-0 items-center whitespace-nowrap transition-[opacity,padding-left] duration-100 group-hover:duration-150 motion-reduce:transition-none ${labelOpen ? 'opacity-100' : `opacity-0 ${LABEL_SHOWN_STATES}`} ${swap
+              ? `pl-[var(--kit-collapse-gap)] group-focus-visible:pl-0! group-data-[state=open]:pl-0! ${touchMorph ? 'group-hover:pl-0! group-active:pl-0!' : 'fine:group-hover:pl-0! fine:group-active:pl-0!'} ${labelOpen ? 'pl-0!' : ''}`
               : ''}`}
             style={swap ? ({ '--kit-collapse-gap': `${gap}px` } as React.CSSProperties) : { paddingLeft: gap }}
           >

@@ -95,7 +95,9 @@ const SPEC_CAP = 21;
 //       ghost.
 // 149 = 148 + the morphing trigger anchor: a right-aligned collapsing trigger
 //       moves when it expands and the menu must follow its FINAL box.
-const TEST_CAP = 149;
+// 150 = 149 + the dock transition: icon-docking must animate the label column,
+//       not swap the DOM and snap.
+const TEST_CAP = 150;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

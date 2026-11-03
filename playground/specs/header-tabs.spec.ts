@@ -74,3 +74,40 @@ test('together mode (toggle): the icon returns beside the active label', async (
   /* Resting tabs stay collapsed in together mode. */
   expect(await labelW(rules)).toBeLessThan(1);
 });
+
+test.describe('dock transition (real motion)', () => {
+  test.use({ contextOptions: { reducedMotion: 'no-preference' } });
+
+  /* Turning the row into icons must ANIMATE the label columns, not swap the
+     DOM (the old non-collapsible branch snapped to icons in one frame). */
+  test('docking animates the label column instead of snapping', async ({ page }) => {
+    await page.goto('/');
+    const tab = page.getByTestId('header-tab-breakdown');
+    const width = () => tab.evaluate(el => el.getBoundingClientRect().width);
+    // Start undocked (labels) and let that expansion settle.
+    await page.getByTestId('header-tabs-collapse-toggle').click();
+    await expect.poll(width).toBeGreaterThan(60);
+    const start = await width();
+    // Dock, sampling every frame (rAF — no fixed waits).
+    const samples = await page.evaluate(async () => {
+      const t = document.querySelector('[data-testid="header-tab-breakdown"]')!;
+      const toggle = document.querySelector('[data-testid="header-tabs-collapse-toggle"]') as HTMLElement;
+      const out: number[] = [];
+      toggle.click();
+      await new Promise<void>(resolve => {
+        const t0 = performance.now();
+        const tick = () => {
+          out.push(t.getBoundingClientRect().width);
+          if (performance.now() - t0 < 400) requestAnimationFrame(tick);
+          else resolve();
+        };
+        requestAnimationFrame(tick);
+      });
+      return out;
+    });
+    const end = samples[samples.length - 1];
+    expect(end).toBeLessThan(start - 20);
+    const mid = samples.filter(n => n < start - 4 && n > end + 4);
+    expect(mid.length, `mid-transition widths (start ${Math.round(start)}, end ${Math.round(end)}, samples ${samples.map(n => Math.round(n))})`).toBeGreaterThan(0);
+  });
+});

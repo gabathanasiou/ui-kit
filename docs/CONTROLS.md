@@ -240,6 +240,13 @@ Any node can be a `DropdownMenu` trigger, including a collapsing icon Button:
 - The menu is **controlled** (`open` / `onOpenChange`); the positioner needs
   that state. Radix writes `data-state="open"`, which keeps the trigger's box
   open while the menu is up.
+- **Dock/undock is ONE continuous grid transition.** `TabFace` renders the same
+  label/icon columns whether `collapse` is on or off — `collapse` only changes
+  the label's resting state (undocked = pinned open; docked = opens for
+  active/hover/focus/open). Never branch the DOM on `collapse`: swapping to a
+  plain flex face makes the row snap to icons instead of animating. The face
+  owns the icon↔label gap whenever an icon is present (`Button` sets the shell
+  gap to 0), and the coarse delay applies only to the touch morph.
 - **Submenus inherit the parent's resolved tokens at any depth**
   (`DropdownThemeAttrsContext`: `data-theme` / `data-mode` / `data-accent`) —
   a nested menu in an emerald project stays emerald. Never give a submenu its

@@ -303,11 +303,15 @@ export default function Button({
      `group` for the hover/focus/open reveal, and gap 0 while collapsing (the
      face owns the icon↔label spacing then). */
   const collapsible = !!collapse && !!icon && !iconOnly;
+  /* The face owns the icon↔label gap whenever it renders a grid (icon
+     present), including the UNDOCKED state — the dock animation needs the same
+     structure in both modes. */
+  const faceOwnsGap = !!icon && !iconOnly;
   const sizing: React.CSSProperties = iconOnly
     ? { width: iconDim, height: iconDim, padding: 0, gap: 0 }
     : sizeProp === 'minimal'
-      ? { ...minimalSize, gap: collapsible ? 0 : gap }
-      : { ...variantSize, gap: collapsible ? 0 : gap };
+      ? { ...minimalSize, gap: faceOwnsGap ? 0 : gap }
+      : { ...variantSize, gap: faceOwnsGap ? 0 : gap };
   /* Coarse pointers: the button ACTIVATES ON THE TAP (pointerup), never on the
      click (roadmap 338). iOS drops clicks on toolbar controls intermittently —
      no movement, no overlay, no long task — which read as "the button needs a
@@ -323,7 +327,7 @@ export default function Button({
       data-accent={kit?.accent}
       data-surface={kit?.surface}
       data-identity-accent={identityAccent}
-      className={`${BASE} ${iconOnly ? 'justify-center' : ''} ${collapsible ? 'group' : ''} ${cls} ${className}`}
+      className={`${BASE} ${iconOnly ? 'justify-center' : ''} ${faceOwnsGap ? 'group' : ''} ${cls} ${className}`}
       /* A toggled base-variant button is a PRESSED toggle: expose it to AT
          (tabs are selections and use aria-selected/current instead). */
       aria-pressed={active && !variant.startsWith('tab') ? true : undefined}
