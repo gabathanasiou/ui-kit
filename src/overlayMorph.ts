@@ -110,11 +110,13 @@ function anchorOf(el: HTMLElement, getAnchor: (() => OverlayRect | null) | null)
  *  correct from the very first visible frame. */
 export function playOverlayOpen(token: Token, el: HTMLElement, getAnchor: (() => OverlayRect | null) | null, onDone?: () => void) {
   const my = ++token.current;
-  const prev = { transition: el.style.transition, transform: el.style.transform, transformOrigin: el.style.transformOrigin, opacity: el.style.opacity };
-  /* A REOPEN can land while the close morph has already pinned the element
-     `visibility:hidden` + `pointer-events:none` (the close timeout wrote them
-     before this open). An OPEN surface is visible and interactive by
-     definition — clear both here and never restore the stale close values. */
+  /* A REOPEN can land while the close morph has pinned the element
+     `visibility:hidden`, `pointer-events:none`, `opacity:0` and a scale
+     transform. An OPEN surface is visible and interactive by definition —
+     clear every close leftover rather than snapshotting it: restoring a stale
+     `opacity:0` when this open finished left the menu mounted, "open", and
+     permanently invisible (the tap-again bug). The OPEN end state is the
+     element's natural state; there is nothing to restore. */
   el.style.visibility = '';
   el.style.pointerEvents = '';
   el.style.transition = 'none';
@@ -133,10 +135,10 @@ export function playOverlayOpen(token: Token, el: HTMLElement, getAnchor: (() =>
       el.style.opacity = '';
       window.setTimeout(() => {
         if (token.current !== my) return;
-        el.style.transition = prev.transition;
-        el.style.transform = prev.transform;
-        el.style.transformOrigin = prev.transformOrigin;
-        el.style.opacity = prev.opacity;
+        el.style.transition = '';
+        el.style.transform = '';
+        el.style.transformOrigin = '';
+        el.style.opacity = '';
         onDone?.();
       }, MORPH_MS + 60);
     });

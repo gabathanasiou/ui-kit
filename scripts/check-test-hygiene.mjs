@@ -87,7 +87,13 @@ const SPEC_CAP = 21;
 // 145 = 144 + the REAL-MOTION nested-card open (335): the parent going
 //       pointer-events:none mid-gesture dismissed the whole menu; reduced
 //       motion never hit it, so the regression needs its own motion-on case.
-const TEST_CAP = 145;
+// 147 = 145 + roadmap 338: a deferred (ghost) click must not activate the row
+//       that replaced the tapped one, and a reopen inside the close morph
+//       must not finish by restoring the close's `opacity: 0`.
+// 148 = 147 + the assistive-tech path: a bare click (no pointerdown) still
+//       activates a row — only a click after a press on another element is a
+//       ghost.
+const TEST_CAP = 148;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

@@ -1,8 +1,7 @@
 # Agent Context — @gabriel/ui-kit
 
-This repo is the design + perfecting ground for the shared interaction
-primitives consumed by **lemon_schedule** (and any future app). The kit ships
-a committed `dist/`; consumers pin a github tag (`github:gabathanasiou/ui-kit#v0.1.x`).
+This repo is the shared interaction primitives for **lemon_schedule** (and
+future apps). The kit ships a committed `dist/`; consumers pin a github tag.
 
 ## Commands
 
@@ -69,6 +68,10 @@ a committed `dist/`; consumers pin a github tag (`github:gabathanasiou/ui-kit#v0
   reveals use the `fine:` variant.
 - **Menu rows act on the TAP** (`coarseItemTap.ts`): pointerup fires the action,
   a synthetic click closes via Radix, the real click is swallowed once.
+- **Ghost clicks (338)**: a click acts only if the SAME row got this gesture's
+  pointerdown (iOS may deliver it late, after a nested card replaced the row
+  under the finger); reopens during a close morph end at the natural state.
+  Detail: `docs/CONTROLS.md` §7.
 
 ## Coarse scaling (touch sizing)
 

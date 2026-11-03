@@ -1069,10 +1069,18 @@ export default function DropdownMenu({
                   onPointerLeave={highlight.pointerLeave}
                   /* A tap inside ANY menu surface (a nested card is portaled as
                      a sibling) is never "outside" this menu — otherwise iOS's
-                     first tap closed the dropdown instead of selecting the row. */
+                     first tap closed the dropdown instead of selecting the row.
+                     The TRIGGER is outside the content DOM too, but its own tap
+                     is this menu's toggle, not a dismissal: on touch Radix
+                     defers this outside-dismissal to the CLICK, so a trigger
+                     tap that REOPENED during the close morph was immediately
+                     closed again by the deferred click (the "tap, nothing
+                     happens, tap again" bug). Let the trigger's own handlers
+                     own opening/closing. */
                   onPointerDownOutside={e => {
                     const target = e.target as Element | null;
                     if (target?.closest('[role="menu"], [data-radix-menu-content]')) e.preventDefault();
+                    if (target && triggerRef.current && triggerRef.current.contains(target)) e.preventDefault();
                   }}
                   /* While a nested card is open, a FOCUS move into it is not
                      an outside dismissal: the child is a separate portal/layer
@@ -1241,6 +1249,8 @@ function ManagerNameItem({
       style={itemSize}
       className={`flex-1 min-w-0 rounded outline-none cursor-pointer flex items-center ${d.rowText} ${isActive ? '' : d.rowTextHover}`}
       onSelect={e => {
+        /* Ghost click: the gesture never started on this row (roadmap 338). */
+        if (tap.takeGhost()) { e.preventDefault(); return; }
         if (tap.suppressSelect()) {
           if (!closeOnSelect) e.preventDefault();
           return;
@@ -1248,6 +1258,7 @@ function ManagerNameItem({
         if (closeOnSelect) onSelect(item.id);
         else { e.preventDefault(); onSelect(item.id); }
       }}
+      onClick={tap.onClick}
       onPointerDown={tap.onPointerDown}
       onPointerUp={tap.onPointerUp}
       onPointerCancel={tap.onPointerCancel}

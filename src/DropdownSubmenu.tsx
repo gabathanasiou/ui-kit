@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useDropdownTheme, useDropdownThemeAttrs, SubmenuContext, MenuHighlightContext, useMenuHighlight, useMenuHighlightState, useMenuKeys, useMenuKeyLock, useMenuWheel } from './DropdownMenu';
 import type { MenuHighlightItem } from './DropdownMenu';
 import { IS_COARSE, useCoarseScale, coarsePx } from './device';
+import { isGhostClick } from './coarseItemTap';
 import { usePortalTarget } from './popout';
 import { useOverlayMorph, playRectMorph, overlayMorphEnabled } from './overlayMorph';
 import { revealRowInScroller } from './revealInScroller';
@@ -99,6 +100,12 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
       if (timer) window.clearTimeout(timer);
     };
     const swallow = (event: MouseEvent) => {
+      const target = event.target as Element | null;
+      /* Menu ROWS own their own click semantics (the per-row ghost guard in
+         coarseItemTap): a deferred click that lands on a row must reach that
+         guard, which decides. This swallow only stops the tap's click from
+         falling through to the app UNDER the replaced card. */
+      if (target?.closest('[role="menuitem"]')) { cleanup(); return; }
       event.preventDefault();
       event.stopImmediatePropagation();
       cleanup();
@@ -376,6 +383,14 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
           }}
           onPointerCancel={() => { triggerDownRef.current = null; }}
           onClick={(e) => {
+            /* Ghost click (roadmap 338): the tap that opened another card (or
+               any earlier gesture) must never reach this row — Radix would
+               focus it and (re)open the submenu. A real click carries this
+               row's own pointerdown. */
+            if (isGhostClick(e.currentTarget, e)) {
+              e.preventDefault();
+              return;
+            }
             /* Accordion (WIP): Radix opens the sub on the first click; the
                second tap on the same header collapses it. Replace never
                closes on a click — the row is gone once its card opens. */

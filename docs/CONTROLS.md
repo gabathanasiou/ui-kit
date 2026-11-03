@@ -245,6 +245,34 @@ Any node can be a `DropdownMenu` trigger, including a collapsing icon Button:
   a nested menu in an emerald project stays emerald. Never give a submenu its
   own theme preset.
 
+### Touch: rows act on the tap, ghosts never act (roadmap 338)
+
+`coarseItemTap.ts` owns the touch contract, shared by `DropdownItem`, the item
+manager rows and `ContextMenuItem`:
+
+- **A row acts on `pointerup`** (still press, <8px move, <900ms). The action
+  runs, a synthetic `el.click()` lets Radix close the surface, and the real
+  click is swallowed once. A swallowed/late click never costs a second tap.
+- **A click only acts if that same row received this gesture's pointerdown**
+  (`useGhostClick`). iOS may deliver a tap's click LATE — after its
+  tap-to-hover deferral, or after hit-testing changed because the nested card
+  replaced the row under the finger. Without this guard that click runs the
+  row that happened to appear there (the first child item or Back), which
+  looks like "the nested menu dismissed itself". Ghost clicks are ignored AND
+  `preventDefault`ed, so the surface stays open. `detail === 0`
+  (keyboard `.click()`), a focused row (VoiceOver activates with a bare click)
+  and mouse/pen clicks are never ghosts.
+- **Reopen during a close morph ends at the natural state.** `playOverlayOpen`
+  must never restore a snapshot of the closing element's inline `opacity:0` /
+  scale — the menu stayed mounted, "open" and permanently invisible until the
+  user tapped again. A pointerdown on the menu **trigger** is never an outside
+  dismissal either: on touch Radix defers outside-dismissal to the click, and
+  that deferred click closed a just-reopened menu (the other half of "tap,
+  nothing happens, tap again").
+
+Regressions: playground `iphone-touch.spec.ts` §"ghost clicks and reopen races
+(338)" (motion ON) + the app's `e2e/iphone-touch.spec.ts` cases 338.
+
 ## 8. Playground map
 
 | Section | Demos |

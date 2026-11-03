@@ -182,6 +182,92 @@ test.describe('nested card with REAL motion', () => {
   });
 });
 
+test.describe('ghost clicks and reopen races (338)', () => {
+  test.use({ contextOptions: { reducedMotion: 'no-preference' } });
+
+  /* iOS can deliver the click for a tap LATE (tap-to-hover deferral, or after
+     hit-testing changed). The nested card opens exactly over the row that was
+     tapped, so the deferred click used to land on the row that replaced it
+     (a child item, or Back) and run it — the menu dismissed itself. A click
+     may only act if the SAME row received this gesture's pointerdown. */
+  test('a deferred click never activates the row that replaced the tapped one', async ({ page }) => {
+    await open(page);
+    await caseOf(page, 'dropdown').getByRole('button', { name: 'Menu' }).tap();
+    const more = page.getByRole('menuitem', { name: 'More…' });
+    const box = (await more.boundingBox())!;
+    const pt = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    const pressedAt = await page.evaluate(() => performance.now());
+    // A tap as the iOS tap-to-hover model delivers it: no click.
+    await more.evaluate((el, p) => {
+      for (const type of ['pointerdown', 'pointerup']) {
+        el.dispatchEvent(new PointerEvent(type, {
+          bubbles: true, cancelable: true, pointerType: 'touch', pointerId: 1,
+          isPrimary: true, button: 0, buttons: type === 'pointerdown' ? 1 : 0,
+          clientX: p.x, clientY: p.y,
+        }));
+      }
+    }, pt);
+    const nested = page.getByRole('menuitem', { name: 'Nested A' });
+    await expect(nested).toBeVisible();
+
+    // Once the parent card is inert (320ms), the child card covers the tapped
+    // row: this point now hits a DIFFERENT row (the premise of the bug).
+    await page.waitForFunction(() => !!document.querySelector('[data-submenu-inert]'), null, { timeout: 2000 });
+    const rowUnderFinger = await page.evaluate((p) => {
+      const el = document.elementFromPoint(p.x, p.y) as HTMLElement | null;
+      return el?.closest('[role="menuitem"]')?.textContent?.trim() ?? null;
+    }, pt);
+    expect(rowUnderFinger).not.toBe('More…');
+
+    // The deferred click, landing on the row that replaced the tapped one. It
+    // arrives AFTER the one-shot 600ms swallow expires but inside the ghost
+    // window — only the per-row guard can stop it (the old 600ms swallow did
+    // not, which is the bug).
+    await page.waitForFunction((t) => performance.now() > t, pressedAt + 750);
+    await page.evaluate((p) => {
+      const el = document.elementFromPoint(p.x, p.y) as HTMLElement | null;
+      el?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1, clientX: p.x, clientY: p.y }));
+    }, pt);
+
+    await expect(nested).toBeVisible();
+    await expect(stateOf(page, 'dropdown')).toContainText('pick: —');
+  });
+
+  /* Assistive tech activation is a BARE click (no pointerdown). It must still
+     work: only a click that follows a press on a DIFFERENT element is a ghost. */
+  test('a bare click with no pointerdown still activates the row (VoiceOver)', async ({ page }) => {
+    await open(page);
+    await caseOf(page, 'dropdown').getByRole('button', { name: 'Menu' }).tap();
+    const item = page.getByRole('menuitem', { name: 'Second item' });
+    await expect(item).toBeVisible();
+    await item.evaluate((el) => {
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }));
+    });
+    await expect(stateOf(page, 'dropdown')).toContainText('pick: Second');
+    await expect(page.locator('[role="menu"]')).toHaveCount(0, { timeout: 2000 });
+  });
+
+  /* A reopen landing inside the close morph used to finish the open by
+     restoring the close's inline `opacity: 0`: the menu stayed mounted,
+     "open" and permanently invisible until the user tapped again. */
+  test('a reopen during the close morph leaves a painted, interactive panel', async ({ page }) => {
+    await open(page);
+    const trigger = caseOf(page, 'dropdown').getByRole('button', { name: 'Menu' });
+    for (let i = 0; i < 6; i++) {
+      await trigger.tap();
+      await trigger.tap();
+      await trigger.tap();
+      await expect.poll(
+        () => page.locator('[role="menu"]').first().evaluate(el => Number(getComputedStyle(el).opacity)),
+        { timeout: 2000, message: `round ${i}: three taps must leave a painted menu` },
+      ).toBe(1);
+      await page.getByRole('menuitem', { name: 'First item' }).tap();
+      await expect(stateOf(page, 'dropdown')).toContainText('pick: First');
+      await expect(page.locator('[role="menu"]')).toHaveCount(0, { timeout: 2000 });
+    }
+  });
+});
+
 test('NumberInput: a chevron tap steps the value (pointerdown default must not eat the click)', async ({ page }) => {
   await open(page);
   const tile = caseOf(page, 'number-input');

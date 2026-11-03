@@ -8,6 +8,7 @@ import { registerOverlayClose } from './overlayRegistry';
 import DropdownSubmenu from './DropdownSubmenu';
 import { useKitTheme, menuAttributesOf } from './ThemeScope';
 import { revealRowInScroller } from './revealInScroller';
+import { useGhostClick } from './coarseItemTap';
 import { visualViewportBox, safeAreaInsets } from './menuMetrics';
 import {
   DropdownThemeContext, DropdownThemeAttrsContext, SubmenuContext, MenuHighlightContext, useMenuHighlight,
@@ -219,6 +220,9 @@ export const ContextMenuItem: React.FC<{
   const apiRef = useRef(api);
   apiRef.current = api;
   const selfRef = useRef<MenuHighlightItem | null>(null);
+  /* Ghost-click guard (roadmap 338): a late click from the tap that opened a
+     nested card must not run the row it happened to land on. */
+  const ghost = useGhostClick();
 
   useEffect(() => {
     const self: MenuHighlightItem = { label: menuItemLabel(children), activate: () => { if (!disabled) onClick(); } };
@@ -233,7 +237,11 @@ export const ContextMenuItem: React.FC<{
   return (
     <RadixDropdownMenu.Item
       data-ei={myIndex >= 0 ? myIndex : undefined}
-      onClick={disabled ? undefined : onClick}
+      onClick={(e) => {
+        if (disabled) return;
+        if (ghost.takeGhost()) { e.preventDefault(); return; }
+        onClick();
+      }}
       onPointerEnter={() => { if (!disabled && api && myIndex >= 0) api.setHighlighted(myIndex, 'pointer'); }}
       onTouchStart={() => {}}
       disabled={disabled}

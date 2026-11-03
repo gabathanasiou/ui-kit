@@ -154,6 +154,11 @@ export default function DropdownItem({
         style={{ ...itemSize, display: hidden ? 'none' : undefined }} className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${variantStyles} ${inSelection ? '' : (selected ? 'ui-item-selected' : '')} ${highlighted ? 'ui-item-highlighted' : ''} ${rowDisabled ? 'opacity-30 pointer-events-none' : ''} ${className}`}
         onSelect={(e) => {
           if (skipClickRef.current) { skipClickRef.current = false; return; }
+          /* Ghost click (roadmap 338): iOS may deliver the click for a tap
+             after the card under the finger has been replaced, so it lands on
+             a row this gesture never touched. Ignore it AND prevent the
+             select — the surface must stay open, not dismiss itself. */
+          if (coarseTap.takeGhost()) { e.preventDefault(); return; }
           /* Coarse: the pointerup already ran the action; its synthetic click
              is here only so Radix closes the surface. Keep-open rows and the
              multi-select draft must not close, so they prevent the default. */
@@ -170,6 +175,7 @@ export default function DropdownItem({
           }
           if (keepOpen) e.preventDefault(); onClick();
         }}
+        onClick={coarseTap.onClick}
         onPointerDown={coarseTap.onPointerDown}
         onPointerUp={coarseTap.onPointerUp}
         onPointerCancel={coarseTap.onPointerCancel}
