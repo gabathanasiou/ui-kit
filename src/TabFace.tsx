@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
+import { IS_COARSE } from './device';
 
 /**
  * The icon ↔ label face of a tab (roadmap 258) — the collapsing mechanics,
@@ -41,6 +42,11 @@ export interface TabFaceProps {
 }
 
 const MOTION = 'transition-[grid-template-columns] ease-out duration-150 group-hover:duration-200 motion-reduce:transition-none';
+/* Coarse pointers (iPhone): iOS suppresses a tap's click when the page
+   REFLOWS during its synthetic mousemove. The label/icon grid changes are
+   layout, so hold them for 200ms — the tap acts first, then the reveal
+   animates. The icon → hover text → click text model is unchanged. */
+const LAYOUT_DELAY = IS_COARSE ? ' delay-200' : '';
 const LABEL_STATES = 'group-hover:grid-cols-[1fr] group-focus-visible:grid-cols-[1fr] group-active:grid-cols-[1fr] group-data-[state=open]:grid-cols-[1fr]';
 const ICON_HIDDEN_STATES = 'group-hover:grid-cols-[0fr] group-focus-visible:grid-cols-[0fr] group-active:grid-cols-[0fr] group-data-[state=open]:grid-cols-[0fr]';
 const LABEL_SHOWN_STATES = 'group-hover:opacity-100 group-focus-visible:opacity-100 group-active:opacity-100 group-data-[state=open]:opacity-100';
@@ -114,13 +120,13 @@ export function TabFace({ icon, collapse = false, iconWithLabel = true, active =
   return (
     <>
       {showIcon && (swap ? (
-        <span data-kit-icon className={`grid min-w-0 ${MOTION} ${active ? 'grid-cols-[0fr]' : `grid-cols-[1fr] ${ICON_HIDDEN_STATES}`}`}>
+        <span data-kit-icon className={`grid min-w-0 ${MOTION}${LAYOUT_DELAY} ${active ? 'grid-cols-[0fr]' : `grid-cols-[1fr] ${ICON_HIDDEN_STATES}`}`}>
           <span className="inline-flex min-w-0 items-center overflow-hidden">{iconFace}</span>
         </span>
       ) : (
         <span data-kit-icon className="shrink-0 inline-flex items-center justify-center">{iconFace}</span>
       ))}
-      <span data-kit-label className={`grid min-w-0 ${MOTION} ${active ? 'grid-cols-[1fr]' : `grid-cols-[0fr] ${LABEL_STATES}`}`}>
+      <span data-kit-label className={`grid min-w-0 ${MOTION}${LAYOUT_DELAY} ${active ? 'grid-cols-[1fr]' : `grid-cols-[0fr] ${LABEL_STATES}`}`}>
         <span className="min-w-0 overflow-hidden">
           <span
             className={`flex min-w-0 items-center whitespace-nowrap transition-[opacity,padding-left] duration-100 group-hover:duration-150 motion-reduce:transition-none ${active ? 'opacity-100' : `opacity-0 ${LABEL_SHOWN_STATES}`} ${swap

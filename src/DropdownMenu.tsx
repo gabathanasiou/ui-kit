@@ -6,6 +6,7 @@ import { usePortalTarget, useCurrentDocument } from './popout';
 import { IS_COARSE, getCoarseScale, useCoarseScale, coarsePx } from './device';
 import { useOverlayMorph } from './overlayMorph';
 import { useDropdownPosition, DROPDOWN_MAX_HEIGHT } from './useDropdownPosition';
+import { useCoarseItemTap } from './coarseItemTap';
 import { registerOverlayClose } from './overlayRegistry';
 import { useKitTheme, menuAttributesOf } from './ThemeScope';
 import { revealRowInScroller, useRevealRowOnOpen } from './revealInScroller';
@@ -687,9 +688,10 @@ export default function DropdownMenu({
       if (contentElRef.current && contentElRef.current.contains(t)) return;
       if (triggerRef.current && triggerRef.current.contains(t)) return;
       /* An open submenu's content portals as a SIBLING of the root content —
-         exclude it too so a tap inside a submenu item still selects it (Radix
-         Content and SubContent both carry `data-radix-menu-content`). */
-      if (t instanceof Element && t.closest('[data-radix-menu-content]')) return;
+         exclude EVERY menu surface so a tap inside a nested item still
+         selects it (Radix Content/SubContent carry `data-radix-menu-content`;
+         `role=menu` + the popper wrapper cover older/other surfaces too). */
+      if (t instanceof Element && t.closest('[role="menu"], [data-radix-menu-content], [data-radix-popper-content-wrapper]')) return;
       onOpenChange?.(false);
       onClose?.();
     };
@@ -945,6 +947,12 @@ export default function DropdownMenu({
                native combobox model). Never on an already-open field: there
                the click is caret placement. */
             if (!wasOpen && el instanceof HTMLInputElement) el.select();
+          } else if (!openRef.current && persistedRef.current && !closeFromTriggerPointerDownRef.current) {
+            /* Reopen during the close morph — from the POINTERDOWN, not the
+               click. Touch triggers (and the PageToolbar guard) never deliver
+               that click, so a fast "pick, then reopen" used to leave the
+               menu stuck invisible until the morph finished. */
+            onOpenChange?.(true);
           }
         },
         /* Space is a printable search character, but Radix treats it as the
@@ -1059,6 +1067,22 @@ export default function DropdownMenu({
                     visibility: pos.ready ? 'visible' : 'hidden',
                   }}
                   onPointerLeave={highlight.pointerLeave}
+                  /* A tap inside ANY menu surface (a nested card is portaled as
+                     a sibling) is never "outside" this menu — otherwise iOS's
+                     first tap closed the dropdown instead of selecting the row. */
+                  onPointerDownOutside={e => {
+                    const target = e.target as Element | null;
+                    if (target?.closest('[role="menu"], [data-radix-menu-content]')) e.preventDefault();
+                  }}
+                  /* While a nested card is open, a FOCUS move into it is not
+                     an outside dismissal: the child is a separate portal/layer
+                     but still part of this menu. Radix only checks DOM
+                     branches here, so the root used to close the moment the
+                     submenu card took focus on touch. Pointer-down dismissals
+                     are still handled (and guarded to menu targets above). */
+                  onInteractOutside={e => {
+                    if (e.type === 'dismissableLayer.focusOutside' && subChain.length > 0) e.preventDefault();
+                  }}
                   /* Trigger-as-search: the field owns the keyboard. Anything
                      that focuses the menu (Radix's open autofocus, a stray
                      click) hands it straight back, so typing never dies. */
@@ -1190,6 +1214,48 @@ export interface ItemManagerDropdownProps {
   morph?: boolean;
   /** Passed through to DropdownMenu (popup content classes, e.g. z-index). */
   contentClassName?: string;
+}
+
+/** One manager row's name cell — coarse taps act on pointerup (roadmap 337),
+ *  exactly like DropdownItem, so a swallowed click never costs a second tap. */
+function ManagerNameItem({
+  item,
+  isActive,
+  itemSize,
+  itemRender,
+  closeOnSelect,
+  onSelect,
+  d,
+}: {
+  item: { id: string; name: string };
+  isActive: boolean;
+  itemSize: React.CSSProperties;
+  itemRender?: (item: { id: string; name: string }) => React.ReactNode;
+  closeOnSelect?: boolean;
+  onSelect: (id: string) => void;
+  d: ReturnType<typeof getDropdownClasses>;
+}) {
+  const tap = useCoarseItemTap(() => onSelect(item.id));
+  return (
+    <RadixDropdownMenu.Item
+      style={itemSize}
+      className={`flex-1 min-w-0 rounded outline-none cursor-pointer flex items-center ${d.rowText} ${isActive ? '' : d.rowTextHover}`}
+      onSelect={e => {
+        if (tap.suppressSelect()) {
+          if (!closeOnSelect) e.preventDefault();
+          return;
+        }
+        if (closeOnSelect) onSelect(item.id);
+        else { e.preventDefault(); onSelect(item.id); }
+      }}
+      onPointerDown={tap.onPointerDown}
+      onPointerUp={tap.onPointerUp}
+      onPointerCancel={tap.onPointerCancel}
+      onTouchStart={() => {}}
+    >
+      <span className={`truncate ${isActive ? d.rowActiveText : ''}`}>{itemRender ? itemRender(item) : item.name}</span>
+    </RadixDropdownMenu.Item>
+  );
 }
 
 export function ItemManagerDropdown({
@@ -1423,14 +1489,15 @@ export function ItemManagerDropdown({
               </>
             ) : (
               <>
-                <RadixDropdownMenu.Item
-                  style={itemSize}
-                  className={`flex-1 min-w-0 rounded outline-none cursor-pointer flex items-center ${d.rowText} ${isActive ? '' : d.rowTextHover}`}
-                  onSelect={closeOnSelect ? () => { onSelect(item.id); } : e => { e.preventDefault(); onSelect(item.id); }}
-                  onTouchStart={() => {}}
-                >
-                  <span className={`truncate ${isActive ? d.rowActiveText : ''}`}>{itemRender ? itemRender(item) : item.name}</span>
-                </RadixDropdownMenu.Item>
+                <ManagerNameItem
+                  item={item}
+                  isActive={isActive}
+                  itemSize={itemSize}
+                  itemRender={itemRender}
+                  closeOnSelect={closeOnSelect}
+                  onSelect={onSelect}
+                  d={d}
+                />
                 <RadixDropdownMenu.Item
                   className={`shrink-0 ${d.btnSize} rounded flex items-center justify-center outline-none cursor-pointer ${isActive ? d.btnActive : d.btnBase}`}
                   onSelect={e => { e.preventDefault(); startRename(item.id, item.name); }}

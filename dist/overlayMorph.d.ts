@@ -8,7 +8,19 @@ export type OverlayRect = {
     width: number;
     height: number;
 };
+/** The FLIP transform that paints a box currently at `to` as if it were at
+ *  `from` (translate + scale, origin top-left). Shared by the Modal's stack
+ *  morph and the nested dropdown replace morph — ONE implementation. */
+export declare function rectMap(from: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>, to: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>): string;
 export declare function overlayMorphEnabled(morph?: boolean): boolean;
+/** FLIP morph: pin `el` visually onto `from` (no transition), then animate to
+ *  its true box. This is the Modal's stacked open/close language; nested
+ *  dropdown cards use the SAME routine (parent card → child card and back).
+ *  The transition also carries opacity so a survivor's CSS fade keeps running
+ *  underneath it. */
+export declare function playRectMorph(token: {
+    current: number;
+}, el: HTMLElement, from: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>, onDone?: () => void): void;
 /** Fraction (0..1, 0..1) of the panel box to anchor the scale morph at: the
  *  corner/edge nearest to the center of `anchor`. A point anchor (press
  *  point: zero-size rect) yields the nearest corner; a trigger rect yields

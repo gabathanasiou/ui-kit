@@ -30,13 +30,26 @@ async function tapBlank(page: Page) {
   await page.getByRole('heading', { name: 'Touch audit matrix' }).tap();
 }
 
-test('dropdown: tap 1 opens; a tap outside closes', async ({ page }) => {
+test('dropdown: tap 1 opens; a row acts on the TAP itself; outside closes', async ({ page }) => {
   await open(page);
   const item = page.getByRole('menuitem', { name: 'First item' });
   await expect(item).toBeHidden();
   await caseOf(page, 'dropdown').getByRole('button', { name: 'Menu' }).tap();
   await expect(item).toBeVisible();
-  await item.tap();
+
+  /* Roadmap 337: a row must act from pointerup — iOS may swallow the click
+     (a dismiss layer or a page change), which read as "the dropdown closes,
+     nothing happens". No click is dispatched here. */
+  const box = (await item.boundingBox())!;
+  await item.evaluate((el, pt) => {
+    for (const type of ['pointerdown', 'pointerup']) {
+      el.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: 'touch', pointerId: 1,
+        isPrimary: true, button: 0, buttons: type === 'pointerdown' ? 1 : 0,
+        clientX: pt.x, clientY: pt.y,
+      }));
+    }
+  }, { x: box.x + box.width / 2, y: box.y + box.height / 2 });
   await expect(item).toBeHidden();
   await expect(stateOf(page, 'dropdown')).toContainText('pick: First');
 
@@ -49,7 +62,7 @@ test('dropdown: tap 1 opens; a tap outside closes', async ({ page }) => {
 test('submenu on touch: accordion — only the header stays, the panel expands beneath it (182)', async ({ page }) => {
   await open(page);
   const tile = caseOf(page, 'dropdown');
-  await tile.getByRole('button', { name: 'Accordion', exact: true }).tap();
+  await tile.getByRole('button', { name: 'Accordion (WIP)', exact: true }).tap();
   await tile.getByRole('button', { name: 'Menu' }).tap();
   const parent = page.locator('[role="menu"]').first();
   await expect(parent).toBeVisible();
@@ -83,43 +96,90 @@ test('submenu on touch: accordion — only the header stays, the panel expands b
   await expect(page.getByRole('menuitem', { name: 'First item' })).toBeVisible();
 });
 
-test('submenu default: phones use in-place, iPad uses the accordion', async ({ page }) => {
+test('submenu default: every coarse device uses the in-place card (335)', async ({ page }) => {
   await open(page);
   await caseOf(page, 'dropdown').getByRole('button', { name: 'Menu' }).tap();
   await page.getByRole('menuitem', { name: 'More…' }).tap();
-  const isPhone = (page.viewportSize()?.width ?? 999) <= 600;
-  if (isPhone) {
-    const card = page.locator('[data-submenu-presentation="replace"]');
-    await expect(card).toBeVisible();
-    await expect(card.locator('[data-submenu-back]')).toBeVisible();
-    await expect(page.locator('[data-submenu-panel]')).toHaveCount(0);
-  } else {
-    await expect(page.locator('[data-submenu-panel]')).toBeVisible();
-    await expect(page.getByRole('menuitem', { name: 'First item' })).toBeHidden();
-  }
+  const card = page.locator('[data-submenu-presentation="replace"]');
+  await expect(card).toBeVisible();
+  await expect(card.locator('[data-submenu-back]')).toBeVisible();
+  await expect(page.locator('[data-submenu-panel]')).toHaveCount(0);
 });
 
-test('submenu switch: the earlier in-place presentation still works', async ({ page }) => {
+test('nested 3 levels: ONE card, ONE Back, Back returns exactly one level (335)', async ({ page }) => {
   await open(page);
-  const tile = caseOf(page, 'dropdown');
-  await tile.getByRole('button', { name: 'In place', exact: true }).tap();
-  await expect(stateOf(page, 'dropdown')).toContainText('menu: replace');
-
-  await tile.getByRole('button', { name: 'Menu' }).tap();
-  const parent = page.locator('[role="menu"]').first();
-  await expect(parent).toBeVisible();
-  const parentBox = (await parent.boundingBox())!;
+  await caseOf(page, 'dropdown').getByRole('button', { name: 'Menu' }).tap();
+  const root = page.locator('[role="menu"]').first();
+  const rootBox = (await root.boundingBox())!;
   await page.getByRole('menuitem', { name: 'More…' }).tap();
-  const child = page.locator('[role="menu"]').last();
-  await expect(child).toBeVisible();
-  const childBox = (await child.boundingBox())!;
+  const level2 = page.locator('[role="menu"]').nth(1);
+  await expect(level2).toBeVisible();
+  await page.getByRole('menuitem', { name: 'Deeper…' }).tap();
+  const level3 = page.locator('[role="menu"]').nth(2);
+  await expect(level3).toBeVisible();
 
-  // In place = same width, same left edge, no exposed strip / dismiss layer.
-  expect(Math.abs(childBox.width - parentBox.width)).toBeLessThanOrEqual(2);
-  expect(Math.abs(childBox.x - parentBox.x)).toBeLessThanOrEqual(12);
-  await expect(page.locator('[data-submenu-dismiss]')).toHaveCount(0);
-  await child.locator('[data-submenu-back]').tap();
-  await expect(page.getByRole('menuitem', { name: 'Nested A' })).toBeHidden();
+  /* Exactly ONE painted card: the ancestors keep their layout (the FLIP needs
+     their rects) but are fully transparent — no dimmed stack, no second
+     shadow. */
+  const painted = await page.locator('[role="menu"]').evaluateAll(els =>
+    els.filter(el => Number(getComputedStyle(el).opacity) > 0).length);
+  expect(painted).toBe(1);
+  const backs = await page.locator('[data-submenu-back]').evaluateAll(els => els.filter(el => {
+    let p: HTMLElement | null = el as HTMLElement;
+    while (p) {
+      if (Number(getComputedStyle(p).opacity) === 0) return false;
+      p = p.parentElement;
+    }
+    return true;
+  }).length);
+  expect(backs).toBe(1);
+
+  // The whole chain shares ONE width: the nested card covers its parent card
+  // exactly (action menus keep their natural width; only wide pickers like the
+  // version menu fill the phone — roadmap 336).
+  const level3Box = (await level3.boundingBox())!;
+  expect(Math.abs(level3Box.width - rootBox.width)).toBeLessThanOrEqual(2);
+  expect(level3Box.x).toBeGreaterThanOrEqual(0);
+  expect(level3Box.x + level3Box.width).toBeLessThanOrEqual(page.viewportSize()!.width + 1);
+
+  // Back is a NORMAL item: same height as the list's rows, with the divider,
+  // and it names the card it returns from.
+  const back = page.locator('[data-submenu-back]').filter({ hasText: 'Deeper…' });
+  const backBox = (await back.boundingBox())!;
+  const deepRow = page.getByRole('menuitem', { name: 'Deep A' });
+  const rowBox = (await deepRow.boundingBox())!;
+  expect(Math.abs(backBox.height - rowBox.height)).toBeLessThanOrEqual(3);
+
+  // One level at a time: level 3 → level 2 (its own Back still present) →
+  // root.
+  await back.tap();
+  await expect(page.getByRole('menuitem', { name: 'Deep A' })).toHaveCount(0);
+  await expect(page.getByRole('menuitem', { name: 'Nested A' })).toBeVisible();
+  const level2Back = page.locator('[data-submenu-back]').filter({ hasText: 'More…' });
+  await expect(level2Back).toBeVisible();
+  await level2Back.tap();
+  await expect(page.getByRole('menuitem', { name: 'More…' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'First item' })).toBeVisible();
+});
+
+test.describe('nested card with REAL motion', () => {
+  test.use({ contextOptions: { reducedMotion: 'no-preference' } });
+  test('opening a nested card never dismisses the root (335)', async ({ page }) => {
+    /* Regression: the parent card turning pointer-events:none in the same
+       frame made WebKit focus the row underneath → focusOutside → the whole
+       menu closed. Reduced-motion runs never hit it (the FLIP was skipped),
+       so this case MUST run with motion on. */
+    await open(page);
+    await caseOf(page, 'dropdown').getByRole('button', { name: 'Menu' }).tap();
+    await page.getByRole('menuitem', { name: 'More…' }).tap();
+    await expect(page.locator('[role="menu"]')).toHaveCount(2);
+    await expect(page.locator('[data-submenu-presentation="replace"]')).toBeVisible();
+    await page.getByRole('menuitem', { name: 'Deeper…' }).tap();
+    await expect(page.locator('[role="menu"]')).toHaveCount(3);
+    await expect(page.getByRole('menuitem', { name: 'Deep A' })).toBeVisible();
+    await page.locator('[data-submenu-back]').filter({ hasText: 'Deeper…' }).tap();
+    await expect(page.getByRole('menuitem', { name: 'Nested A' })).toBeVisible();
+  });
 });
 
 test('NumberInput: a chevron tap steps the value (pointerdown default must not eat the click)', async ({ page }) => {

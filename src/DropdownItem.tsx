@@ -4,6 +4,7 @@ import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useDropdownTheme, getDropdownClasses, useHighlightRow, useMenuSearch, useItemSize, useMenuGroupSize, useMenuId } from './DropdownMenu';
 import { useSelectionContext } from './selection';
 import { SelectionCheck } from './SelectionControls';
+import { useCoarseItemTap } from './coarseItemTap';
 
 // typeahead label extractor — shared with ContextMenuItem
 import { menuItemLabel as itemLabel } from './DropdownMenu';
@@ -70,17 +71,20 @@ export default function DropdownItem({
   const inSelection = !!selection && itemId !== undefined;
   const checked = selection && itemId !== undefined ? selection.isSelected(itemId) : selected;
   const rowDisabled = disabled || (selection && itemId !== undefined ? !selection.canToggle(itemId) : false);
+  const activate = () => {
+    if (rowDisabled) return;
+    if (selection && itemId !== undefined) selection.toggle(itemId);
+    else onClick();
+  };
+  /* Touch rows activate on the FIRST tap (roadmap 337) — see coarseItemTap.ts. */
+  const coarseTap = useCoarseItemTap(activate, rowDisabled);
   /* Single-highlight (the panel model) via the shared row contract — register
      into the NEAREST surface context on mount (registration order = index);
      pointer hover writes the shared highlightedIndex — NO focus() (the
      v0.1.53 focus-stealing is gone); the lit row carries `.ui-item-highlighted`. */
   const { myIndex, highlighted, setPointer, api } = useHighlightRow({
     label: () => itemLabel(children),
-    activate: () => {
-      if (rowDisabled) return;
-      if (selection && itemId !== undefined) selection.toggle(itemId);
-      else onClick();
-    },
+    activate,
     disabled: rowDisabled,
     group,
     itemId,
@@ -150,6 +154,13 @@ export default function DropdownItem({
         style={{ ...itemSize, display: hidden ? 'none' : undefined }} className={`w-full text-left rounded flex items-center gap-2 outline-none cursor-pointer select-none ${variantStyles} ${inSelection ? '' : (selected ? 'ui-item-selected' : '')} ${highlighted ? 'ui-item-highlighted' : ''} ${rowDisabled ? 'opacity-30 pointer-events-none' : ''} ${className}`}
         onSelect={(e) => {
           if (skipClickRef.current) { skipClickRef.current = false; return; }
+          /* Coarse: the pointerup already ran the action; its synthetic click
+             is here only so Radix closes the surface. Keep-open rows and the
+             multi-select draft must not close, so they prevent the default. */
+          if (coarseTap.suppressSelect()) {
+            if (keepOpen || inSelection) e.preventDefault();
+            return;
+          }
           if (inSelection) {
             /* A row click TOGGLES and the panel stays open — the footer hero is
                the only commit path. */
@@ -159,6 +170,9 @@ export default function DropdownItem({
           }
           if (keepOpen) e.preventDefault(); onClick();
         }}
+        onPointerDown={coarseTap.onPointerDown}
+        onPointerUp={coarseTap.onPointerUp}
+        onPointerCancel={coarseTap.onPointerCancel}
         onPointerEnter={() => { setPointer(myIndex); }}
         onTouchStart={() => {}}
         disabled={rowDisabled}
@@ -177,6 +191,7 @@ export default function DropdownItem({
               skipClickRef.current = true;
               rightAction.onClick();
             }}
+            onPointerUp={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();

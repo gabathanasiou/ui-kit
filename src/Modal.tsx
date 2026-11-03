@@ -4,6 +4,7 @@ import { X, RotateCcw } from 'lucide-react';
 import { IS_COARSE, useCoarseScale, coarsePx } from './device';
 import { usePortalTarget, useCurrentWindow } from './popout';
 import { useKitTheme, resolveKitTheme, ResolvedThemeProvider } from './ThemeScope';
+import { MORPH_MS, MORPH_EASE, rectMap, playRectMorph } from './overlayMorph';
 
 const MAX_EDGE = 8;
 
@@ -31,8 +32,6 @@ const MAX_EDGE = 8;
    morphing flag can be switched off per-instance (morph={false}).
    prefers-reduced-motion skips all of it. */
 const STACK_SELECTOR = '[data-modal-stack]';
-const MORPH_MS = 220;
-const MORPH_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
 const ZOOM_FROM = 0.94;
 
 function reduceMotion(): boolean {
@@ -51,37 +50,8 @@ function viewportBox(win: Window | null): { top: number; height: number; bottom:
   return { top, height, bottom: top + height };
 }
 
-/** Rect-to-rect map: how to transform an element occupying `from` so it
- *  visually sits on `to` (origin top-left). */
-function rectMap(from: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>, to: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>) {
-  return `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width}, ${to.height / from.height})`;
-}
-
-/** FLIP: pin `el` visually onto `from` (no transition), then animate to its
- *  true box. The inline transition also carries opacity 180ms so a survivor's
- *  CSS fade (tokens.css [data-modal-stack]) keeps running under it. */
-function playMorph(token: { current: number }, el: HTMLElement, from: DOMRect, onDone: () => void) {
-  const my = ++token.current;
-  const to = el.getBoundingClientRect();
-  el.style.transition = 'none';
-  el.style.transform = rectMap(to, from);
-  el.style.transformOrigin = '0 0';
-  void el.getBoundingClientRect(); // force reflow so the start state is committed
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      if (token.current !== my) return;
-      el.style.transition = `transform ${MORPH_MS}ms ${MORPH_EASE}, opacity 180ms ease`;
-      el.style.transform = 'none';
-      window.setTimeout(() => {
-        if (token.current !== my) return;
-        el.style.transition = '';
-        el.style.transform = '';
-        el.style.transformOrigin = '';
-        onDone();
-      }, MORPH_MS + 80);
-    });
-  });
-}
+/* The FLIP itself (`rectMap` + `playRectMorph`) lives in overlayMorph.ts —
+   the SAME routine the nested dropdown replace morph uses. */
 
 /** Standalone-open zoom: grow the content box from ZOOM_FROM to full. */
 function zoomIn(token: { current: number }, el: HTMLElement, onDone: () => void) {
@@ -332,7 +302,7 @@ export default function Modal({
     const parent = parents[parents.length - 1];
     beginAnim();
     if (parent) {
-      playMorph(animToken, el, parent.getBoundingClientRect(), endAnim);
+      playRectMorph(animToken, el, parent.getBoundingClientRect(), endAnim);
     } else {
       zoomIn(animToken, el, endAnim);
     }
@@ -427,7 +397,7 @@ export default function Modal({
         hadOpenChild = false;
         if (lastChildRect && !reduceMotion()) {
           beginAnim();
-          playMorph(animToken, el, lastChildRect, endAnim);
+          playRectMorph(animToken, el, lastChildRect, endAnim);
         }
         lastChildRect = null;
         /* Stack-fade recovery (roadmap 71): the tokens.css `:has` fade should

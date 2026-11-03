@@ -31,10 +31,53 @@ export const ZOOM_FROM = 0.94;
 
 export type OverlayRect = { left: number; top: number; width: number; height: number };
 
+/** The FLIP transform that paints a box currently at `to` as if it were at
+ *  `from` (translate + scale, origin top-left). Shared by the Modal's stack
+ *  morph and the nested dropdown replace morph — ONE implementation. */
+export function rectMap(
+  from: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>,
+  to: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>,
+) {
+  return `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width}, ${to.height / from.height})`;
+}
+
 export function overlayMorphEnabled(morph?: boolean): boolean {
   if (morph === false) return false;
   if (typeof window === 'undefined') return false;
   return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** FLIP morph: pin `el` visually onto `from` (no transition), then animate to
+ *  its true box. This is the Modal's stacked open/close language; nested
+ *  dropdown cards use the SAME routine (parent card → child card and back).
+ *  The transition also carries opacity so a survivor's CSS fade keeps running
+ *  underneath it. */
+export function playRectMorph(
+  token: { current: number },
+  el: HTMLElement,
+  from: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>,
+  onDone?: () => void,
+) {
+  const my = ++token.current;
+  const to = el.getBoundingClientRect();
+  el.style.transition = 'none';
+  el.style.transform = rectMap(to, from);
+  el.style.transformOrigin = '0 0';
+  void el.getBoundingClientRect(); // force reflow so the start state is committed
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (token.current !== my) return;
+      el.style.transition = `transform ${MORPH_MS}ms ${MORPH_EASE}, opacity 180ms ease`;
+      el.style.transform = 'none';
+      window.setTimeout(() => {
+        if (token.current !== my) return;
+        el.style.transition = '';
+        el.style.transform = '';
+        el.style.transformOrigin = '';
+        onDone?.();
+      }, MORPH_MS + 80);
+    });
+  });
 }
 
 /** Fraction (0..1, 0..1) of the panel box to anchor the scale morph at: the
@@ -68,6 +111,12 @@ function anchorOf(el: HTMLElement, getAnchor: (() => OverlayRect | null) | null)
 export function playOverlayOpen(token: Token, el: HTMLElement, getAnchor: (() => OverlayRect | null) | null, onDone?: () => void) {
   const my = ++token.current;
   const prev = { transition: el.style.transition, transform: el.style.transform, transformOrigin: el.style.transformOrigin, opacity: el.style.opacity };
+  /* A REOPEN can land while the close morph has already pinned the element
+     `visibility:hidden` + `pointer-events:none` (the close timeout wrote them
+     before this open). An OPEN surface is visible and interactive by
+     definition — clear both here and never restore the stale close values. */
+  el.style.visibility = '';
+  el.style.pointerEvents = '';
   el.style.transition = 'none';
   el.style.transformOrigin = '50% 50%';
   el.style.transform = `scale(${ZOOM_FROM})`;

@@ -8,6 +8,7 @@ import { registerOverlayClose } from './overlayRegistry';
 import DropdownSubmenu from './DropdownSubmenu';
 import { useKitTheme, menuAttributesOf } from './ThemeScope';
 import { revealRowInScroller } from './revealInScroller';
+import { visualViewportBox, safeAreaInsets } from './menuMetrics';
 import {
   DropdownThemeContext, DropdownThemeAttrsContext, SubmenuContext, MenuHighlightContext, useMenuHighlight,
   useMenuHighlightState, useMenuKeys, useMenuKeyLock, useMenuWheel, menuItemLabel,
@@ -136,7 +137,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
     setContentRef(node);
   }, [setContentRef]);
 
-  /* Position at the press point, clamped to the viewport (or container). */
+  /* Position at the press point, clamped to the viewport (or container),
+     never under a safe-area rail. */
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   useLayoutEffect(() => {
     if (!open || !contentReady || !contentElRef.current) return;
@@ -146,14 +148,17 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
     const el = contentElRef.current;
     const w = el.offsetWidth;
     const h = el.offsetHeight;
+    const win = currentWindow ?? null;
+    const vv = win ? visualViewportBox(win) : { x: 0, y: 0, width: 0, height: 0 };
+    const safe = win ? safeAreaInsets(win.document) : { left: 0, right: 0, top: 0, bottom: 0 };
     const containerRect = containerRef?.current?.getBoundingClientRect();
-    const vw = containerRect ? containerRect.right : currentWindow?.innerWidth ?? 0;
-    const vh = containerRect ? containerRect.bottom : currentWindow?.innerHeight ?? 0;
-    const minLeft = containerRect ? containerRect.left : 0;
-    const minTop = containerRect ? containerRect.top : 0;
+    const vw = (containerRect ? containerRect.right : vv.x + vv.width) - safe.right;
+    const vh = (containerRect ? containerRect.bottom : vv.y + vv.height) - safe.bottom;
+    const minLeft = (containerRect ? containerRect.left : vv.x) + safe.left;
+    const minTop = (containerRect ? containerRect.top : vv.y) + safe.top;
     let top = Math.max(minTop + MARGIN, pressRef.current.top);
     let left = Math.max(minLeft + MARGIN, pressRef.current.left);
-    if (left + w > vw) left = vw - w - MARGIN;
+    if (left + w > vw) left = Math.max(minLeft + MARGIN, vw - w - MARGIN);
     if (top + h > vh) top = Math.max(minTop + MARGIN, vh - h - MARGIN);
     setPos({ left, top });
   }, [open, contentReady, x, y, containerRef]);
@@ -178,7 +183,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
               {...resolved.attrs}
               data-ui-fixed
               className="fixed ui-menu rounded-lg shadow-xl p-1 z-[9999] min-w-[180px] max-h-[85vh] overflow-y-auto scrollbar-custom"
-              style={{ fontSize: CTX_TEXT_FS, left: pos?.left ?? pressRef.current.left, top: pos?.top ?? pressRef.current.top, touchAction: 'manipulation' }}
+              style={{
+                fontSize: CTX_TEXT_FS,
+                left: pos?.left ?? pressRef.current.left,
+                top: pos?.top ?? pressRef.current.top,
+                touchAction: 'manipulation',
+              }}
               onPointerLeave={highlight.pointerLeave}
             >
               {children}

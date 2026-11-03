@@ -60,27 +60,24 @@ a committed `dist/`; consumers pin a github tag (`github:gabathanasiou/ui-kit#v0
 - **Hover styles are UNGATED by design** (tokens.css `@custom-variant hover`) —
   iOS Safari's tap-to-hover needs a real `:hover` rule on the tapped element;
   `(hover: hover)` is false on iPadOS, so gating kills the native behavior.
-- Pen = finger = touch: `isTouchLike()` in `src/device.ts`. Safari doesn't
-  synthesize clicks for pen taps on overlays (`device.ts` shim) and never fires
-  `:active` for pen.
-- iOS sticky hover (tap → `:hover` sticks until the next tap) IS the tap
-  feedback — no JS flash/pulse workarounds; they double with it and read as delays.
+- Pen = finger = touch (`isTouchLike`); iOS sticky hover IS the tap feedback —
+  no JS flash/pulse workarounds (they double it and read as delays).
+- **Never change LAYOUT on hover/active for coarse pointers.** iOS runs
+  `mouseover`/`mousemove` before the tap's click and DROPS the rest when the page
+  reflows. Colour/opacity is fine; width/height/padding/grid-track is not.
+  TabFace delays its `0fr↔1fr` reveal 200ms on coarse (`delay-200`); app geometry
+  reveals use the `fine:` variant.
+- **Menu rows act on the TAP** (`coarseItemTap.ts`): pointerup fires the action,
+  a synthetic click closes via Radix, the real click is swallowed once.
 
 ## Coarse scaling (touch sizing)
 
-- **The kit scales sizes for coarse devices (iPad) via a GLOBAL `coarseScale`
-  knob** (`src/device.ts`): `setCoarseScale(n)` (0…1), `useCoarseScale()`,
-  `useCoarse()` (boolean), `useCoarseSize()`/`coarsePx()` (proportional inline
-  sizes). Default is **0.5 (50%)** — halfway to the full touch bump, big enough
-  without blowing up. 0 = desktop sizes everywhere.
-- **RULE — every new component/surface with baked sizes must gate them on the
-  coarse scale** (never hardcode `IS_COARSE ? big : small` for sizing): paddings
-  interpolate via `useCoarseSize()`/inline styles (Tailwind can't JIT runtime
-  classes), sizes via `coarsePx()`. Don't leave boolean scalers — the slider
-  must work on everything. `IS_COARSE` stays for BEHAVIOR only (long-press,
-  keyboard repositioning), never sizing.
-- The playground has a sticky **coarse-scale controller** (Off/50%/Full +
-  slider + number + Reset) to verify every surface at any %.
+- **GLOBAL `coarseScale` knob** (`src/device.ts`): `setCoarseScale(n)` (0…1),
+  `useCoarseScale()`, `useCoarse()`, `useCoarseSize()`/`coarsePx()`. Default
+  **0.5**; 0 = desktop sizes everywhere.
+- **Every baked size goes through the scale** (never `IS_COARSE ? big : small`):
+  `useCoarseSize()`/inline styles or `coarsePx()`. `IS_COARSE` is BEHAVIOR only.
+  The playground's sticky controller verifies any %.
 
 ## Selection + PickerField (roadmap 322)
 `src/selection.ts` is the ONE selection model; `src/PickerField.tsx` the ONE
@@ -120,7 +117,7 @@ it the kit's utilities are never generated) and raises `.ui-menu` to z-10001
   projects run every spec — engine-incompatible cases skip on the iPad project with
   a reason (wheel, coarse geometry).
 - New spec or source file → add it to `scripts/smart-test.mjs` RULES; an orphan spec
-  fails `npm run lint`. The suite is capped (19 specs / 114 tests) — extend, push down,
+  fails `npm run lint`. The suite is capped (21 specs / 145 tests) — extend, push down,
   or consciously raise the cap in `scripts/check-test-hygiene.mjs`.
 - **Visual-only changes get NO test** — end with a numbered manual check for the user.
 - Spec-map landmarks: dismissal/hidden-content in `dropdown-menu.spec.ts`; StrictMode

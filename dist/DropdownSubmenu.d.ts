@@ -9,11 +9,10 @@ export interface DropdownSubmenuProps {
     /** Extra classes on the sub content (e.g. lifting it above a context
      *  menu's z-index). */
     contentClassName?: string;
-    /** Coarse-pointer presentation (roadmaps 182/331). DEFAULT is viewport-
-     *  aware: phones (≤600px) use `replace` — the child card covers the parent
-     *  exactly, with a Back row (the original audit version) — while wider
-     *  coarse devices (iPad) use `accordion`: only the trigger row survives and
-     *  the child panel expands beneath it. Pass an explicit value to force one.
+    /** Coarse-pointer presentation. DEFAULT is `replace` on EVERY coarse device
+     *  (roadmaps 335/182): ONE card on screen — the child FLIPs out of its
+     *  parent's box (the modal stack language) and Back FLIPs the parent back.
+     *  `accordion` is playground-only WIP and must never be wired into the app.
      *  Desktop always keeps the Radix side placement. */
     touchPresentation?: 'accordion' | 'replace';
 }

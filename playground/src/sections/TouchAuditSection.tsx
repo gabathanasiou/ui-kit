@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import {
-  Button, Checkbox, Checklist, RadioList, NumberInput, Seg, FloatingToggle, Modal, ModalFooter, isPhoneViewport,
+  Button, Checkbox, Checklist, RadioList, NumberInput, Seg, FloatingToggle, Modal, ModalFooter,
   ModalFooterButton, DropdownMenu, DropdownItem, DropdownSubmenu, ContextMenu, ContextMenuItem,
   SearchMenu, PickerField, Tooltip, MorphActionField, MorphSearchField, SelectionCheck,
   SelectionFooter, RichTextEditor, FormatToolbar, RICH_TEXT_STATE_IDLE, useDialog,
@@ -50,12 +50,14 @@ function MenuCases() {
   const [open, setOpen] = useState(false);
   const [pick, setPick] = useState('—');
   const [searchOpen, setSearchOpen] = useState(false);
-  const [presentation, setPresentation] = useState<'accordion' | 'replace'>(() => (isPhoneViewport() ? 'replace' : 'accordion'));
+  /* `replace` is the app's ONLY coarse presentation (roadmap 335); the
+     accordion is a playground-only WIP switch. */
+  const [presentation, setPresentation] = useState<'accordion' | 'replace'>('replace');
   return (
     <>
-      <TouchCase id="dropdown" label="Dropdown menu" hint="Tap 1 opens; tap a row selects; tap outside closes. Nested menu default: In place on phones, Accordion on iPad — the switch forces either." state={`pick: ${pick} · menu: ${presentation}`}>
+      <TouchCase id="dropdown" label="Dropdown menu" hint="Tap 1 opens; tap a row selects; tap outside closes. Nested menus: ONE card that morphs parent → child; Back morphs it back. The accordion switch is WIP-only." state={`pick: ${pick} · menu: ${presentation}`}>
         <Seg
-          options={[{ v: 'accordion', l: 'Accordion' }, { v: 'replace', l: 'In place' }]}
+          options={[{ v: 'accordion', l: 'Accordion (WIP)' }, { v: 'replace', l: 'In place' }]}
           value={presentation}
           onChange={(v) => setPresentation(v as 'accordion' | 'replace')}
           theme="dark"
@@ -74,6 +76,10 @@ function MenuCases() {
           <DropdownSubmenu id="touch-sub" label="More…" touchPresentation={presentation}>
             <DropdownItem onClick={() => { setPick('Nested A'); setOpen(false); }}>Nested A</DropdownItem>
             <DropdownItem onClick={() => { setPick('Nested B'); setOpen(false); }}>Nested B</DropdownItem>
+            <DropdownSubmenu id="touch-sub-deep" label="Deeper…" touchPresentation={presentation}>
+              <DropdownItem onClick={() => { setPick('Deep A'); setOpen(false); }}>Deep A</DropdownItem>
+              <DropdownItem onClick={() => { setPick('Deep B'); setOpen(false); }}>Deep B</DropdownItem>
+            </DropdownSubmenu>
           </DropdownSubmenu>
         </DropdownMenu>
       </TouchCase>

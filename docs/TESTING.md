@@ -10,7 +10,7 @@ Ported (right-sized) from lemon_schedule's `docs/TESTING.md` — the app proves 
    the Playwright playground suite proves the kit behaves end-to-end in real browsers
    (Chrome desktop + WebKit iPad). If a bug can be reproduced without a browser, it
    belongs in a unit test — then keep ONE e2e case proving the surface is wired.
-2. **The suite is the kit's regression net.** ~12 specs / ~66 tests, fully parallel,
+2. **The suite is the kit's regression net.** ~21 specs / ~145 tests, fully parallel,
    ~30s. Keep it fast and trustworthy: a slow/red suite stops being run.
 3. **A red run is not proof of a regression.** Answer "was it me?" with
    `npm run test:baseline` — never by `git checkout`/`git stash` (destroys work).
@@ -93,7 +93,7 @@ inline-style/utility-class/parent selectors.
    (throwaway HEAD worktree, isolated port).
 4. **Retire dead specs.** A spec for removed behaviour is deleted (git preserves it).
 5. **Quarantine, don't tolerate, chronic flake** (tag `@quarantine` + registry below).
-6. **Never grow the suite past its caps** (15 specs / 89 tests) without a conscious
+6. **Never grow the suite past its caps** (21 specs / 145 tests) without a conscious
    decision recorded in `scripts/check-test-hygiene.mjs`.
 
 ## Flake policy

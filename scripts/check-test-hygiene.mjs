@@ -82,7 +82,12 @@ const SPEC_CAP = 21;
 // 142 = 141 + the modal footer hero case merged from the 332 theme work.
 // 143 = 142 + the device-default submenu presentation case (phone in place /
 //       iPad accordion, 331/182).
-const TEST_CAP = 143;
+// 144 = 143 + roadmap 337: a menu row must act from the TAP itself (pointerup,
+//       no click) — the first-tap contract the iPhone audit exists to protect.
+// 145 = 144 + the REAL-MOTION nested-card open (335): the parent going
+//       pointer-events:none mid-gesture dismissed the whole menu; reduced
+//       motion never hit it, so the regression needs its own motion-on case.
+const TEST_CAP = 145;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

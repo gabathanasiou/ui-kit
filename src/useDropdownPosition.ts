@@ -2,6 +2,7 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 import { computePosition, offset, flip, shift, size } from '@floating-ui/react-dom';
 import { useCurrentWindow } from './popout';
+import { visualViewportBox, safeAreaInsets } from './menuMetrics';
 
 /**
  * THE dropdown/panel positioner — one engine for every floating menu surface
@@ -65,12 +66,9 @@ export interface UseDropdownPositionOptions {
 
 export const DROPDOWN_MAX_HEIGHT = 384;
 
-/** The visible viewport in layout-viewport coordinates. */
-function visualBox(win: Window): { x: number; y: number; width: number; height: number } {
-  const vv = win.visualViewport;
-  if (!vv) return { x: 0, y: 0, width: win.innerWidth, height: win.innerHeight };
-  return { x: vv.offsetLeft, y: vv.offsetTop, width: vv.width, height: vv.height };
-}
+/** The visible viewport in layout-viewport coordinates (menuMetrics — the one
+ *  source shared with the phone full-width rule). */
+const visualBox = visualViewportBox;
 
 export function useDropdownPosition({
   anchorRef,
@@ -107,7 +105,17 @@ export function useDropdownPosition({
       const panel = panelRef.current;
       if (!win || !anchor || !panel || !panel.isConnected) return;
       const content = contentRef?.current ?? panel;
-      const boundary = visualBox(win);
+      const rawBoundary = visualBox(win);
+      /* Safe-area rails are part of the usable viewport: on an iPhone in
+         landscape one edge sits under the Dynamic Island. The engine never
+         places a panel beneath it — same boundary for every surface. */
+      const safe = safeAreaInsets(win.document);
+      const boundary = {
+        x: rawBoundary.x + safe.left,
+        y: rawBoundary.y + safe.top,
+        width: Math.max(0, rawBoundary.width - safe.left - safe.right),
+        height: Math.max(0, rawBoundary.height - safe.top - safe.bottom),
+      };
       const cap = maxHeight ?? DROPDOWN_MAX_HEIGHT;
       const floor = Math.min(minHeight, cap);
 
