@@ -191,6 +191,12 @@ export function useDropdownPosition({
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(onViewportChange);
+      /* The ANCHOR too: a morphing trigger (a collapsing `Button`, the
+         SearchMenu width morph) grows/moves as the menu opens — its open state
+         reveals the label. Measuring only the panel left the menu anchored to
+         the pre-reveal box (wrong x on a right-aligned toolbar). The observer
+         re-runs computePosition on every layout frame of the reveal. */
+      if (anchorRef.current) ro.observe(anchorRef.current);
       if (panelRef.current) ro.observe(panelRef.current);
       if (contentRef?.current) ro.observe(contentRef.current);
     }

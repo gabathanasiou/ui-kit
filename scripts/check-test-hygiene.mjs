@@ -93,7 +93,9 @@ const SPEC_CAP = 21;
 // 148 = 147 + the assistive-tech path: a bare click (no pointerdown) still
 //       activates a row — only a click after a press on another element is a
 //       ghost.
-const TEST_CAP = 148;
+// 149 = 148 + the morphing trigger anchor: a right-aligned collapsing trigger
+//       moves when it expands and the menu must follow its FINAL box.
+const TEST_CAP = 149;
 
 const specFiles = readdirSync(SPECS_DIR).filter(f => f.endsWith('.spec.ts')).sort();
 

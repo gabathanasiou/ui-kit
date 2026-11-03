@@ -233,6 +233,27 @@ test.describe('ghost clicks and reopen races (338)', () => {
     await expect(stateOf(page, 'dropdown')).toContainText('pick: —');
   });
 
+  /* A collapsing trigger grows/moves when its open state reveals the label.
+     In a right-aligned bar that moves its left edge — the menu must follow the
+     FINAL box (the positioner observes the anchor). */
+  test('a morphing trigger anchors the menu to its FINAL expanded box', async ({ page }) => {
+    test.skip((page.viewportSize()?.width ?? 0) < 600, 'needs room for the right-aligned card + menu');
+    await open(page);
+    const tile = caseOf(page, 'morph-anchor');
+    const trigger = tile.getByRole('button', { name: 'Edit actions' });
+    const before = (await trigger.boundingBox())!;
+    await trigger.tap();
+    const menu = page.locator('[role="menu"]').last();
+    await expect(menu).toBeVisible();
+    // The premise: the trigger really did grow (and moved left) on open.
+    await expect.poll(async () => (await trigger.boundingBox())?.width ?? 0, { timeout: 3000 }).toBeGreaterThan(before.width + 20);
+    // The menu tracks it.
+    await expect.poll(async () => {
+      const [t, m] = await Promise.all([trigger.boundingBox(), menu.boundingBox()]);
+      return Math.abs((t?.x ?? 0) - (m?.x ?? 0));
+    }, { timeout: 3000, message: 'menu left follows the expanded trigger' }).toBeLessThanOrEqual(2);
+  });
+
   /* Assistive tech activation is a BARE click (no pointerdown). It must still
      work: only a click that follows a press on a DIFFERENT element is a ghost. */
   test('a bare click with no pointerdown still activates the row (VoiceOver)', async ({ page }) => {

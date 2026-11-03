@@ -50,6 +50,7 @@ function MenuCases() {
   const [open, setOpen] = useState(false);
   const [pick, setPick] = useState('—');
   const [searchOpen, setSearchOpen] = useState(false);
+  const [morphOpen, setMorphOpen] = useState(false);
   /* `replace` is the app's ONLY coarse presentation (roadmap 335); the
      accordion is a playground-only WIP switch. */
   const [presentation, setPresentation] = useState<'accordion' | 'replace'>('replace');
@@ -82,6 +83,20 @@ function MenuCases() {
             </DropdownSubmenu>
           </DropdownSubmenu>
         </DropdownMenu>
+      </TouchCase>
+
+      <TouchCase id="morph-anchor" label="Morph trigger — right-aligned" hint="A collapsing trigger grows when it opens. In a right-aligned bar its box MOVES left — the menu must anchor to the FINAL (expanded) box, not the pre-reveal one." state={`open: ${morphOpen ? 'yes' : 'no'}`}>
+        <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end' }}>
+          <DropdownMenu
+            open={morphOpen}
+            onOpenChange={setMorphOpen}
+            width="w-28"
+            trigger={<Button variant="outline" icon={<Pencil className="w-3.5 h-3.5" />} collapse revealOnHover aria-label="Edit actions">Actions</Button>}
+          >
+            <DropdownItem onClick={() => setMorphOpen(false)}>Rename</DropdownItem>
+            <DropdownItem onClick={() => setMorphOpen(false)}>Duplicate</DropdownItem>
+          </DropdownMenu>
+        </div>
       </TouchCase>
 
       <TouchCase id="context-menu" label="Context menu" hint="Opens at the press point; submenu opens in place on touch." state={`root: ${searchOpen ? 'open' : 'closed'}`}>
