@@ -6,6 +6,7 @@ import DropdownItem from './DropdownItem';
 import Button from './Button';
 import { TB_DIVIDER, TB_INPUT, TB_PICKER, useToolbarChrome } from './EditorChrome';
 import { Tooltip } from './Tooltip';
+import { useKitTheme, menuThemeOf } from './ThemeScope';
 import type { RichTextEditorHandle, RichTextState } from './RichTextEditor';
 
 // ---- rich-text formatting toolbar (selection-aware, via the editor ref) --------
@@ -19,8 +20,8 @@ const RT_COLORS = ['#b91c1c', '#b45309', '#15803d', '#1d4ed8', '#7c3aed', '#6b72
 
 /** "Default" swatch glyph — circle with a diagonal slash (no color). */
 const NoColorDot: React.FC<{ className?: string }> = ({ className = 'w-3 h-3' }) => (
-  <span className={`${className} rounded-full border border-zinc-600 relative inline-flex items-center justify-center shrink-0`}>
-    <span className="absolute left-0 right-0 top-1/2 h-px bg-zinc-400 -rotate-45" />
+  <span className={`${className} rounded-full border border-[color:var(--ui-input-border)] relative inline-flex items-center justify-center shrink-0`}>
+    <span className="absolute left-0 right-0 top-1/2 h-px bg-[var(--ui-text-muted)] -rotate-45" />
   </span>
 );
 
@@ -28,18 +29,21 @@ const NoColorDot: React.FC<{ className?: string }> = ({ className = 'w-3 h-3' })
 
 export const FontMenu: React.FC<{ value: string; disabled: boolean; onChange: (f: string) => void; mixed?: boolean }> = ({ value, disabled, onChange, mixed }) => {
   const [open, setOpen] = useState(false);
+  const kitTheme = useKitTheme();
+  const mode = kitTheme?.mode ?? 'dark';
+  const theme = menuThemeOf(kitTheme);
   return (
     <DropdownMenu
       open={open}
       onOpenChange={setOpen}
-      theme="dark"
+      theme={theme}
       width="w-44"
       trigger={
         <button type="button" disabled={disabled} className={`${TB_PICKER} w-28 justify-between`}>
           {mixed
-            ? <span className="truncate italic text-zinc-500">Mixed</span>
+            ? <span className="truncate italic text-[color:var(--ui-text-faint)]">Mixed</span>
             : <span className="truncate" style={{ fontFamily: value || 'Helvetica' }}>{value || 'Helvetica'}</span>}
-          <ChevronDown className="w-3 h-3 text-zinc-500 shrink-0" />
+          <ChevronDown className="w-3 h-3 text-[color:var(--ui-text-faint)] shrink-0" />
         </button>
       }
     >
@@ -56,6 +60,9 @@ export const FontMenu: React.FC<{ value: string; disabled: boolean; onChange: (f
 const LinkMenu: React.FC<{ editorRef: React.RefObject<RichTextEditorHandle | null>; disabled: boolean; active: boolean }> = ({ editorRef, disabled, active }) => {
   const [open, setOpen] = useState(false);
   const chrome = useToolbarChrome();
+  const kitTheme = useKitTheme();
+  const mode = kitTheme?.mode ?? 'dark';
+  const theme = menuThemeOf(kitTheme);
   const [url, setUrl] = useState('');
   const apply = () => {
     const trimmed = url.trim();
@@ -68,11 +75,11 @@ const LinkMenu: React.FC<{ editorRef: React.RefObject<RichTextEditorHandle | nul
     <DropdownMenu
       open={open}
       onOpenChange={setOpen}
-      theme="dark"
+      theme={theme}
       width="w-64"
       trigger={
         <Button
-          theme="dark"
+          theme={mode}
           active={active}
           disabled={disabled}
           onMouseDown={e => e.preventDefault()}
@@ -95,11 +102,11 @@ const LinkMenu: React.FC<{ editorRef: React.RefObject<RichTextEditorHandle | nul
           style={chrome.input} className={TB_INPUT + ' w-full'}
         />
         <div className="flex items-center gap-2">
-          <Button theme="dark" onClick={apply} style={chrome.control} disabled={!url.trim()}>
+          <Button theme={mode} onClick={apply} style={chrome.control} disabled={!url.trim()}>
             Apply
           </Button>
           <Button
-            theme="dark"
+            theme={mode}
             onClick={() => { editorRef.current?.exec('unlink'); setOpen(false); }}
             style={chrome.control}
           >
@@ -140,6 +147,9 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disable
   const [colorOpen, setColorOpen] = useState(false);
   const run = (cmd: string, value?: string) => editorRef.current?.exec(cmd, value);
   const chrome = useToolbarChrome();
+  const kitTheme = useKitTheme();
+  const mode = kitTheme?.mode ?? 'dark';
+  const theme = menuThemeOf(kitTheme);
   const locked = (axis: 'bold' | 'italic') => !!lockedFormatting?.[axis];
   // The bar WRAPS when its surface is narrower than the controls (the docked
   // inspector column) — never clips. Related controls travel as one
@@ -152,16 +162,16 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disable
     <div className={`flex flex-wrap items-center ${dividers ? 'gap-x-1' : 'gap-x-2'} gap-y-1.5`}>
       <div className={cluster}>
         <Tooltip content={lockedFormatting?.bold || 'Bold'}>
-          <Button theme="dark" aria-label="Bold" active={(active?.bold ?? false) || locked('bold')} disabled={disabled || locked('bold')} onMouseDown={e => e.preventDefault()} onClick={() => run('bold')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center font-bold">B</Button>
+          <Button theme={mode} aria-label="Bold" active={(active?.bold ?? false) || locked('bold')} disabled={disabled || locked('bold')} onMouseDown={e => e.preventDefault()} onClick={() => run('bold')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center font-bold">B</Button>
         </Tooltip>
         <Tooltip content={lockedFormatting?.italic || 'Italic'}>
-          <Button theme="dark" aria-label="Italic" active={(active?.italic ?? false) || locked('italic')} disabled={disabled || locked('italic')} onMouseDown={e => e.preventDefault()} onClick={() => run('italic')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center italic">I</Button>
+          <Button theme={mode} aria-label="Italic" active={(active?.italic ?? false) || locked('italic')} disabled={disabled || locked('italic')} onMouseDown={e => e.preventDefault()} onClick={() => run('italic')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center italic">I</Button>
         </Tooltip>
         <Tooltip content="Underline">
-          <Button theme="dark" aria-label="Underline" active={active?.underline ?? false} disabled={disabled} onMouseDown={e => e.preventDefault()} onClick={() => run('underline')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center"><UnderlineIcon className="w-3 h-3" /></Button>
+          <Button theme={mode} aria-label="Underline" active={active?.underline ?? false} disabled={disabled} onMouseDown={e => e.preventDefault()} onClick={() => run('underline')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center"><UnderlineIcon className="w-3 h-3" /></Button>
         </Tooltip>
         <Tooltip content="Strikethrough">
-          <Button theme="dark" aria-label="Strikethrough" active={active?.strike ?? false} disabled={disabled} onMouseDown={e => e.preventDefault()} onClick={() => run('strikeThrough')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center"><Strikethrough className="w-3 h-3" /></Button>
+          <Button theme={mode} aria-label="Strikethrough" active={active?.strike ?? false} disabled={disabled} onMouseDown={e => e.preventDefault()} onClick={() => run('strikeThrough')} style={{ ...chrome.toggle, padding: 0 }} className="justify-center"><Strikethrough className="w-3 h-3" /></Button>
         </Tooltip>
       </div>
       {sep}
@@ -173,21 +183,21 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disable
         <DropdownMenu
           open={colorOpen}
           onOpenChange={setColorOpen}
-          theme="dark"
+          theme={theme}
           width="w-36"
           trigger={
-            <Button theme="dark" disabled={disabled} style={chrome.control} className="justify-between min-w-0" title="Text color">
+            <Button theme={mode} disabled={disabled} style={chrome.control} className="justify-between min-w-0" title="Text color">
               {active?.color
-                ? <span className="w-3 h-3 rounded-full border border-zinc-600 shrink-0" style={{ background: active.color }} />
+                ? <span className="w-3 h-3 rounded-full border border-[color:var(--ui-input-border)] shrink-0" style={{ background: active.color }} />
                 : <NoColorDot />}
-              <ChevronDown className="w-3 h-3 text-zinc-500" />
+              <ChevronDown className="w-3 h-3 text-[color:var(--ui-text-faint)]" />
             </Button>
           }
         >
           <div className="grid grid-cols-4 gap-1 p-2">
             <button
               onClick={() => { run('unsetColor'); setColorOpen(false); }}
-              className={`w-7 h-7 rounded border border-zinc-700 hover:border-zinc-500 transition-colors flex items-center justify-center ${!active?.color ? 'ring-2 ring-zinc-300' : ''}`}
+              className={`w-7 h-7 rounded border border-[color:var(--ui-input-border)] hover:border-[var(--ui-input-focus-border)] transition-colors flex items-center justify-center ${!active?.color ? 'ring-2 ring-[var(--ui-check-ring)]' : ''}`}
               title="Default (black ink)"
             >
               <NoColorDot className="w-3.5 h-3.5" />
@@ -196,7 +206,7 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disable
               <button
                 key={c}
                 onClick={() => { run('foreColor', c); setColorOpen(false); }}
-                className={`w-7 h-7 rounded border border-zinc-700 hover:border-zinc-500 transition-colors ${c === active?.color ? 'ring-2 ring-zinc-300' : ''}`}
+                className={`w-7 h-7 rounded border border-[color:var(--ui-input-border)] hover:border-[var(--ui-input-focus-border)] transition-colors ${c === active?.color ? 'ring-2 ring-[var(--ui-check-ring)]' : ''}`}
                 style={{ background: c }}
                 title={c}
               />
@@ -213,7 +223,7 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({ editorRef, disable
             {showClearFormatting && (
               <Tooltip content="Clear formatting">
                 <Button
-                  theme="dark"
+                  theme={mode}
                   aria-label="Clear formatting"
                   disabled={disabled}
                   onMouseDown={e => e.preventDefault()}

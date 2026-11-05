@@ -12,6 +12,7 @@ import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import Suggestion, { type SuggestionOptions } from '@tiptap/suggestion';
 import { sanitizeRichText } from './richText';
+import { useKitTheme } from './ThemeScope';
 import { Token, preprocessTokenHtml, stripTokenWrappers, type TokenItem, type TokenMeta } from './TokenExtension';
 import { TokenSuggestion } from './RichTextSuggestionPopup';
 
@@ -201,6 +202,9 @@ export interface RichTextEditorProps {
 const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProps>(({
   value, onChange, placeholder, disabled, className, onStateChange, resolveToken, suggestionItems, attributeItems, onTokenClick, onSelectionChange,
 }, ref) => {
+  const kitTheme = useKitTheme();
+  const editorMode = kitTheme?.mode ?? 'dark';
+  const editorAccent = kitTheme?.accent ?? 'zinc';
   const resolveRef = useRef(resolveToken);
   resolveRef.current = resolveToken;
   const itemsRef = useRef(suggestionItems);
@@ -484,7 +488,9 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
   }), [editor]);
 
   return (
-    <EditorContent editor={editor} className={`richtext-editor ${className || ''}`} />
+    <div data-mode={editorMode} data-accent={editorAccent} className="contents">
+      <EditorContent editor={editor} className={`richtext-editor ${className || ''}`} />
+    </div>
   );
 });
 

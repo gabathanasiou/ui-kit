@@ -7,7 +7,7 @@ import { useSlidingPill } from './slidingPill';
 import { TabFace } from './TabFace';
 import { useKitTheme, segModeOf } from './ThemeScope';
 
-// ---- dark editor-toolbox vocabulary (touch devices scale up — app pattern) ----
+// ---- editor-toolbox vocabulary (token-driven: follows mode + accent) --------
 
 /** Proportional coarse sizes for the editor-chrome toolbar (TB_* constants
  *  are load-time; this returns INLINE sizes interpolated by the global
@@ -29,22 +29,22 @@ export function useToolbarChrome() {
   };
 }
 
-export const TB_ROW_LABEL = IS_COARSE ? 'text-xs font-semibold text-zinc-600 uppercase tracking-wider shrink-0 w-24' : 'text-[9px] font-semibold text-zinc-600 uppercase tracking-wider shrink-0 w-16';
-export const TB_BTN = IS_COARSE ? 'h-10 px-3.5 text-sm font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 disabled:opacity-30 flex items-center gap-2 transition-colors' : 'h-7 px-2.5 text-[10px] font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 disabled:opacity-30 flex items-center gap-1.5 transition-colors';
-export const TB_BTN_ICON = IS_COARSE ? 'h-10 px-3 text-sm font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-400 hover:bg-zinc-700 disabled:opacity-25 flex items-center gap-1 transition-colors' : 'h-7 px-2 text-[10px] font-medium rounded bg-zinc-800 border border-zinc-700 text-zinc-400 hover:bg-zinc-700 disabled:opacity-25 flex items-center gap-0.5 transition-colors';
-export const TB_DANGER = 'hover:bg-red-950/50';
+export const TB_ROW_LABEL = IS_COARSE ? 'text-xs font-semibold text-[color:var(--ui-label)] uppercase tracking-wider shrink-0 w-24' : 'text-[9px] font-semibold text-[color:var(--ui-label)] uppercase tracking-wider shrink-0 w-16';
+export const TB_BTN = IS_COARSE ? 'h-10 px-3.5 text-sm font-medium rounded bg-[var(--ui-btn-bg)] border border-[color:var(--ui-input-border)] text-[color:var(--ui-text)] hover:bg-[var(--ui-item-hover-bg)] disabled:opacity-30 flex items-center gap-2 transition-colors' : 'h-7 px-2.5 text-[10px] font-medium rounded bg-[var(--ui-btn-bg)] border border-[color:var(--ui-input-border)] text-[color:var(--ui-text)] hover:bg-[var(--ui-item-hover-bg)] disabled:opacity-30 flex items-center gap-1.5 transition-colors';
+export const TB_BTN_ICON = IS_COARSE ? 'h-10 px-3 text-sm font-medium rounded bg-[var(--ui-btn-bg)] border border-[color:var(--ui-input-border)] text-[color:var(--ui-text-muted)] hover:bg-[var(--ui-item-hover-bg)] disabled:opacity-25 flex items-center gap-1 transition-colors' : 'h-7 px-2 text-[10px] font-medium rounded bg-[var(--ui-btn-bg)] border border-[color:var(--ui-input-border)] text-[color:var(--ui-text-muted)] hover:bg-[var(--ui-item-hover-bg)] disabled:opacity-25 flex items-center gap-0.5 transition-colors';
+export const TB_DANGER = 'hover:bg-[var(--ui-danger-hover-bg)] hover:text-[color:var(--ui-danger-hover-text)]';
 export const TB_TOGGLE = IS_COARSE ? 'h-10 w-10 rounded border flex items-center justify-center disabled:opacity-25 transition-colors' : 'h-7 w-7 rounded border flex items-center justify-center disabled:opacity-25 transition-colors';
 export const TB_TOGGLE_ON = 'bg-[var(--ui-accent-selected-bg)] border-[var(--ui-border-strong)] text-[color:var(--ui-accent-selected-text)]';
-export const TB_TOGGLE_OFF = 'bg-zinc-800 border-zinc-700 text-zinc-500 hover:bg-zinc-700';
-export const TB_INPUT = IS_COARSE ? 'h-10 px-2.5 text-sm bg-zinc-800 border border-zinc-700 rounded text-zinc-300 placeholder:text-zinc-600 outline-none focus:border-zinc-500 disabled:opacity-30' : 'h-7 px-2 text-[10px] bg-zinc-800 border border-zinc-700 rounded text-zinc-300 placeholder:text-zinc-600 outline-none focus:border-zinc-500 disabled:opacity-30';
-export const TB_NUM = IS_COARSE ? 'w-14 h-9 bg-zinc-800 border border-zinc-700 rounded text-sm text-center text-zinc-300 outline-none focus:border-[var(--ui-input-focus-border)] shrink-0 read-only:opacity-50' : 'w-10 h-6 bg-zinc-800 border border-zinc-700 rounded text-[11px] text-center text-zinc-300 outline-none focus:border-[var(--ui-input-focus-border)] shrink-0 read-only:opacity-50';
-export const TB_DIVIDER = IS_COARSE ? 'w-px h-7 bg-zinc-700 mx-1' : 'w-px h-5 bg-zinc-700 mx-0.5';
+export const TB_TOGGLE_OFF = 'bg-[var(--ui-btn-bg)] border-[color:var(--ui-input-border)] text-[color:var(--ui-text-faint)] hover:bg-[var(--ui-item-hover-bg)]';
+export const TB_INPUT = IS_COARSE ? 'h-10 px-2.5 text-sm bg-[var(--ui-input-bg)] border border-[color:var(--ui-input-border)] rounded text-[color:var(--ui-input-text)] placeholder:text-[color:var(--ui-text-disabled)] outline-none focus:border-[var(--ui-input-focus-border)] disabled:opacity-30' : 'h-7 px-2 text-[10px] bg-[var(--ui-input-bg)] border border-[color:var(--ui-input-border)] rounded text-[color:var(--ui-input-text)] placeholder:text-[color:var(--ui-text-disabled)] outline-none focus:border-[var(--ui-input-focus-border)] disabled:opacity-30';
+export const TB_NUM = IS_COARSE ? 'w-14 h-9 bg-[var(--ui-input-bg)] border border-[color:var(--ui-input-border)] rounded text-sm text-center text-[color:var(--ui-input-text)] outline-none focus:border-[var(--ui-input-focus-border)] shrink-0 read-only:opacity-50' : 'w-10 h-6 bg-[var(--ui-input-bg)] border border-[color:var(--ui-input-border)] rounded text-[11px] text-center text-[color:var(--ui-input-text)] outline-none focus:border-[var(--ui-input-focus-border)] shrink-0 read-only:opacity-50';
+export const TB_DIVIDER = IS_COARSE ? 'w-px h-7 bg-[var(--ui-sep)] mx-1' : 'w-px h-5 bg-[var(--ui-sep)] mx-0.5';
 export const TB_SEG = 'inline-flex rounded-[var(--ui-radius-btn)] overflow-hidden border border-[var(--ui-border-strong)]';
 /** Dropdown trigger look shared by every picker — matches the ribbon designer's
  *  dropdown buttons (h-7, coarse h-10) instead of the old thin strip. */
 export const TB_PICKER = IS_COARSE
-  ? 'h-10 px-3 text-sm rounded bg-zinc-800 border border-zinc-700 text-zinc-200 hover:border-zinc-500 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-between gap-1'
-  : 'h-7 px-2.5 text-[10px] rounded bg-zinc-800 border border-zinc-700 text-zinc-200 hover:border-zinc-500 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-between gap-1';
+  ? 'h-10 px-3 text-sm rounded bg-[var(--ui-input-bg)] border border-[color:var(--ui-input-border)] text-[color:var(--ui-input-text)] hover:border-[var(--ui-input-focus-border)] disabled:opacity-30 disabled:pointer-events-none flex items-center justify-between gap-1'
+  : 'h-7 px-2.5 text-[10px] rounded bg-[var(--ui-input-bg)] border border-[color:var(--ui-input-border)] text-[color:var(--ui-input-text)] hover:border-[var(--ui-input-focus-border)] disabled:opacity-30 disabled:pointer-events-none flex items-center justify-between gap-1';
 
 export const ToolButton: React.FC<{ onClick: () => void; disabled?: boolean; title: string; className?: string; children: React.ReactNode }> = ({ onClick, disabled, title, className = TB_BTN, children }) => {
   const chrome = useToolbarChrome();
@@ -239,13 +239,13 @@ export const Seg: React.FC<{
 /** Section eyebrow: uppercase label with a hairline rule. */
 export const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex items-center gap-2 min-w-max">
-    <span className={IS_COARSE ? 'text-xs font-semibold text-zinc-500 uppercase tracking-wider' : 'text-[9px] font-semibold text-zinc-500 uppercase tracking-wider'}>{children}</span>
-    <div className="h-px bg-zinc-700/50" style={{ minWidth: 24, flex: 1 }} />
+    <span className={IS_COARSE ? 'text-xs font-semibold text-[color:var(--ui-label)] uppercase tracking-wider' : 'text-[9px] font-semibold text-[color:var(--ui-label)] uppercase tracking-wider'}>{children}</span>
+    <div className="h-px bg-[var(--ui-sep)]" style={{ minWidth: 24, flex: 1 }} />
   </div>
 );
 
-const CONTENT_LABEL_CLS = 'text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1';
-const CONTENT_ROW_LABEL_CLS = 'text-[10px] font-medium text-zinc-500 uppercase tracking-wider w-28 shrink-0';
+const CONTENT_LABEL_CLS = 'text-[10px] font-medium text-[color:var(--ui-label)] uppercase tracking-wider mb-1';
+const CONTENT_ROW_LABEL_CLS = 'text-[10px] font-medium text-[color:var(--ui-label)] uppercase tracking-wider w-28 shrink-0';
 
 /** Labeled content row inside an editor panel (label above when `tall`). */
 export const ContentRow: React.FC<{ label?: string; children: React.ReactNode; tall?: boolean }> = ({ label, children, tall }) => (
@@ -261,7 +261,7 @@ export const ContentRow: React.FC<{ label?: string; children: React.ReactNode; t
  *  still right-aligned via `ml-auto`, and wraps again internally if it is
  *  still wider than the panel. */
 export const ChromeHeader: React.FC<{ leading?: React.ReactNode; trailing?: React.ReactNode; className?: string }> = ({ leading, trailing, className = '' }) => (
-  <div className={`flex flex-wrap items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-zinc-700/40 border border-zinc-700/60 min-w-0 ${className}`}>
+  <div className={`flex flex-wrap items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[var(--ui-card-bg)] border border-[color:var(--ui-card-border)] min-w-0 ${className}`}>
     {leading}
     {trailing && <div className="ml-auto flex flex-wrap items-center justify-end gap-1">{trailing}</div>}
   </div>
