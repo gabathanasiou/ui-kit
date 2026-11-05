@@ -23,10 +23,10 @@ export declare function useToolbarChrome(): {
 export declare const TB_ROW_LABEL: string;
 export declare const TB_BTN: string;
 export declare const TB_BTN_ICON: string;
-export declare const TB_DANGER = "hover:bg-red-950/50";
+export declare const TB_DANGER = "hover:bg-[var(--ui-danger-hover-bg)] hover:text-[color:var(--ui-danger-hover-text)]";
 export declare const TB_TOGGLE: string;
 export declare const TB_TOGGLE_ON = "bg-[var(--ui-accent-selected-bg)] border-[var(--ui-border-strong)] text-[color:var(--ui-accent-selected-text)]";
-export declare const TB_TOGGLE_OFF = "bg-zinc-800 border-zinc-700 text-zinc-500 hover:bg-zinc-700";
+export declare const TB_TOGGLE_OFF = "bg-[var(--ui-btn-bg)] border-[color:var(--ui-input-border)] text-[color:var(--ui-text-faint)] hover:bg-[var(--ui-item-hover-bg)]";
 export declare const TB_INPUT: string;
 export declare const TB_NUM: string;
 export declare const TB_DIVIDER: string;
