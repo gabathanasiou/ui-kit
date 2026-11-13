@@ -5,6 +5,7 @@ import Modal from './Modal';
 import ModalFooterButton from './ModalFooterButton';
 import Checkbox from './Checkbox';
 import { useInputSize } from './input';
+import { isImeConfirm } from './ime';
 
 /* Confirm/prompt/alert dialogs render THROUGH the kit Modal (this file used
    to be its own Radix Dialog with bespoke chrome) — they inherit the whole
@@ -145,9 +146,11 @@ export function DialogProvider({ children, theme, accent, surface }: {
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Enter' || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return;
+      if (e.key !== 'Enter' || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return;
       e.preventDefault();
       e.stopImmediatePropagation();
+      /* An IME candidate confirm must not resolve the dialog. */
+      if (isImeConfirm(e)) return;
       confirmAction();
     };
     document.addEventListener('keydown', onKeyDown, true);

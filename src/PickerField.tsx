@@ -4,6 +4,7 @@ import Button from './Button';
 import SearchMenu, { type SearchMenuHandle } from './SearchMenu';
 import type { SearchMenuGroup, SearchMenuItem } from './searchMenuModel';
 import { orderByCatalogue, sameSelection } from './selection';
+import { isImeConfirm } from './ime';
 import {
   formatPickerValues,
   hasPickerMatch,
@@ -552,6 +553,9 @@ export function PickerField({
          region, a stripboard row) closes the editor on the row pick instead
          of keeping the panel open for the next one. */
       event.stopPropagation();
+      /* IME candidate confirm — never pick a row or commit the half-converted
+         text (preventDefault above keeps the host out of it either way). */
+      if (isImeConfirm(event)) return;
       if (open && searchRef.current?.activateHighlighted()) return;
       commit();
       return;

@@ -4,6 +4,7 @@ Shared interaction primitives for Gabriel's apps — extracted from the **lemon_
 
 **What's inside**
 - `device.ts` — pointer/hover capability model: `IS_COARSE`, `IS_TOUCH_CAPABLE`, `isTouchLike()` (Apple Pencil = finger), last-pointer tracking, hardware-keyboard detection, the pencil click shim for Safari overlays
+- `isImeConfirm()` — the shared IME gate for `Enter` handlers (`isComposing` + WebKit's `keyCode === 229` confirming Enter); every kit field/rename/search handler bails on it, and consumers should too
 - `useTouchMode()` — touch-first UI variant switching
 - `DropdownMenu` / `DropdownItem` / `DropdownSubmenu` — Radix-wired menus with `onTouchStart` claim trick, tap-vs-drag disambiguation, one `getDropdownClasses()` design-system function, grouped rows (`group` headers + category-matching search), plus `ItemManagerDropdown` (list with rename/duplicate/delete)
 - `ContextMenu` + `LongPressMenuProvider` — long-press ring → synthetic `contextmenu` (touch's right-click), shared with desktop right-click. Opt in with `data-context-menu` on any element; opt out a subtree with `useLongPressOptOut()`

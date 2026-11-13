@@ -3,6 +3,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { coarsePx, useCoarseScale } from './device';
 import { useInputSize } from './input';
+import { isImeConfirm } from './ime';
 import { clampNumber, scrubbedValue, steppedValue } from './numberInputMath';
 
 /**
@@ -201,7 +202,10 @@ export default function NumberInput({
           }
         }}
         onKeyDown={e => {
-          if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+          if (e.key === 'Enter') {
+            if (isImeConfirm(e)) return;
+            (e.target as HTMLInputElement).blur();
+          }
           if (e.key === 'Escape') { setDraft(null); (e.target as HTMLInputElement).blur(); }
           if (!readOnly && !disabled && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
             e.preventDefault();

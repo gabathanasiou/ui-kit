@@ -6,6 +6,7 @@ import type { TokenItem } from './TokenExtension';
 import { MenuHighlightContext, useMenuHighlightState, useHighlightRow, getDropdownClasses } from './DropdownMenu';
 import { useCoarseScale, coarsePx } from './device';
 import { revealRowInScroller } from './revealInScroller';
+import { isImeConfirm } from './ime';
 import type { MenuHighlightApi } from './DropdownMenu';
 
 // Caret-anchored token autocomplete for the rich text editor, adapted to the
@@ -188,6 +189,10 @@ export const TokenSuggestion: SuggestionOptions<TokenItem, { field: string }>['r
         return true;
       }
       if (key === 'Enter' || key === 'Tab') {
+        /* Enter during an IME composition confirms the candidate, not the
+           mention — let the IME own the key. (Tab is never a composition
+           confirm.) */
+        if (key === 'Enter' && isImeConfirm(event)) return false;
         event.preventDefault();
         // The kit's single-highlight model: activate the highlighted
         // DropdownItem (its activate = the row's onClick → command). Fall back

@@ -5,6 +5,7 @@ import Button from './Button';
 import { inputCls } from './input';
 import MorphFieldShell from './MorphFieldShell';
 import { useIconButtonSize, useCoarseScale, coarsePx } from './device';
+import { isImeConfirm } from './ime';
 import type { MorphFieldAction } from './morphFieldTypes';
 export type { MorphFieldAction } from './morphFieldTypes';
 
@@ -183,6 +184,8 @@ export function MorphSearchField({
        when it passed `onSubmit`. */
     if (event.key === 'Enter') {
       event.preventDefault();
+      /* An IME candidate confirm collapses nothing and submits nothing. */
+      if (isImeConfirm(event)) return;
       onSubmit?.(value);
       collapse(true);
       return;

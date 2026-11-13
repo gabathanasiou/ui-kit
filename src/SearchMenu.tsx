@@ -21,6 +21,7 @@ import {
 import { useSelection, NO_SELECTION_IDS } from './selection';
 import type { MultipleSelectionProps } from './selection';
 import { SelectionCheck, SelectionFooter } from './SelectionControls';
+import { isImeConfirm } from './ime';
 
 /**
  * SearchMenu — the shared "deep search" surface (roadmap 172, ui-kit).
@@ -738,6 +739,9 @@ export function SearchMenu({
       }
     } else if (event.key === 'Enter') {
       event.preventDefault();
+      /* An IME candidate confirm must never pick a row (Safari's confirming
+         Enter can arrive with isComposing false — keyCode 229 catches it). */
+      if (isImeConfirm(event)) return;
       const row = allRows[highlighted] ?? allRows[0];
       if (row) activate(row);
     } else if (event.key === 'Escape') {

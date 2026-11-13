@@ -7,6 +7,7 @@ import Button from './Button';
 import { TB_DIVIDER, TB_INPUT, TB_PICKER, useToolbarChrome } from './EditorChrome';
 import { Tooltip } from './Tooltip';
 import { useKitTheme, menuThemeOf } from './ThemeScope';
+import { isImeConfirm } from './ime';
 import type { RichTextEditorHandle, RichTextState } from './RichTextEditor';
 
 // ---- rich-text formatting toolbar (selection-aware, via the editor ref) --------
@@ -98,7 +99,7 @@ const LinkMenu: React.FC<{ editorRef: React.RefObject<RichTextEditorHandle | nul
           onChange={e => setUrl(e.target.value)}
           placeholder="https://…"
           autoFocus
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); apply(); } }}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (isImeConfirm(e)) return; apply(); } }}
           style={chrome.input} className={TB_INPUT + ' w-full'}
         />
         <div className="flex items-center gap-2">

@@ -13,6 +13,7 @@ import { revealRowInScroller, useRevealRowOnOpen } from './revealInScroller';
 import { useSelection, SelectionContext, NO_SELECTION_IDS } from './selection';
 import type { MultipleSelectionProps } from './selection';
 import { SelectionFooter } from './SelectionControls';
+import { isImeConfirm } from './ime';
 
 export type DropdownTheme = 'light' | 'dark' | 'blue' | 'emerald';
 
@@ -724,6 +725,9 @@ export default function DropdownMenu({
      the controlled query. */
   const onFieldKey = useCallback((e: KeyboardEvent): boolean => {
     if (e.key === 'Enter') {
+      /* Returning true prevents the default (the guide's ordering). An IME
+         candidate confirm ends here: no row activation. */
+      if (isImeConfirm(e)) return true;
       const idx = highlight.highlightedIndex;
       const item = highlight.items[idx >= 0 ? idx : 0];
       item?.activate();
@@ -1010,6 +1014,7 @@ export default function DropdownMenu({
             highlight.setHighlighted(next, 'keyboard');
           } else if (e.key === 'Enter') {
             e.preventDefault();
+            if (isImeConfirm(e)) return;
             const idx = highlight.highlightedIndex;
             const item = highlight.items[idx >= 0 ? idx : 0];
             item?.activate();
@@ -1341,7 +1346,7 @@ export function ItemManagerDropdown({
            so the browser never delivers it to the input. Handle Enter (commit)
            / Escape (cancel) here at DOCUMENT capture, which fires first. */
         if (editingId && target === inputRef.current) {
-          if (e.key === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); commitRename(); }
+          if (e.key === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); if (isImeConfirm(e)) return; commitRename(); }
           else if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); cancelRename(); }
         }
         return;
@@ -1478,7 +1483,7 @@ export function ItemManagerDropdown({
                     autoFocus
                     value={editValue}
                     onChange={e => setEditValue(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitRename(); } if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancelRename(); } }}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); if (isImeConfirm(e)) return; commitRename(); } if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancelRename(); } }}
                     className="w-full outline-none bg-transparent placeholder:text-current placeholder:opacity-50"
                     style={itemSize}
                   />
