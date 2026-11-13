@@ -375,14 +375,20 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
       ...(labelledBy ? { 'aria-labelledby': labelledBy } : { 'aria-label': label ?? '' }),
     };
   }, [label, labelledBy]);
+  /* Stable identity: TipTap compares options by reference on every render and
+     would otherwise run `setOptions` (a view setProps) per render. */
+  const editorProps = React.useMemo(
+    () => (rootAttributes ? { attributes: rootAttributes } : undefined),
+    [rootAttributes],
+  );
 
   const editor = useEditor({
     immediatelyRender: false,
     /* TipTap owns the editable node; `editorProps.attributes` is its supported
        hook for ARIA. An unnamed rich-text region is announced as a bare
        "textbox" — consumers pass the block's name ("Notes", "Call sheet
-       prose"). Stable identity so TipTap's option diff stays a no-op. */
-    ...(rootAttributes ? { editorProps: { attributes: rootAttributes } } : {}),
+       prose"). */
+    ...(editorProps ? { editorProps } : {}),
     extensions: [
       StarterKit,
       Placeholder.configure({ placeholder }),
