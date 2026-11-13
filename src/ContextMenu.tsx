@@ -25,6 +25,11 @@ export interface ContextMenuProps {
   onClose: () => void;
   children: React.ReactNode;
   containerRef?: React.RefObject<HTMLElement>;
+  /** Accessible name for the menu (`role="menu"`). Radix labels content from
+   *  its trigger, and this menu's trigger is the hidden full-viewport span —
+   *  so without this the name is the empty string. Pass the domain name:
+   *  "Scene actions", "Cast member actions". */
+  label?: string;
   /** Tokens theme (default `'light'` — context menus anchor on light surfaces).
    *  Pass `'dark'` when the menu opens over dark chrome (the ribbon designer). */
   theme?: DropdownTheme;
@@ -44,7 +49,7 @@ export interface ContextMenuProps {
  * Press-point anchored and STATIC (it does not follow scrolling); the close
  * morph shrinks back to where the menu was opened.
  */
-export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, children, containerRef, theme: themeProp, morph = true }) => {
+export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, children, containerRef, label = 'Context menu', theme: themeProp, morph = true }) => {
   const kit = useKitTheme();
   /* A surface/panel context keeps the menu light/dark and lets the accent
      reach selection/hover; a chrome context uses the full preset. The
@@ -182,6 +187,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ open, x, y, onClose, c
             <RadixDropdownMenu.Content
               ref={setComposedRef}
               {...resolved.attrs}
+              /* Radix labels the menu from its trigger id; the trigger here is
+                 an aria-hidden empty span, so the computed name would be "".
+                 Override BOTH name sources — aria-labelledby wins over
+                 aria-label in the accname computation. */
+              aria-label={label}
+              aria-labelledby={undefined}
               data-ui-fixed
               className="fixed ui-menu rounded-lg shadow-xl p-1 z-[9999] min-w-[180px] max-h-[85vh] overflow-y-auto scrollbar-custom"
               style={{

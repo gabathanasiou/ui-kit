@@ -43,6 +43,7 @@ function ContextMenuDemo() {
         x={ctx?.x ?? 0}
         y={ctx?.y ?? 0}
         onClose={() => setCtx(null)}
+        label="Bench actions"
       >
         <ContextMenuItem selected={pick === 'Plain item'} onClick={() => { setPick('Plain item'); setCtx(null); }}>
           Plain item {pick === 'Plain item' ? '— current' : ''}

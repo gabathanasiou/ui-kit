@@ -17,6 +17,9 @@ async function openCtx(page: Page) {
 
 test('context menu: single highlight on hover and leaving clears it', async ({ page }) => {
   await openCtx(page);
+  /* The menu is named (the trigger is an aria-hidden span — Radix would
+     otherwise compute an empty name). */
+  await expect(page.getByRole('menu', { name: 'Bench actions' })).toBeVisible();
   await page.getByRole('menuitem', { name: 'Delete', exact: true }).hover();
   await expect(litRows(page)).toHaveCount(1);
   await expect(litRows(page)).toContainText('Delete');

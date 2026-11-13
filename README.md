@@ -105,7 +105,7 @@ a fully themed dummy modal and both menu contexts).
 ```tsx
 <LongPressMenuProvider>
   <MessageBubble data-context-menu onContextMenu={openMenu} />
-  <ContextMenu open={open} x={x} y={y} onClose={close}>
+  <ContextMenu open={open} x={x} y={y} onClose={close} label="Message actions">
     <ContextMenuItem onClick={copy}>Copy</ContextMenuItem>
     <ContextMenuItem variant="danger" onClick={report}>Report</ContextMenuItem>
   </ContextMenu>
@@ -113,6 +113,8 @@ a fully themed dummy modal and both menu contexts).
 ```
 
 Desktop right-click and touch long-press both fire `onContextMenu` — one handler, both inputs.
+`label` names the menu for assistive tech (the visible trigger is a hidden span, so Radix
+cannot derive a name); pass the domain action ("Scene actions").
 
 ## Icon-first tabs (collapse + sliding selection)
 
