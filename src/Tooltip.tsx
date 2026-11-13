@@ -5,8 +5,10 @@ import { usePortalTarget, useCurrentWindow } from './popout';
 import { useCoarseScale, coarsePx } from './device';
 import { useKitTheme } from './ThemeScope';
 
-/** Grace before hiding: the pointer may travel from the trigger into the
- *  bubble itself (WCAG 1.4.13 — the content must be hoverable). */
+/** Grace before hiding: short enough that the bubble clears as soon as the
+ *  pointer leaves, long enough that crossing an adjacent control does not
+ *  flicker two tips. The bubble is pointer-events-none, so it can never
+ *  swallow a click aimed at the surface under it. */
 const HIDE_DELAY_MS = 100;
 
 /** The accessible name a tooltip lends its trigger, or null when the trigger
@@ -121,7 +123,9 @@ export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> =
       ref={ref}
       className="inline-flex"
       onMouseEnter={() => { hoveringRef.current = true; showTip(); }}
-      onMouseLeave={() => { hoveringRef.current = false; scheduleHide(); }}
+      /* Mouse interest ALWAYS ends at the trigger. A click can focus the
+         control, but that must not pin its tip over the neighbouring row. */
+      onMouseLeave={() => { hoveringRef.current = false; focusedRef.current = false; scheduleHide(); }}
       /* Keyboard parity: focus shows the tooltip, blur hides it (the grace
          timer absorbs iPad's intra-control focus hops). */
       onFocusCapture={(e) => {
@@ -153,10 +157,8 @@ export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> =
           hidden={!show}
           data-mode={kit?.mode}
           data-accent={kit?.accent}
-          className="ui-tooltip fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-[color:var(--ui-tooltip-border)] bg-[var(--ui-tooltip-bg)] text-[color:var(--ui-tooltip-text)] pointer-events-auto"
+          className="ui-tooltip fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-[color:var(--ui-tooltip-border)] bg-[var(--ui-tooltip-bg)] text-[color:var(--ui-tooltip-text)] pointer-events-none"
           style={{ ...tipStyle, left: pos.x, top: pos.y - 4, transform: 'translate(-50%, -100%)', zIndex: 99999 }}
-          onMouseEnter={() => { hoveringRef.current = true; clearCloseTimer(); }}
-          onMouseLeave={() => { hoveringRef.current = false; scheduleHide(); }}
         >
           {content.split('\n• ').map((line, i) => (
             <div key={i} className={i > 0 ? 'mt-0.5 pt-0.5 border-t border-[color:var(--ui-tooltip-sep)]' : ''}>{line}</div>

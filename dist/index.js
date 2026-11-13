@@ -3410,7 +3410,7 @@ const Pn = ({ content: n, children: e }) => {
         k.current = !0, J();
       },
       onMouseLeave: () => {
-        k.current = !1, N();
+        k.current = !1, C.current = !1, N();
       },
       onFocusCapture: (U) => {
         U.target !== U.currentTarget && (C.current = !0, J());
@@ -3433,14 +3433,8 @@ const Pn = ({ content: n, children: e }) => {
               hidden: !d,
               "data-mode": t == null ? void 0 : t.mode,
               "data-accent": t == null ? void 0 : t.accent,
-              className: "ui-tooltip fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-[color:var(--ui-tooltip-border)] bg-[var(--ui-tooltip-bg)] text-[color:var(--ui-tooltip-text)] pointer-events-auto",
+              className: "ui-tooltip fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-[color:var(--ui-tooltip-border)] bg-[var(--ui-tooltip-bg)] text-[color:var(--ui-tooltip-text)] pointer-events-none",
               style: { ...l, left: h.x, top: h.y - 4, transform: "translate(-50%, -100%)", zIndex: 99999 },
-              onMouseEnter: () => {
-                k.current = !0, B();
-              },
-              onMouseLeave: () => {
-                k.current = !1, N();
-              },
               children: [
                 n.split(`
 • `).map((U, re) => /* @__PURE__ */ p("div", { className: re > 0 ? "mt-0.5 pt-0.5 border-t border-[color:var(--ui-tooltip-sep)]" : "", children: U }, re)),
