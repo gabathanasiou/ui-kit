@@ -5,7 +5,7 @@ import { test, expect, Page } from '@playwright/test';
    width animation must not drag it. `style.left` is the positioned anchor
    coordinate (the bounding box also includes the overlay scale). */
 
-const panel = (page: Page) => page.locator('#search-menu-panel');
+const panel = (page: Page) => page.locator('[data-search-panel]');
 
 async function measure(page: Page, rowTestId: string, expandedWidth: number) {
   const row = page.getByTestId(rowTestId);

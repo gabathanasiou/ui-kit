@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, ChevronDown, Plus, Search, X } from 'lucide-react';
 import { getDropdownClasses, useItemSize, useMenuGroupSize, type DropdownTheme } from './DropdownMenu';
@@ -230,6 +230,10 @@ export function SearchMenu({
   ref,
 }: SearchMenuProps) {
   const isControlled = controlledQuery !== undefined;
+  /* Per-instance id base: SearchMenu is mounted by pickers, morph fields AND
+     menus at the same time, so a hardcoded panel id resolved to whichever
+     instance won (or a hidden one). */
+  const menuId = useId();
   const [innerQuery, setInnerQuery] = useState('');
   const query = isControlled ? controlledQuery : innerQuery;
   const setQuery = useCallback((next: string) => {
@@ -386,6 +390,14 @@ export function SearchMenu({
     [allRows, groupsActionable],
   );
   const browseTree = (expandableGroups || browseExpanded) && !query.trim();
+
+  /* The row the keyboard is on, exposed to assistive tech. Only a NAVIGABLE
+     row counts: collapsed-group children render inside an aria-hidden box and
+     plain group headers are not reachable — pointing aria-activedescendant at
+     either would reference a hidden/inexistent option. */
+  const activeOptionId = open && highlighted >= 0 && navigateRows.some(x => x.index === highlighted)
+    ? `${menuId}-opt-${highlighted}`
+    : undefined;
 
   /* Multi-select (roadmap 322): a DRAFT seeded from `multiple.selectedIds`.
      The accordion still expands categories; record rows toggle. The footer
@@ -885,7 +897,8 @@ export function SearchMenu({
         data-search-input
         role="combobox"
         aria-expanded={open}
-        aria-controls="search-menu-panel"
+        aria-controls={`${menuId}-panel`}
+        aria-activedescendant={activeOptionId}
         aria-autocomplete="list"
         onChange={e => onChange(e.target.value)}
         onFocus={() => { if (openOnFocus) openPanel(); }}
@@ -910,7 +923,8 @@ export function SearchMenu({
         data-search-input
         role="combobox"
         aria-expanded={open}
-        aria-controls="search-menu-panel"
+        aria-controls={`${menuId}-panel`}
+        aria-activedescendant={activeOptionId}
         aria-autocomplete="list"
         onChange={e => onChange(e.target.value)}
         onFocus={() => { if (openOnFocus && expanded) openPanel(); }}
@@ -1005,6 +1019,7 @@ export function SearchMenu({
         key={`item:${row.hit.item.id}`}
         type="button"
         role="option"
+        id={`${menuId}-opt-${rowIndex}`}
         aria-selected={checked}
         tabIndex={-1}
         data-search-item={row.hit.item.id}
@@ -1113,6 +1128,7 @@ export function SearchMenu({
       <div
         key={`group:${row.group.key}`}
         role="option"
+        id={`${menuId}-opt-${rowIndex}`}
         aria-selected={false}
         aria-expanded={showChevron ? groupExpanded : undefined}
         data-search-group={row.group.key}
@@ -1169,6 +1185,7 @@ export function SearchMenu({
         key={`${row.source || 'empty'}:${row.actionIndex}`}
         type="button"
         role="option"
+        id={`${menuId}-opt-${rowIndex}`}
         aria-selected={false}
         tabIndex={-1}
         data-search-action={row.source || 'empty'}
@@ -1222,7 +1239,8 @@ export function SearchMenu({
   const panel = (open || persisted) ? createPortal(
     <div
       ref={setPanelRef}
-      id="search-menu-panel"
+      id={`${menuId}-panel`}
+      data-search-panel
       data-theme={theme}
       role="listbox"
       aria-label={placeholder}

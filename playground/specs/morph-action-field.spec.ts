@@ -17,7 +17,7 @@ test.describe('MorphActionField', () => {
     await trigger(page, 'morph-action-role').click();
     await expect(root).toHaveAttribute('data-expanded', 'true');
     await expect(input(page, 'morph-action-role')).toBeFocused();
-    await expect(page.locator('#search-menu-panel')).toHaveCount(0);
+    await expect(page.locator('[data-search-panel]')).toHaveCount(0);
     await expect(root).toHaveCSS('transition-property', 'width');
 
     await input(page, 'morph-action-role').fill('Gaffer');

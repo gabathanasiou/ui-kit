@@ -91,7 +91,7 @@ test.describe('Glide canvas-native cell controls', () => {
 
     const overlay = await pickerOverlay(page);
     await expect(overlay.locator('input')).toHaveValue('1. GEORGE');
-    const panel = page.locator('#search-menu-panel');
+    const panel = page.locator('[data-search-panel]');
     await expect(panel).toBeVisible();
     await panel.getByText('2. MARY', { exact: true }).first().click();
 
@@ -116,7 +116,7 @@ test.describe('Glide canvas-native cell controls', () => {
     const cell = await stableNativePoint(page, 'cellBounds', 1, 'location');
     await page.mouse.dblclick(cell.x + 10, cell.y + cell.height / 2);
     await expect(await pickerOverlay(page)).toBeVisible();
-    await expect(page.locator('#search-menu-panel')).toBeVisible();
+    await expect(page.locator('[data-search-panel]')).toBeVisible();
   });
 
   test('the trash segment fires once on click and keeps grid focus', async ({ page }) => {
@@ -232,7 +232,7 @@ test.describe('Glide canvas-native cell controls', () => {
     await page.mouse.click(lane.x, lane.y);
     await expect(await pickerOverlay(page)).toBeVisible();
 
-    const panel = page.locator('#search-menu-panel');
+    const panel = page.locator('[data-search-panel]');
     await expect(panel).toBeVisible();
     await panel.getByText('Unit Base — Battersea', { exact: true }).first().click();
     await expect(page.getByTestId('glide-native-cells-status')).toHaveText('report to → Unit Base — Battersea');

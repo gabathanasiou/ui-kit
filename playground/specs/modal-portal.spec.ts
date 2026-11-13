@@ -72,7 +72,7 @@ test('dropdown inside a modal: Escape dismisses only the dropdown', async ({ pag
   await searchTrigger.click();
   const panel = page.locator('[role="listbox"]');
   await expect(panel).toBeVisible();
-  await page.locator('#search-menu-panel [data-search-item="tz-4"]').click();
+  await page.locator('[data-search-panel] [data-search-item="tz-4"]').click();
   await expect(panel).toHaveCount(0, { timeout: 5000 });
   await expect(modal.getByTestId('inmodal-search-pick')).toHaveText('pick: tz-4');
   await expect(modal.getByRole('button', { name: /City 4/ })).toBeVisible();

@@ -292,6 +292,12 @@ test('SearchMenu inline: click opens, category rows jump, empty action adds', as
   // Click the textbox → the search panel opens (browse state with categories).
   await input.click();
   await expect(searchPanel(page)).toBeVisible();
+  /* Combobox contract: ids are per-instance (two SearchMenus can be mounted),
+     the field controls THIS listbox and the lit row is the active option. */
+  const panelId = await searchPanel(page).getAttribute('id');
+  await expect(input).toHaveAttribute('aria-controls', panelId!);
+  const litId = await searchPanel(page).locator('[data-search-group].ui-item-highlighted, [data-search-item].ui-item-highlighted').first().getAttribute('id');
+  await expect(input).toHaveAttribute('aria-activedescendant', litId!);
   await expect(page.locator('[data-search-group="cast"]')).toBeVisible();
 
   // Browse tree: the Cast chevron expands its records in place.
@@ -383,11 +389,11 @@ test('SearchMenu expandable: button morphs into the field and back', async ({ pa
   await flat.getByRole('button', { name: /Region/ }).click();
   await expect(searchPanel(page)).toBeVisible();
   await expect(page.locator('[data-search-group]')).toHaveCount(0);
-  await expect(page.locator('#search-menu-panel [data-search-item]')).toHaveCount(60);
-  const current = page.locator('#search-menu-panel [data-search-item="tz-40"]');
+  await expect(page.locator('[data-search-panel] [data-search-item]')).toHaveCount(60);
+  const current = page.locator('[data-search-panel] [data-search-item="tz-40"]');
   await expect(current).toHaveAttribute('aria-selected', 'true');
   await expect(current.locator('svg.lucide-check')).toHaveCount(1);
-  await page.locator('#search-menu-panel [data-search-item="tz-42"]').click();
+  await page.locator('[data-search-panel] [data-search-item="tz-42"]').click();
   await expect(searchPanel(page)).toHaveCount(0);
   await expect(page.getByTestId('flat-picker-status')).toHaveText('flat pick: tz-42');
   await expect(flat.getByRole('button', { name: /City 42/ })).toBeVisible();
@@ -404,7 +410,7 @@ test('picker with a value: opens already scrolled to it, and the list never move
   await page.evaluate(() => {
     (window as any).__revealTrace = [];
     const tick = () => {
-      const panel = document.getElementById('search-menu-panel');
+      const panel = document.querySelector('[data-search-panel]');
       const scroller = panel?.querySelector<HTMLElement>('[data-search-scroller]');
       (window as any).__revealTrace.push({
         visible: panel ? getComputedStyle(panel).visibility === 'visible' : false,
@@ -418,7 +424,7 @@ test('picker with a value: opens already scrolled to it, and the list never move
   const flat = page.getByTestId('search-menu-flat-picker');
   await flat.getByRole('button', { name: /Region/ }).click();
   await expect(searchPanel(page)).toBeVisible();
-  await expect(page.locator('#search-menu-panel [data-search-item="tz-40"]')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('[data-search-panel] [data-search-item="tz-40"]')).toHaveAttribute('aria-selected', 'true');
 
   const trace = await page.evaluate(() => (window as any).__revealTrace as { visible: boolean; top: number | null }[]);
   const visibleTops = trace.filter(s => s.visible && s.top !== null).map(s => s.top as number);
@@ -427,7 +433,7 @@ test('picker with a value: opens already scrolled to it, and the list never move
   expect(visibleTops[0], 'opens scrolled to the current value, not at the top').toBeGreaterThan(0);
 
   // The current row is inside the visible band (not merely "selected").
-  const current = page.locator('#search-menu-panel [data-search-item="tz-40"]');
+  const current = page.locator('[data-search-panel] [data-search-item="tz-40"]');
   expect(await current.evaluate((el) => {
     const scroller = document.querySelector('[data-search-scroller]')!;
     const r = el.getBoundingClientRect();
@@ -436,7 +442,7 @@ test('picker with a value: opens already scrolled to it, and the list never move
   })).toBe(true);
 
   // ONE mouse click on a visible row commits and closes — no second try.
-  await page.locator('#search-menu-panel [data-search-item="tz-44"]').click();
+  await page.locator('[data-search-panel] [data-search-item="tz-44"]').click();
   await expect(searchPanel(page)).toHaveCount(0);
   await expect(page.getByTestId('flat-picker-status')).toHaveText('flat pick: tz-44');
 });
@@ -461,7 +467,7 @@ test('SearchMenu multiple: categories expand, group select-all, hidden-by-filter
   const wrap = page.getByTestId('multi-search-accordion');
   const status = page.getByTestId('multi-search-status');
   await wrap.locator('[data-search-trigger]').click();
-  const panel = page.locator('#search-menu-panel');
+  const panel = page.locator('[data-search-panel]');
   await expect(panel).toBeVisible();
 
   // Categories still expand — the row click does NOT select the category.
@@ -491,7 +497,7 @@ test('PickerField multiple: toggle, Escape cancels, Tab commits, typed create', 
   const cast = page.getByTestId('picker-cast');
   await cast.scrollIntoViewIfNeeded();
   const input = cast.locator('input');
-  const panel = page.locator('#search-menu-panel');
+  const panel = page.locator('[data-search-panel]');
   const status = page.getByTestId('picker-cast-status');
   const commits = page.getByTestId('picker-commits');
 
@@ -560,7 +566,7 @@ test('PickerField multiple: toggle, Escape cancels, Tab commits, typed create', 
 
 test('PickerField: single grouped commit, morph face and async source', async ({ page }) => {
   await page.goto('/');
-  const panel = page.locator('#search-menu-panel');
+  const panel = page.locator('[data-search-panel]');
 
   // Single grouped catalogue: plain headers, pick commits + closes.
   const loc = page.getByTestId('picker-location');

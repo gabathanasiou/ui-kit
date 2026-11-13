@@ -23,7 +23,7 @@ test.describe('Glide data grid', () => {
     // name, with the kit picker panel under it.
     const overlay = page.locator('[data-glide-overlay-layer] [data-picker-field]').first();
     await expect(overlay.locator('input')).toHaveValue('JOHN DOE');
-    const panel = page.locator('#search-menu-panel');
+    const panel = page.locator('[data-search-panel]');
     await expect(panel).toBeVisible();
     await panel.getByText('MAKIS GOUDOUMIS', { exact: true }).first().click();
 
