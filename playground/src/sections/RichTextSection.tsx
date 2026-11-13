@@ -94,6 +94,7 @@ function RichTextDemo() {
           ref={editorRef}
           value={value}
           onChange={setValue}
+          label="Report notes"
           onStateChange={setActive}
           placeholder="Write… type @ to insert a token"
           resolveToken={resolveRTToken}

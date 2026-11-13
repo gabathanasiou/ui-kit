@@ -177,6 +177,11 @@ export interface RichTextEditorProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /** Accessible NAME for the editable region (no visible label is rendered —
+   *  the consumer owns layout). `labelledBy` wins when both are set. */
+  label?: string;
+  /** Id of a visible node that names the editor (takes precedence over `label`). */
+  labelledBy?: string;
   /** Fired whenever the caret/selection moves or formatting changes. */
   onStateChange?: (state: RichTextState) => void;
   /** Resolves a stored token key to its chip meta (label + color). */
@@ -200,7 +205,7 @@ export interface RichTextEditorProps {
 }
 
 const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProps>(({
-  value, onChange, placeholder, disabled, className, onStateChange, resolveToken, suggestionItems, attributeItems, onTokenClick, onSelectionChange,
+  value, onChange, placeholder, disabled, className, label, labelledBy, onStateChange, resolveToken, suggestionItems, attributeItems, onTokenClick, onSelectionChange,
 }, ref) => {
   const kitTheme = useKitTheme();
   const editorMode = kitTheme?.mode ?? 'dark';
@@ -362,8 +367,22 @@ const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEditorProp
     return [token, attributeSuggestion];
   }, []);
 
+  const rootAttributes = React.useMemo<Record<string, string> | undefined>(() => {
+    if (!label && !labelledBy) return undefined;
+    return {
+      role: 'textbox',
+      'aria-multiline': 'true',
+      ...(labelledBy ? { 'aria-labelledby': labelledBy } : { 'aria-label': label ?? '' }),
+    };
+  }, [label, labelledBy]);
+
   const editor = useEditor({
     immediatelyRender: false,
+    /* TipTap owns the editable node; `editorProps.attributes` is its supported
+       hook for ARIA. An unnamed rich-text region is announced as a bare
+       "textbox" — consumers pass the block's name ("Notes", "Call sheet
+       prose"). Stable identity so TipTap's option diff stays a no-op. */
+    ...(rootAttributes ? { editorProps: { attributes: rootAttributes } } : {}),
     extensions: [
       StarterKit,
       Placeholder.configure({ placeholder }),

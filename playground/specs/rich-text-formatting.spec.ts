@@ -10,6 +10,9 @@ const output = (page: Page) => page.getByTestId('rt-output');
 
 test('font family and size apply to the selection only', async ({ page }) => {
   await page.goto('/');
+  /* The editable region carries the consumer's accessible name (TipTap owns
+     the DOM; the prop is applied through editorProps.attributes). */
+  await expect(page.getByTestId('rt-demo').getByRole('textbox', { name: 'Report notes' })).toBeVisible();
   await editor(page).click();
   await page.keyboard.type('Hello world');
   // caret is at the end — select the last word
