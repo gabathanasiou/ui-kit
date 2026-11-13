@@ -19,6 +19,11 @@ decision, and neither should force a hand-written theme block.
 `blue` = Drive-style chrome. `emerald` = shared/collaborative chrome.
 Add a colour by adding one `[data-accent="…"]` block — no component changes.
 
+**Native UI follows the scope.** Each theme scope declares `color-scheme` —
+`dark` on `:root` / `[data-mode="dark"]` / the legacy blue+emerald presets,
+`light` on `[data-mode="light"]` — so scrollbars, form controls, carets and the
+canvas match the surface without per-component CSS.
+
 **Where the accent applies** — this is the rule that keeps cloud projects
 looking like today (blue header/tabs, neutral modals):
 

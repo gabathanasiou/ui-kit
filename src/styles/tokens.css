@@ -16,6 +16,9 @@
 :root,
 [data-mode="dark"],
 [data-theme="dark"] {
+  /* Native UI (scrollbars, form controls, caret, canvas) follows the scope. */
+  color-scheme: dark;
+
   /* dark (default) — zinc equivalents */
   --ui-menu-bg: rgba(9, 9, 11, 0.95);
   --ui-menu-border: #27272a;
@@ -190,6 +193,8 @@
 
 [data-theme="light"],
 [data-mode="light"] {
+  color-scheme: light;
+
   --ui-menu-bg: #ffffff;
   --ui-menu-border: #e4e4e7;
   --ui-panel-bg: #ffffff;
@@ -339,6 +344,8 @@
 }
 
 [data-theme="blue"] {
+  color-scheme: dark;
+
   --ui-menu-bg: rgba(23, 37, 84, 0.95);
   --ui-menu-border: rgba(255, 255, 255, 0.1);
   --ui-panel-bg: #1e293b;
@@ -415,6 +422,8 @@
    maps Drive → blue, shared → emerald). Same white-alpha overlay set as blue,
    only the tinted fills differ. */
 [data-theme="emerald"] {
+  color-scheme: dark;
+
   --ui-menu-bg: rgba(2, 44, 34, 0.95);
   --ui-menu-border: rgba(255, 255, 255, 0.1);
   --ui-panel-bg: #064e3b;
