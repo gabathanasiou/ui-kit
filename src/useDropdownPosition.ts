@@ -23,8 +23,9 @@ import { visualViewportBox, safeAreaInsets } from './menuMetrics';
  *  4. `size` caps the height to the room left on the chosen side, never below
  *     `minHeight`.
  *
- * Re-measures on: any scroll (capture), window resize, visualViewport
- * resize/scroll (keyboard), and panel/content resize (filtering, list growth).
+ * Re-measures on: page/modal scrolls (capture — a panel's OWN scroller is
+ * ignored), window resize, visualViewport resize/scroll (keyboard), and
+ * panel/content resize (filtering, list growth).
  */
 
 export interface DropdownPanelPos {
@@ -184,10 +185,20 @@ export function useDropdownPosition({
     const doc = win?.document ?? null;
     const vv = win?.visualViewport ?? null;
     const onViewportChange = () => schedule();
+    /* A fixed panel cannot move when its own list scrolls — its height cap is
+       driven by `size` and the ResizeObserver below. Repositioning on that
+       scroll only bought a forced layout (`scrollHeight`), a full
+       computePosition and a React render per frame on iPad. Page/modal
+       scrolls still reposition: the anchor genuinely moves there. */
+    const onScroll = (e: Event) => {
+      const target = e.target as Node | null;
+      if (target && (panelRef.current?.contains(target) || contentRef?.current?.contains(target))) return;
+      schedule();
+    };
     vv?.addEventListener('resize', onViewportChange);
     vv?.addEventListener('scroll', onViewportChange);
     win?.addEventListener('resize', onViewportChange);
-    doc?.addEventListener('scroll', onViewportChange, { capture: true, passive: true });
+    doc?.addEventListener('scroll', onScroll, { capture: true, passive: true });
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(onViewportChange);
@@ -206,7 +217,7 @@ export function useDropdownPosition({
       vv?.removeEventListener('resize', onViewportChange);
       vv?.removeEventListener('scroll', onViewportChange);
       win?.removeEventListener('resize', onViewportChange);
-      doc?.removeEventListener('scroll', onViewportChange, { capture: true });
+      doc?.removeEventListener('scroll', onScroll, { capture: true });
       ro?.disconnect();
     };
   }, [open, anchorRef, panelRef, contentRef, anchorRectRef, gap, padding, maxHeight, minHeight]);
