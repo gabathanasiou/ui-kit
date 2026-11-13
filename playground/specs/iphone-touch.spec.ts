@@ -313,10 +313,16 @@ test('SearchMenu: the Clear action fires on tap 1', async ({ page }) => {
   await expect(field).toHaveValue('');
 });
 
-test('Tooltip: tap 1 reveals; a tap outside clears it', async ({ page }) => {
+test('Tooltip: tap 1 reveals; a tap outside clears it; focus reveals and Escape dismisses', async ({ page }) => {
   await open(page);
   const tile = caseOf(page, 'tooltip');
   const bubble = page.getByText('Revealed by tap 1', { exact: true });
+  await expect(bubble).toBeHidden();
+  /* Keyboard parity: focus shows the tooltip and it is exposed as
+     role="tooltip"; Escape dismisses it. */
+  await tile.getByText('Reveal tooltip', { exact: true }).focus();
+  await expect(page.getByRole('tooltip')).toBeVisible();
+  await page.keyboard.press('Escape');
   await expect(bubble).toBeHidden();
   await tile.getByText('Reveal tooltip', { exact: true }).tap();
   await expect(bubble).toBeVisible();

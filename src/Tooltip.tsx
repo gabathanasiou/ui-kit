@@ -1,9 +1,13 @@
 "use client";
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { usePortalTarget, useCurrentWindow } from './popout';
 import { useCoarseScale, coarsePx } from './device';
 import { useKitTheme } from './ThemeScope';
+
+/** Grace before hiding: the pointer may travel from the trigger into the
+ *  bubble itself (WCAG 1.4.13 — the content must be hoverable). */
+const HIDE_DELAY_MS = 100;
 
 /** The accessible name a tooltip lends its trigger, or null when the trigger
  *  already has one (`aria-label`/`title`) or shows its own text — visible
@@ -33,15 +37,45 @@ export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> =
   const tipStyle = { padding: `${padY}px ${padX}px`, fontSize: fs };
   const portalTarget = usePortalTarget();
   const currentWindow = useCurrentWindow();
+  const tipId = useId();
   const [show, setShow] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
+  /* Render the bubble only after hydration: it stays MOUNTED (hidden) so the
+   * trigger's aria-describedby always resolves, but a portal cannot render
+   * during SSR. */
+  const [mounted, setMounted] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const bubbleRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoveringRef = useRef(false);
+  const focusedRef = useRef(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const updatePos = () => {
     if (!ref.current) return;
     const r = ref.current.getBoundingClientRect();
     setPos({ x: r.left + r.width / 2, y: r.top });
+  };
+
+  const clearCloseTimer = () => {
+    if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null; }
+  };
+
+  const showTip = () => {
+    clearCloseTimer();
+    updatePos();
+    setShow(true);
+  };
+
+  /* Hide only once BOTH interest signals are gone. A mouse leave (or a blur)
+   * starts the grace timer; re-entering the trigger OR the bubble cancels it. */
+  const scheduleHide = () => {
+    clearCloseTimer();
+    closeTimer.current = setTimeout(() => {
+      closeTimer.current = null;
+      if (!hoveringRef.current && !focusedRef.current) setShow(false);
+    }, HIDE_DELAY_MS);
   };
 
   useEffect(() => () => { if (closeTimer.current) clearTimeout(closeTimer.current); }, []);
@@ -53,36 +87,76 @@ export const Tooltip: React.FC<{ content: string; children: React.ReactNode }> =
 
   /* Touch dismissal: iOS keeps the tap's :hover sticky, so without this the
      bubble can outlive the tap that revealed it. Any tap OUTSIDE the trigger
-     hides it (the first tap shows it, a tap anywhere else clears it). */
+     (and outside the bubble itself) hides it. */
   useEffect(() => {
     if (!show) return undefined;
     const doc = ref.current?.ownerDocument ?? document;
     const onPointerDown = (event: PointerEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) setShow(false);
+      const t = event.target as Node | null;
+      if (!t) return;
+      if (ref.current?.contains(t) || bubbleRef.current?.contains(t)) return;
+      hoveringRef.current = false;
+      focusedRef.current = false;
+      clearCloseTimer();
+      setShow(false);
     };
     doc.addEventListener('pointerdown', onPointerDown, true);
     return () => doc.removeEventListener('pointerdown', onPointerDown, true);
   }, [show]);
 
   const labelProps = tooltipAriaLabel(children, content);
-  const trigger = Object.keys(labelProps).length > 0
-    ? React.cloneElement(children as React.ReactElement<Record<string, unknown>>, labelProps)
+  const childProps = React.isValidElement(children) ? (children.props as Record<string, unknown>) : null;
+  /* Only describe when the tooltip did NOT already become the accessible name
+     (otherwise screen readers read the same string twice). A consumer's own
+     description always wins. */
+  const describedBy = content && Object.keys(labelProps).length === 0 && !childProps?.['aria-describedby']
+    ? { 'aria-describedby': tipId }
+    : {};
+  const trigger = React.isValidElement(children)
+    ? React.cloneElement(children as React.ReactElement<Record<string, unknown>>, { ...labelProps, ...describedBy })
     : children;
 
   return (
     <div
       ref={ref}
       className="inline-flex"
-      onMouseEnter={() => { if (closeTimer.current) clearTimeout(closeTimer.current); updatePos(); setShow(true); }}
-      onMouseLeave={() => { closeTimer.current = setTimeout(() => setShow(false), 60); }}
+      onMouseEnter={() => { hoveringRef.current = true; showTip(); }}
+      onMouseLeave={() => { hoveringRef.current = false; scheduleHide(); }}
+      /* Keyboard parity: focus shows the tooltip, blur hides it (the grace
+         timer absorbs iPad's intra-control focus hops). */
+      onFocusCapture={(e) => {
+        if (e.target === e.currentTarget) return;
+        focusedRef.current = true;
+        showTip();
+      }}
+      onBlurCapture={(e) => {
+        if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget as Node)) return;
+        focusedRef.current = false;
+        scheduleHide();
+      }}
+      /* Escape dismisses without swallowing the key: an open menu/modal above
+         still owns it (we never preventDefault, and a consumer that already
+         handled it wins). */
+      onKeyDown={(e) => {
+        if (e.key !== 'Escape' || e.defaultPrevented) return;
+        clearCloseTimer();
+        hoveringRef.current = false;
+        setShow(false);
+      }}
     >
       {trigger}
-      {show && createPortal(
+      {mounted && createPortal(
         <div
+          ref={bubbleRef}
+          id={tipId}
+          role="tooltip"
+          hidden={!show}
           data-mode={kit?.mode}
           data-accent={kit?.accent}
-          className="ui-tooltip fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-[color:var(--ui-tooltip-border)] bg-[var(--ui-tooltip-bg)] text-[color:var(--ui-tooltip-text)] pointer-events-none"
+          className="ui-tooltip fixed rounded shadow-xl whitespace-nowrap leading-relaxed max-w-xs border border-[color:var(--ui-tooltip-border)] bg-[var(--ui-tooltip-bg)] text-[color:var(--ui-tooltip-text)] pointer-events-auto"
           style={{ ...tipStyle, left: pos.x, top: pos.y - 4, transform: 'translate(-50%, -100%)', zIndex: 99999 }}
+          onMouseEnter={() => { hoveringRef.current = true; clearCloseTimer(); }}
+          onMouseLeave={() => { hoveringRef.current = false; scheduleHide(); }}
         >
           {content.split('\n• ').map((line, i) => (
             <div key={i} className={i > 0 ? 'mt-0.5 pt-0.5 border-t border-[color:var(--ui-tooltip-sep)]' : ''}>{line}</div>
