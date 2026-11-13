@@ -160,6 +160,13 @@ export default function NumberInput({
 
   const stepperW = boxed ? coarsePx(22, 30, scale) : coarsePx(16, 22, scale);
   const chevron = boxed ? coarsePx(14, 18, scale) : coarsePx(11, 15, scale);
+  /* WCAG 2.5.8 minimum: the chip and box keep their exact geometry — a
+     transparent ::after grows each button's HIT area sideways to 24px and
+     outward (↑ up, ↓ down) by enough to reach 24 tall. Extending away from
+     each other means the two targets never overlap; the visible chip and the
+     hover fill stay the same size. */
+  const stepHitX = Math.max(0, Math.ceil((24 - stepperW) / 2));
+  const stepOverhang = Math.round(coarsePx(11, 5, scale));
 
   return (
     <span
@@ -214,7 +221,14 @@ export default function NumberInput({
         }}
         onPointerDown={onPointerDown}
       />
-      <span className="ui-number-steppers" style={{ width: stepperW }}>
+      <span
+        className="ui-number-steppers"
+        style={{
+          width: stepperW,
+          '--ui-number-step-hit-x': `${stepHitX}px`,
+          '--ui-number-step-overhang': `${stepOverhang}px`,
+        } as React.CSSProperties}
+      >
         <button {...stepper(1)} className="ui-number-step">
           <ChevronUp style={{ width: chevron, height: chevron }} />
         </button>

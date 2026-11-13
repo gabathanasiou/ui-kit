@@ -1346,6 +1346,7 @@ select,
   box-sizing: border-box;
 }
 .ui-number-step {
+  position: relative;
   flex: 1 1 0;
   display: flex;
   align-items: center;
@@ -1359,6 +1360,29 @@ select,
   opacity: 0.55;
   cursor: pointer;
   transition: background-color 120ms ease, opacity 120ms ease;
+}
+
+/* Hit-area growth only (WCAG 2.5.8): the button and its chevron keep their
+   exact visual size and position. The invisible ::after extends the pointer
+   target sideways to 24px and OUTWARD — the top step upward, the bottom step
+   downward — so the two targets never overlap. The component passes the
+   overhang for the current coarse scale. */
+.ui-number-step::after {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--ui-number-step-hit-x, 0px));
+  right: calc(-1 * var(--ui-number-step-hit-x, 0px));
+}
+.ui-number-step:first-child::after {
+  top: calc(-1 * var(--ui-number-step-overhang, 0px));
+  bottom: 0;
+}
+.ui-number-step:last-child::after {
+  top: 0;
+  bottom: calc(-1 * var(--ui-number-step-overhang, 0px));
+}
+.ui-number-step:disabled::after {
+  pointer-events: none;
 }
 .ui-number-step:hover:not(:disabled) {
   background: var(--ui-input-hover-bg);
