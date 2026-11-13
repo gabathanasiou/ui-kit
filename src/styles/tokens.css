@@ -73,7 +73,7 @@
   --ui-item-highlight-wash: #ffffff;
   --ui-item-highlight-wash-opacity: 18%;
   --ui-sep: #27272a;
-  --ui-scroll-thumb: #52525b;
+  --ui-scroll-thumb: #71717a;
 
   --ui-row-hover-bg: #3f3f46;
   --ui-row-active-bg: rgba(37, 99, 235, 0.28);
@@ -245,7 +245,7 @@
   --ui-item-highlight-wash: #ffffff;
   --ui-item-highlight-wash-opacity: 35%;
   --ui-sep: #e4e4e7;
-  --ui-scroll-thumb: #d4d4d8;
+  --ui-scroll-thumb: #71717a;
 
   --ui-row-hover-bg: #e4e4e7;
   --ui-row-active-bg: #eff6ff;
@@ -364,7 +364,7 @@
   --ui-text-muted: rgba(255, 255, 255, 0.6);
   --ui-text-faint: rgba(255, 255, 255, 0.45);
   --ui-text-disabled: rgba(255, 255, 255, 0.2);
-  --ui-scroll-thumb: rgba(255, 255, 255, 0.3);
+  --ui-scroll-thumb: rgba(255, 255, 255, 0.4);
 
   --ui-item-hover-bg: rgba(255, 255, 255, 0.1);
   --ui-item-hover-text: #ffffff;
@@ -442,7 +442,7 @@
   --ui-text-muted: rgba(255, 255, 255, 0.6);
   --ui-text-faint: rgba(255, 255, 255, 0.45);
   --ui-text-disabled: rgba(255, 255, 255, 0.2);
-  --ui-scroll-thumb: rgba(255, 255, 255, 0.3);
+  --ui-scroll-thumb: rgba(255, 255, 255, 0.4);
 
   --ui-item-hover-bg: rgba(255, 255, 255, 0.1);
   --ui-item-hover-text: #ffffff;
@@ -1799,6 +1799,17 @@ select,
 }
 
 /* ── Scrollbars ───────────────────────────────────────────────────────── */
+
+/* Standard properties first: Safari 26.2 / Chrome use these for overlay
+   scrollbars, and macOS only honours `scrollbar-color` when `scrollbar-width`
+   is set. The WebKit pseudo-elements stay as the fallback for older Safari
+   (26.0–26.1) — both are declared, never `@supports`-gated, so a browser that
+   understands the standard pair simply ignores the other. Never transition
+   `scrollbar-color` (WebKit flickers). */
+.scrollbar-custom {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ui-scroll-thumb, var(--ui-text-disabled)) transparent;
+}
 
 .scrollbar-custom::-webkit-scrollbar {
   width: 6px;
