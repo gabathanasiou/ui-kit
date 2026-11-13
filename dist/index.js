@@ -3553,38 +3553,44 @@ const np = ze ? "text-xs font-semibold text-[color:var(--ui-label)] uppercase tr
         })
       ]
     }
-  ) : /* @__PURE__ */ R("div", { ref: B, className: `relative ${Dc} bg-[var(--ui-seg-track-bg)]${o ? " w-full" : ""}`, children: [
-    W.style && /* @__PURE__ */ p(
-      "span",
-      {
-        "aria-hidden": !0,
-        className: `absolute bg-[var(--ui-accent-pill-bg)] ${W.motionClass}`,
-        style: { ...W.style, top: 0, bottom: 0 }
-      }
-    ),
-    e.map((I, Z) => {
-      const te = S(I.v);
-      return /* @__PURE__ */ R(
-        "button",
+  ) : (
+    /* Self-scope the chrome track too (the track variant already does): a
+       chrome Seg can live in a PORTAL (FloatingChrome), where the app's
+       data-mode/data-accent ancestors do not exist — without these attrs the
+       selected pill's accent tokens resolve to nothing. */
+    /* @__PURE__ */ R("div", { ref: B, ...b, className: `relative ${Dc} bg-[var(--ui-seg-track-bg)]${o ? " w-full" : ""}`, children: [
+      W.style && /* @__PURE__ */ p(
+        "span",
         {
-          ref: (U) => {
-            J.current[Z] = U;
+          "aria-hidden": !0,
+          className: `absolute bg-[var(--ui-accent-pill-bg)] ${W.motionClass}`,
+          style: { ...W.style, top: 0, bottom: 0 }
+        }
+      ),
+      e.map((I, Z) => {
+        const te = S(I.v);
+        return /* @__PURE__ */ R(
+          "button",
+          {
+            ref: (U) => {
+              J.current[Z] = U;
+            },
+            ...I.dataProps,
+            disabled: r,
+            onClick: () => t(I.v),
+            title: I.title,
+            style: { ...x.control, height: w },
+            className: `relative z-10 font-medium transition-colors disabled:opacity-30 ${o ? "flex-1" : ""} ${te ? "text-[color:var(--ui-accent-pill-text)]" : "text-[color:var(--ui-text-muted)] hover:bg-[var(--ui-accent-hover-bg)]"} ${I.v !== e[e.length - 1].v ? "border-r border-[var(--ui-border)]" : ""}`,
+            children: [
+              I.icon,
+              I.l
+            ]
           },
-          ...I.dataProps,
-          disabled: r,
-          onClick: () => t(I.v),
-          title: I.title,
-          style: { ...x.control, height: w },
-          className: `relative z-10 font-medium transition-colors disabled:opacity-30 ${o ? "flex-1" : ""} ${te ? "text-[color:var(--ui-accent-pill-text)]" : "text-[color:var(--ui-text-muted)] hover:bg-[var(--ui-accent-hover-bg)]"} ${I.v !== e[e.length - 1].v ? "border-r border-[var(--ui-border)]" : ""}`,
-          children: [
-            I.icon,
-            I.l
-          ]
-        },
-        I.v
-      );
-    })
-  ] });
+          I.v
+        );
+      })
+    ] })
+  );
 }, ap = ({ children: n }) => /* @__PURE__ */ R("div", { className: "flex items-center gap-2 min-w-max", children: [
   /* @__PURE__ */ p("span", { className: ze ? "text-xs font-semibold text-[color:var(--ui-label)] uppercase tracking-wider" : "text-[9px] font-semibold text-[color:var(--ui-label)] uppercase tracking-wider", children: n }),
   /* @__PURE__ */ p("div", { className: "h-px bg-[var(--ui-sep)]", style: { minWidth: 24, flex: 1 } })

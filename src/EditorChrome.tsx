@@ -206,7 +206,11 @@ export const Seg: React.FC<{
   }
 
   return (
-    <div ref={wrapRef} className={`relative ${TB_SEG} bg-[var(--ui-seg-track-bg)]${stretch ? ' w-full' : ''}`}>
+    /* Self-scope the chrome track too (the track variant already does): a
+       chrome Seg can live in a PORTAL (FloatingChrome), where the app's
+       data-mode/data-accent ancestors do not exist — without these attrs the
+       selected pill's accent tokens resolve to nothing. */
+    <div ref={wrapRef} {...trackAttrs} className={`relative ${TB_SEG} bg-[var(--ui-seg-track-bg)]${stretch ? ' w-full' : ''}`}>
       {pill.style && (
         <span
           aria-hidden
