@@ -7,6 +7,11 @@ export interface ContextMenuProps {
     onClose: () => void;
     children: React.ReactNode;
     containerRef?: React.RefObject<HTMLElement>;
+    /** Accessible name for the menu (`role="menu"`). Radix labels content from
+     *  its trigger, and this menu's trigger is the hidden full-viewport span —
+     *  so without this the name is the empty string. Pass the domain name:
+     *  "Scene actions", "Cast member actions". */
+    label?: string;
     /** Tokens theme (default `'light'` — context menus anchor on light surfaces).
      *  Pass `'dark'` when the menu opens over dark chrome (the ribbon designer). */
     theme?: DropdownTheme;

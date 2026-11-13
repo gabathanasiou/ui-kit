@@ -51,6 +51,11 @@ export interface RichTextEditorProps {
     placeholder?: string;
     disabled?: boolean;
     className?: string;
+    /** Accessible NAME for the editable region (no visible label is rendered —
+     *  the consumer owns layout). `labelledBy` wins when both are set. */
+    label?: string;
+    /** Id of a visible node that names the editor (takes precedence over `label`). */
+    labelledBy?: string;
     /** Fired whenever the caret/selection moves or formatting changes. */
     onStateChange?: (state: RichTextState) => void;
     /** Resolves a stored token key to its chip meta (label + color). */

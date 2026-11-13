@@ -16,6 +16,9 @@
 :root,
 [data-mode="dark"],
 [data-theme="dark"] {
+  /* Native UI (scrollbars, form controls, caret, canvas) follows the scope. */
+  color-scheme: dark;
+
   /* dark (default) — zinc equivalents */
   --ui-menu-bg: rgba(9, 9, 11, 0.95);
   --ui-menu-border: #27272a;
@@ -70,7 +73,7 @@
   --ui-item-highlight-wash: #ffffff;
   --ui-item-highlight-wash-opacity: 18%;
   --ui-sep: #27272a;
-  --ui-scroll-thumb: #52525b;
+  --ui-scroll-thumb: #71717a;
 
   --ui-row-hover-bg: #3f3f46;
   --ui-row-active-bg: rgba(37, 99, 235, 0.28);
@@ -190,6 +193,8 @@
 
 [data-theme="light"],
 [data-mode="light"] {
+  color-scheme: light;
+
   --ui-menu-bg: #ffffff;
   --ui-menu-border: #e4e4e7;
   --ui-panel-bg: #ffffff;
@@ -240,7 +245,7 @@
   --ui-item-highlight-wash: #ffffff;
   --ui-item-highlight-wash-opacity: 35%;
   --ui-sep: #e4e4e7;
-  --ui-scroll-thumb: #d4d4d8;
+  --ui-scroll-thumb: #71717a;
 
   --ui-row-hover-bg: #e4e4e7;
   --ui-row-active-bg: #eff6ff;
@@ -339,6 +344,8 @@
 }
 
 [data-theme="blue"] {
+  color-scheme: dark;
+
   --ui-menu-bg: rgba(23, 37, 84, 0.95);
   --ui-menu-border: rgba(255, 255, 255, 0.1);
   --ui-panel-bg: #1e293b;
@@ -357,7 +364,7 @@
   --ui-text-muted: rgba(255, 255, 255, 0.6);
   --ui-text-faint: rgba(255, 255, 255, 0.45);
   --ui-text-disabled: rgba(255, 255, 255, 0.2);
-  --ui-scroll-thumb: rgba(255, 255, 255, 0.3);
+  --ui-scroll-thumb: rgba(255, 255, 255, 0.4);
 
   --ui-item-hover-bg: rgba(255, 255, 255, 0.1);
   --ui-item-hover-text: #ffffff;
@@ -415,6 +422,8 @@
    maps Drive → blue, shared → emerald). Same white-alpha overlay set as blue,
    only the tinted fills differ. */
 [data-theme="emerald"] {
+  color-scheme: dark;
+
   --ui-menu-bg: rgba(2, 44, 34, 0.95);
   --ui-menu-border: rgba(255, 255, 255, 0.1);
   --ui-panel-bg: #064e3b;
@@ -433,7 +442,7 @@
   --ui-text-muted: rgba(255, 255, 255, 0.6);
   --ui-text-faint: rgba(255, 255, 255, 0.45);
   --ui-text-disabled: rgba(255, 255, 255, 0.2);
-  --ui-scroll-thumb: rgba(255, 255, 255, 0.3);
+  --ui-scroll-thumb: rgba(255, 255, 255, 0.4);
 
   --ui-item-hover-bg: rgba(255, 255, 255, 0.1);
   --ui-item-hover-text: #ffffff;
@@ -1337,6 +1346,7 @@ select,
   box-sizing: border-box;
 }
 .ui-number-step {
+  position: relative;
   flex: 1 1 0;
   display: flex;
   align-items: center;
@@ -1350,6 +1360,29 @@ select,
   opacity: 0.55;
   cursor: pointer;
   transition: background-color 120ms ease, opacity 120ms ease;
+}
+
+/* Hit-area growth only (WCAG 2.5.8): the button and its chevron keep their
+   exact visual size and position. The invisible ::after extends the pointer
+   target sideways to 24px and OUTWARD — the top step upward, the bottom step
+   downward — so the two targets never overlap. The component passes the
+   overhang for the current coarse scale. */
+.ui-number-step::after {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--ui-number-step-hit-x, 0px));
+  right: calc(-1 * var(--ui-number-step-hit-x, 0px));
+}
+.ui-number-step:first-child::after {
+  top: calc(-1 * var(--ui-number-step-overhang, 0px));
+  bottom: 0;
+}
+.ui-number-step:last-child::after {
+  top: 0;
+  bottom: calc(-1 * var(--ui-number-step-overhang, 0px));
+}
+.ui-number-step:disabled::after {
+  pointer-events: none;
 }
 .ui-number-step:hover:not(:disabled) {
   background: var(--ui-input-hover-bg);
@@ -1394,7 +1427,8 @@ select,
   transition: background-color 120ms ease, border-color 120ms ease;
 }
 
-.ui-checkbox input:focus-visible + .ui-checkbox-box {
+.ui-checkbox input:focus-visible + .ui-checkbox-box,
+.ui-checkbox input:focus-visible + .ui-check-indicator {
   outline: 2px solid var(--ui-accent-focus, var(--ui-text-muted));
   outline-offset: 1px;
 }
@@ -1790,6 +1824,17 @@ select,
 }
 
 /* ── Scrollbars ───────────────────────────────────────────────────────── */
+
+/* Standard properties first: Safari 26.2 / Chrome use these for overlay
+   scrollbars, and macOS only honours `scrollbar-color` when `scrollbar-width`
+   is set. The WebKit pseudo-elements stay as the fallback for older Safari
+   (26.0–26.1) — both are declared, never `@supports`-gated, so a browser that
+   understands the standard pair simply ignores the other. Never transition
+   `scrollbar-color` (WebKit flickers). */
+.scrollbar-custom {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ui-scroll-thumb, var(--ui-text-disabled)) transparent;
+}
 
 .scrollbar-custom::-webkit-scrollbar {
   width: 6px;

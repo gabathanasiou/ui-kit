@@ -18,8 +18,9 @@ import { type RefObject } from 'react';
  *  4. `size` caps the height to the room left on the chosen side, never below
  *     `minHeight`.
  *
- * Re-measures on: any scroll (capture), window resize, visualViewport
- * resize/scroll (keyboard), and panel/content resize (filtering, list growth).
+ * Re-measures on: page/modal scrolls (capture — a panel's OWN scroller is
+ * ignored), window resize, visualViewport resize/scroll (keyboard), and
+ * panel/content resize (filtering, list growth).
  */
 export interface DropdownPanelPos {
     /** Layout-viewport coordinates (same space as `getBoundingClientRect`). */
