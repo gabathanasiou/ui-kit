@@ -10944,7 +10944,7 @@ function gp({
        does not cancel the click. */
     onMouseDown: (D) => D.preventDefault(),
     onClick: () => I(M)
-  }), U = B ? _(22, 30, C) : _(16, 22, C), re = B ? _(14, 18, C) : _(11, 15, C), ke = Math.max(0, Math.ceil((24 - U) / 2)), ue = Math.round(_(11, 5, C));
+  }), U = B ? _(22, 30, C) : _(16, 22, C), re = B ? _(14, 18, C) : _(11, 15, C), ke = Math.max(0, Math.ceil((24 - (U - 2)) / 2)), ue = Math.round(_(11, 5, C));
   return /* @__PURE__ */ R(
     "span",
     {

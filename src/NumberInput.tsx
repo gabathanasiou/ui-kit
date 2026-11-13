@@ -162,10 +162,11 @@ export default function NumberInput({
   const chevron = boxed ? coarsePx(14, 18, scale) : coarsePx(11, 15, scale);
   /* WCAG 2.5.8 minimum: the chip and box keep their exact geometry — a
      transparent ::after grows each button's HIT area sideways to 24px and
-     outward (↑ up, ↓ down) by enough to reach 24 tall. Extending away from
-     each other means the two targets never overlap; the visible chip and the
-     hover fill stay the same size. */
-  const stepHitX = Math.max(0, Math.ceil((24 - stepperW) / 2));
+     outward (↑ up, ↓ down) by enough to reach 24 tall. The button is inset by
+     the steppers' 1px padding on each side, hence `stepperW - 2`. Extending
+     away from each other means the two targets never overlap; the visible
+     chip and the hover fill stay the same size. */
+  const stepHitX = Math.max(0, Math.ceil((24 - (stepperW - 2)) / 2));
   const stepOverhang = Math.round(coarsePx(11, 5, scale));
 
   return (
