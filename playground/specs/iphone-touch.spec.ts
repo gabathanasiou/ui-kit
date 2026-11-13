@@ -316,15 +316,21 @@ test('SearchMenu: the Clear action fires on tap 1', async ({ page }) => {
 test('Tooltip: tap 1 reveals; a tap outside clears it; focus reveals and Escape dismisses', async ({ page }) => {
   await open(page);
   const tile = caseOf(page, 'tooltip');
+  const trigger = tile.getByRole('button', { name: 'Reveal tooltip' });
   const bubble = page.getByText('Revealed by tap 1', { exact: true });
   await expect(bubble).toBeHidden();
+  /* The bubble is mounted (hidden) and referenced as the trigger's
+     description — an always-resolvable id, not one that appears on hover. */
+  const descId = await trigger.getAttribute('aria-describedby');
+  expect(descId).toBeTruthy();
+  await expect(page.locator(`[id="${descId}"]`)).toHaveText('Revealed by tap 1');
   /* Keyboard parity: focus shows the tooltip and it is exposed as
      role="tooltip"; Escape dismisses it. */
-  await tile.getByText('Reveal tooltip', { exact: true }).focus();
+  await trigger.focus();
   await expect(page.getByRole('tooltip')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(bubble).toBeHidden();
-  await tile.getByText('Reveal tooltip', { exact: true }).tap();
+  await trigger.tap();
   await expect(bubble).toBeVisible();
   await tapBlank(page);
   await expect(bubble).toBeHidden();
