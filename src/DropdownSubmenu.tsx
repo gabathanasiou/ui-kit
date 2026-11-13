@@ -434,12 +434,24 @@ export default function DropdownSubmenu({ id, label, icon, width, side = 'right'
           collisionPadding={8}
           style={touchGeom ? { width: touchGeom.width, zIndex: touchGeom.childZ } : undefined}
           onPointerLeave={highlight.pointerLeave}
-          /* Focus moving between this card and its parent/deeper card is
-             part of the menu, not an outside dismissal (Radix only knows DOM
-             branches, and every card is its own portal). */
+          /* Focus moving INTO this card, or into a DEEPER card (a separate
+             portal whose trigger row lives in this card), is part of the
+             submenu, not an outside dismissal. Focus landing anywhere else —
+             notably a sibling row in the PARENT card — must close this sub the
+             way Radix intends. Radix labels each sub content with its
+             trigger's id, so the trigger's DOM ancestry is the reliable test;
+             a blanket "any menu surface" test left every submenu stuck open
+             while the pointer walked the parent card (regression 0.2.9). */
           onFocusOutside={e => {
             const target = e.target as Element | null;
-            if (target?.closest('[role="menu"], [data-radix-menu-content], [data-radix-popper-content-wrapper]')) e.preventDefault();
+            const self = subContentRef.current;
+            if (!target || !self) return;
+            const card = target.closest('[role="menu"], [data-radix-menu-content], [data-radix-popper-content-wrapper]');
+            if (!card) return;
+            if (self.contains(target) || self.contains(card)) { e.preventDefault(); return; }
+            const labelledBy = card.getAttribute('aria-labelledby');
+            const ownerTrigger = labelledBy ? target.ownerDocument.getElementById(labelledBy) : null;
+            if (ownerTrigger && self.contains(ownerTrigger)) e.preventDefault();
           }}
         >
           <MenuHighlightContext.Provider value={highlight}>
