@@ -1403,7 +1403,8 @@ select,
   transition: background-color 120ms ease, border-color 120ms ease;
 }
 
-.ui-checkbox input:focus-visible + .ui-checkbox-box {
+.ui-checkbox input:focus-visible + .ui-checkbox-box,
+.ui-checkbox input:focus-visible + .ui-check-indicator {
   outline: 2px solid var(--ui-accent-focus, var(--ui-text-muted));
   outline-offset: 1px;
 }
